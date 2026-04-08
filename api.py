@@ -27,7 +27,8 @@ from typing import Dict, Any, Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, HttpUrl, field_validator
 import re
 
@@ -115,7 +116,31 @@ class ScanRequest(BaseModel):
 
 @app.get("/")
 def root():
+    index_path = os.path.join(os.path.dirname(__file__), "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path, media_type="text/html")
     return {"status": "ok", "service": "Web Security Scanner"}
+
+
+@app.get("/robots.txt")
+def robots():
+    path = os.path.join(os.path.dirname(__file__), "robots.txt")
+    if os.path.exists(path):
+        return FileResponse(path, media_type="text/plain")
+
+
+@app.get("/sitemap.xml")
+def sitemap():
+    path = os.path.join(os.path.dirname(__file__), "sitemap.xml")
+    if os.path.exists(path):
+        return FileResponse(path, media_type="application/xml")
+
+
+@app.get("/.well-known/security.txt")
+def security_txt():
+    path = os.path.join(os.path.dirname(__file__), ".well-known", "security.txt")
+    if os.path.exists(path):
+        return FileResponse(path, media_type="text/plain")
 
 
 @app.post("/scan")
