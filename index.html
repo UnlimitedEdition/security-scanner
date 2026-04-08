@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Web Security Scanner — Besplatna analiza bezbednosti sajta | 50+ provera</title>
-  <meta name="description" content="Besplatan online alat za analizu bezbednosti vaseg sajta. Proverava SSL, HTTP headere, DNS, SEO, osetljive fajlove i jos 50+ sigurnosnih provera. Bez modifikacije vaseg sajta.">
+  <title>Web Security Scanner — Besplatna analiza sajta</title>
+  <meta name="description" content="Besplatan alat za analizu bezbednosti sajta. SSL, HTTP headeri, DNS, SEO, osetljivi fajlovi — 50+ provera bez modifikacije vaseg sajta.">
   <link rel="canonical" href="https://security-scanner-ruddy.vercel.app/">
   <!-- Open Graph -->
   <meta property="og:type" content="website">
@@ -471,7 +471,7 @@
       border-bottom: 2px solid #333;
       margin-bottom: 1.5rem;
     }
-    .print-header h1 { font-size: 1.6rem; margin-bottom: 0.3rem; }
+    .print-header h2 { font-size: 1.6rem; margin-bottom: 0.3rem; }
     .print-header p { font-size: 0.9rem; color: #555; }
 
     /* PRINT */
@@ -593,7 +593,7 @@
 <!-- TAB: SECURITY (main results) -->
 <div class="tab-panel security-panel active" id="panel-security">
   <div class="print-header" id="printHeader">
-    <h1>Web Security Scanner — Izvestaj</h1>
+    <h2>Web Security Scanner — Izvestaj</h2>
     <p id="printMeta"></p>
   </div>
   <div class="results-wrap" id="resultsWrap"></div>
@@ -957,10 +957,11 @@ function renderResults(data) {
     wrap.appendChild(errBox);
   }
 
-  // Categories
+  // Categories (exclude SEO — shown in separate tab)
   var categories = {};
   data.results.forEach(function(item) {
     var cat = item.category || "Ostalo";
+    if (cat === "SEO") return;
     if (!categories[cat]) categories[cat] = [];
     categories[cat].push(item);
   });

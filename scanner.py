@@ -67,7 +67,9 @@ def compute_score(results: List[Dict]) -> Dict[str, Any]:
     - MEDIUM: -5 each (max 4 = -20), LOW: -2 each (max 5 = -10)
     - Minimum floor is 5 (a reachable site is never 0 unless truly broken)
     """
-    failed = [r for r in results if not r.get("passed", True)]
+    # Exclude SEO results from security score (SEO has its own score in frontend)
+    security_results = [r for r in results if r.get("category") != "SEO"]
+    failed = [r for r in security_results if not r.get("passed", True)]
 
     # Group by severity, apply diminishing returns (cap per category)
     by_sev = {"CRITICAL": [], "HIGH": [], "MEDIUM": [], "LOW": []}
