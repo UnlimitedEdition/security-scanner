@@ -43,6 +43,52 @@ USER_AGENT = (
 )
 
 
+def _detect_bot_protection(body: str, headers: dict) -> bool:
+    """Detect if response is a bot challenge page instead of real content."""
+    if not body:
+        return False
+
+    body_lower = body.lower()
+
+    # Known challenge page signatures
+    challenge_signs = [
+        "vercel security checkpoint",
+        "checking your browser",
+        "just a moment",
+        "cf-challenge",
+        "__cf_chl",
+        "challenge-platform",
+        "ray id:",
+        "ddos protection by",
+        "attention required",
+        "enable javascript and cookies to continue",
+        "browser verification",
+    ]
+    for sign in challenge_signs:
+        if sign in body_lower:
+            return True
+
+    # Very short body with no real HTML structure = likely challenge
+    # Real pages have at least some content
+    has_title = "<title" in body_lower
+    has_body_content = len(body) > 2000
+    has_meta = '<meta name="description"' in body_lower or '<meta name="viewport"' in body_lower
+
+    # If page has < 1500 chars and no standard meta tags, likely a challenge
+    if len(body) < 1500 and not has_meta and not has_title:
+        return True
+
+    # Check for challenge-related headers
+    lower_headers = {k.lower(): v for k, v in headers.items()}
+    if "cf-mitigated" in lower_headers:
+        return True
+    server = lower_headers.get("server", "").lower()
+    if "cloudflare" in server and "cf-ray" in lower_headers and not has_body_content:
+        return True
+
+    return False
+
+
 def _normalize_url(url: str) -> str:
     if not url.startswith(("http://", "https://")):
         url = "https://" + url
@@ -168,6 +214,8 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
     response_headers = {}
     response_body = ""
 
+    bot_blocked = False
+
     try:
         update("Učitavanje sajta...", 10)
         main_response = session.get(base_url, timeout=15, allow_redirects=True)
@@ -175,6 +223,16 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
         response_body = main_response.text[:50000]  # Cap at 50KB
         final_url = main_response.url
         is_https = final_url.startswith("https://")
+
+        # Detect bot protection / challenge pages
+        bot_blocked = _detect_bot_protection(response_body, response_headers)
+        if bot_blocked:
+            errors.append("Bot zaštita detektovana — sajt prikazuje challenge stranicu umesto pravog sadržaja. "
+                          "Rezultati za HTTP headere i SEO mogu biti netačni. "
+                          "Pokušajte skeniranje sa localhost (start.bat).")
+            # Clear body/headers so we don't report false results
+            response_body = ""
+            response_headers = {}
     except requests.exceptions.SSLError as e:
         errors.append(f"SSL greška: {str(e)[:100]}")
         is_https = False
