@@ -606,50 +606,12 @@
 
 <!-- TAB: PERFORMANCE -->
 <div class="tab-panel" id="panel-performance">
-  <div class="coming-soon-wrap">
-    <div class="cs-card">
-      <div class="cs-icon">&#9889;</div>
-      <h3>Brzina Ucitavanja</h3>
-      <p>TTFB, LCP, FID i CLS metrike za vas sajt</p>
-      <span class="cs-badge" data-sr="Uskoro" data-en="Coming soon">Uskoro</span>
-    </div>
-    <div class="cs-card">
-      <div class="cs-icon">&#128230;</div>
-      <h3>Velicina Resursa</h3>
-      <p>Analiza JS, CSS i slika — optimizacija za brzinu</p>
-      <span class="cs-badge" data-sr="Uskoro" data-en="Coming soon">Uskoro</span>
-    </div>
-    <div class="cs-card">
-      <div class="cs-icon">&#128260;</div>
-      <h3>Kompresija &amp; Cache</h3>
-      <p>Gzip/Brotli, cache headeri, CDN detekcija</p>
-      <span class="cs-badge" data-sr="Uskoro" data-en="Coming soon">Uskoro</span>
-    </div>
-  </div>
+  <div class="results-wrap" id="perfResultsWrap"></div>
 </div>
 
 <!-- TAB: GDPR -->
 <div class="tab-panel" id="panel-gdpr">
-  <div class="coming-soon-wrap">
-    <div class="cs-card">
-      <div class="cs-icon">&#128274;</div>
-      <h3>Cookie Politika</h3>
-      <p>Detekcija kolacica, cookie banner provera, consent mehanizmi</p>
-      <span class="cs-badge" data-sr="Uskoro" data-en="Coming soon">Uskoro</span>
-    </div>
-    <div class="cs-card">
-      <div class="cs-icon">&#128196;</div>
-      <h3>Privacy Policy</h3>
-      <p>Provera da li sajt ima politiku privatnosti i uslove koriscenja</p>
-      <span class="cs-badge" data-sr="Uskoro" data-en="Coming soon">Uskoro</span>
-    </div>
-    <div class="cs-card">
-      <div class="cs-icon">&#128506;</div>
-      <h3>Third-Party Trackeri</h3>
-      <p>Identifikacija Google Analytics, Facebook Pixel i ostalih trackera</p>
-      <span class="cs-badge" data-sr="Uskoro" data-en="Coming soon">Uskoro</span>
-    </div>
-  </div>
+  <div class="results-wrap" id="gdprResultsWrap"></div>
 </div>
 
 <!-- AD SLOT (after results) -->
@@ -680,7 +642,7 @@ const API_BASE = (location.hostname === "localhost" || location.hostname === "12
 let currentLang = "sr";
 let currentResults = null;
 
-const MODULES = ["SSL/TLS","Headers","DNS","Files","Info","Cookies","Redirects","CMS","SEO","CT","Subdomains"];
+const MODULES = ["SSL/TLS","Headers","DNS","Files","Cookies","Redirects","CMS","Vuln","JS","API","Deps","SEO","Perf","GDPR","A11y","CT","Subs"];
 
 function switchTab(tab) {
   document.querySelectorAll(".tab-panel").forEach(function(p) { p.classList.remove("active"); });
@@ -955,13 +917,13 @@ function renderResults(data) {
   var categories = {};
   data.results.forEach(function(item) {
     var cat = item.category || "Ostalo";
-    if (cat === "SEO") return;
+    if (["SEO","Performance","GDPR","Accessibility"].indexOf(cat) !== -1) return;
     if (!categories[cat]) categories[cat] = [];
     categories[cat].push(item);
   });
 
-  var catOrder = ["SSL/TLS","Security Headers","DNS Security","SEO","Sensitive Files","Information Disclosure","Cookie Security","Redirects","CMS/Technology","Certificate Transparency","Subdomain Enumeration","Admin Exposure","Open Ports","CORS Policy","Best Practices","robots.txt"];
-  var catIcons = {"SSL/TLS":"\uD83D\uDD10","Security Headers":"\uD83D\uDEE1\uFE0F","DNS Security":"\uD83D\uDCE1","Sensitive Files":"\uD83D\uDCC1","Information Disclosure":"\uD83D\uDD75\uFE0F","Cookie Security":"\uD83C\uDF6A","Redirects":"\u21AA\uFE0F","CMS/Technology":"\u2699\uFE0F","SEO":"\uD83D\uDD0D","Certificate Transparency":"\uD83D\uDCDC","Subdomain Enumeration":"\uD83C\uDF10","Admin Exposure":"\uD83D\uDD12","Open Ports":"\uD83D\uDEAA","CORS Policy":"\uD83D\uDD00","Best Practices":"\u2B50","robots.txt":"\uD83E\uDD16"};
+  var catOrder = ["SSL/TLS","Security Headers","DNS Security","Vulnerability Scan","JavaScript Security","API Security","Dependencies","Sensitive Files","Information Disclosure","Cookie Security","Redirects","CMS/Technology","Certificate Transparency","Subdomain Enumeration","Admin Exposure","Open Ports","CORS Policy","Best Practices","robots.txt"];
+  var catIcons = {"SSL/TLS":"\uD83D\uDD10","Security Headers":"\uD83D\uDEE1\uFE0F","DNS Security":"\uD83D\uDCE1","Vulnerability Scan":"\uD83D\uDCA3","JavaScript Security":"\uD83D\uDCDC","API Security":"\uD83D\uDD17","Dependencies":"\uD83D\uDCE6","Sensitive Files":"\uD83D\uDCC1","Information Disclosure":"\uD83D\uDD75\uFE0F","Cookie Security":"\uD83C\uDF6A","Redirects":"\u21AA\uFE0F","CMS/Technology":"\u2699\uFE0F","SEO":"\uD83D\uDD0D","Performance":"\u26A1","GDPR":"\uD83D\uDD12","Accessibility":"\u267F","Certificate Transparency":"\uD83D\uDCDC","Subdomain Enumeration":"\uD83C\uDF10","Admin Exposure":"\uD83D\uDD12","Open Ports":"\uD83D\uDEAA","CORS Policy":"\uD83D\uDD00","Best Practices":"\u2B50","robots.txt":"\uD83E\uDD16"};
 
   var sorted = catOrder.filter(function(c) { return categories[c]; });
   Object.keys(categories).forEach(function(c) { if (sorted.indexOf(c) === -1) sorted.push(c); });
@@ -1025,6 +987,8 @@ function renderResults(data) {
 
   // Render SEO results in separate tab
   renderSeoTab(data);
+  renderPerformanceTab(data);
+  renderGdprTab(data);
 }
 
 function renderSeoTab(data) {
@@ -1117,6 +1081,103 @@ function renderSeoTab(data) {
     passSection.appendChild(passBody);
     seoWrap.appendChild(passSection);
   }
+}
+
+function renderTabResults(wrapId, data, categories, titleSr, titleEn) {
+  var wrap = document.getElementById(wrapId);
+  if (!wrap) return;
+  var items = data.results.filter(function(r) { return categories.indexOf(r.category) !== -1; });
+  wrap.style.display = "block";
+  while (wrap.firstChild) wrap.removeChild(wrap.firstChild);
+
+  if (items.length === 0) {
+    var noData = document.createElement("div");
+    noData.className = "score-card";
+    noData.style.textAlign = "center";
+    noData.style.padding = "2rem";
+    var msg = document.createElement("p");
+    msg.style.color = "var(--text-dim)";
+    msg.textContent = currentLang === "en" ? "Scan a site to see results" : "Skenirajte sajt da vidite rezultate";
+    noData.appendChild(msg);
+    wrap.appendChild(noData);
+    return;
+  }
+
+  var passed = items.filter(function(i) { return i.passed; }).length;
+  var failed = items.filter(function(i) { return !i.passed; }).length;
+  var total = items.length;
+  var pct = Math.round((passed / total) * 100);
+
+  var summary = document.createElement("div");
+  summary.className = "score-card";
+  summary.style.marginBottom = "1.5rem";
+  var summaryText = document.createElement("div");
+  summaryText.className = "score-details";
+  var tabTitle = document.createElement("div");
+  tabTitle.style.cssText = "font-size:1.3rem;font-weight:800;margin-bottom:0.5rem";
+  tabTitle.textContent = (currentLang === "en" ? titleEn : titleSr) + " \u2014 " + pct + "%";
+  summaryText.appendChild(tabTitle);
+  var tabMeta = document.createElement("div");
+  tabMeta.className = "score-meta";
+  tabMeta.textContent = passed + "/" + total + " " + (currentLang === "en" ? "checks passed" : "provera proslo") + " \u00B7 " + failed + " " + (currentLang === "en" ? "issues" : "problema");
+  summaryText.appendChild(tabMeta);
+  summary.appendChild(summaryText);
+  wrap.appendChild(summary);
+
+  var failedItems = items.filter(function(i) { return !i.passed; });
+  var passedItems = items.filter(function(i) { return i.passed; });
+
+  if (failedItems.length > 0) {
+    var failSection = document.createElement("div");
+    failSection.className = "category-section";
+    var failHeader = document.createElement("div");
+    failHeader.className = "category-header";
+    failHeader.onclick = function() { toggleCat(this); };
+    var failTitle = document.createElement("div");
+    failTitle.className = "category-title";
+    failTitle.textContent = (currentLang === "en" ? "Issues to fix" : "Problemi za resavanje") + " (" + failedItems.length + ")";
+    var failChev = document.createElement("span");
+    failChev.className = "category-chevron open";
+    failChev.textContent = "\u25BC";
+    failHeader.appendChild(failTitle);
+    failHeader.appendChild(failChev);
+    failSection.appendChild(failHeader);
+    var failBody = document.createElement("div");
+    failBody.className = "category-body open";
+    failedItems.forEach(function(item) { failBody.appendChild(renderItem(item)); });
+    failSection.appendChild(failBody);
+    wrap.appendChild(failSection);
+  }
+
+  if (passedItems.length > 0) {
+    var passSection = document.createElement("div");
+    passSection.className = "category-section";
+    var passHeader = document.createElement("div");
+    passHeader.className = "category-header";
+    passHeader.onclick = function() { toggleCat(this); };
+    var passTitle = document.createElement("div");
+    passTitle.className = "category-title";
+    passTitle.textContent = (currentLang === "en" ? "Passed checks" : "Uspesne provere") + " (" + passedItems.length + ")";
+    var passChev = document.createElement("span");
+    passChev.className = "category-chevron";
+    passChev.textContent = "\u25BC";
+    passHeader.appendChild(passTitle);
+    passHeader.appendChild(passChev);
+    passSection.appendChild(passHeader);
+    var passBody = document.createElement("div");
+    passBody.className = "category-body";
+    passedItems.forEach(function(item) { passBody.appendChild(renderItem(item)); });
+    passSection.appendChild(passBody);
+    wrap.appendChild(passSection);
+  }
+}
+
+function renderPerformanceTab(data) {
+  renderTabResults("perfResultsWrap", data, ["Performance", "Accessibility"], "Performanse i Pristupacnost", "Performance & Accessibility");
+}
+
+function renderGdprTab(data) {
+  renderTabResults("gdprResultsWrap", data, ["GDPR"], "GDPR / Privatnost", "GDPR / Privacy");
 }
 
 function renderItem(item) {

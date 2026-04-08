@@ -199,5 +199,5 @@ def run(base_url: str, domain: str, response_body: str, session: requests.Sessio
     results.extend(_check_security_txt(base_url, session))
     results.extend(_check_caa(domain))
     results.extend(_check_sri(response_body))
-    results.extend(_check_http2(domain))
+    # HTTP/2 check moved to performance_check.py
     return results

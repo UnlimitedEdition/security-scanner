@@ -27,6 +27,8 @@ from checks import ssl_check, headers_check, dns_check, files_check
 from checks import disclosure_check, cookies_check, redirect_check, cms_check
 from checks import admin_check, robots_check, ports_check, cors_check, extras_check
 from checks import ct_check, subdomain_check, seo_check
+from checks import performance_check, gdpr_check, vuln_check
+from checks import js_check, api_check, accessibility_check, dependency_check
 
 # Severity weights for scoring
 SEVERITY_WEIGHTS = {
@@ -114,7 +116,7 @@ def compute_score(results: List[Dict]) -> Dict[str, Any]:
     - Minimum floor is 5 (a reachable site is never 0 unless truly broken)
     """
     # Exclude SEO results from security score (SEO has its own score in frontend)
-    security_results = [r for r in results if r.get("category") != "SEO"]
+    security_results = [r for r in results if r.get("category") not in ("SEO", "Performance", "GDPR", "Accessibility")]
     failed = [r for r in security_results if not r.get("passed", True)]
 
     # Group by severity, apply diminishing returns (cap per category)
@@ -213,6 +215,8 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
     main_response = None
     response_headers = {}
     response_body = ""
+    response_time_ms = 0
+    page_size_bytes = 0
 
     bot_blocked = False
 
@@ -221,6 +225,8 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
         main_response = session.get(base_url, timeout=15, allow_redirects=True)
         response_headers = dict(main_response.headers)
         response_body = main_response.text[:50000]  # Cap at 50KB
+        response_time_ms = main_response.elapsed.total_seconds() * 1000
+        page_size_bytes = len(main_response.content)
         final_url = main_response.url
         is_https = final_url.startswith("https://")
 
@@ -233,6 +239,8 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
             # Clear body/headers so we don't report false results
             response_body = ""
             response_headers = {}
+            response_time_ms = 0
+            page_size_bytes = 0
     except requests.exceptions.SSLError as e:
         errors.append(f"SSL greška: {str(e)[:100]}")
         is_https = False
@@ -350,22 +358,78 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
         errors.append(f"CORS check greška: {str(e)[:80]}")
 
     # --- 13. Extras: security.txt, CAA, SRI ---
-    update("Proveravam security.txt, CAA, SRI...", 93)
+    update("Proveravam security.txt, CAA, SRI...", 85)
     try:
         extras_results = extras_check.run(base_url, domain, response_body, session)
         all_results.extend(extras_results)
     except Exception as e:
         errors.append(f"Extras check greška: {str(e)[:80]}")
 
-    # --- 14. SEO Analysis ---
-    update("Analiziram SEO...", 94)
+    # --- 14. Vulnerability Scan ---
+    update("Skeniram ranjivosti (pasivno)...", 87)
+    try:
+        vuln_results = vuln_check.run(base_url, response_body, response_headers, session)
+        all_results.extend(vuln_results)
+    except Exception as e:
+        errors.append(f"Vuln check greška: {str(e)[:80]}")
+
+    # --- 15. JavaScript Security ---
+    update("Analiziram JavaScript bezbednost...", 88)
+    try:
+        js_results = js_check.run(base_url, response_body, session)
+        all_results.extend(js_results)
+    except Exception as e:
+        errors.append(f"JS check greška: {str(e)[:80]}")
+
+    # --- 16. API Security ---
+    update("Proveravam API bezbednost...", 89)
+    try:
+        api_results = api_check.run(base_url, session)
+        all_results.extend(api_results)
+    except Exception as e:
+        errors.append(f"API check greška: {str(e)[:80]}")
+
+    # --- 17. Dependencies ---
+    update("Proveravam zavisnosti i biblioteke...", 90)
+    try:
+        dep_results = dependency_check.run(base_url, response_body, session)
+        all_results.extend(dep_results)
+    except Exception as e:
+        errors.append(f"Dependency check greška: {str(e)[:80]}")
+
+    # --- 18. SEO Analysis ---
+    update("Analiziram SEO...", 91)
     try:
         seo_results = seo_check.run(base_url, response_body, response_headers, session)
         all_results.extend(seo_results)
     except Exception as e:
         errors.append(f"SEO check greška: {str(e)[:80]}")
 
-    # --- 15. Certificate Transparency ---
+    # --- 19. Performance ---
+    update("Analiziram performanse sajta...", 92)
+    try:
+        perf_results = performance_check.run(base_url, response_body, response_headers, session, response_time_ms, page_size_bytes)
+        all_results.extend(perf_results)
+    except Exception as e:
+        errors.append(f"Performance check greška: {str(e)[:80]}")
+
+    # --- 20. GDPR / Privacy ---
+    update("Proveravam GDPR usklađenost...", 93)
+    try:
+        gdpr_results = gdpr_check.run(base_url, response_body, response_headers, session)
+        all_results.extend(gdpr_results)
+    except Exception as e:
+        errors.append(f"GDPR check greška: {str(e)[:80]}")
+
+    # --- 21. Accessibility ---
+    update("Proveravam pristupačnost (a11y)...", 94)
+    try:
+        a11y_results = accessibility_check.run(response_body)
+        all_results.extend(a11y_results)
+    except Exception as e:
+        errors.append(f"Accessibility check greška: {str(e)[:80]}")
+
+    # --- 22. Certificate Transparency ---
     update("Proveravam Certificate Transparency logove...", 96)
     try:
         ct_results = ct_check.run(domain)
@@ -373,7 +437,7 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
     except Exception as e:
         errors.append(f"CT check greška: {str(e)[:80]}")
 
-    # --- 15. Subdomain Enumeration ---
+    # --- 23. Subdomain Enumeration ---
     update("Skeniram subdomene...", 98)
     try:
         sub_results = subdomain_check.run(domain)
