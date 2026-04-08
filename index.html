@@ -4,152 +4,272 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Web Security Scanner — Besplatna analiza sajta</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0f1117;
-      --surface: #1a1d27;
-      --surface2: #22263a;
-      --border: #2e3250;
+      --bg: #0a0c15;
+      --surface: #12152a;
+      --surface2: #1a1e38;
+      --border: #252a4a;
       --text: #e8eaf6;
-      --text-dim: #8892b0;
+      --text-dim: #7b83a6;
       --accent: #6c63ff;
-      --accent-glow: rgba(108,99,255,0.2);
+      --accent2: #a78bfa;
+      --accent-glow: rgba(108,99,255,0.18);
       --red: #ef4444;
       --orange: #f97316;
       --yellow: #eab308;
       --green: #22c55e;
       --blue: #3b82f6;
-      --radius: 12px;
+      --radius: 14px;
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
+      overflow-x: hidden;
     }
 
-    /* HEADER */
-    .header {
-      background: linear-gradient(135deg, #0f1117 0%, #1a1240 50%, #0f1117 100%);
+    /* NAVBAR */
+    .navbar {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(10,12,21,0.85);
+      backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border);
-      padding: 2rem 1rem 3rem;
-      text-align: center;
+      padding: 0 1.5rem;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 56px;
     }
-    .header-badge {
+    .nav-brand {
+      font-weight: 800; font-size: 1.1rem;
+      display: flex; align-items: center; gap: 0.5rem;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .nav-brand svg { width: 24px; height: 24px; }
+    .nav-links { display: flex; gap: 0.3rem; }
+    .nav-link {
+      background: none; border: none; color: var(--text-dim);
+      font-size: 0.85rem; font-weight: 600; padding: 6px 14px;
+      border-radius: 8px; cursor: pointer; transition: all 0.2s;
+      font-family: inherit;
+    }
+    .nav-link:hover { color: var(--text); background: var(--surface2); }
+    .nav-link.active { color: var(--accent); background: var(--accent-glow); }
+    .nav-right { display: flex; align-items: center; gap: 0.6rem; }
+    .hamburger {
+      display: none; background: none; border: none; color: var(--text);
+      font-size: 1.5rem; cursor: pointer; padding: 4px;
+    }
+    @media (max-width: 700px) {
+      .hamburger { display: block; }
+      .nav-links {
+        display: none; position: absolute; top: 56px; left: 0; right: 0;
+        background: var(--surface); border-bottom: 1px solid var(--border);
+        flex-direction: column; padding: 0.5rem;
+      }
+      .nav-links.open { display: flex; }
+    }
+
+    /* HERO */
+    .hero {
+      position: relative;
+      text-align: center;
+      padding: 4rem 1rem 5rem;
+      overflow: hidden;
+    }
+    .hero-glow {
+      position: absolute; top: -120px; left: 50%; transform: translateX(-50%);
+      width: 600px; height: 400px;
+      background: radial-gradient(ellipse, rgba(108,99,255,0.2) 0%, transparent 70%);
+      pointer-events: none;
+      animation: glowPulse 4s ease-in-out infinite;
+    }
+    @keyframes glowPulse {
+      0%,100% { opacity: 0.6; transform: translateX(-50%) scale(1); }
+      50% { opacity: 1; transform: translateX(-50%) scale(1.1); }
+    }
+    .hero-badge {
+      position: relative;
       display: inline-block;
       background: var(--accent-glow);
-      border: 1px solid var(--accent);
-      color: var(--accent);
-      font-size: 0.75rem;
-      font-weight: 600;
-      padding: 4px 14px;
-      border-radius: 20px;
-      margin-bottom: 1rem;
-      letter-spacing: 0.05em;
+      border: 1px solid rgba(108,99,255,0.4);
+      color: var(--accent2);
+      font-size: 0.75rem; font-weight: 700;
+      padding: 5px 16px; border-radius: 20px;
+      margin-bottom: 1.2rem;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
     }
-    .header h1 {
-      font-size: clamp(1.8rem, 5vw, 3rem);
-      font-weight: 800;
-      line-height: 1.1;
-      margin-bottom: 0.75rem;
+    .hero h1 {
+      position: relative;
+      font-size: clamp(2rem, 5.5vw, 3.4rem);
+      font-weight: 900; line-height: 1.08;
+      margin-bottom: 1rem;
+      letter-spacing: -0.02em;
     }
-    .header h1 span { color: var(--accent); }
-    .header p {
-      color: var(--text-dim);
-      font-size: 1.05rem;
-      max-width: 520px;
-      margin: 0 auto 0.5rem;
+    .hero h1 .grad {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero p {
+      position: relative;
+      color: var(--text-dim); font-size: 1.05rem;
+      max-width: 520px; margin: 0 auto;
     }
 
-    /* SCAN FORM */
-    .scan-form-wrap {
-      max-width: 700px;
-      margin: -1.5rem auto 0;
-      padding: 0 1rem 2rem;
+    /* SCAN BOX */
+    .scan-wrap {
+      max-width: 680px;
+      margin: -2rem auto 0;
+      padding: 0 1rem 2.5rem;
+      position: relative; z-index: 2;
     }
     .scan-box {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 1.75rem;
-      box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+      box-shadow: 0 12px 48px rgba(0,0,0,0.5);
     }
-    .scan-input-row {
-      display: flex;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-    }
+    .scan-row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
     .scan-input {
-      flex: 1;
-      min-width: 200px;
+      flex: 1; min-width: 200px;
       background: var(--bg);
       border: 1.5px solid var(--border);
-      border-radius: 8px;
+      border-radius: 10px;
       color: var(--text);
+      font-family: inherit;
       font-size: 1rem;
-      padding: 0.85rem 1.1rem;
+      padding: 0.9rem 1.1rem;
       outline: none;
-      transition: border-color 0.2s;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
-    .scan-input:focus { border-color: var(--accent); }
+    .scan-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
     .scan-input::placeholder { color: var(--text-dim); }
     .scan-btn {
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-size: 1rem;
-      font-weight: 700;
-      padding: 0.85rem 2rem;
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+      color: #fff; border: none; border-radius: 10px;
+      font-family: inherit; font-size: 1rem; font-weight: 700;
+      padding: 0.9rem 2.2rem;
       cursor: pointer;
-      transition: background 0.2s, transform 0.1s;
+      transition: transform 0.15s, box-shadow 0.2s;
       white-space: nowrap;
     }
-    .scan-btn:hover { background: #5a52e0; }
+    .scan-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 24px rgba(108,99,255,0.35);
+    }
     .scan-btn:active { transform: scale(0.98); }
-    .scan-btn:disabled { background: #444; cursor: not-allowed; }
+    .scan-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
     .scan-note {
-      margin-top: 0.85rem;
-      font-size: 0.82rem;
-      color: var(--text-dim);
+      margin-top: 0.9rem;
+      font-size: 0.8rem; color: var(--text-dim);
       text-align: center;
     }
 
     /* PROGRESS */
-    .progress-wrap {
-      display: none;
-      margin-top: 1.5rem;
-    }
+    .progress-wrap { display: none; margin-top: 1.5rem; }
     .progress-label {
-      font-size: 0.88rem;
-      color: var(--text-dim);
+      font-size: 0.85rem; color: var(--text-dim);
       margin-bottom: 0.5rem;
-      display: flex;
-      justify-content: space-between;
+      display: flex; justify-content: space-between;
     }
-    .progress-bar-bg {
-      height: 6px;
-      background: var(--border);
-      border-radius: 99px;
-      overflow: hidden;
+    .progress-modules {
+      display: flex; flex-wrap: wrap; gap: 0.4rem;
+      margin-bottom: 0.8rem;
     }
-    .progress-bar-fill {
+    .prog-mod {
+      font-size: 0.72rem; font-weight: 600;
+      padding: 3px 10px; border-radius: 6px;
+      background: var(--surface2); color: var(--text-dim);
+      border: 1px solid var(--border);
+      transition: all 0.3s;
+    }
+    .prog-mod.active {
+      background: var(--accent-glow);
+      border-color: var(--accent);
+      color: var(--accent2);
+      animation: modPulse 1s ease-in-out infinite;
+    }
+    .prog-mod.done { background: rgba(34,197,94,0.1); border-color: var(--green); color: var(--green); }
+    @keyframes modPulse {
+      0%,100% { opacity: 1; } 50% { opacity: 0.6; }
+    }
+    .progress-track {
+      height: 5px; background: var(--border);
+      border-radius: 99px; overflow: hidden;
+    }
+    .progress-fill {
       height: 100%;
-      background: linear-gradient(90deg, var(--accent), #a78bfa);
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
       border-radius: 99px;
       transition: width 0.5s ease;
       width: 0%;
     }
 
-    /* RESULTS CONTAINER */
+    /* AD SLOT */
+    .ad-slot {
+      display: none;
+      text-align: center;
+      margin: 1.5rem auto;
+      max-width: 900px;
+      padding: 0 1rem;
+    }
+    .ad-slot.visible { display: block; }
+    .ad-placeholder {
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      color: var(--text-dim);
+      font-size: 0.75rem;
+      min-height: 90px;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* TAB CONTENT PANELS */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* COMING SOON CARDS */
+    .coming-soon-wrap {
+      max-width: 900px; margin: 0 auto;
+      padding: 2rem 1rem 4rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+    }
+    .cs-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem 1.5rem;
+      text-align: center;
+    }
+    .cs-icon { font-size: 2.5rem; margin-bottom: 0.8rem; }
+    .cs-card h3 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+    .cs-card p { font-size: 0.85rem; color: var(--text-dim); line-height: 1.5; }
+    .cs-badge {
+      display: inline-block; margin-top: 1rem;
+      font-size: 0.7rem; font-weight: 700;
+      padding: 4px 12px; border-radius: 12px;
+      background: rgba(234,179,8,0.12); color: var(--yellow);
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+
+    /* RESULTS */
     .results-wrap {
       max-width: 900px;
       margin: 0 auto;
-      padding: 0 1rem 4rem;
+      padding: 0 1rem 2rem;
       display: none;
     }
 
@@ -159,123 +279,105 @@
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 2rem;
-      display: flex;
-      gap: 2rem;
-      flex-wrap: wrap;
-      align-items: center;
+      display: flex; gap: 2rem; flex-wrap: wrap; align-items: center;
       margin-bottom: 1.5rem;
     }
-    .score-grade {
-      font-size: 5rem;
-      font-weight: 900;
-      line-height: 1;
-      min-width: 100px;
-      text-align: center;
+    .score-ring-wrap { position: relative; width: 120px; height: 120px; }
+    .score-ring-wrap svg { transform: rotate(-90deg); }
+    .score-ring-bg { fill: none; stroke: var(--border); stroke-width: 8; }
+    .score-ring-fill {
+      fill: none; stroke-width: 8; stroke-linecap: round;
+      transition: stroke-dashoffset 1.2s ease, stroke 0.3s;
     }
+    .score-ring-text {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+    }
+    .score-ring-grade { font-size: 2.2rem; font-weight: 900; line-height: 1; }
+    .score-ring-num { font-size: 0.8rem; font-weight: 600; color: var(--text-dim); }
     .score-details { flex: 1; min-width: 200px; }
-    .score-number {
-      font-size: 1.4rem;
-      font-weight: 700;
-      margin-bottom: 0.25rem;
-    }
-    .score-label {
-      font-size: 1.1rem;
-      color: var(--text-dim);
-      margin-bottom: 1rem;
-    }
-    .score-counts {
-      display: flex;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-    }
+    .score-label { font-size: 1.15rem; color: var(--text-dim); margin-bottom: 1rem; }
+    .score-counts { display: flex; gap: 0.6rem; flex-wrap: wrap; }
     .count-badge {
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      font-size: 0.88rem;
-      padding: 4px 10px;
-      border-radius: 6px;
-      font-weight: 600;
+      display: flex; align-items: center; gap: 0.35rem;
+      font-size: 0.85rem; padding: 4px 10px;
+      border-radius: 6px; font-weight: 600;
     }
     .count-badge.critical { background: rgba(239,68,68,0.15); color: var(--red); }
     .count-badge.high { background: rgba(249,115,22,0.15); color: var(--orange); }
     .count-badge.medium { background: rgba(234,179,8,0.15); color: var(--yellow); }
     .count-badge.low { background: rgba(59,130,246,0.15); color: var(--blue); }
     .score-meta {
-      font-size: 0.82rem;
-      color: var(--text-dim);
-      margin-top: 1rem;
+      font-size: 0.8rem; color: var(--text-dim); margin-top: 1rem;
     }
-
-    /* PDF BUTTON */
-    .pdf-btn {
+    .score-actions {
+      display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-end;
+    }
+    .lang-toggle { display: flex; gap: 0.3rem; }
+    .lang-btn {
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text-dim); border-radius: 6px;
+      padding: 4px 10px; font-size: 0.78rem; cursor: pointer;
+      transition: all 0.2s; font-family: inherit;
+    }
+    .lang-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .action-btn {
       background: transparent;
       border: 1.5px solid var(--accent);
       color: var(--accent);
       border-radius: 8px;
-      padding: 0.7rem 1.4rem;
-      font-size: 0.9rem;
-      font-weight: 600;
+      padding: 0.55rem 1.2rem;
+      font-size: 0.82rem; font-weight: 600;
       cursor: pointer;
       transition: background 0.2s;
+      font-family: inherit;
+      white-space: nowrap;
     }
-    .pdf-btn:hover { background: var(--accent-glow); }
+    .action-btn:hover { background: var(--accent-glow); }
 
-    /* CATEGORY SECTIONS */
+    /* CATEGORY */
     .category-section {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      margin-bottom: 1rem;
+      margin-bottom: 0.75rem;
       overflow: hidden;
     }
     .category-header {
-      padding: 1rem 1.25rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: pointer;
-      user-select: none;
+      padding: 0.9rem 1.25rem;
+      display: flex; justify-content: space-between; align-items: center;
+      cursor: pointer; user-select: none;
       border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
     }
-    .category-header:hover { background: rgba(255,255,255,0.03); }
+    .category-header:hover { background: rgba(255,255,255,0.02); }
     .category-title {
-      font-weight: 700;
-      font-size: 1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
+      font-weight: 700; font-size: 0.95rem;
+      display: flex; align-items: center; gap: 0.6rem;
     }
-    .category-chevron { transition: transform 0.2s; font-size: 0.9rem; }
+    .category-chevron { transition: transform 0.2s; font-size: 0.85rem; }
     .category-chevron.open { transform: rotate(180deg); }
     .category-body { display: none; }
     .category-body.open { display: block; }
 
     /* CHECK ITEMS */
     .check-item {
-      padding: 1rem 1.25rem;
-      border-bottom: 1px solid rgba(46,50,80,0.5);
-      display: flex;
-      gap: 1rem;
-      align-items: flex-start;
+      padding: 0.9rem 1.25rem;
+      border-bottom: 1px solid rgba(37,42,74,0.5);
+      display: flex; gap: 0.9rem; align-items: flex-start;
     }
     .check-item:last-child { border-bottom: none; }
-    .check-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 0.1rem; }
+    .check-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 2px; }
     .check-content { flex: 1; }
     .check-title {
-      font-weight: 600;
-      font-size: 0.95rem;
-      margin-bottom: 0.4rem;
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      flex-wrap: wrap;
+      font-weight: 600; font-size: 0.9rem;
+      margin-bottom: 0.35rem;
+      display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
     }
     .sev-badge {
-      font-size: 0.7rem;
-      font-weight: 700;
-      padding: 2px 8px;
-      border-radius: 4px;
+      font-size: 0.65rem; font-weight: 700;
+      padding: 2px 7px; border-radius: 4px;
       letter-spacing: 0.05em;
     }
     .sev-CRITICAL { background: rgba(239,68,68,0.2); color: var(--red); }
@@ -284,62 +386,47 @@
     .sev-LOW { background: rgba(59,130,246,0.2); color: var(--blue); }
     .sev-INFO { background: rgba(34,197,94,0.15); color: var(--green); }
     .check-desc {
-      font-size: 0.86rem;
-      color: var(--text-dim);
-      margin-bottom: 0.5rem;
-      line-height: 1.5;
+      font-size: 0.83rem; color: var(--text-dim);
+      margin-bottom: 0.45rem; line-height: 1.5;
     }
     .check-rec {
-      font-size: 0.84rem;
-      background: rgba(108,99,255,0.08);
+      font-size: 0.82rem;
+      background: rgba(108,99,255,0.07);
       border-left: 3px solid var(--accent);
-      padding: 0.5rem 0.75rem;
+      padding: 0.45rem 0.7rem;
       border-radius: 0 6px 6px 0;
-      color: var(--text);
     }
     .check-rec strong { color: var(--accent); }
 
-    /* LANG TOGGLE */
-    .lang-toggle {
-      display: flex;
-      gap: 0.4rem;
-      align-items: center;
-    }
-    .lang-btn {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      color: var(--text-dim);
-      border-radius: 6px;
-      padding: 4px 10px;
-      font-size: 0.8rem;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .lang-btn.active {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #fff;
-    }
-
-    /* ERROR STATE */
+    /* ERROR */
     .error-box {
       background: rgba(239,68,68,0.1);
       border: 1px solid rgba(239,68,68,0.3);
       border-radius: var(--radius);
-      padding: 1.25rem;
-      color: var(--red);
+      padding: 1.25rem; color: var(--red);
       margin-bottom: 1rem;
     }
 
-    /* PRINT STYLES */
+    /* FOOTER */
+    .footer {
+      text-align: center;
+      padding: 2rem 1rem 3rem;
+      border-top: 1px solid var(--border);
+      color: var(--text-dim);
+      font-size: 0.8rem;
+    }
+    .footer a { color: var(--accent); text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+
+    /* PRINT */
     @media print {
       body { background: #fff; color: #000; }
-      .header, .scan-form-wrap, .pdf-btn, .lang-toggle { display: none !important; }
+      .navbar, .hero, .scan-wrap, .ad-slot, .footer,
+      .score-actions, .nav-links { display: none !important; }
       .results-wrap { display: block !important; padding: 0; }
+      .tab-panel.security-panel { display: block !important; }
       .score-card, .category-section {
-        background: #fff;
-        border: 1px solid #ccc;
-        break-inside: avoid;
+        background: #fff; border: 1px solid #ccc; break-inside: avoid;
       }
       .category-body { display: block !important; }
       .check-item { break-inside: avoid; }
@@ -350,127 +437,237 @@
 </head>
 <body>
 
-<!-- HEADER -->
-<div class="header">
-  <div class="header-badge">🛡️ Besplatna analiza · Free analysis</div>
-  <h1>Web <span>Security</span> Scanner</h1>
-  <p>Pasivna bezbednosna analiza — 40+ provera, bez dodirivanja sajta</p>
-  <p style="font-size:0.85rem; margin-top:4px;">Passive security analysis — 40+ checks, no site modification</p>
-</div>
+<!-- NAVBAR -->
+<nav class="navbar">
+  <a href="#" class="nav-brand">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    SecurityScanner
+  </a>
+  <div class="nav-links" id="navLinks">
+    <button class="nav-link active" data-tab="security" onclick="switchTab('security')">Bezbednost</button>
+    <button class="nav-link" data-tab="seo" onclick="switchTab('seo')">SEO</button>
+    <button class="nav-link" data-tab="performance" onclick="switchTab('performance')">Performanse</button>
+    <button class="nav-link" data-tab="gdpr" onclick="switchTab('gdpr')">GDPR</button>
+  </div>
+  <div class="nav-right">
+    <button class="hamburger" onclick="document.getElementById('navLinks').classList.toggle('open')">&#9776;</button>
+  </div>
+</nav>
 
-<!-- SCAN FORM -->
-<div class="scan-form-wrap">
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-badge">Besplatna analiza / Free analysis</div>
+  <h1>Web <span class="grad">Security</span> Scanner</h1>
+  <p>Pasivna bezbednosna analiza sa 40+ provera — bez dodirivanja sajta</p>
+</section>
+
+<!-- SCAN BOX -->
+<div class="scan-wrap">
   <div class="scan-box">
-    <div class="scan-input-row">
-      <input
-        class="scan-input"
-        type="text"
-        id="urlInput"
+    <div class="scan-row">
+      <input class="scan-input" type="text" id="urlInput"
         placeholder="vasajt.rs ili https://example.com"
-        autocomplete="off"
-        autocorrect="off"
-        spellcheck="false"
-      />
-      <button class="scan-btn" id="scanBtn" onclick="startScan()">
-        Skeniraj sajt
-      </button>
+        autocomplete="off" autocorrect="off" spellcheck="false" />
+      <button class="scan-btn" id="scanBtn" onclick="startScan()">Skeniraj sajt</button>
     </div>
     <div class="scan-note">
-      🔒 Samo pasivno čitanje javnih informacija — ne menjamo vaš sajt &nbsp;|&nbsp;
-      Only passive reading of public data — we do not modify your site
+      Samo pasivno citanje javnih informacija — ne menjamo vas sajt
     </div>
     <div class="progress-wrap" id="progressWrap">
+      <div class="progress-modules" id="progressModules"></div>
       <div class="progress-label">
         <span id="progressStep">Inicijalizacija...</span>
         <span id="progressPct">0%</span>
       </div>
-      <div class="progress-bar-bg">
-        <div class="progress-bar-fill" id="progressBar"></div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressBar"></div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- RESULTS -->
-<div class="results-wrap" id="resultsWrap">
-  <!-- injected by JS -->
+<!-- AD SLOT (during scan) -->
+<div class="ad-slot" id="adSlotTop">
+  <div class="ad-placeholder">
+    <!-- AdSense code goes here -->
+    Reklama / Ad space
+  </div>
 </div>
 
+<!-- TAB: SECURITY (main results) -->
+<div class="tab-panel security-panel active" id="panel-security">
+  <div class="results-wrap" id="resultsWrap"></div>
+</div>
+
+<!-- TAB: SEO -->
+<div class="tab-panel" id="panel-seo">
+  <div class="coming-soon-wrap">
+    <div class="cs-card">
+      <div class="cs-icon">&#128270;</div>
+      <h3>Meta Tag Analiza</h3>
+      <p>Provera title, description, Open Graph i Twitter Card tagova</p>
+      <span class="cs-badge">Uskoro</span>
+    </div>
+    <div class="cs-card">
+      <div class="cs-icon">&#127760;</div>
+      <h3>Sitemap &amp; Robots</h3>
+      <p>Detekcija sitemap.xml, robots.txt i crawl konfiguracije</p>
+      <span class="cs-badge">Uskoro</span>
+    </div>
+    <div class="cs-card">
+      <div class="cs-icon">&#128279;</div>
+      <h3>Link Analiza</h3>
+      <p>Broken linkovi, redirect lanci, canonical tagovi</p>
+      <span class="cs-badge">Uskoro</span>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: PERFORMANCE -->
+<div class="tab-panel" id="panel-performance">
+  <div class="coming-soon-wrap">
+    <div class="cs-card">
+      <div class="cs-icon">&#9889;</div>
+      <h3>Brzina Ucitavanja</h3>
+      <p>TTFB, LCP, FID i CLS metrike za vas sajt</p>
+      <span class="cs-badge">Uskoro</span>
+    </div>
+    <div class="cs-card">
+      <div class="cs-icon">&#128230;</div>
+      <h3>Velicina Resursa</h3>
+      <p>Analiza JS, CSS i slika — optimizacija za brzinu</p>
+      <span class="cs-badge">Uskoro</span>
+    </div>
+    <div class="cs-card">
+      <div class="cs-icon">&#128260;</div>
+      <h3>Kompresija &amp; Cache</h3>
+      <p>Gzip/Brotli, cache headeri, CDN detekcija</p>
+      <span class="cs-badge">Uskoro</span>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: GDPR -->
+<div class="tab-panel" id="panel-gdpr">
+  <div class="coming-soon-wrap">
+    <div class="cs-card">
+      <div class="cs-icon">&#128274;</div>
+      <h3>Cookie Politika</h3>
+      <p>Detekcija kolacica, cookie banner provera, consent mehanizmi</p>
+      <span class="cs-badge">Uskoro</span>
+    </div>
+    <div class="cs-card">
+      <div class="cs-icon">&#128196;</div>
+      <h3>Privacy Policy</h3>
+      <p>Provera da li sajt ima politiku privatnosti i uslove koriscenja</p>
+      <span class="cs-badge">Uskoro</span>
+    </div>
+    <div class="cs-card">
+      <div class="cs-icon">&#128506;</div>
+      <h3>Third-Party Trackeri</h3>
+      <p>Identifikacija Google Analytics, Facebook Pixel i ostalih trackera</p>
+      <span class="cs-badge">Uskoro</span>
+    </div>
+  </div>
+</div>
+
+<!-- AD SLOT (after results) -->
+<div class="ad-slot" id="adSlotBottom">
+  <div class="ad-placeholder">
+    <!-- AdSense code goes here -->
+    Reklama / Ad space
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <p>Web Security Scanner &copy; 2026 &mdash;
+    Deo <a href="https://gradovi.rs" target="_blank" rel="noopener">gradovi.rs</a> projekta
+  </p>
+  <p style="margin-top:0.4rem;">Kontakt: info@gradovi.rs</p>
+</footer>
+
 <script>
-// Auto-detect: lokalno ili produkcija
-const API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+const API_BASE = (location.hostname === "localhost" || location.hostname === "127.0.0.1")
   ? "http://localhost:8000"
   : "https://unlimitededition-web-security-scanner.hf.space";
+
 let currentLang = "sr";
 let currentResults = null;
 
+const MODULES = ["SSL/TLS","Headers","DNS","Files","Info","Cookies","Redirects","CMS"];
+
+function switchTab(tab) {
+  document.querySelectorAll(".tab-panel").forEach(function(p) { p.classList.remove("active"); });
+  document.querySelectorAll(".nav-link").forEach(function(b) { b.classList.remove("active"); });
+  document.getElementById("panel-" + tab).classList.add("active");
+  document.querySelector('.nav-link[data-tab="' + tab + '"]').classList.add("active");
+  document.getElementById("navLinks").classList.remove("open");
+}
+
 function setLang(lang) {
   currentLang = lang;
-  document.querySelectorAll(".lang-btn").forEach(b => {
+  document.querySelectorAll(".lang-btn").forEach(function(b) {
     b.classList.toggle("active", b.dataset.lang === lang);
   });
   if (currentResults) renderResults(currentResults);
 }
 
-function t(item, field) {
-  // Return localized text from result item
-  if (currentLang === "en") {
-    return item[field + "_en"] || item[field] || "";
-  }
-  return item[field] || "";
-}
-
 async function startScan() {
-  const url = document.getElementById("urlInput").value.trim();
-  if (!url) {
-    alert("Unesite URL sajta.");
-    return;
-  }
+  var url = document.getElementById("urlInput").value.trim();
+  if (!url) { alert("Unesite URL sajta."); return; }
 
-  const btn = document.getElementById("scanBtn");
+  var btn = document.getElementById("scanBtn");
   btn.disabled = true;
   btn.textContent = "Skeniranje...";
 
+  switchTab("security");
+
   document.getElementById("progressWrap").style.display = "block";
   document.getElementById("resultsWrap").style.display = "none";
+  document.getElementById("adSlotTop").classList.add("visible");
+  document.getElementById("adSlotBottom").classList.remove("visible");
+
+  var modWrap = document.getElementById("progressModules");
+  modWrap.textContent = "";
+  MODULES.forEach(function(m) {
+    var span = document.createElement("span");
+    span.className = "prog-mod";
+    span.id = "mod-" + m.replace(/[\/\s]/g, "");
+    span.textContent = m;
+    modWrap.appendChild(span);
+  });
+
   setProgress("Pokretanje skeniranja...", 2);
 
   try {
-    // Start scan
-    const startResp = await fetch(`${API_BASE}/scan`, {
+    var resp = await fetch(API_BASE + "/scan", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url }),
+      body: JSON.stringify({ url: url })
     });
-
-    if (!startResp.ok) {
-      const err = await startResp.json();
-      throw new Error(err.detail || "API greška");
-    }
-
-    const { scan_id } = await startResp.json();
-
-    // Poll for results
-    await pollScan(scan_id);
-
+    if (!resp.ok) { var e = await resp.json(); throw new Error(e.detail || "API greska"); }
+    var data = await resp.json();
+    await pollScan(data.scan_id);
   } catch (err) {
-    showError("Greška: " + err.message + "\n\nProverite da li je Python API pokrenut (python api.py)");
+    showError("Greska: " + err.message + "\n\nProverite da li je API pokrenut.");
     btn.disabled = false;
     btn.textContent = "Skeniraj sajt";
     document.getElementById("progressWrap").style.display = "none";
+    document.getElementById("adSlotTop").classList.remove("visible");
   }
 }
 
 async function pollScan(scanId) {
-  const btn = document.getElementById("scanBtn");
-
+  var btn = document.getElementById("scanBtn");
   while (true) {
     await sleep(800);
-
-    const resp = await fetch(`${API_BASE}/scan/${scanId}`);
-    const data = await resp.json();
+    var resp = await fetch(API_BASE + "/scan/" + scanId);
+    var data = await resp.json();
 
     setProgress(data.step || "...", data.progress || 0);
+    updateModules(data.step || "", data.progress || 0);
 
     if (data.status === "completed") {
       currentResults = data.result;
@@ -478,17 +675,30 @@ async function pollScan(scanId) {
       btn.disabled = false;
       btn.textContent = "Skeniraj ponovo";
       document.getElementById("progressWrap").style.display = "none";
+      document.getElementById("adSlotTop").classList.remove("visible");
+      document.getElementById("adSlotBottom").classList.add("visible");
       return;
     }
-
     if (data.status === "error") {
-      showError("Greška pri skeniranju: " + (data.error || "Nepoznata greška"));
+      showError("Greska: " + (data.error || "Nepoznata greska"));
       btn.disabled = false;
       btn.textContent = "Skeniraj sajt";
       document.getElementById("progressWrap").style.display = "none";
+      document.getElementById("adSlotTop").classList.remove("visible");
       return;
     }
   }
+}
+
+function updateModules(step, pct) {
+  MODULES.forEach(function(m, i) {
+    var el = document.getElementById("mod-" + m.replace(/[\/\s]/g, ""));
+    if (!el) return;
+    var threshold = (i / MODULES.length) * 100;
+    if (pct > threshold + 12) { el.className = "prog-mod done"; }
+    else if (pct > threshold) { el.className = "prog-mod active"; }
+    else { el.className = "prog-mod"; }
+  });
 }
 
 function setProgress(step, pct) {
@@ -498,171 +708,303 @@ function setProgress(step, pct) {
 }
 
 function renderResults(data) {
-  const wrap = document.getElementById("resultsWrap");
+  var wrap = document.getElementById("resultsWrap");
   wrap.style.display = "block";
-  wrap.innerHTML = "";
+  while (wrap.firstChild) wrap.removeChild(wrap.firstChild);
 
-  // --- Score Card ---
-  const s = data.score;
-  const scoreCard = document.createElement("div");
+  var s = data.score;
+  var circumference = 2 * Math.PI * 50;
+  var offset = circumference - (s.score / 100) * circumference;
+
+  // Score card
+  var scoreCard = document.createElement("div");
   scoreCard.className = "score-card";
-  scoreCard.id = "scoreCard";
-  scoreCard.innerHTML = `
-    <div>
-      <div class="score-grade" style="color:${s.grade_color}">${s.grade}</div>
-    </div>
-    <div class="score-details">
-      <div class="score-number" style="color:${s.grade_color}">${s.score} / 100</div>
-      <div class="score-label">${s.grade_label}</div>
-      <div class="score-counts">
-        ${s.counts.critical ? `<span class="count-badge critical">🔴 ${s.counts.critical} Kritično</span>` : ""}
-        ${s.counts.high ? `<span class="count-badge high">🟠 ${s.counts.high} Visoko</span>` : ""}
-        ${s.counts.medium ? `<span class="count-badge medium">🟡 ${s.counts.medium} Srednje</span>` : ""}
-        ${s.counts.low ? `<span class="count-badge low">🔵 ${s.counts.low} Nisko</span>` : ""}
-      </div>
-      <div class="score-meta">
-        🌐 ${data.domain} &nbsp;·&nbsp;
-        ${data.total_checks} provera &nbsp;·&nbsp;
-        ${data.failed_checks} problema &nbsp;·&nbsp;
-        ⏱ ${data.scan_time}s
-      </div>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:0.6rem;align-items:flex-end">
-      <div class="lang-toggle">
-        <button class="lang-btn active" data-lang="sr" onclick="setLang('sr')">SR</button>
-        <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
-      </div>
-      <button class="pdf-btn" onclick="window.print()">📄 Sačuvaj PDF</button>
-    </div>
-  `;
+
+  var ringWrap = document.createElement("div");
+  ringWrap.className = "score-ring-wrap";
+
+  var svgNS = "http://www.w3.org/2000/svg";
+  var svg = document.createElementNS(svgNS, "svg");
+  svg.setAttribute("width", "120");
+  svg.setAttribute("height", "120");
+  svg.setAttribute("viewBox", "0 0 120 120");
+
+  var bgCircle = document.createElementNS(svgNS, "circle");
+  bgCircle.setAttribute("class", "score-ring-bg");
+  bgCircle.setAttribute("cx", "60");
+  bgCircle.setAttribute("cy", "60");
+  bgCircle.setAttribute("r", "50");
+  svg.appendChild(bgCircle);
+
+  var fillCircle = document.createElementNS(svgNS, "circle");
+  fillCircle.setAttribute("class", "score-ring-fill");
+  fillCircle.setAttribute("cx", "60");
+  fillCircle.setAttribute("cy", "60");
+  fillCircle.setAttribute("r", "50");
+  fillCircle.setAttribute("stroke", s.grade_color);
+  fillCircle.setAttribute("stroke-dasharray", String(circumference));
+  fillCircle.setAttribute("stroke-dashoffset", String(circumference));
+  svg.appendChild(fillCircle);
+
+  ringWrap.appendChild(svg);
+
+  var ringText = document.createElement("div");
+  ringText.className = "score-ring-text";
+  var gradeEl = document.createElement("span");
+  gradeEl.className = "score-ring-grade";
+  gradeEl.style.color = s.grade_color;
+  gradeEl.textContent = s.grade;
+  var numEl = document.createElement("span");
+  numEl.className = "score-ring-num";
+  numEl.textContent = s.score + "/100";
+  ringText.appendChild(gradeEl);
+  ringText.appendChild(numEl);
+  ringWrap.appendChild(ringText);
+
+  scoreCard.appendChild(ringWrap);
+
+  // Animate ring after render
+  requestAnimationFrame(function() {
+    setTimeout(function() {
+      fillCircle.setAttribute("stroke-dashoffset", String(offset));
+    }, 50);
+  });
+
+  // Score details
+  var details = document.createElement("div");
+  details.className = "score-details";
+
+  var label = document.createElement("div");
+  label.className = "score-label";
+  label.textContent = s.grade_label;
+  details.appendChild(label);
+
+  var counts = document.createElement("div");
+  counts.className = "score-counts";
+  var levels = [
+    { key: "critical", cls: "critical", label: "Kriticno" },
+    { key: "high", cls: "high", label: "Visoko" },
+    { key: "medium", cls: "medium", label: "Srednje" },
+    { key: "low", cls: "low", label: "Nisko" }
+  ];
+  levels.forEach(function(lv) {
+    if (s.counts[lv.key]) {
+      var badge = document.createElement("span");
+      badge.className = "count-badge " + lv.cls;
+      badge.textContent = s.counts[lv.key] + " " + lv.label;
+      counts.appendChild(badge);
+    }
+  });
+  details.appendChild(counts);
+
+  var meta = document.createElement("div");
+  meta.className = "score-meta";
+  meta.textContent = data.domain + " \u00B7 " + data.total_checks + " provera \u00B7 " + data.failed_checks + " problema \u00B7 " + data.scan_time + "s";
+  details.appendChild(meta);
+
+  scoreCard.appendChild(details);
+
+  // Actions
+  var actions = document.createElement("div");
+  actions.className = "score-actions";
+
+  var langToggle = document.createElement("div");
+  langToggle.className = "lang-toggle";
+  var srBtn = document.createElement("button");
+  srBtn.className = "lang-btn active";
+  srBtn.dataset.lang = "sr";
+  srBtn.textContent = "SR";
+  srBtn.onclick = function() { setLang("sr"); };
+  var enBtn = document.createElement("button");
+  enBtn.className = "lang-btn";
+  enBtn.dataset.lang = "en";
+  enBtn.textContent = "EN";
+  enBtn.onclick = function() { setLang("en"); };
+  langToggle.appendChild(srBtn);
+  langToggle.appendChild(enBtn);
+  actions.appendChild(langToggle);
+
+  var shareBtn = document.createElement("button");
+  shareBtn.className = "action-btn";
+  shareBtn.textContent = "Podeli rezultat";
+  shareBtn.onclick = shareResults;
+  actions.appendChild(shareBtn);
+
+  var pdfBtn = document.createElement("button");
+  pdfBtn.className = "action-btn";
+  pdfBtn.textContent = "Sacuvaj PDF";
+  pdfBtn.onclick = function() { window.print(); };
+  actions.appendChild(pdfBtn);
+
+  scoreCard.appendChild(actions);
   wrap.appendChild(scoreCard);
 
-  // --- Errors (if any) ---
+  // Errors
   if (data.errors && data.errors.length > 0) {
-    const errBox = document.createElement("div");
+    var errBox = document.createElement("div");
     errBox.className = "error-box";
-    errBox.innerHTML = `<strong>⚠️ Upozorenja pri skeniranju:</strong><br>${data.errors.map(e => `• ${e}`).join("<br>")}`;
+    var errStrong = document.createElement("strong");
+    errStrong.textContent = "Upozorenja:";
+    errBox.appendChild(errStrong);
+    errBox.appendChild(document.createElement("br"));
+    data.errors.forEach(function(e) {
+      errBox.appendChild(document.createTextNode("- " + e));
+      errBox.appendChild(document.createElement("br"));
+    });
     wrap.appendChild(errBox);
   }
 
-  // --- Group results by category ---
-  const categories = {};
-  for (const item of data.results) {
-    const cat = item.category || "Ostalo";
+  // Categories
+  var categories = {};
+  data.results.forEach(function(item) {
+    var cat = item.category || "Ostalo";
     if (!categories[cat]) categories[cat] = [];
     categories[cat].push(item);
-  }
+  });
 
-  const catOrder = [
-    "SSL/TLS", "Security Headers", "DNS Security",
-    "Sensitive Files", "Information Disclosure",
-    "Cookie Security", "Redirects", "CMS/Technology"
-  ];
+  var catOrder = ["SSL/TLS","Security Headers","DNS Security","Sensitive Files","Information Disclosure","Cookie Security","Redirects","CMS/Technology"];
+  var catIcons = {"SSL/TLS":"\uD83D\uDD10","Security Headers":"\uD83D\uDEE1\uFE0F","DNS Security":"\uD83D\uDCE1","Sensitive Files":"\uD83D\uDCC1","Information Disclosure":"\uD83D\uDD75\uFE0F","Cookie Security":"\uD83C\uDF6A","Redirects":"\u21AA\uFE0F","CMS/Technology":"\u2699\uFE0F"};
 
-  const categoryIcons = {
-    "SSL/TLS": "🔐",
-    "Security Headers": "🛡️",
-    "DNS Security": "📡",
-    "Sensitive Files": "📁",
-    "Information Disclosure": "🕵️",
-    "Cookie Security": "🍪",
-    "Redirects": "↪️",
-    "CMS/Technology": "⚙️",
-  };
+  var sorted = catOrder.filter(function(c) { return categories[c]; });
+  Object.keys(categories).forEach(function(c) { if (sorted.indexOf(c) === -1) sorted.push(c); });
 
-  const sortedCats = [
-    ...catOrder.filter(c => categories[c]),
-    ...Object.keys(categories).filter(c => !catOrder.includes(c))
-  ];
+  sorted.forEach(function(catName) {
+    var items = categories[catName];
+    var failed = items.filter(function(i) { return !i.passed; });
+    var icon = catIcons[catName] || "\uD83D\uDD0D";
+    var hasCrit = failed.some(function(i) { return i.severity === "CRITICAL"; });
+    var hasHigh = failed.some(function(i) { return i.severity === "HIGH"; });
+    var status = failed.length === 0 ? "\u2705" : hasCrit ? "\uD83D\uDD34" : hasHigh ? "\uD83D\uDFE0" : "\uD83D\uDFE1";
 
-  for (const catName of sortedCats) {
-    const items = categories[catName];
-    const failed = items.filter(i => !i.passed);
-    const icon = categoryIcons[catName] || "🔍";
-
-    // Category status indicator
-    const hasCritical = failed.some(i => i.severity === "CRITICAL");
-    const hasHigh = failed.some(i => i.severity === "HIGH");
-    const catColor = hasCritical ? "var(--red)" : hasHigh ? "var(--orange)" : failed.length > 0 ? "var(--yellow)" : "var(--green)";
-    const catStatus = failed.length === 0 ? "✅" : hasCritical ? "🔴" : hasHigh ? "🟠" : "🟡";
-
-    const section = document.createElement("div");
+    var section = document.createElement("div");
     section.className = "category-section";
-    section.innerHTML = `
-      <div class="category-header" onclick="toggleCategory(this)">
-        <div class="category-title">
-          <span>${icon}</span>
-          <span>${catName}</span>
-          <span style="font-size:0.8rem;font-weight:400;color:var(--text-dim)">
-            (${failed.length > 0 ? failed.length + " problema" : "sve OK"})
-          </span>
-        </div>
-        <div style="display:flex;align-items:center;gap:0.6rem">
-          <span>${catStatus}</span>
-          <span class="category-chevron">▼</span>
-        </div>
-      </div>
-      <div class="category-body ${failed.length > 0 ? 'open' : ''}">
-        ${items.map(item => renderCheckItem(item)).join("")}
-      </div>
-    `;
-    wrap.appendChild(section);
-  }
 
-  // Scroll to results
+    // Header
+    var header = document.createElement("div");
+    header.className = "category-header";
+    header.onclick = function() { toggleCat(this); };
+
+    var titleDiv = document.createElement("div");
+    titleDiv.className = "category-title";
+    var iconSpan = document.createElement("span");
+    iconSpan.textContent = icon;
+    titleDiv.appendChild(iconSpan);
+    var nameSpan = document.createElement("span");
+    nameSpan.textContent = catName;
+    titleDiv.appendChild(nameSpan);
+    var countSpan = document.createElement("span");
+    countSpan.style.cssText = "font-size:0.78rem;font-weight:400;color:var(--text-dim)";
+    countSpan.textContent = "(" + (failed.length > 0 ? failed.length + " problema" : "sve OK") + ")";
+    titleDiv.appendChild(countSpan);
+
+    var rightDiv = document.createElement("div");
+    rightDiv.style.cssText = "display:flex;align-items:center;gap:0.5rem";
+    var statusSpan = document.createElement("span");
+    statusSpan.textContent = status;
+    rightDiv.appendChild(statusSpan);
+    var chevron = document.createElement("span");
+    chevron.className = "category-chevron" + (failed.length > 0 ? " open" : "");
+    chevron.textContent = "\u25BC";
+    rightDiv.appendChild(chevron);
+
+    header.appendChild(titleDiv);
+    header.appendChild(rightDiv);
+    section.appendChild(header);
+
+    // Body
+    var body = document.createElement("div");
+    body.className = "category-body" + (failed.length > 0 ? " open" : "");
+    items.forEach(function(item) {
+      body.appendChild(renderItem(item));
+    });
+    section.appendChild(body);
+    wrap.appendChild(section);
+  });
+
   wrap.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-function renderCheckItem(item) {
-  const icon = item.passed ? "✅" : {
-    "CRITICAL": "🔴", "HIGH": "🟠", "MEDIUM": "🟡", "LOW": "🔵", "INFO": "ℹ️"
-  }[item.severity] || "⚪";
+function renderItem(item) {
+  var icons = { "CRITICAL":"\uD83D\uDD34", "HIGH":"\uD83D\uDFE0", "MEDIUM":"\uD83D\uDFE1", "LOW":"\uD83D\uDD35", "INFO":"\u2139\uFE0F" };
+  var icon = item.passed ? "\u2705" : (icons[item.severity] || "\u26AA");
+  var title = currentLang === "en" ? (item.title_en || item.title) : item.title;
+  var desc = currentLang === "en" ? (item.description_en || item.description) : item.description;
+  var rec = currentLang === "en" ? (item.recommendation_en || item.recommendation) : item.recommendation;
 
-  const titleText = currentLang === "en" ? (item.title_en || item.title) : item.title;
-  const descText = currentLang === "en" ? (item.description_en || item.description) : item.description;
-  const recText = currentLang === "en" ? (item.recommendation_en || item.recommendation) : item.recommendation;
+  var div = document.createElement("div");
+  div.className = "check-item";
 
-  return `
-    <div class="check-item">
-      <div class="check-icon">${icon}</div>
-      <div class="check-content">
-        <div class="check-title">
-          <span>${titleText}</span>
-          ${!item.passed ? `<span class="sev-badge sev-${item.severity}">${item.severity}</span>` : ""}
-        </div>
-        ${descText ? `<div class="check-desc">${escHtml(descText)}</div>` : ""}
-        ${recText ? `<div class="check-rec"><strong>✏️ Rešenje:</strong> ${escHtml(recText)}</div>` : ""}
-      </div>
-    </div>
-  `;
+  var iconDiv = document.createElement("div");
+  iconDiv.className = "check-icon";
+  iconDiv.textContent = icon;
+  div.appendChild(iconDiv);
+
+  var content = document.createElement("div");
+  content.className = "check-content";
+
+  var titleDiv = document.createElement("div");
+  titleDiv.className = "check-title";
+  var titleSpan = document.createElement("span");
+  titleSpan.textContent = title;
+  titleDiv.appendChild(titleSpan);
+  if (!item.passed) {
+    var sevBadge = document.createElement("span");
+    sevBadge.className = "sev-badge sev-" + item.severity;
+    sevBadge.textContent = item.severity;
+    titleDiv.appendChild(sevBadge);
+  }
+  content.appendChild(titleDiv);
+
+  if (desc) {
+    var descDiv = document.createElement("div");
+    descDiv.className = "check-desc";
+    descDiv.textContent = desc;
+    content.appendChild(descDiv);
+  }
+
+  if (rec) {
+    var recDiv = document.createElement("div");
+    recDiv.className = "check-rec";
+    var recStrong = document.createElement("strong");
+    recStrong.textContent = "Resenje: ";
+    recDiv.appendChild(recStrong);
+    recDiv.appendChild(document.createTextNode(rec));
+    content.appendChild(recDiv);
+  }
+
+  div.appendChild(content);
+  return div;
 }
 
-function toggleCategory(header) {
-  const body = header.nextElementSibling;
-  const chevron = header.querySelector(".category-chevron");
-  body.classList.toggle("open");
-  chevron.classList.toggle("open");
+function toggleCat(h) {
+  h.nextElementSibling.classList.toggle("open");
+  h.querySelector(".category-chevron").classList.toggle("open");
+}
+
+function shareResults() {
+  if (!currentResults) return;
+  var s = currentResults.score;
+  var text = "Security Scanner rezultat za " + currentResults.domain + ": " + s.grade + " (" + s.score + "/100) - " + currentResults.failed_checks + " problema od " + currentResults.total_checks + " provera. Testiraj svoj sajt: " + location.href;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(function() { alert("Rezultat kopiran!"); });
+  } else {
+    prompt("Kopiraj:", text);
+  }
 }
 
 function showError(msg) {
-  const wrap = document.getElementById("resultsWrap");
+  var wrap = document.getElementById("resultsWrap");
   wrap.style.display = "block";
-  wrap.innerHTML = `<div class="error-box">❌ ${escHtml(msg)}</div>`;
+  while (wrap.firstChild) wrap.removeChild(wrap.firstChild);
+  var errDiv = document.createElement("div");
+  errDiv.className = "error-box";
+  errDiv.textContent = msg;
+  wrap.appendChild(errDiv);
 }
 
-function escHtml(str) {
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
+function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
 
-function sleep(ms) {
-  return new Promise(r => setTimeout(r, ms));
-}
-
-// Allow Enter key
-document.getElementById("urlInput").addEventListener("keydown", e => {
+document.getElementById("urlInput").addEventListener("keydown", function(e) {
   if (e.key === "Enter") startScan();
 });
 </script>
