@@ -3,7 +3,37 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Web Security Scanner — Besplatna analiza sajta</title>
+  <title>Web Security Scanner — Besplatna analiza bezbednosti sajta | 50+ provera</title>
+  <meta name="description" content="Besplatan online alat za analizu bezbednosti vaseg sajta. Proverava SSL, HTTP headere, DNS, SEO, osetljive fajlove i jos 50+ sigurnosnih provera. Bez modifikacije vaseg sajta.">
+  <link rel="canonical" href="https://security-scanner-ruddy.vercel.app/">
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Web Security Scanner — Besplatna analiza bezbednosti">
+  <meta property="og:description" content="Proverite bezbednost vaseg sajta besplatno. 50+ sigurnosnih provera: SSL, headeri, DNS, SEO, osetljivi fajlovi, admin paneli i jos mnogo toga.">
+  <meta property="og:url" content="https://security-scanner-ruddy.vercel.app/">
+  <meta property="og:image" content="https://security-scanner-ruddy.vercel.app/og-image.png">
+  <meta property="og:site_name" content="Web Security Scanner">
+  <meta property="og:locale" content="sr_RS">
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Web Security Scanner — Besplatna analiza bezbednosti">
+  <meta name="twitter:description" content="50+ sigurnosnih provera za vas sajt. SSL, HTTP headeri, DNS, SEO, osetljivi fajlovi. Potpuno besplatno.">
+  <meta name="twitter:image" content="https://security-scanner-ruddy.vercel.app/og-image.png">
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Web Security Scanner",
+    "url": "https://security-scanner-ruddy.vercel.app/",
+    "description": "Besplatan online alat za pasivnu analizu bezbednosti veb sajtova sa 50+ sigurnosnih provera.",
+    "applicationCategory": "SecurityApplication",
+    "operatingSystem": "Web",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "RSD" },
+    "author": { "@type": "Person", "name": "Toske", "url": "https://toske-programer.web.app" }
+  }
+  </script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <style>
@@ -433,20 +463,64 @@
       margin: 0.8rem auto;
     }
 
+    /* PRINT HEADER (hidden on screen, visible in print) */
+    .print-header {
+      display: none;
+      text-align: center;
+      padding: 1.5rem 0 1rem;
+      border-bottom: 2px solid #333;
+      margin-bottom: 1.5rem;
+    }
+    .print-header h1 { font-size: 1.6rem; margin-bottom: 0.3rem; }
+    .print-header p { font-size: 0.9rem; color: #555; }
+
     /* PRINT */
     @media print {
-      body { background: #fff; color: #000; }
+      * { color-adjust: exact !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      body { background: #fff !important; color: #000 !important; font-size: 11pt; }
       .navbar, .hero, .scan-wrap, .ad-slot, .footer,
-      .score-actions, .nav-links { display: none !important; }
-      .results-wrap { display: block !important; padding: 0; }
+      .lang-toggle, .action-btn, .hamburger, .nav-links,
+      .page-wrap, .page-content { display: contents !important; }
+      .navbar, .hero, .scan-wrap, .ad-slot, .footer { display: none !important; }
+      .print-header { display: block !important; }
+      .results-wrap { display: block !important; padding: 0 !important; max-width: 100% !important; }
       .tab-panel.security-panel { display: block !important; }
-      .score-card, .category-section {
-        background: #fff; border: 1px solid #ccc; break-inside: avoid;
+      .tab-panel:not(.security-panel) { display: none !important; }
+      .score-card {
+        background: #f8f9fa !important; border: 2px solid #333 !important;
+        break-inside: avoid; margin-bottom: 1rem !important;
+        padding: 1.2rem !important;
       }
+      .score-actions { display: none !important; }
+      .score-ring-wrap svg { transform: rotate(-90deg) !important; }
+      .score-ring-bg { stroke: #ddd !important; }
+      .score-ring-text { color: #000 !important; }
+      .score-ring-grade { color: inherit !important; }
+      .score-ring-num { color: #555 !important; }
+      .score-label { color: #333 !important; }
+      .score-meta { color: #555 !important; }
+      .count-badge { border: 1px solid #ccc !important; }
+      .count-badge.critical { background: #fee2e2 !important; color: #dc2626 !important; }
+      .count-badge.high { background: #ffedd5 !important; color: #ea580c !important; }
+      .count-badge.medium { background: #fef9c3 !important; color: #a16207 !important; }
+      .count-badge.low { background: #dbeafe !important; color: #1d4ed8 !important; }
+      .category-section {
+        background: #fff !important; border: 1px solid #ccc !important;
+        break-inside: avoid; margin-bottom: 0.5rem !important;
+      }
+      .category-header { border-bottom: 1px solid #ccc !important; }
       .category-body { display: block !important; }
-      .check-item { break-inside: avoid; }
+      .category-chevron { display: none !important; }
+      .check-item { break-inside: avoid; border-bottom: 1px solid #eee !important; }
+      .check-desc { color: #333 !important; }
+      .check-rec { background: #f0f0ff !important; border-left: 3px solid #6c63ff !important; color: #000 !important; }
+      .check-rec strong { color: #4a3fcf !important; }
       .sev-CRITICAL { color: #dc2626 !important; background: #fee2e2 !important; }
       .sev-HIGH { color: #ea580c !important; background: #ffedd5 !important; }
+      .sev-MEDIUM { color: #a16207 !important; background: #fef9c3 !important; }
+      .sev-LOW { color: #1d4ed8 !important; background: #dbeafe !important; }
+      .sev-INFO { color: #15803d !important; background: #dcfce7 !important; }
+      .error-box { background: #fee2e2 !important; border: 1px solid #dc2626 !important; color: #dc2626 !important; }
     }
   </style>
 </head>
@@ -467,6 +541,10 @@
     <button class="nav-link" data-tab="gdpr" onclick="switchTab('gdpr')">GDPR</button>
   </div>
   <div class="nav-right">
+    <div class="lang-toggle" id="navLangToggle">
+      <button class="lang-btn active" data-lang="sr" onclick="setLang('sr')">SR</button>
+      <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+    </div>
     <button class="hamburger" onclick="document.getElementById('navLinks').classList.toggle('open')">&#9776;</button>
   </div>
 </nav>
@@ -474,9 +552,9 @@
 <!-- HERO -->
 <section class="hero">
   <div class="hero-glow"></div>
-  <div class="hero-badge">Besplatna analiza / Free analysis</div>
+  <div class="hero-badge" data-sr="Besplatna analiza bezbednosti" data-en="Free security analysis" id="heroBadge">Besplatna analiza bezbednosti</div>
   <h1>Web <span class="grad">Security</span> Scanner</h1>
-  <p>Pasivna bezbednosna analiza sa 40+ provera — bez dodirivanja sajta</p>
+  <p id="heroDesc" data-sr="Pasivna bezbednosna analiza sa 50+ provera — bez dodirivanja sajta" data-en="Passive security analysis with 50+ checks — no site modification">Pasivna bezbednosna analiza sa 50+ provera — bez dodirivanja sajta</p>
 </section>
 
 <!-- SCAN BOX -->
@@ -486,9 +564,9 @@
       <input class="scan-input" type="text" id="urlInput"
         placeholder="vasajt.rs ili https://example.com"
         autocomplete="off" autocorrect="off" spellcheck="false" />
-      <button class="scan-btn" id="scanBtn" onclick="startScan()">Skeniraj sajt</button>
+      <button class="scan-btn" id="scanBtn" onclick="startScan()" data-sr="Skeniraj sajt" data-en="Scan site">Skeniraj sajt</button>
     </div>
-    <div class="scan-note">
+    <div class="scan-note" id="scanNote" data-sr="Samo pasivno citanje javnih informacija — ne menjamo vas sajt" data-en="Passive reading of public information only — we do not modify your site">
       Samo pasivno citanje javnih informacija — ne menjamo vas sajt
     </div>
     <div class="progress-wrap" id="progressWrap">
@@ -514,29 +592,21 @@
 
 <!-- TAB: SECURITY (main results) -->
 <div class="tab-panel security-panel active" id="panel-security">
+  <div class="print-header" id="printHeader">
+    <h1>Web Security Scanner — Izvestaj</h1>
+    <p id="printMeta"></p>
+  </div>
   <div class="results-wrap" id="resultsWrap"></div>
 </div>
 
 <!-- TAB: SEO -->
 <div class="tab-panel" id="panel-seo">
-  <div class="coming-soon-wrap">
-    <div class="cs-card">
+  <div class="results-wrap" id="seoResultsWrap" style="display:none;"></div>
+  <div class="coming-soon-wrap" id="seoPlaceholder">
+    <div class="cs-card" style="grid-column: 1/-1; max-width: 500px; margin: 0 auto;">
       <div class="cs-icon">&#128270;</div>
-      <h3>Meta Tag Analiza</h3>
-      <p>Provera title, description, Open Graph i Twitter Card tagova</p>
-      <span class="cs-badge">Uskoro</span>
-    </div>
-    <div class="cs-card">
-      <div class="cs-icon">&#127760;</div>
-      <h3>Sitemap &amp; Robots</h3>
-      <p>Detekcija sitemap.xml, robots.txt i crawl konfiguracije</p>
-      <span class="cs-badge">Uskoro</span>
-    </div>
-    <div class="cs-card">
-      <div class="cs-icon">&#128279;</div>
-      <h3>Link Analiza</h3>
-      <p>Broken linkovi, redirect lanci, canonical tagovi</p>
-      <span class="cs-badge">Uskoro</span>
+      <h3 data-sr="Skenirajte sajt da vidite SEO analizu" data-en="Scan a site to see SEO analysis">Skenirajte sajt da vidite SEO analizu</h3>
+      <p data-sr="12 provera: title, description, OG tagovi, sitemap, headings, strukturirani podaci..." data-en="12 checks: title, description, OG tags, sitemap, headings, structured data...">12 provera: title, description, OG tagovi, sitemap, headings, strukturirani podaci...</p>
     </div>
   </div>
 </div>
@@ -548,19 +618,19 @@
       <div class="cs-icon">&#9889;</div>
       <h3>Brzina Ucitavanja</h3>
       <p>TTFB, LCP, FID i CLS metrike za vas sajt</p>
-      <span class="cs-badge">Uskoro</span>
+      <span class="cs-badge" data-sr="Uskoro" data-en="Coming soon">Uskoro</span>
     </div>
     <div class="cs-card">
       <div class="cs-icon">&#128230;</div>
       <h3>Velicina Resursa</h3>
       <p>Analiza JS, CSS i slika — optimizacija za brzinu</p>
-      <span class="cs-badge">Uskoro</span>
+      <span class="cs-badge" data-sr="Uskoro" data-en="Coming soon">Uskoro</span>
     </div>
     <div class="cs-card">
       <div class="cs-icon">&#128260;</div>
       <h3>Kompresija &amp; Cache</h3>
       <p>Gzip/Brotli, cache headeri, CDN detekcija</p>
-      <span class="cs-badge">Uskoro</span>
+      <span class="cs-badge" data-sr="Uskoro" data-en="Coming soon">Uskoro</span>
     </div>
   </div>
 </div>
@@ -572,19 +642,19 @@
       <div class="cs-icon">&#128274;</div>
       <h3>Cookie Politika</h3>
       <p>Detekcija kolacica, cookie banner provera, consent mehanizmi</p>
-      <span class="cs-badge">Uskoro</span>
+      <span class="cs-badge" data-sr="Uskoro" data-en="Coming soon">Uskoro</span>
     </div>
     <div class="cs-card">
       <div class="cs-icon">&#128196;</div>
       <h3>Privacy Policy</h3>
       <p>Provera da li sajt ima politiku privatnosti i uslove koriscenja</p>
-      <span class="cs-badge">Uskoro</span>
+      <span class="cs-badge" data-sr="Uskoro" data-en="Coming soon">Uskoro</span>
     </div>
     <div class="cs-card">
       <div class="cs-icon">&#128506;</div>
       <h3>Third-Party Trackeri</h3>
       <p>Identifikacija Google Analytics, Facebook Pixel i ostalih trackera</p>
-      <span class="cs-badge">Uskoro</span>
+      <span class="cs-badge" data-sr="Uskoro" data-en="Coming soon">Uskoro</span>
     </div>
   </div>
 </div>
@@ -617,7 +687,7 @@ const API_BASE = (location.hostname === "localhost" || location.hostname === "12
 let currentLang = "sr";
 let currentResults = null;
 
-const MODULES = ["SSL/TLS","Headers","DNS","Files","Info","Cookies","Redirects","CMS","CT","Subdomains"];
+const MODULES = ["SSL/TLS","Headers","DNS","Files","Info","Cookies","Redirects","CMS","SEO","CT","Subdomains"];
 
 function switchTab(tab) {
   document.querySelectorAll(".tab-panel").forEach(function(p) { p.classList.remove("active"); });
@@ -631,6 +701,25 @@ function setLang(lang) {
   currentLang = lang;
   document.querySelectorAll(".lang-btn").forEach(function(b) {
     b.classList.toggle("active", b.dataset.lang === lang);
+  });
+  // Translate static elements
+  document.querySelectorAll("[data-sr][data-en]").forEach(function(el) {
+    el.textContent = el.getAttribute("data-" + lang);
+  });
+  // Translate scan button states
+  var btn = document.getElementById("scanBtn");
+  if (btn && !btn.disabled) {
+    if (currentResults) {
+      btn.textContent = lang === "en" ? "Scan again" : "Skeniraj ponovo";
+    } else {
+      btn.textContent = btn.getAttribute("data-" + lang);
+    }
+  }
+  // Translate nav tabs
+  var tabNames = { security: { sr: "Bezbednost", en: "Security" }, seo: { sr: "SEO", en: "SEO" }, performance: { sr: "Performanse", en: "Performance" }, gdpr: { sr: "GDPR", en: "GDPR" } };
+  document.querySelectorAll(".nav-link[data-tab]").forEach(function(b) {
+    var tab = b.dataset.tab;
+    if (tabNames[tab]) b.textContent = tabNames[tab][lang];
   });
   if (currentResults) renderResults(currentResults);
 }
@@ -803,16 +892,16 @@ function renderResults(data) {
   var counts = document.createElement("div");
   counts.className = "score-counts";
   var levels = [
-    { key: "critical", cls: "critical", label: "Kriticno" },
-    { key: "high", cls: "high", label: "Visoko" },
-    { key: "medium", cls: "medium", label: "Srednje" },
-    { key: "low", cls: "low", label: "Nisko" }
+    { key: "critical", cls: "critical", sr: "Kriticno", en: "Critical" },
+    { key: "high", cls: "high", sr: "Visoko", en: "High" },
+    { key: "medium", cls: "medium", sr: "Srednje", en: "Medium" },
+    { key: "low", cls: "low", sr: "Nisko", en: "Low" }
   ];
   levels.forEach(function(lv) {
     if (s.counts[lv.key]) {
       var badge = document.createElement("span");
       badge.className = "count-badge " + lv.cls;
-      badge.textContent = s.counts[lv.key] + " " + lv.label;
+      badge.textContent = s.counts[lv.key] + " " + lv[currentLang];
       counts.appendChild(badge);
     }
   });
@@ -820,7 +909,16 @@ function renderResults(data) {
 
   var meta = document.createElement("div");
   meta.className = "score-meta";
-  meta.textContent = data.domain + " \u00B7 " + data.total_checks + " provera \u00B7 " + data.failed_checks + " problema \u00B7 " + data.scan_time + "s";
+  var checksWord = currentLang === "en" ? "checks" : "provera";
+  var issuesWord = currentLang === "en" ? "issues" : "problema";
+  meta.textContent = data.domain + " \u00B7 " + data.total_checks + " " + checksWord + " \u00B7 " + data.failed_checks + " " + issuesWord + " \u00B7 " + data.scan_time + "s";
+
+  // Set print header
+  var printMeta = document.getElementById("printMeta");
+  if (printMeta) {
+    var dateStr = new Date().toLocaleDateString(currentLang === "sr" ? "sr-RS" : "en-US");
+    printMeta.textContent = data.domain + " \u2014 " + s.grade + " (" + s.score + "/100) \u2014 " + dateStr;
+  }
   details.appendChild(meta);
 
   scoreCard.appendChild(details);
@@ -829,31 +927,15 @@ function renderResults(data) {
   var actions = document.createElement("div");
   actions.className = "score-actions";
 
-  var langToggle = document.createElement("div");
-  langToggle.className = "lang-toggle";
-  var srBtn = document.createElement("button");
-  srBtn.className = "lang-btn active";
-  srBtn.dataset.lang = "sr";
-  srBtn.textContent = "SR";
-  srBtn.onclick = function() { setLang("sr"); };
-  var enBtn = document.createElement("button");
-  enBtn.className = "lang-btn";
-  enBtn.dataset.lang = "en";
-  enBtn.textContent = "EN";
-  enBtn.onclick = function() { setLang("en"); };
-  langToggle.appendChild(srBtn);
-  langToggle.appendChild(enBtn);
-  actions.appendChild(langToggle);
-
   var shareBtn = document.createElement("button");
   shareBtn.className = "action-btn";
-  shareBtn.textContent = "Podeli rezultat";
+  shareBtn.textContent = currentLang === "en" ? "Share result" : "Podeli rezultat";
   shareBtn.onclick = shareResults;
   actions.appendChild(shareBtn);
 
   var pdfBtn = document.createElement("button");
   pdfBtn.className = "action-btn";
-  pdfBtn.textContent = "Sacuvaj PDF";
+  pdfBtn.textContent = currentLang === "en" ? "Download PDF" : "Preuzmi PDF";
   pdfBtn.onclick = function() { window.print(); };
   actions.appendChild(pdfBtn);
 
@@ -883,8 +965,8 @@ function renderResults(data) {
     categories[cat].push(item);
   });
 
-  var catOrder = ["SSL/TLS","Security Headers","DNS Security","Sensitive Files","Information Disclosure","Cookie Security","Redirects","CMS/Technology","Certificate Transparency","Subdomain Enumeration","Admin Exposure","Open Ports","CORS Policy","Best Practices","robots.txt"];
-  var catIcons = {"SSL/TLS":"\uD83D\uDD10","Security Headers":"\uD83D\uDEE1\uFE0F","DNS Security":"\uD83D\uDCE1","Sensitive Files":"\uD83D\uDCC1","Information Disclosure":"\uD83D\uDD75\uFE0F","Cookie Security":"\uD83C\uDF6A","Redirects":"\u21AA\uFE0F","CMS/Technology":"\u2699\uFE0F","Certificate Transparency":"\uD83D\uDCDC","Subdomain Enumeration":"\uD83C\uDF10","Admin Exposure":"\uD83D\uDD12","Open Ports":"\uD83D\uDEAA","CORS Policy":"\uD83D\uDD00","Best Practices":"\u2B50","robots.txt":"\uD83E\uDD16"};
+  var catOrder = ["SSL/TLS","Security Headers","DNS Security","SEO","Sensitive Files","Information Disclosure","Cookie Security","Redirects","CMS/Technology","Certificate Transparency","Subdomain Enumeration","Admin Exposure","Open Ports","CORS Policy","Best Practices","robots.txt"];
+  var catIcons = {"SSL/TLS":"\uD83D\uDD10","Security Headers":"\uD83D\uDEE1\uFE0F","DNS Security":"\uD83D\uDCE1","Sensitive Files":"\uD83D\uDCC1","Information Disclosure":"\uD83D\uDD75\uFE0F","Cookie Security":"\uD83C\uDF6A","Redirects":"\u21AA\uFE0F","CMS/Technology":"\u2699\uFE0F","SEO":"\uD83D\uDD0D","Certificate Transparency":"\uD83D\uDCDC","Subdomain Enumeration":"\uD83C\uDF10","Admin Exposure":"\uD83D\uDD12","Open Ports":"\uD83D\uDEAA","CORS Policy":"\uD83D\uDD00","Best Practices":"\u2B50","robots.txt":"\uD83E\uDD16"};
 
   var sorted = catOrder.filter(function(c) { return categories[c]; });
   Object.keys(categories).forEach(function(c) { if (sorted.indexOf(c) === -1) sorted.push(c); });
@@ -915,7 +997,9 @@ function renderResults(data) {
     titleDiv.appendChild(nameSpan);
     var countSpan = document.createElement("span");
     countSpan.style.cssText = "font-size:0.78rem;font-weight:400;color:var(--text-dim)";
-    countSpan.textContent = "(" + (failed.length > 0 ? failed.length + " problema" : "sve OK") + ")";
+    var issuesTxt = currentLang === "en" ? failed.length + " issues" : failed.length + " problema";
+    var okTxt = currentLang === "en" ? "all OK" : "sve OK";
+    countSpan.textContent = "(" + (failed.length > 0 ? issuesTxt : okTxt) + ")";
     titleDiv.appendChild(countSpan);
 
     var rightDiv = document.createElement("div");
@@ -943,6 +1027,55 @@ function renderResults(data) {
   });
 
   wrap.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  // Render SEO results in separate tab
+  renderSeoTab(data);
+}
+
+function renderSeoTab(data) {
+  var seoWrap = document.getElementById("seoResultsWrap");
+  var placeholder = document.getElementById("seoPlaceholder");
+  if (!seoWrap) return;
+
+  var seoItems = data.results.filter(function(r) { return r.category === "SEO"; });
+  if (seoItems.length === 0) {
+    seoWrap.style.display = "none";
+    if (placeholder) placeholder.style.display = "";
+    return;
+  }
+
+  if (placeholder) placeholder.style.display = "none";
+  seoWrap.style.display = "block";
+  while (seoWrap.firstChild) seoWrap.removeChild(seoWrap.firstChild);
+
+  var passed = seoItems.filter(function(i) { return i.passed; }).length;
+  var failed = seoItems.filter(function(i) { return !i.passed; }).length;
+  var total = seoItems.length;
+  var pct = Math.round((passed / total) * 100);
+
+  // SEO score summary
+  var summary = document.createElement("div");
+  summary.className = "score-card";
+  summary.style.marginBottom = "1.5rem";
+
+  var summaryText = document.createElement("div");
+  summaryText.className = "score-details";
+  var seoTitle = document.createElement("div");
+  seoTitle.style.cssText = "font-size:1.3rem;font-weight:800;margin-bottom:0.5rem";
+  seoTitle.textContent = (currentLang === "en" ? "SEO Analysis" : "SEO Analiza") + " — " + pct + "%";
+  summaryText.appendChild(seoTitle);
+
+  var seoMeta = document.createElement("div");
+  seoMeta.className = "score-meta";
+  seoMeta.textContent = passed + "/" + total + " " + (currentLang === "en" ? "checks passed" : "provera proslo") + " \u00B7 " + failed + " " + (currentLang === "en" ? "issues" : "problema");
+  summaryText.appendChild(seoMeta);
+  summary.appendChild(summaryText);
+  seoWrap.appendChild(summary);
+
+  // Individual items
+  seoItems.forEach(function(item) {
+    seoWrap.appendChild(renderItem(item));
+  });
 }
 
 function renderItem(item) {
@@ -987,7 +1120,7 @@ function renderItem(item) {
     var recDiv = document.createElement("div");
     recDiv.className = "check-rec";
     var recStrong = document.createElement("strong");
-    recStrong.textContent = "Resenje: ";
+    recStrong.textContent = currentLang === "en" ? "Fix: " : "Resenje: ";
     recDiv.appendChild(recStrong);
     recDiv.appendChild(document.createTextNode(rec));
     content.appendChild(recDiv);
