@@ -180,4 +180,39 @@ def run(domain: str) -> List[Dict[str, Any]]:
             "recommendation_en": "Add a DMARC record at _dmarc.yourdomain.com.",
         })
 
+    # --- DNSSEC Check ---
+    try:
+        dnskey_answers = dns.resolver.resolve(domain, "DNSKEY", lifetime=5)
+        has_dnskey = len(dnskey_answers) > 0
+        if has_dnskey:
+            results.append({
+                "id": "dns_dnssec_ok",
+                "category": "DNS Security",
+                "severity": "INFO",
+                "passed": True,
+                "title": "DNSSEC je aktivan \u2713",
+                "title_en": "DNSSEC is active \u2713",
+                "description": f"Domen {domain} ima DNSKEY zapise \u2014 DNS odgovori su kriptografski potpisani.",
+                "description_en": f"Domain {domain} has DNSKEY records \u2014 DNS responses are cryptographically signed.",
+                "recommendation": "",
+                "recommendation_en": "",
+            })
+    except (dns.resolver.NoAnswer, dns.resolver.NXDOMAIN, dns.name.EmptyLabel):
+        results.append({
+            "id": "dns_dnssec_missing",
+            "category": "DNS Security",
+            "severity": "MEDIUM",
+            "passed": False,
+            "title": "DNSSEC nije konfigurisan",
+            "title_en": "DNSSEC is not configured",
+            "description": "Domen nema DNSKEY zapise \u2014 DNS odgovori nisu kriptografski potpisani. Napada\u010d mo\u017ee izvr\u0161iti DNS spoofing/cache poisoning.",
+            "description_en": "Domain has no DNSKEY records \u2014 DNS responses are not cryptographically signed. Attacker can perform DNS spoofing/cache poisoning.",
+            "recommendation": "Aktivirajte DNSSEC kod va\u0161eg registrara ili DNS provajdera (Cloudflare, Route53 imaju automatski DNSSEC).",
+            "recommendation_en": "Enable DNSSEC at your domain registrar or DNS provider (Cloudflare, Route53 have automatic DNSSEC).",
+        })
+    except dns.exception.Timeout:
+        pass
+    except Exception:
+        pass
+
     return results

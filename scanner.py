@@ -26,6 +26,7 @@ except ImportError:
 from checks import ssl_check, headers_check, dns_check, files_check
 from checks import disclosure_check, cookies_check, redirect_check, cms_check
 from checks import admin_check, robots_check, ports_check, cors_check, extras_check
+from checks import ct_check, subdomain_check
 
 # Severity weights for scoring
 SEVERITY_WEIGHTS = {
@@ -278,12 +279,28 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
         errors.append(f"CORS check greška: {str(e)[:80]}")
 
     # --- 13. Extras: security.txt, CAA, SRI ---
-    update("Proveravam security.txt, CAA, SRI...", 97)
+    update("Proveravam security.txt, CAA, SRI...", 93)
     try:
         extras_results = extras_check.run(base_url, domain, response_body, session)
         all_results.extend(extras_results)
     except Exception as e:
         errors.append(f"Extras check greška: {str(e)[:80]}")
+
+    # --- 14. Certificate Transparency ---
+    update("Proveravam Certificate Transparency logove...", 95)
+    try:
+        ct_results = ct_check.run(domain)
+        all_results.extend(ct_results)
+    except Exception as e:
+        errors.append(f"CT check greška: {str(e)[:80]}")
+
+    # --- 15. Subdomain Enumeration ---
+    update("Skeniram subdomene...", 97)
+    try:
+        sub_results = subdomain_check.run(domain)
+        all_results.extend(sub_results)
+    except Exception as e:
+        errors.append(f"Subdomain check greška: {str(e)[:80]}")
 
     update("Izračunavam ocenu...", 99)
 

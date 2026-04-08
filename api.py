@@ -19,7 +19,9 @@ except ImportError:
     pass
 
 import uuid
+import time
 import threading
+from collections import defaultdict
 from datetime import datetime
 from typing import Dict, Any, Optional
 
@@ -71,6 +73,20 @@ app.add_middleware(SecurityHeadersMiddleware)
 # In-memory scan store (use Redis in production)
 scans: Dict[str, Dict[str, Any]] = {}
 
+# Rate limiter: max 10 scans per IP per hour
+_rate_store: Dict[str, list] = defaultdict(list)
+_RATE_LIMIT = 10
+_RATE_WINDOW = 3600
+
+
+def _check_rate_limit(ip: str) -> bool:
+    now = time.time()
+    _rate_store[ip] = [t for t in _rate_store[ip] if now - t < _RATE_WINDOW]
+    if len(_rate_store[ip]) >= _RATE_LIMIT:
+        return False
+    _rate_store[ip].append(now)
+    return True
+
 
 class ScanRequest(BaseModel):
     url: str
@@ -103,8 +119,14 @@ def root():
 
 
 @app.post("/scan")
-def start_scan(req: ScanRequest):
+def start_scan(req: ScanRequest, request: Request):
     """Start a new scan. Returns scan_id immediately."""
+    client_ip = request.client.host if request.client else "unknown"
+    if not _check_rate_limit(client_ip):
+        raise HTTPException(
+            status_code=429,
+            detail="Previše zahteva. Maksimalno 10 skeniranja po satu. / Too many requests. Max 10 scans per hour."
+        )
     scan_id = str(uuid.uuid4())[:8]
     scans[scan_id] = {
         "id": scan_id,
