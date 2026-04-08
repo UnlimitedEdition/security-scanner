@@ -7,8 +7,24 @@ import dns.resolver
 from typing import List, Dict, Any
 
 
+PLATFORM_DOMAINS = [
+    ".vercel.app", ".netlify.app", ".github.io", ".gitlab.io",
+    ".herokuapp.com", ".hf.space", ".web.app", ".firebaseapp.com",
+    ".azurewebsites.net", ".cloudfront.net", ".pages.dev",
+    ".onrender.com", ".fly.dev", ".railway.app",
+]
+
+
+def _is_platform_domain(domain: str) -> bool:
+    for suffix in PLATFORM_DOMAINS:
+        if domain.endswith(suffix):
+            return True
+    return False
+
+
 def run(domain: str) -> List[Dict[str, Any]]:
     results = []
+    is_platform = _is_platform_domain(domain)
 
     # --- SPF Check ---
     try:
@@ -89,31 +105,59 @@ def run(domain: str) -> List[Dict[str, Any]]:
                 break
 
         if not spf_found:
+            if is_platform:
+                results.append({
+                    "id": "dns_spf_platform",
+                    "category": "DNS Security",
+                    "severity": "INFO",
+                    "passed": True,
+                    "title": "SPF \u2014 platform domen (DNS kontroli\u0161e hosting provajder)",
+                    "title_en": "SPF \u2014 platform domain (DNS controlled by hosting provider)",
+                    "description": f"{domain} je platform domen \u2014 SPF/DMARC konfigurise hosting provajder, ne korisnik.",
+                    "description_en": f"{domain} is a platform domain \u2014 SPF/DMARC is configured by the hosting provider, not the user.",
+                    "recommendation": "Za punu kontrolu koristite sopstveni domen.",
+                    "recommendation_en": "For full control, use your own custom domain.",
+                })
+            else:
+                results.append({
+                    "id": "dns_spf_missing",
+                    "category": "DNS Security",
+                    "severity": "HIGH",
+                    "passed": False,
+                    "title": "SPF record nedostaje \u2014 email spoofing mogu\u0107",
+                    "title_en": "SPF Record Missing \u2014 Email Spoofing Possible",
+                    "description": "Bez SPF recorda, napada\u010d mo\u017ee poslati email koji izgleda kao da dolazi sa va\u0161eg domena. Klijenti mogu dobiti la\u017ene fakture ili phishing emailove.",
+                    "description_en": "Without an SPF record, anyone can send email that appears to come from your domain. Clients may receive fake invoices or phishing emails.",
+                    "recommendation": 'Dodajte TXT record: v=spf1 include:_spf.yourmailprovider.com ~all',
+                    "recommendation_en": 'Add TXT record: v=spf1 include:_spf.yourmailprovider.com ~all',
+                })
+    except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.exception.Timeout):
+        if is_platform:
+            results.append({
+                "id": "dns_spf_platform",
+                "category": "DNS Security",
+                "severity": "INFO",
+                "passed": True,
+                "title": "SPF \u2014 platform domen (DNS kontroli\u0161e hosting provajder)",
+                "title_en": "SPF \u2014 platform domain (DNS controlled by hosting provider)",
+                "description": f"{domain} je platform domen \u2014 SPF/DMARC konfigurise hosting provajder.",
+                "description_en": f"{domain} is a platform domain \u2014 SPF/DMARC is configured by the hosting provider.",
+                "recommendation": "",
+                "recommendation_en": "",
+            })
+        else:
             results.append({
                 "id": "dns_spf_missing",
                 "category": "DNS Security",
                 "severity": "HIGH",
                 "passed": False,
-                "title": "SPF record nedostaje — email spoofing moguć",
-                "title_en": "SPF Record Missing — Email Spoofing Possible",
-                "description": "Bez SPF recorda, napadač može poslati email koji izgleda kao da dolazi sa vašeg domena. Klijenti mogu dobiti lažne fakture ili phishing emailove.",
-                "description_en": "Without an SPF record, anyone can send email that appears to come from your domain. Clients may receive fake invoices or phishing emails.",
-                "recommendation": 'Dodajte TXT record: v=spf1 include:_spf.yourmailprovider.com ~all',
-                "recommendation_en": 'Add TXT record: v=spf1 include:_spf.yourmailprovider.com ~all',
+                "title": "SPF record nedostaje",
+                "title_en": "SPF Record Missing",
+                "description": "Nije prona\u0111en SPF TXT record za ovaj domen.",
+                "description_en": "No SPF TXT record found for this domain.",
+                "recommendation": "Dodajte SPF record da za\u0161titite domen od email spoofing-a.",
+                "recommendation_en": "Add an SPF record to protect your domain from email spoofing.",
             })
-    except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.exception.Timeout):
-        results.append({
-            "id": "dns_spf_missing",
-            "category": "DNS Security",
-            "severity": "HIGH",
-            "passed": False,
-            "title": "SPF record nedostaje",
-            "title_en": "SPF Record Missing",
-            "description": "Nije pronađen SPF TXT record za ovaj domen.",
-            "description_en": "No SPF TXT record found for this domain.",
-            "recommendation": "Dodajte SPF record da zaštitite domen od email spoofing-a.",
-            "recommendation_en": "Add an SPF record to protect your domain from email spoofing.",
-        })
 
     # --- DMARC Check ---
     try:
@@ -154,6 +198,47 @@ def run(domain: str) -> List[Dict[str, Any]]:
                 break
 
         if not dmarc_found:
+            if is_platform:
+                results.append({
+                    "id": "dns_dmarc_platform",
+                    "category": "DNS Security",
+                    "severity": "INFO",
+                    "passed": True,
+                    "title": "DMARC \u2014 platform domen (DNS kontroli\u0161e hosting provajder)",
+                    "title_en": "DMARC \u2014 platform domain (DNS controlled by hosting provider)",
+                    "description": f"{domain} je platform domen \u2014 DMARC konfigurise hosting provajder.",
+                    "description_en": f"{domain} is a platform domain \u2014 DMARC is configured by the hosting provider.",
+                    "recommendation": "Za punu kontrolu koristite sopstveni domen.",
+                    "recommendation_en": "For full control, use your own custom domain.",
+                })
+            else:
+                results.append({
+                    "id": "dns_dmarc_missing",
+                    "category": "DNS Security",
+                    "severity": "HIGH",
+                    "passed": False,
+                    "title": "DMARC record nedostaje",
+                    "title_en": "DMARC Record Missing",
+                    "description": "Bez DMARC-a nema izve\u0161tavanja o poku\u0161ajima spoofing-a i emailovi sa va\u0161eg domena lak\u0161e prolaze spam filtere napada\u010da.",
+                    "description_en": "Without DMARC there is no reporting on spoofing attempts and spoofed emails from your domain more easily pass spam filters.",
+                    "recommendation": 'Dodajte TXT record na _dmarc.yourdomain.com: v=DMARC1; p=quarantine; rua=mailto:dmarc@yourdomain.com',
+                    "recommendation_en": 'Add TXT record at _dmarc.yourdomain.com: v=DMARC1; p=quarantine; rua=mailto:dmarc@yourdomain.com',
+                })
+    except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.exception.Timeout):
+        if is_platform:
+            results.append({
+                "id": "dns_dmarc_platform",
+                "category": "DNS Security",
+                "severity": "INFO",
+                "passed": True,
+                "title": "DMARC \u2014 platform domen (DNS kontroli\u0161e hosting provajder)",
+                "title_en": "DMARC \u2014 platform domain (DNS controlled by hosting provider)",
+                "description": f"{domain} je platform domen.",
+                "description_en": f"{domain} is a platform domain.",
+                "recommendation": "",
+                "recommendation_en": "",
+            })
+        else:
             results.append({
                 "id": "dns_dmarc_missing",
                 "category": "DNS Security",
@@ -161,24 +246,11 @@ def run(domain: str) -> List[Dict[str, Any]]:
                 "passed": False,
                 "title": "DMARC record nedostaje",
                 "title_en": "DMARC Record Missing",
-                "description": "Bez DMARC-a nema izveštavanja o pokušajima spoofing-a i emailovi sa vašeg domena lakše prolaze spam filtere napadača.",
-                "description_en": "Without DMARC there is no reporting on spoofing attempts and spoofed emails from your domain more easily pass spam filters.",
-                "recommendation": 'Dodajte TXT record na _dmarc.yourdomain.com: v=DMARC1; p=quarantine; rua=mailto:dmarc@yourdomain.com',
-                "recommendation_en": 'Add TXT record at _dmarc.yourdomain.com: v=DMARC1; p=quarantine; rua=mailto:dmarc@yourdomain.com',
+                "description": "Nije prona\u0111en DMARC record za ovaj domen.",
+                "description_en": "No DMARC record found for this domain.",
+                "recommendation": "Dodajte DMARC record na _dmarc.yourdomain.com.",
+                "recommendation_en": "Add a DMARC record at _dmarc.yourdomain.com.",
             })
-    except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.exception.Timeout):
-        results.append({
-            "id": "dns_dmarc_missing",
-            "category": "DNS Security",
-            "severity": "HIGH",
-            "passed": False,
-            "title": "DMARC record nedostaje",
-            "title_en": "DMARC Record Missing",
-            "description": "Nije pronađen DMARC record za ovaj domen.",
-            "description_en": "No DMARC record found for this domain.",
-            "recommendation": "Dodajte DMARC record na _dmarc.yourdomain.com.",
-            "recommendation_en": "Add a DMARC record at _dmarc.yourdomain.com.",
-        })
 
     # --- DNSSEC Check ---
     try:
@@ -198,6 +270,20 @@ def run(domain: str) -> List[Dict[str, Any]]:
                 "recommendation_en": "",
             })
     except (dns.resolver.NoAnswer, dns.resolver.NXDOMAIN, dns.name.EmptyLabel):
+        if is_platform:
+            results.append({
+                "id": "dns_dnssec_platform",
+                "category": "DNS Security",
+                "severity": "INFO",
+                "passed": True,
+                "title": "DNSSEC \u2014 platform domen (kontroli\u0161e hosting provajder)",
+                "title_en": "DNSSEC \u2014 platform domain (controlled by hosting provider)",
+                "description": f"{domain} je platform domen \u2014 DNSSEC konfigurise provajder.",
+                "description_en": f"{domain} is a platform domain \u2014 DNSSEC is configured by the provider.",
+                "recommendation": "",
+                "recommendation_en": "",
+            })
+            return results
         results.append({
             "id": "dns_dnssec_missing",
             "category": "DNS Security",

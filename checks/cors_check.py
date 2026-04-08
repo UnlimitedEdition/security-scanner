@@ -53,28 +53,30 @@ def run(base_url: str, response_headers: dict, session: requests.Session) -> Lis
                     "category": "CORS Policy",
                     "severity": "CRITICAL",
                     "passed": False,
-                    "title": f"CORS: Wildcard (*) + credentials=true — kritična ranjivost! ({location})",
-                    "title_en": f"CORS: Wildcard (*) + credentials=true — critical vulnerability! ({location})",
-                    "description": "CORS wildcard sa credentials=true dozvoljava BILO kojoj veb stranici da šalje autentifikovane zahteve u ime korisnika. Ovo je kritična sigurnosna ranjivost.",
-                    "description_en": "CORS wildcard with credentials=true allows ANY website to send authenticated requests on behalf of users. This is a critical security vulnerability.",
-                    "recommendation": "Nikada ne kombinujte Access-Control-Allow-Origin: * sa Access-Control-Allow-Credentials: true. Koristite specifičan origin umesto wildcard-a.",
-                    "recommendation_en": "Never combine Access-Control-Allow-Origin: * with Access-Control-Allow-Credentials: true. Use a specific origin instead of a wildcard.",
+                    "title": f"CORS: Wildcard (*) + credentials=true \u2014 kriti\u010dna ranjivost! ({location})",
+                    "title_en": f"CORS: Wildcard (*) + credentials=true \u2014 critical vulnerability! ({location})",
+                    "description": "CORS wildcard sa credentials=true dozvoljava BILO kojoj veb stranici da \u0161alje autentifikovane zahteve u ime korisnika.",
+                    "description_en": "CORS wildcard with credentials=true allows ANY website to send authenticated requests on behalf of users.",
+                    "recommendation": "Nikada ne kombinujte Access-Control-Allow-Origin: * sa Access-Control-Allow-Credentials: true.",
+                    "recommendation_en": "Never combine Access-Control-Allow-Origin: * with Access-Control-Allow-Credentials: true.",
                 })
                 found_issue = True
-            else:
+            elif "API endpoint" in location:
+                # Wildcard on API = medium concern
                 results.append({
                     "id": "cors_wildcard",
                     "category": "CORS Policy",
                     "severity": "MEDIUM",
                     "passed": False,
-                    "title": f"CORS: Wildcard (*) dozvoljava pristup sa svih domena ({location})",
-                    "title_en": f"CORS: Wildcard (*) allows access from all domains ({location})",
-                    "description": "Access-Control-Allow-Origin: * znači da svaka veb stranica može čitati odgovore vašeg API-ja. Za javne API-je ovo može biti OK, ali za stranice sa podacima korisnika — nije.",
-                    "description_en": "Access-Control-Allow-Origin: * means any website can read your API responses. For public APIs this may be OK, but for pages with user data — it is not.",
-                    "recommendation": "Ograničite CORS na specifične domene: Access-Control-Allow-Origin: https://vasajt.com",
+                    "title": f"CORS: Wildcard (*) na API endpointu ({location})",
+                    "title_en": f"CORS: Wildcard (*) on API endpoint ({location})",
+                    "description": "Access-Control-Allow-Origin: * na API endpointu zna\u010di da svaka veb stranica mo\u017ee \u010ditati odgovore va\u0161eg API-ja.",
+                    "description_en": "Access-Control-Allow-Origin: * on API endpoint means any website can read your API responses.",
+                    "recommendation": "Ograni\u010dite CORS na specifi\u010dne domene: Access-Control-Allow-Origin: https://vasajt.com",
                     "recommendation_en": "Restrict CORS to specific domains: Access-Control-Allow-Origin: https://yourdomain.com",
                 })
                 found_issue = True
+            # else: wildcard on main page only (static site) = not an issue, skip
 
         elif origin_val and origin_val != "*":
             # Reflected origin — dynamic CORS without whitelist check
