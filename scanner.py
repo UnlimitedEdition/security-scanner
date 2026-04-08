@@ -38,7 +38,7 @@ SEVERITY_WEIGHTS = {
 
 USER_AGENT = (
     "Mozilla/5.0 (compatible; SiteSecurityScanner/1.0; "
-    "+https://gradovi.rs/scan)"
+    "+https://toske-programer.web.app)"
 )
 
 
