@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Web Security Scanner — Besplatna analiza sajta</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3250;
+      --text: #e8eaf6;
+      --text-dim: #8892b0;
+      --accent: #6c63ff;
+      --accent-glow: rgba(108,99,255,0.2);
+      --red: #ef4444;
+      --orange: #f97316;
+      --yellow: #eab308;
+      --green: #22c55e;
+      --blue: #3b82f6;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* HEADER */
+    .header {
+      background: linear-gradient(135deg, #0f1117 0%, #1a1240 50%, #0f1117 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 2rem 1rem 3rem;
+      text-align: center;
+    }
+    .header-badge {
+      display: inline-block;
+      background: var(--accent-glow);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 4px 14px;
+      border-radius: 20px;
+      margin-bottom: 1rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .header h1 {
+      font-size: clamp(1.8rem, 5vw, 3rem);
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 0.75rem;
+    }
+    .header h1 span { color: var(--accent); }
+    .header p {
+      color: var(--text-dim);
+      font-size: 1.05rem;
+      max-width: 520px;
+      margin: 0 auto 0.5rem;
+    }
+
+    /* SCAN FORM */
+    .scan-form-wrap {
+      max-width: 700px;
+      margin: -1.5rem auto 0;
+      padding: 0 1rem 2rem;
+    }
+    .scan-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+    }
+    .scan-input-row {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .scan-input {
+      flex: 1;
+      min-width: 200px;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 1rem;
+      padding: 0.85rem 1.1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .scan-input:focus { border-color: var(--accent); }
+    .scan-input::placeholder { color: var(--text-dim); }
+    .scan-btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      padding: 0.85rem 2rem;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+    .scan-btn:hover { background: #5a52e0; }
+    .scan-btn:active { transform: scale(0.98); }
+    .scan-btn:disabled { background: #444; cursor: not-allowed; }
+    .scan-note {
+      margin-top: 0.85rem;
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      text-align: center;
+    }
+
+    /* PROGRESS */
+    .progress-wrap {
+      display: none;
+      margin-top: 1.5rem;
+    }
+    .progress-label {
+      font-size: 0.88rem;
+      color: var(--text-dim);
+      margin-bottom: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+    }
+    .progress-bar-bg {
+      height: 6px;
+      background: var(--border);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), #a78bfa);
+      border-radius: 99px;
+      transition: width 0.5s ease;
+      width: 0%;
+    }
+
+    /* RESULTS CONTAINER */
+    .results-wrap {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 1rem 4rem;
+      display: none;
+    }
+
+    /* SCORE CARD */
+    .score-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    .score-grade {
+      font-size: 5rem;
+      font-weight: 900;
+      line-height: 1;
+      min-width: 100px;
+      text-align: center;
+    }
+    .score-details { flex: 1; min-width: 200px; }
+    .score-number {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+    .score-label {
+      font-size: 1.1rem;
+      color: var(--text-dim);
+      margin-bottom: 1rem;
+    }
+    .score-counts {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .count-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.88rem;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+    .count-badge.critical { background: rgba(239,68,68,0.15); color: var(--red); }
+    .count-badge.high { background: rgba(249,115,22,0.15); color: var(--orange); }
+    .count-badge.medium { background: rgba(234,179,8,0.15); color: var(--yellow); }
+    .count-badge.low { background: rgba(59,130,246,0.15); color: var(--blue); }
+    .score-meta {
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      margin-top: 1rem;
+    }
+
+    /* PDF BUTTON */
+    .pdf-btn {
+      background: transparent;
+      border: 1.5px solid var(--accent);
+      color: var(--accent);
+      border-radius: 8px;
+      padding: 0.7rem 1.4rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .pdf-btn:hover { background: var(--accent-glow); }
+
+    /* CATEGORY SECTIONS */
+    .category-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+    .category-header {
+      padding: 1rem 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+      border-bottom: 1px solid var(--border);
+    }
+    .category-header:hover { background: rgba(255,255,255,0.03); }
+    .category-title {
+      font-weight: 700;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .category-chevron { transition: transform 0.2s; font-size: 0.9rem; }
+    .category-chevron.open { transform: rotate(180deg); }
+    .category-body { display: none; }
+    .category-body.open { display: block; }
+
+    /* CHECK ITEMS */
+    .check-item {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid rgba(46,50,80,0.5);
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+    .check-item:last-child { border-bottom: none; }
+    .check-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 0.1rem; }
+    .check-content { flex: 1; }
+    .check-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-bottom: 0.4rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+    .sev-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.05em;
+    }
+    .sev-CRITICAL { background: rgba(239,68,68,0.2); color: var(--red); }
+    .sev-HIGH { background: rgba(249,115,22,0.2); color: var(--orange); }
+    .sev-MEDIUM { background: rgba(234,179,8,0.2); color: var(--yellow); }
+    .sev-LOW { background: rgba(59,130,246,0.2); color: var(--blue); }
+    .sev-INFO { background: rgba(34,197,94,0.15); color: var(--green); }
+    .check-desc {
+      font-size: 0.86rem;
+      color: var(--text-dim);
+      margin-bottom: 0.5rem;
+      line-height: 1.5;
+    }
+    .check-rec {
+      font-size: 0.84rem;
+      background: rgba(108,99,255,0.08);
+      border-left: 3px solid var(--accent);
+      padding: 0.5rem 0.75rem;
+      border-radius: 0 6px 6px 0;
+      color: var(--text);
+    }
+    .check-rec strong { color: var(--accent); }
+
+    /* LANG TOGGLE */
+    .lang-toggle {
+      display: flex;
+      gap: 0.4rem;
+      align-items: center;
+    }
+    .lang-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .lang-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    /* ERROR STATE */
+    .error-box {
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.3);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      color: var(--red);
+      margin-bottom: 1rem;
+    }
+
+    /* PRINT STYLES */
+    @media print {
+      body { background: #fff; color: #000; }
+      .header, .scan-form-wrap, .pdf-btn, .lang-toggle { display: none !important; }
+      .results-wrap { display: block !important; padding: 0; }
+      .score-card, .category-section {
+        background: #fff;
+        border: 1px solid #ccc;
+        break-inside: avoid;
+      }
+      .category-body { display: block !important; }
+      .check-item { break-inside: avoid; }
+      .sev-CRITICAL { color: #dc2626 !important; background: #fee2e2 !important; }
+      .sev-HIGH { color: #ea580c !important; background: #ffedd5 !important; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-badge">🛡️ Besplatna analiza · Free analysis</div>
+  <h1>Web <span>Security</span> Scanner</h1>
+  <p>Pasivna bezbednosna analiza — 40+ provera, bez dodirivanja sajta</p>
+  <p style="font-size:0.85rem; margin-top:4px;">Passive security analysis — 40+ checks, no site modification</p>
+</div>
+
+<!-- SCAN FORM -->
+<div class="scan-form-wrap">
+  <div class="scan-box">
+    <div class="scan-input-row">
+      <input
+        class="scan-input"
+        type="text"
+        id="urlInput"
+        placeholder="vasajt.rs ili https://example.com"
+        autocomplete="off"
+        autocorrect="off"
+        spellcheck="false"
+      />
+      <button class="scan-btn" id="scanBtn" onclick="startScan()">
+        Skeniraj sajt
+      </button>
+    </div>
+    <div class="scan-note">
+      🔒 Samo pasivno čitanje javnih informacija — ne menjamo vaš sajt &nbsp;|&nbsp;
+      Only passive reading of public data — we do not modify your site
+    </div>
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-label">
+        <span id="progressStep">Inicijalizacija...</span>
+        <span id="progressPct">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progressBar"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div class="results-wrap" id="resultsWrap">
+  <!-- injected by JS -->
+</div>
+
+<script>
+// Auto-detect: lokalno ili produkcija
+const API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+  ? "http://localhost:8000"
+  : "https://unlimitededition-web-security-scanner.hf.space";
+let currentLang = "sr";
+let currentResults = null;
+
+function setLang(lang) {
+  currentLang = lang;
+  document.querySelectorAll(".lang-btn").forEach(b => {
+    b.classList.toggle("active", b.dataset.lang === lang);
+  });
+  if (currentResults) renderResults(currentResults);
+}
+
+function t(item, field) {
+  // Return localized text from result item
+  if (currentLang === "en") {
+    return item[field + "_en"] || item[field] || "";
+  }
+  return item[field] || "";
+}
+
+async function startScan() {
+  const url = document.getElementById("urlInput").value.trim();
+  if (!url) {
+    alert("Unesite URL sajta.");
+    return;
+  }
+
+  const btn = document.getElementById("scanBtn");
+  btn.disabled = true;
+  btn.textContent = "Skeniranje...";
+
+  document.getElementById("progressWrap").style.display = "block";
+  document.getElementById("resultsWrap").style.display = "none";
+  setProgress("Pokretanje skeniranja...", 2);
+
+  try {
+    // Start scan
+    const startResp = await fetch(`${API_BASE}/scan`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url }),
+    });
+
+    if (!startResp.ok) {
+      const err = await startResp.json();
+      throw new Error(err.detail || "API greška");
+    }
+
+    const { scan_id } = await startResp.json();
+
+    // Poll for results
+    await pollScan(scan_id);
+
+  } catch (err) {
+    showError("Greška: " + err.message + "\n\nProverite da li je Python API pokrenut (python api.py)");
+    btn.disabled = false;
+    btn.textContent = "Skeniraj sajt";
+    document.getElementById("progressWrap").style.display = "none";
+  }
+}
+
+async function pollScan(scanId) {
+  const btn = document.getElementById("scanBtn");
+
+  while (true) {
+    await sleep(800);
+
+    const resp = await fetch(`${API_BASE}/scan/${scanId}`);
+    const data = await resp.json();
+
+    setProgress(data.step || "...", data.progress || 0);
+
+    if (data.status === "completed") {
+      currentResults = data.result;
+      renderResults(data.result);
+      btn.disabled = false;
+      btn.textContent = "Skeniraj ponovo";
+      document.getElementById("progressWrap").style.display = "none";
+      return;
+    }
+
+    if (data.status === "error") {
+      showError("Greška pri skeniranju: " + (data.error || "Nepoznata greška"));
+      btn.disabled = false;
+      btn.textContent = "Skeniraj sajt";
+      document.getElementById("progressWrap").style.display = "none";
+      return;
+    }
+  }
+}
+
+function setProgress(step, pct) {
+  document.getElementById("progressStep").textContent = step;
+  document.getElementById("progressPct").textContent = pct + "%";
+  document.getElementById("progressBar").style.width = pct + "%";
+}
+
+function renderResults(data) {
+  const wrap = document.getElementById("resultsWrap");
+  wrap.style.display = "block";
+  wrap.innerHTML = "";
+
+  // --- Score Card ---
+  const s = data.score;
+  const scoreCard = document.createElement("div");
+  scoreCard.className = "score-card";
+  scoreCard.id = "scoreCard";
+  scoreCard.innerHTML = `
+    <div>
+      <div class="score-grade" style="color:${s.grade_color}">${s.grade}</div>
+    </div>
+    <div class="score-details">
+      <div class="score-number" style="color:${s.grade_color}">${s.score} / 100</div>
+      <div class="score-label">${s.grade_label}</div>
+      <div class="score-counts">
+        ${s.counts.critical ? `<span class="count-badge critical">🔴 ${s.counts.critical} Kritično</span>` : ""}
+        ${s.counts.high ? `<span class="count-badge high">🟠 ${s.counts.high} Visoko</span>` : ""}
+        ${s.counts.medium ? `<span class="count-badge medium">🟡 ${s.counts.medium} Srednje</span>` : ""}
+        ${s.counts.low ? `<span class="count-badge low">🔵 ${s.counts.low} Nisko</span>` : ""}
+      </div>
+      <div class="score-meta">
+        🌐 ${data.domain} &nbsp;·&nbsp;
+        ${data.total_checks} provera &nbsp;·&nbsp;
+        ${data.failed_checks} problema &nbsp;·&nbsp;
+        ⏱ ${data.scan_time}s
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:0.6rem;align-items:flex-end">
+      <div class="lang-toggle">
+        <button class="lang-btn active" data-lang="sr" onclick="setLang('sr')">SR</button>
+        <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+      </div>
+      <button class="pdf-btn" onclick="window.print()">📄 Sačuvaj PDF</button>
+    </div>
+  `;
+  wrap.appendChild(scoreCard);
+
+  // --- Errors (if any) ---
+  if (data.errors && data.errors.length > 0) {
+    const errBox = document.createElement("div");
+    errBox.className = "error-box";
+    errBox.innerHTML = `<strong>⚠️ Upozorenja pri skeniranju:</strong><br>${data.errors.map(e => `• ${e}`).join("<br>")}`;
+    wrap.appendChild(errBox);
+  }
+
+  // --- Group results by category ---
+  const categories = {};
+  for (const item of data.results) {
+    const cat = item.category || "Ostalo";
+    if (!categories[cat]) categories[cat] = [];
+    categories[cat].push(item);
+  }
+
+  const catOrder = [
+    "SSL/TLS", "Security Headers", "DNS Security",
+    "Sensitive Files", "Information Disclosure",
+    "Cookie Security", "Redirects", "CMS/Technology"
+  ];
+
+  const categoryIcons = {
+    "SSL/TLS": "🔐",
+    "Security Headers": "🛡️",
+    "DNS Security": "📡",
+    "Sensitive Files": "📁",
+    "Information Disclosure": "🕵️",
+    "Cookie Security": "🍪",
+    "Redirects": "↪️",
+    "CMS/Technology": "⚙️",
+  };
+
+  const sortedCats = [
+    ...catOrder.filter(c => categories[c]),
+    ...Object.keys(categories).filter(c => !catOrder.includes(c))
+  ];
+
+  for (const catName of sortedCats) {
+    const items = categories[catName];
+    const failed = items.filter(i => !i.passed);
+    const icon = categoryIcons[catName] || "🔍";
+
+    // Category status indicator
+    const hasCritical = failed.some(i => i.severity === "CRITICAL");
+    const hasHigh = failed.some(i => i.severity === "HIGH");
+    const catColor = hasCritical ? "var(--red)" : hasHigh ? "var(--orange)" : failed.length > 0 ? "var(--yellow)" : "var(--green)";
+    const catStatus = failed.length === 0 ? "✅" : hasCritical ? "🔴" : hasHigh ? "🟠" : "🟡";
+
+    const section = document.createElement("div");
+    section.className = "category-section";
+    section.innerHTML = `
+      <div class="category-header" onclick="toggleCategory(this)">
+        <div class="category-title">
+          <span>${icon}</span>
+          <span>${catName}</span>
+          <span style="font-size:0.8rem;font-weight:400;color:var(--text-dim)">
+            (${failed.length > 0 ? failed.length + " problema" : "sve OK"})
+          </span>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.6rem">
+          <span>${catStatus}</span>
+          <span class="category-chevron">▼</span>
+        </div>
+      </div>
+      <div class="category-body ${failed.length > 0 ? 'open' : ''}">
+        ${items.map(item => renderCheckItem(item)).join("")}
+      </div>
+    `;
+    wrap.appendChild(section);
+  }
+
+  // Scroll to results
+  wrap.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function renderCheckItem(item) {
+  const icon = item.passed ? "✅" : {
+    "CRITICAL": "🔴", "HIGH": "🟠", "MEDIUM": "🟡", "LOW": "🔵", "INFO": "ℹ️"
+  }[item.severity] || "⚪";
+
+  const titleText = currentLang === "en" ? (item.title_en || item.title) : item.title;
+  const descText = currentLang === "en" ? (item.description_en || item.description) : item.description;
+  const recText = currentLang === "en" ? (item.recommendation_en || item.recommendation) : item.recommendation;
+
+  return `
+    <div class="check-item">
+      <div class="check-icon">${icon}</div>
+      <div class="check-content">
+        <div class="check-title">
+          <span>${titleText}</span>
+          ${!item.passed ? `<span class="sev-badge sev-${item.severity}">${item.severity}</span>` : ""}
+        </div>
+        ${descText ? `<div class="check-desc">${escHtml(descText)}</div>` : ""}
+        ${recText ? `<div class="check-rec"><strong>✏️ Rešenje:</strong> ${escHtml(recText)}</div>` : ""}
+      </div>
+    </div>
+  `;
+}
+
+function toggleCategory(header) {
+  const body = header.nextElementSibling;
+  const chevron = header.querySelector(".category-chevron");
+  body.classList.toggle("open");
+  chevron.classList.toggle("open");
+}
+
+function showError(msg) {
+  const wrap = document.getElementById("resultsWrap");
+  wrap.style.display = "block";
+  wrap.innerHTML = `<div class="error-box">❌ ${escHtml(msg)}</div>`;
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+// Allow Enter key
+document.getElementById("urlInput").addEventListener("keydown", e => {
+  if (e.key === "Enter") startScan();
+});
+</script>
+
+</body>
+</html>

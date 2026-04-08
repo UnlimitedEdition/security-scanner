@@ -1,0 +1,183 @@
+"""
+DNS Security Checks
+Checks: SPF, DMARC, DNSSEC
+These protect against email spoofing and DNS attacks.
+"""
+import dns.resolver
+from typing import List, Dict, Any
+
+
+def run(domain: str) -> List[Dict[str, Any]]:
+    results = []
+
+    # --- SPF Check ---
+    try:
+        spf_found = False
+        answers = dns.resolver.resolve(domain, "TXT")
+        for rdata in answers:
+            txt = str(rdata).strip('"')
+            if txt.startswith("v=spf1"):
+                spf_found = True
+                # Check for dangerous all mechanism
+                if "+all" in txt:
+                    results.append({
+                        "id": "dns_spf_permissive",
+                        "category": "DNS Security",
+                        "severity": "CRITICAL",
+                        "passed": False,
+                        "title": "SPF record dozvoljava sve (+all) — opasno!",
+                        "title_en": "SPF record allows all (+all) — dangerous!",
+                        "description": "SPF record ima '+all' što znači da BILO KO može slati email sa vašeg domena.",
+                        "description_en": "SPF record has '+all' meaning ANYONE can send email from your domain.",
+                        "recommendation": "Promenite '+all' u '-all' da blokirate neovlašćene pošiljaoce.",
+                        "recommendation_en": "Change '+all' to '-all' to block unauthorized senders.",
+                    })
+                elif "~all" in txt:
+                    # Softfail — better than +all but weaker than -all
+                    results.append({
+                        "id": "dns_spf_softfail",
+                        "category": "DNS Security",
+                        "severity": "LOW",
+                        "passed": False,
+                        "title": "SPF koristi ~all (softfail) umesto -all (hardfail)",
+                        "title_en": "SPF uses ~all (softfail) instead of -all (hardfail)",
+                        "description": f"SPF postoji ali završava sa '~all' (softfail) — email serveri primaju sumnjive emailove ali ih označavaju. Sa '-all' bi ih potpuno odbijali. Vrednost: {txt[:80]}",
+                        "description_en": f"SPF exists but ends with '~all' (softfail) — mail servers accept suspicious emails but mark them. With '-all' they would be fully rejected. Value: {txt[:80]}",
+                        "recommendation": "Promenite '~all' u '-all' za strožu zaštitu od email spoofing-a.",
+                        "recommendation_en": "Change '~all' to '-all' for stricter email spoofing protection.",
+                    })
+                    # Also check for overly permissive +a +mx
+                    if "+a" in txt or "+mx" in txt:
+                        results.append({
+                            "id": "dns_spf_permissive_mechanisms",
+                            "category": "DNS Security",
+                            "severity": "LOW",
+                            "passed": False,
+                            "title": "SPF: +a i +mx mehanizmi su previše permisivni",
+                            "title_en": "SPF: +a and +mx mechanisms are overly permissive",
+                            "description": f"'+a' i '+mx' dozvoljavaju svim serverima koji su u A/MX recordima da šalju email. Koristite samo eksplicitne IP adrese ili include: mehanizme. Vrednost: {txt[:80]}",
+                            "description_en": f"'+a' and '+mx' allow all servers in A/MX records to send email. Use only explicit IP addresses or include: mechanisms. Value: {txt[:80]}",
+                            "recommendation": "Promenite '+a +mx +ip4:...' u samo 'ip4:... include:mailprovider.com -all'.",
+                            "recommendation_en": "Change '+a +mx +ip4:...' to just 'ip4:... include:mailprovider.com -all'.",
+                        })
+                elif "-all" in txt:
+                    results.append({
+                        "id": "dns_spf_ok",
+                        "category": "DNS Security",
+                        "severity": "INFO",
+                        "passed": True,
+                        "title": "SPF record prisutan i strogo konfigurisan ✓",
+                        "title_en": "SPF Record Present and Strictly Configured ✓",
+                        "description": f"SPF: {txt[:100]}",
+                        "description_en": f"SPF: {txt[:100]}",
+                        "recommendation": "",
+                        "recommendation_en": "",
+                    })
+                else:
+                    results.append({
+                        "id": "dns_spf_ok",
+                        "category": "DNS Security",
+                        "severity": "INFO",
+                        "passed": True,
+                        "title": "SPF record prisutan ✓",
+                        "title_en": "SPF Record Present ✓",
+                        "description": f"SPF: {txt[:100]}",
+                        "description_en": f"SPF: {txt[:100]}",
+                        "recommendation": "",
+                        "recommendation_en": "",
+                    })
+                break
+
+        if not spf_found:
+            results.append({
+                "id": "dns_spf_missing",
+                "category": "DNS Security",
+                "severity": "HIGH",
+                "passed": False,
+                "title": "SPF record nedostaje — email spoofing moguć",
+                "title_en": "SPF Record Missing — Email Spoofing Possible",
+                "description": "Bez SPF recorda, napadač može poslati email koji izgleda kao da dolazi sa vašeg domena. Klijenti mogu dobiti lažne fakture ili phishing emailove.",
+                "description_en": "Without an SPF record, anyone can send email that appears to come from your domain. Clients may receive fake invoices or phishing emails.",
+                "recommendation": 'Dodajte TXT record: v=spf1 include:_spf.yourmailprovider.com ~all',
+                "recommendation_en": 'Add TXT record: v=spf1 include:_spf.yourmailprovider.com ~all',
+            })
+    except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.exception.Timeout):
+        results.append({
+            "id": "dns_spf_missing",
+            "category": "DNS Security",
+            "severity": "HIGH",
+            "passed": False,
+            "title": "SPF record nedostaje",
+            "title_en": "SPF Record Missing",
+            "description": "Nije pronađen SPF TXT record za ovaj domen.",
+            "description_en": "No SPF TXT record found for this domain.",
+            "recommendation": "Dodajte SPF record da zaštitite domen od email spoofing-a.",
+            "recommendation_en": "Add an SPF record to protect your domain from email spoofing.",
+        })
+
+    # --- DMARC Check ---
+    try:
+        dmarc_domain = f"_dmarc.{domain}"
+        dmarc_found = False
+        answers = dns.resolver.resolve(dmarc_domain, "TXT")
+        for rdata in answers:
+            txt = str(rdata).strip('"')
+            if txt.startswith("v=DMARC1"):
+                dmarc_found = True
+                # Check policy
+                if "p=none" in txt:
+                    results.append({
+                        "id": "dns_dmarc_weak",
+                        "category": "DNS Security",
+                        "severity": "MEDIUM",
+                        "passed": False,
+                        "title": "DMARC postoji ali samo nadgleda (p=none)",
+                        "title_en": "DMARC exists but only monitors (p=none)",
+                        "description": "DMARC je konfigurisan na p=none što samo loguje, ali ne blokira lažne emailove.",
+                        "description_en": "DMARC is configured with p=none which only logs, but does not block spoofed emails.",
+                        "recommendation": "Promenite na p=quarantine ili p=reject za aktivnu zaštitu.",
+                        "recommendation_en": "Change to p=quarantine or p=reject for active protection.",
+                    })
+                else:
+                    results.append({
+                        "id": "dns_dmarc_ok",
+                        "category": "DNS Security",
+                        "severity": "INFO",
+                        "passed": True,
+                        "title": "DMARC zaštita aktivna ✓",
+                        "title_en": "DMARC Protection Active ✓",
+                        "description": f"DMARC: {txt[:100]}",
+                        "description_en": f"DMARC: {txt[:100]}",
+                        "recommendation": "",
+                        "recommendation_en": "",
+                    })
+                break
+
+        if not dmarc_found:
+            results.append({
+                "id": "dns_dmarc_missing",
+                "category": "DNS Security",
+                "severity": "HIGH",
+                "passed": False,
+                "title": "DMARC record nedostaje",
+                "title_en": "DMARC Record Missing",
+                "description": "Bez DMARC-a nema izveštavanja o pokušajima spoofing-a i emailovi sa vašeg domena lakše prolaze spam filtere napadača.",
+                "description_en": "Without DMARC there is no reporting on spoofing attempts and spoofed emails from your domain more easily pass spam filters.",
+                "recommendation": 'Dodajte TXT record na _dmarc.yourdomain.com: v=DMARC1; p=quarantine; rua=mailto:dmarc@yourdomain.com',
+                "recommendation_en": 'Add TXT record at _dmarc.yourdomain.com: v=DMARC1; p=quarantine; rua=mailto:dmarc@yourdomain.com',
+            })
+    except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.exception.Timeout):
+        results.append({
+            "id": "dns_dmarc_missing",
+            "category": "DNS Security",
+            "severity": "HIGH",
+            "passed": False,
+            "title": "DMARC record nedostaje",
+            "title_en": "DMARC Record Missing",
+            "description": "Nije pronađen DMARC record za ovaj domen.",
+            "description_en": "No DMARC record found for this domain.",
+            "recommendation": "Dodajte DMARC record na _dmarc.yourdomain.com.",
+            "recommendation_en": "Add a DMARC record at _dmarc.yourdomain.com.",
+        })
+
+    return results

@@ -1,0 +1,27 @@
+# fly.toml - Fly.io configuration for Web Security Scanner
+# Deploy with: fly deploy
+
+app = "web-security-scanner"
+primary_region = "ams"  # Amsterdam - najblize Srbiji
+
+[build]
+  dockerfile = "Dockerfile"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = false   # Ne gasi masinu - uvek dostupno
+  auto_start_machines = true
+  min_machines_running = 1     # Uvek barem 1 masina aktivna
+
+  [http_service.concurrency]
+    type = "requests"
+    hard_limit = 25
+    soft_limit = 20
+
+[[vm]]
+  size = "shared-cpu-1x"   # Besplatni tier
+  memory = "256mb"
+
+[env]
+  PORT = "8000"
