@@ -408,15 +408,30 @@
     }
 
     /* FOOTER */
+    .page-wrap {
+      display: flex; flex-direction: column; min-height: 100vh;
+    }
+    .page-content { flex: 1; }
     .footer {
       text-align: center;
-      padding: 2rem 1rem 3rem;
+      padding: 2.5rem 1rem 2.5rem;
       border-top: 1px solid var(--border);
+      background: var(--surface);
       color: var(--text-dim);
       font-size: 0.8rem;
+      margin-top: auto;
     }
     .footer a { color: var(--accent); text-decoration: none; }
     .footer a:hover { text-decoration: underline; }
+    .footer-links {
+      display: flex; justify-content: center; gap: 1.5rem;
+      flex-wrap: wrap; margin-bottom: 0.8rem;
+    }
+    .footer-divider {
+      width: 60px; height: 1px;
+      background: var(--border);
+      margin: 0.8rem auto;
+    }
 
     /* PRINT */
     @media print {
@@ -436,6 +451,8 @@
   </style>
 </head>
 <body>
+<div class="page-wrap">
+<div class="page-content">
 
 <!-- NAVBAR -->
 <nav class="navbar">
@@ -580,13 +597,19 @@
   </div>
 </div>
 
+</div><!-- /.page-content -->
+
 <!-- FOOTER -->
 <footer class="footer">
-  <p>Web Security Scanner &copy; 2026 &mdash;
-    Deo <a href="https://gradovi.rs" target="_blank" rel="noopener">gradovi.rs</a> projekta
-  </p>
+  <div class="footer-links">
+    <a href="https://gradovi.rs" target="_blank" rel="noopener">gradovi.rs</a>
+    <a href="https://toske-programer.web.app" target="_blank" rel="noopener">Izradu radio: Toske-Programer</a>
+  </div>
+  <div class="footer-divider"></div>
+  <p>Web Security Scanner &copy; 2026 &mdash; Deo <a href="https://gradovi.rs" target="_blank" rel="noopener">gradovi.rs</a> projekta</p>
   <p style="margin-top:0.4rem;">Kontakt: info@gradovi.rs</p>
 </footer>
+</div><!-- /.page-wrap -->
 
 <script>
 const API_BASE = (location.hostname === "localhost" || location.hostname === "127.0.0.1")
