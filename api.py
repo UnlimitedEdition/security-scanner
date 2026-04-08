@@ -122,6 +122,13 @@ def root():
     return {"status": "ok", "service": "Web Security Scanner"}
 
 
+@app.get("/ads.txt")
+def ads_txt():
+    path = os.path.join(os.path.dirname(__file__), "ads.txt")
+    if os.path.exists(path):
+        return FileResponse(path, media_type="text/plain")
+
+
 @app.get("/robots.txt")
 def robots():
     path = os.path.join(os.path.dirname(__file__), "robots.txt")
