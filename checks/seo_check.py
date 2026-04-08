@@ -310,26 +310,50 @@ def _check_lang_attr(body):
 
 def _check_sitemap(base_url, session):
     results = []
-    sitemap_urls = [
-        base_url.rstrip("/") + "/sitemap.xml",
-        base_url.rstrip("/") + "/sitemap_index.xml",
+    sitemap_paths = [
+        "/sitemap.xml",
+        "/sitemap_index.xml",
+        "/sitemap/",
+        "/sitemap",
+        "/sitemaps.xml",
+        "/sitemap1.xml",
+        "/post-sitemap.xml",
+        "/page-sitemap.xml",
+        "/wp-sitemap.xml",
     ]
+
+    # Also check robots.txt for Sitemap: directive
+    try:
+        robots_resp = session.get(base_url.rstrip("/") + "/robots.txt", timeout=TIMEOUT)
+        if robots_resp.status_code == 200:
+            for line in robots_resp.text.split("\n"):
+                line = line.strip()
+                if line.lower().startswith("sitemap:"):
+                    sitemap_url = line.split(":", 1)[1].strip()
+                    if sitemap_url and sitemap_url not in sitemap_paths:
+                        sitemap_paths.insert(0, sitemap_url)
+    except Exception:
+        pass
+
     found = False
-    for url in sitemap_urls:
+    found_url = ""
+    for path in sitemap_paths:
         try:
+            url = path if path.startswith("http") else base_url.rstrip("/") + path
             resp = session.get(url, timeout=TIMEOUT, allow_redirects=True)
-            if resp.status_code == 200 and ("<?xml" in resp.text[:100] or "<urlset" in resp.text[:500] or "<sitemapindex" in resp.text[:500]):
+            if resp.status_code == 200 and ("<?xml" in resp.text[:200] or "<urlset" in resp.text[:500] or "<sitemapindex" in resp.text[:500] or "sitemap" in resp.text[:500].lower()):
                 found = True
+                found_url = url
                 break
         except Exception:
             pass
 
     if found:
         results.append(_pass("seo_sitemap_ok",
-            "Sitemap.xml pronadjen",
-            "Sitemap.xml found",
-            "Pretrazivaci mogu efikasno da indeksiraju sve stranice.",
-            "Search engines can efficiently index all pages."))
+            f"Sitemap pronadjen ({found_url.split('/')[-1] or 'sitemap'})",
+            f"Sitemap found ({found_url.split('/')[-1] or 'sitemap'})",
+            f"Pretrazivaci mogu efikasno da indeksiraju sve stranice. URL: {found_url[:80]}",
+            f"Search engines can efficiently index all pages. URL: {found_url[:80]}"))
     else:
         results.append(_fail("seo_sitemap_missing", "MEDIUM",
             "Sitemap.xml nedostaje",

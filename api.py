@@ -75,8 +75,8 @@ scans: Dict[str, Dict[str, Any]] = {}
 
 # Rate limiter: max 10 scans per IP per hour
 _rate_store: Dict[str, list] = defaultdict(list)
-_RATE_LIMIT = 10
-_RATE_WINDOW = 3600
+_RATE_LIMIT = 2
+_RATE_WINDOW = 1800
 
 
 def _check_rate_limit(ip: str) -> bool:

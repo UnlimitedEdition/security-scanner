@@ -229,6 +229,10 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
         page_size_bytes = len(main_response.content)
         final_url = main_response.url
         is_https = final_url.startswith("https://")
+        # Update base_url to follow redirects (e.g. gradovi.rs -> www.gradovi.rs)
+        from urllib.parse import urlparse as _urlparse
+        _parsed_final = _urlparse(final_url)
+        base_url = f"{_parsed_final.scheme}://{_parsed_final.netloc}"
 
         # Detect bot protection / challenge pages
         bot_blocked = _detect_bot_protection(response_body, response_headers)
