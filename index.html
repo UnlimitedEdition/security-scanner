@@ -590,7 +590,7 @@
   </div>
 </div>
 
-<!-- TAB: SECURITY (main results) -->
+<!-- TAB: SECURITY -->
 <div class="tab-panel security-panel active" id="panel-security">
   <div class="print-header" id="printHeader">
     <h2>Web Security Scanner — Izvestaj</h2>
@@ -601,14 +601,7 @@
 
 <!-- TAB: SEO -->
 <div class="tab-panel" id="panel-seo">
-  <div class="results-wrap" id="seoResultsWrap" style="display:none;"></div>
-  <div class="coming-soon-wrap" id="seoPlaceholder">
-    <div class="cs-card" style="grid-column: 1/-1; max-width: 500px; margin: 0 auto;">
-      <div class="cs-icon">&#128270;</div>
-      <h3 data-sr="Skenirajte sajt da vidite SEO analizu" data-en="Scan a site to see SEO analysis">Skenirajte sajt da vidite SEO analizu</h3>
-      <p data-sr="12 provera: title, description, OG tagovi, sitemap, headings, strukturirani podaci..." data-en="12 checks: title, description, OG tags, sitemap, headings, structured data...">12 provera: title, description, OG tagovi, sitemap, headings, strukturirani podaci...</p>
-    </div>
-  </div>
+  <div class="results-wrap" id="seoResultsWrap"></div>
 </div>
 
 <!-- TAB: PERFORMANCE -->
@@ -732,8 +725,6 @@ async function startScan() {
   btn.disabled = true;
   btn.textContent = "Skeniranje...";
 
-  switchTab("security");
-
   document.getElementById("progressWrap").style.display = "block";
   document.getElementById("resultsWrap").style.display = "none";
   document.getElementById("adSlotTop").classList.add("visible");
@@ -783,10 +774,13 @@ async function pollScan(scanId) {
       currentResults = data.result;
       renderResults(data.result);
       btn.disabled = false;
-      btn.textContent = "Skeniraj ponovo";
+      btn.textContent = currentLang === "en" ? "Scan again" : "Skeniraj ponovo";
       document.getElementById("progressWrap").style.display = "none";
       document.getElementById("adSlotTop").classList.remove("visible");
       document.getElementById("adSlotBottom").classList.add("visible");
+      // Show active tab's results
+      var activeTab = document.querySelector(".nav-link.active");
+      if (activeTab) switchTab(activeTab.dataset.tab);
       return;
     }
     if (data.status === "error") {
@@ -1035,19 +1029,22 @@ function renderResults(data) {
 
 function renderSeoTab(data) {
   var seoWrap = document.getElementById("seoResultsWrap");
-  var placeholder = document.getElementById("seoPlaceholder");
   if (!seoWrap) return;
 
   var seoItems = data.results.filter(function(r) { return r.category === "SEO"; });
-  if (seoItems.length === 0) {
-    seoWrap.style.display = "none";
-    if (placeholder) placeholder.style.display = "";
-    return;
-  }
-
-  if (placeholder) placeholder.style.display = "none";
   seoWrap.style.display = "block";
   while (seoWrap.firstChild) seoWrap.removeChild(seoWrap.firstChild);
+
+  if (seoItems.length === 0) {
+    var noData = document.createElement("div");
+    noData.className = "error-box";
+    noData.style.background = "var(--surface)";
+    noData.style.color = "var(--text-dim)";
+    noData.style.borderColor = "var(--border)";
+    noData.textContent = currentLang === "en" ? "No SEO data available for this scan." : "Nema SEO podataka za ovo skeniranje.";
+    seoWrap.appendChild(noData);
+    return;
+  }
 
   var passed = seoItems.filter(function(i) { return i.passed; }).length;
   var failed = seoItems.filter(function(i) { return !i.passed; }).length;
@@ -1073,10 +1070,53 @@ function renderSeoTab(data) {
   summary.appendChild(summaryText);
   seoWrap.appendChild(summary);
 
-  // Individual items
-  seoItems.forEach(function(item) {
-    seoWrap.appendChild(renderItem(item));
-  });
+  // Group SEO items: failed first, then passed
+  var seoFailed = seoItems.filter(function(i) { return !i.passed; });
+  var seoPassed = seoItems.filter(function(i) { return i.passed; });
+
+  if (seoFailed.length > 0) {
+    var failSection = document.createElement("div");
+    failSection.className = "category-section";
+    var failHeader = document.createElement("div");
+    failHeader.className = "category-header";
+    failHeader.onclick = function() { toggleCat(this); };
+    var failTitle = document.createElement("div");
+    failTitle.className = "category-title";
+    failTitle.textContent = (currentLang === "en" ? "Issues to fix" : "Problemi za resavanje") + " (" + seoFailed.length + ")";
+    var failChev = document.createElement("span");
+    failChev.className = "category-chevron open";
+    failChev.textContent = "\u25BC";
+    failHeader.appendChild(failTitle);
+    failHeader.appendChild(failChev);
+    failSection.appendChild(failHeader);
+    var failBody = document.createElement("div");
+    failBody.className = "category-body open";
+    seoFailed.forEach(function(item) { failBody.appendChild(renderItem(item)); });
+    failSection.appendChild(failBody);
+    seoWrap.appendChild(failSection);
+  }
+
+  if (seoPassed.length > 0) {
+    var passSection = document.createElement("div");
+    passSection.className = "category-section";
+    var passHeader = document.createElement("div");
+    passHeader.className = "category-header";
+    passHeader.onclick = function() { toggleCat(this); };
+    var passTitle = document.createElement("div");
+    passTitle.className = "category-title";
+    passTitle.textContent = (currentLang === "en" ? "Passed checks" : "Uspesne provere") + " (" + seoPassed.length + ")";
+    var passChev = document.createElement("span");
+    passChev.className = "category-chevron";
+    passChev.textContent = "\u25BC";
+    passHeader.appendChild(passTitle);
+    passHeader.appendChild(passChev);
+    passSection.appendChild(passHeader);
+    var passBody = document.createElement("div");
+    passBody.className = "category-body";
+    seoPassed.forEach(function(item) { passBody.appendChild(renderItem(item)); });
+    passSection.appendChild(passBody);
+    seoWrap.appendChild(passSection);
+  }
 }
 
 function renderItem(item) {
