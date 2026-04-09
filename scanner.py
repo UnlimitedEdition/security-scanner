@@ -201,6 +201,7 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
 
     # Create a session with common headers
     session = requests.Session()
+    session.verify = True  # Will be set to False if SSL fails
     session.headers.update({
         "User-Agent": USER_AGENT,
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
@@ -225,7 +226,13 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
 
     try:
         update("Učitavanje sajta...", 4)
-        main_response = session.get(base_url, timeout=15, allow_redirects=True)
+        try:
+            main_response = session.get(base_url, timeout=15, allow_redirects=True)
+        except requests.exceptions.SSLError:
+            # SSL cert verification failed — retry without verification
+            # This happens on some hosting environments (HF Spaces) with outdated CA bundles
+            session.verify = False
+            main_response = session.get(base_url, timeout=15, allow_redirects=True)
         response_headers = dict(main_response.headers)
         response_body = main_response.text[:50000]  # Cap at 50KB
         response_time_ms = main_response.elapsed.total_seconds() * 1000
@@ -274,7 +281,11 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
             "failed_checks": 0,
         }
     except Exception as e:
-        errors.append(f"Greška: {str(e)[:100]}")
+        errors.append(f"Greška pri učitavanju: {str(e)[:200]}")
+
+    # Debug: log what we got
+    if not response_body:
+        errors.append(f"Upozorenje: prazan response body (status={main_response.status_code if main_response else 'N/A'}, bot_blocked={bot_blocked})")
 
     # --- 1. SSL/TLS Checks ---
     # --- Crawl site pages ---
