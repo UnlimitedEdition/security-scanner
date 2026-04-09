@@ -544,14 +544,20 @@
     @media print {
       * { color-adjust: exact !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
       body { background: #fff !important; color: #000 !important; font-size: 11pt; }
-      .navbar, .hero, .scan-wrap, .ad-slot, .footer,
+      .navbar, .hero, .scan-wrap, .ad-slot, .footer, .features-section,
       .lang-toggle, .action-btn, .hamburger, .nav-links,
       .page-wrap, .page-content { display: contents !important; }
-      .navbar, .hero, .scan-wrap, .ad-slot, .footer { display: none !important; }
+      .navbar, .hero, .scan-wrap, .ad-slot, .footer, .features-section { display: none !important; }
       .print-header { display: block !important; }
       .results-wrap { display: block !important; padding: 0 !important; max-width: 100% !important; }
-      .tab-panel.security-panel { display: block !important; }
-      .tab-panel:not(.security-panel) { display: none !important; }
+      /* Show panels based on data-print-show attribute */
+      .tab-panel[data-print-show="1"] { display: block !important; }
+      .tab-panel[data-print-show="0"] { display: none !important; }
+      /* Default: show security if no attribute set */
+      .tab-panel:not([data-print-show]) { display: none !important; }
+      .tab-panel.security-panel:not([data-print-show]) { display: block !important; }
+      /* Page break between sections in full report */
+      .tab-panel[data-print-show="1"] + .tab-panel[data-print-show="1"] { page-break-before: always; }
       .score-card {
         background: #f8f9fa !important; border: 2px solid #333 !important;
         break-inside: avoid; margin-bottom: 1rem !important;
@@ -728,16 +734,19 @@
 
 <!-- TAB: SEO -->
 <div class="tab-panel" id="panel-seo">
+  <div class="print-header" style="display:none"><h2>SEO Analiza</h2><p class="print-tab-meta"></p></div>
   <div class="results-wrap" id="seoResultsWrap"></div>
 </div>
 
 <!-- TAB: PERFORMANCE -->
 <div class="tab-panel" id="panel-performance">
+  <div class="print-header" style="display:none"><h2>Performanse i Pristupacnost</h2><p class="print-tab-meta"></p></div>
   <div class="results-wrap" id="perfResultsWrap"></div>
 </div>
 
 <!-- TAB: GDPR -->
 <div class="tab-panel" id="panel-gdpr">
+  <div class="print-header" style="display:none"><h2>GDPR / Privatnost</h2><p class="print-tab-meta"></p></div>
   <div class="results-wrap" id="gdprResultsWrap"></div>
 </div>
 
@@ -1036,11 +1045,41 @@ function renderResults(data) {
   shareBtn.onclick = shareResults;
   actions.appendChild(shareBtn);
 
+  var pdfWrap = document.createElement("div");
+  pdfWrap.style.cssText = "position:relative;display:inline-block";
+
   var pdfBtn = document.createElement("button");
   pdfBtn.className = "action-btn";
-  pdfBtn.textContent = currentLang === "en" ? "Download PDF" : "Preuzmi PDF";
-  pdfBtn.onclick = function() { window.print(); };
-  actions.appendChild(pdfBtn);
+  pdfBtn.textContent = currentLang === "en" ? "Download PDF \u25BC" : "Preuzmi PDF \u25BC";
+  pdfBtn.onclick = function() {
+    var menu = pdfBtn.nextElementSibling;
+    menu.style.display = menu.style.display === "block" ? "none" : "block";
+  };
+  pdfWrap.appendChild(pdfBtn);
+
+  var pdfMenu = document.createElement("div");
+  pdfMenu.style.cssText = "display:none;position:absolute;bottom:100%;right:0;margin-bottom:4px;background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;min-width:200px;z-index:50";
+
+  var menuItems = [
+    { sr: "Kompletan izvestaj (sve sekcije)", en: "Full report (all sections)", mode: "all" },
+    { sr: "Samo Bezbednost", en: "Security only", mode: "security" },
+    { sr: "Samo SEO", en: "SEO only", mode: "seo" },
+    { sr: "Samo Performanse", en: "Performance only", mode: "performance" },
+    { sr: "Samo GDPR", en: "GDPR only", mode: "gdpr" }
+  ];
+
+  menuItems.forEach(function(item) {
+    var opt = document.createElement("button");
+    opt.style.cssText = "display:block;width:100%;text-align:left;background:none;border:none;color:var(--text);font-family:inherit;font-size:0.82rem;padding:0.6rem 1rem;cursor:pointer;border-bottom:1px solid var(--border)";
+    opt.textContent = currentLang === "en" ? item.en : item.sr;
+    opt.onmouseover = function() { opt.style.background = "var(--surface2)"; };
+    opt.onmouseout = function() { opt.style.background = "none"; };
+    opt.onclick = function() { pdfMenu.style.display = "none"; printReport(item.mode); };
+    pdfMenu.appendChild(opt);
+  });
+
+  pdfWrap.appendChild(pdfMenu);
+  actions.appendChild(pdfWrap);
 
   scoreCard.appendChild(actions);
   wrap.appendChild(scoreCard);
@@ -1382,6 +1421,46 @@ function renderItem(item) {
 function toggleCat(h) {
   h.nextElementSibling.classList.toggle("open");
   h.querySelector(".category-chevron").classList.toggle("open");
+}
+
+function printReport(mode) {
+  if (!currentResults) return;
+
+  // Show/hide tab panels for printing
+  var panels = {
+    security: document.getElementById("panel-security"),
+    seo: document.getElementById("panel-seo"),
+    performance: document.getElementById("panel-performance"),
+    gdpr: document.getElementById("panel-gdpr")
+  };
+
+  // Set print mode as data attribute
+  document.body.setAttribute("data-print-mode", mode);
+
+  if (mode === "all") {
+    // Show all panels for printing
+    Object.values(panels).forEach(function(p) { if (p) p.setAttribute("data-print-show", "1"); });
+  } else {
+    // Show only selected panel
+    Object.keys(panels).forEach(function(key) {
+      if (panels[key]) panels[key].setAttribute("data-print-show", key === mode ? "1" : "0");
+    });
+  }
+
+  // Update print header
+  var printMeta = document.getElementById("printMeta");
+  if (printMeta && currentResults) {
+    var s = currentResults.score;
+    var dateStr = new Date().toLocaleDateString(currentLang === "sr" ? "sr-RS" : "en-US");
+    var modeLabel = { all: "Full Report", security: "Security", seo: "SEO", performance: "Performance", gdpr: "GDPR" }[mode];
+    printMeta.textContent = currentResults.domain + " \u2014 " + modeLabel + " \u2014 " + dateStr;
+  }
+
+  window.print();
+
+  // Cleanup
+  document.body.removeAttribute("data-print-mode");
+  Object.values(panels).forEach(function(p) { if (p) p.removeAttribute("data-print-show"); });
 }
 
 function shareResults() {
