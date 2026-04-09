@@ -29,7 +29,7 @@ from checks import admin_check, robots_check, ports_check, cors_check, extras_ch
 from checks import ct_check, subdomain_check, seo_check
 from checks import performance_check, gdpr_check, vuln_check
 from checks import js_check, api_check, accessibility_check, dependency_check
-from checks import observatory_check
+from checks import observatory_check, whois_check, tech_stack_check, email_security_check
 from checks.crawler import crawl
 import risk_engine
 
@@ -436,7 +436,31 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
     except Exception as e:
         errors.append(f"Accessibility check greška: {str(e)[:80]}")
 
-    # --- 22. Mozilla Observatory ---
+    # --- 22. WHOIS / Domain Info ---
+    update("Proveravam WHOIS podatke domena...", 92)
+    try:
+        whois_results = whois_check.run(domain)
+        all_results.extend(whois_results)
+    except Exception as e:
+        errors.append(f"WHOIS check greška: {str(e)[:80]}")
+
+    # --- 23. Technology Stack Detection ---
+    update("Detektujem tehnoloski stek...", 93)
+    try:
+        tech_results = tech_stack_check.run(response_body, response_headers)
+        all_results.extend(tech_results)
+    except Exception as e:
+        errors.append(f"Tech stack check greška: {str(e)[:80]}")
+
+    # --- 24. Email Security ---
+    update("Proveravam email bezbednost...", 94)
+    try:
+        email_results = email_security_check.run(domain)
+        all_results.extend(email_results)
+    except Exception as e:
+        errors.append(f"Email check greška: {str(e)[:80]}")
+
+    # --- 25. Mozilla Observatory ---
     update("Mozilla Observatory analiza...", 95)
     try:
         obs_results = observatory_check.run(domain)

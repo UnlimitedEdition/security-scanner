@@ -1,0 +1,163 @@
+"""
+Email Security Check
+Checks MX records, email authentication, and mail server security.
+"""
+import dns.resolver
+import ssl
+import socket
+from typing import List, Dict, Any
+
+TIMEOUT = 5
+
+
+def run(domain: str) -> List[Dict[str, Any]]:
+    results = []
+
+    # Skip platform domains
+    platform_suffixes = [
+        ".vercel.app", ".netlify.app", ".github.io", ".hf.space",
+        ".web.app", ".firebaseapp.com", ".herokuapp.com", ".pages.dev",
+    ]
+    for suffix in platform_suffixes:
+        if domain.endswith(suffix):
+            results.append(_pass("email_platform",
+                "Email — platform domen",
+                "Email — platform domain",
+                "Platform domeni obicno ne koriste email.",
+                "Platform domains typically don't use email."))
+            return results
+
+    # Check MX records
+    mx_records = []
+    try:
+        answers = dns.resolver.resolve(domain, "MX", lifetime=TIMEOUT)
+        for rdata in answers:
+            mx_records.append({
+                "priority": rdata.preference,
+                "server": str(rdata.exchange).rstrip("."),
+            })
+        mx_records.sort(key=lambda x: x["priority"])
+    except (dns.resolver.NoAnswer, dns.resolver.NXDOMAIN):
+        results.append(_fail("email_no_mx", "MEDIUM",
+            "MX zapisi ne postoje — domen ne prima email",
+            "MX records not found — domain does not receive email",
+            "Domen nema MX zapise sto znaci da ne moze primati email. Ako koristite email na ovom domenu, ovo je problem.",
+            "Domain has no MX records which means it cannot receive email. If you use email on this domain, this is an issue.",
+            "Dodajte MX zapise kod vaseg DNS provajdera.",
+            "Add MX records at your DNS provider."))
+        return results
+    except dns.exception.Timeout:
+        return results
+    except Exception:
+        return results
+
+    if mx_records:
+        mx_list = ", ".join([f"{mx['server']} (pri:{mx['priority']})" for mx in mx_records[:5]])
+        results.append(_pass("email_mx_ok",
+            f"MX zapisi pronadjeni ({len(mx_records)} servera)",
+            f"MX records found ({len(mx_records)} servers)",
+            f"Mail serveri: {mx_list}",
+            f"Mail servers: {mx_list}"))
+
+        # Detect email provider
+        primary_mx = mx_records[0]["server"].lower()
+        provider = "Unknown"
+        if "google" in primary_mx or "gmail" in primary_mx:
+            provider = "Google Workspace"
+        elif "outlook" in primary_mx or "microsoft" in primary_mx:
+            provider = "Microsoft 365"
+        elif "zoho" in primary_mx:
+            provider = "Zoho Mail"
+        elif "protonmail" in primary_mx or "proton" in primary_mx:
+            provider = "ProtonMail"
+        elif "yandex" in primary_mx:
+            provider = "Yandex Mail"
+        elif "mxlogin" in primary_mx or "mailgun" in primary_mx:
+            provider = "Mailgun"
+        elif "sendgrid" in primary_mx:
+            provider = "SendGrid"
+
+        if provider != "Unknown":
+            results.append(_pass("email_provider",
+                f"Email provajder: {provider}",
+                f"Email provider: {provider}",
+                f"Primarni MX server ({primary_mx}) pripada servisu {provider}.",
+                f"Primary MX server ({primary_mx}) belongs to {provider}."))
+
+        # Check if primary MX supports STARTTLS
+        try:
+            mx_host = mx_records[0]["server"]
+            sock = socket.create_connection((mx_host, 25), timeout=TIMEOUT)
+            banner = sock.recv(1024).decode("utf-8", errors="ignore")
+            sock.sendall(b"EHLO scanner.test\r\n")
+            ehlo_resp = sock.recv(4096).decode("utf-8", errors="ignore")
+            sock.close()
+
+            if "STARTTLS" in ehlo_resp.upper():
+                results.append(_pass("email_starttls",
+                    "Mail server podrzava STARTTLS enkripciju",
+                    "Mail server supports STARTTLS encryption",
+                    f"{mx_host} podrzava STARTTLS — email se moze slati enkriptovano.",
+                    f"{mx_host} supports STARTTLS — email can be sent encrypted."))
+            else:
+                results.append(_fail("email_no_starttls", "MEDIUM",
+                    "Mail server ne podrzava STARTTLS",
+                    "Mail server does not support STARTTLS",
+                    f"{mx_host} ne podrzava STARTTLS. Email se salje necifrovano.",
+                    f"{mx_host} does not support STARTTLS. Email is sent unencrypted.",
+                    "Omogucite STARTTLS na mail serveru za enkriptovanu komunikaciju.",
+                    "Enable STARTTLS on the mail server for encrypted communication."))
+        except Exception:
+            pass
+
+    # Check BIMI record (Brand Indicators for Message Identification)
+    try:
+        bimi_domain = f"default._bimi.{domain}"
+        answers = dns.resolver.resolve(bimi_domain, "TXT", lifetime=TIMEOUT)
+        for rdata in answers:
+            txt = str(rdata).strip('"')
+            if "v=BIMI1" in txt:
+                results.append(_pass("email_bimi",
+                    "BIMI record pronadjen — brend logo u email klijentima",
+                    "BIMI record found — brand logo in email clients",
+                    "BIMI omogucava prikaz vaseg loga pored emailova u podrzanim klijentima (Gmail, Apple Mail).",
+                    "BIMI enables display of your logo next to emails in supported clients (Gmail, Apple Mail)."))
+                break
+    except Exception:
+        pass
+
+    # Check MTA-STS
+    try:
+        mta_sts_domain = f"_mta-sts.{domain}"
+        answers = dns.resolver.resolve(mta_sts_domain, "TXT", lifetime=TIMEOUT)
+        for rdata in answers:
+            txt = str(rdata).strip('"')
+            if "v=STSv1" in txt:
+                results.append(_pass("email_mta_sts",
+                    "MTA-STS konfigurisan — zastita od downgrade napada",
+                    "MTA-STS configured — protection against downgrade attacks",
+                    "MTA-STS sprecava napadaca da presretne email komunikaciju uklanjanjem STARTTLS (downgrade napad).",
+                    "MTA-STS prevents attackers from intercepting email by stripping STARTTLS (downgrade attack)."))
+                break
+    except Exception:
+        pass
+
+    return results
+
+
+def _pass(check_id, title_sr, title_en, desc_sr, desc_en):
+    return {
+        "id": check_id, "category": "Email Security", "severity": "INFO", "passed": True,
+        "title": title_sr, "title_en": title_en,
+        "description": desc_sr, "description_en": desc_en,
+        "recommendation": "", "recommendation_en": "",
+    }
+
+
+def _fail(check_id, severity, title_sr, title_en, desc_sr, desc_en, rec_sr, rec_en):
+    return {
+        "id": check_id, "category": "Email Security", "severity": severity, "passed": False,
+        "title": title_sr, "title_en": title_en,
+        "description": desc_sr, "description_en": desc_en,
+        "recommendation": rec_sr, "recommendation_en": rec_en,
+    }

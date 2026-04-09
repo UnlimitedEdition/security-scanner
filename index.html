@@ -781,7 +781,7 @@ const API_BASE = (location.hostname === "localhost" || location.hostname === "12
 let currentLang = "sr";
 let currentResults = null;
 
-const MODULES = ["SSL/TLS","Headers","DNS","Files","Cookies","Redirects","CMS","Vuln","JS","API","Deps","SEO","Perf","GDPR","A11y","Mozilla","CT","Subs"];
+const MODULES = ["SSL/TLS","Headers","DNS","Files","Cookies","Redirects","CMS","Vuln","JS","API","Deps","SEO","Perf","GDPR","A11y","WHOIS","Tech","Email","Mozilla","CT","Subs"];
 
 function switchTab(tab) {
   document.querySelectorAll(".tab-panel").forEach(function(p) { p.classList.remove("active"); });
@@ -1181,8 +1181,8 @@ function renderResults(data) {
     categories[cat].push(item);
   });
 
-  var catOrder = ["SSL/TLS","Security Headers","DNS Security","Mozilla Observatory","Vulnerability Scan","JavaScript Security","API Security","Dependencies","Sensitive Files","Information Disclosure","Cookie Security","Redirects","CMS/Technology","Certificate Transparency","Subdomain Enumeration","Admin Exposure","Open Ports","CORS Policy","Best Practices","robots.txt"];
-  var catIcons = {"SSL/TLS":"\uD83D\uDD10","Security Headers":"\uD83D\uDEE1\uFE0F","DNS Security":"\uD83D\uDCE1","Mozilla Observatory":"\uD83E\uDD8A","Vulnerability Scan":"\uD83D\uDCA3","JavaScript Security":"\uD83D\uDCDC","API Security":"\uD83D\uDD17","Dependencies":"\uD83D\uDCE6","Sensitive Files":"\uD83D\uDCC1","Information Disclosure":"\uD83D\uDD75\uFE0F","Cookie Security":"\uD83C\uDF6A","Redirects":"\u21AA\uFE0F","CMS/Technology":"\u2699\uFE0F","SEO":"\uD83D\uDD0D","Performance":"\u26A1","GDPR":"\uD83D\uDD12","Accessibility":"\u267F","Certificate Transparency":"\uD83D\uDCDC","Subdomain Enumeration":"\uD83C\uDF10","Admin Exposure":"\uD83D\uDD12","Open Ports":"\uD83D\uDEAA","CORS Policy":"\uD83D\uDD00","Best Practices":"\u2B50","robots.txt":"\uD83E\uDD16"};
+  var catOrder = ["SSL/TLS","Security Headers","DNS Security","Mozilla Observatory","WHOIS / Domain","Email Security","Technology Stack","Vulnerability Scan","JavaScript Security","API Security","Dependencies","Sensitive Files","Information Disclosure","Cookie Security","Redirects","CMS/Technology","Certificate Transparency","Subdomain Enumeration","Admin Exposure","Open Ports","CORS Policy","Best Practices","robots.txt"];
+  var catIcons = {"SSL/TLS":"\uD83D\uDD10","Security Headers":"\uD83D\uDEE1\uFE0F","DNS Security":"\uD83D\uDCE1","Mozilla Observatory":"\uD83E\uDD8A","WHOIS / Domain":"\uD83D\uDCCB","Email Security":"\uD83D\uDCE7","Technology Stack":"\uD83D\uDEE0\uFE0F","Vulnerability Scan":"\uD83D\uDCA3","JavaScript Security":"\uD83D\uDCDC","API Security":"\uD83D\uDD17","Dependencies":"\uD83D\uDCE6","Sensitive Files":"\uD83D\uDCC1","Information Disclosure":"\uD83D\uDD75\uFE0F","Cookie Security":"\uD83C\uDF6A","Redirects":"\u21AA\uFE0F","CMS/Technology":"\u2699\uFE0F","SEO":"\uD83D\uDD0D","Performance":"\u26A1","GDPR":"\uD83D\uDD12","Accessibility":"\u267F","Certificate Transparency":"\uD83D\uDCDC","Subdomain Enumeration":"\uD83C\uDF10","Admin Exposure":"\uD83D\uDD12","Open Ports":"\uD83D\uDEAA","CORS Policy":"\uD83D\uDD00","Best Practices":"\u2B50","robots.txt":"\uD83E\uDD16"};
 
   var sorted = catOrder.filter(function(c) { return categories[c]; });
   Object.keys(categories).forEach(function(c) { if (sorted.indexOf(c) === -1) sorted.push(c); });
