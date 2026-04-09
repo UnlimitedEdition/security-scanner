@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GDPR Uskladjenost — Vodic | Web Security Scanner</title>
+  <meta name="description" content="Razumite GDPR zahteve za vas sajt: saglasnost, politika privatnosti, kolacici, prava korisnika i kazne za nepostovanje.">
+  <meta property="og:title" content="GDPR Uskladjenost — Vodic | Web Security Scanner">
+  <meta property="og:description" content="Kompletan vodic za GDPR uskladjenost: consent, privacy policy, cookies, prava korisnika i kazne.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://web-security-scanner.vercel.app/blog-gdpr.html">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="GDPR Uskladjenost — Vodic | Web Security Scanner">
+  <meta name="twitter:description" content="Kompletan vodic za GDPR uskladjenost: consent, privacy policy, cookies, prava korisnika i kazne.">
+  <link rel="canonical" href="https://web-security-scanner.vercel.app/blog-gdpr.html">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0c15; color: #e8eaf6;
+      min-height: 100vh; line-height: 1.7;
+    }
+    .container { max-width: 720px; margin: 0 auto; padding: 3rem 1.5rem 4rem; }
+    a { color: #a78bfa; }
+    h1 { font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .subtitle { color: #7b83a6; margin-bottom: 2.5rem; font-size: 0.9rem; }
+    h2 { font-size: 1.15rem; font-weight: 700; margin: 2rem 0 0.8rem; color: #a78bfa; }
+    p, li { color: #c0c4db; font-size: 0.92rem; margin-bottom: 0.6rem; }
+    ul { padding-left: 1.5rem; margin-bottom: 1rem; }
+    .top-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 2rem;
+    }
+    .back { color: #7b83a6; text-decoration: none; font-size: 0.85rem; }
+    .back:hover { color: #a78bfa; }
+    .lang-toggle { display: flex; gap: 0.3rem; }
+    .lang-btn {
+      background: #1a1e38; border: 1px solid #252a4a; color: #7b83a6;
+      border-radius: 6px; padding: 4px 10px; font-size: 0.78rem;
+      cursor: pointer; font-family: inherit; transition: all 0.2s;
+    }
+    .lang-btn.active { background: #6c63ff; border-color: #6c63ff; color: #fff; }
+    .sr { display: block; }
+    .en { display: none; }
+    body.lang-en .sr { display: none; }
+    body.lang-en .en { display: block; }
+    .footer {
+      border-top: 1px solid #252a4a;
+      margin-top: 3rem; padding-top: 1.5rem;
+      text-align: center; color: #7b83a6; font-size: 0.8rem;
+    }
+  </style>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "GDPR Uskladjenost — Vodic",
+    "description": "Kompletan vodic za GDPR uskladjenost: consent, privacy policy, cookies, prava korisnika i kazne.",
+    "author": { "@type": "Person", "name": "Toske" },
+    "publisher": { "@type": "Organization", "name": "Web Security Scanner" },
+    "datePublished": "2026-04-08",
+    "mainEntityOfPage": "https://web-security-scanner.vercel.app/blog-gdpr.html"
+  }
+  </script>
+</head>
+<body>
+<div class="container">
+  <div class="top-bar">
+    <a href="/" class="back">&larr; <span class="sr">Nazad na skener</span><span class="en">Back to scanner</span></a>
+    <div class="lang-toggle">
+      <button class="lang-btn active" onclick="setLang('sr')">SR</button>
+      <button class="lang-btn" onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+
+  <!-- SERBIAN -->
+  <div class="sr">
+    <h1>GDPR Uskladjenost — Vodic</h1>
+    <p class="subtitle">Objavljeno: 8. april 2026.</p>
+
+    <h2>1. Sta je GDPR i koga se tice?</h2>
+    <p>GDPR (General Data Protection Regulation) je regulativa Evropske unije o zastiti licnih podataka, na snazi od maja 2018. godine. Ovo nije samo EU zakon — tice se svakog sajta koji prikuplja podatke od posetilaca iz EU, bez obzira gde se sajt nalazi.</p>
+    <p>Za Srbiju je ovo posebno relevantno jer Zakon o zastiti podataka o licnosti (ZZPL), usvojen 2018. godine, u velikoj meri prati principe GDPR-a. Ako imate posetioce iz EU ili planirate poslovanje na evropskom trzistu, GDPR uskladjenost je obavezna.</p>
+
+    <h2>2. Kljucni zahtevi GDPR-a</h2>
+    <p>GDPR postavlja jasna pravila za obradu licnih podataka:</p>
+    <ul>
+      <li><strong>Saglasnost (Consent)</strong> — morate dobiti jasnu, informisanu i slobodnu saglasnost korisnika pre prikupljanja njihovih podataka. Unapred cekirani checkbox-ovi nisu validna saglasnost.</li>
+      <li><strong>Politika privatnosti</strong> — svaki sajt mora imati jasnu i razumljivu politiku privatnosti koja objasnjava koje podatke prikupljate, zasto, kako ih koristite i koliko dugo ih cuvate.</li>
+      <li><strong>Pravo na pristup</strong> — korisnici imaju pravo da zatraze kopiju svih podataka koje imate o njima, u razumnom roku (obicno 30 dana).</li>
+      <li><strong>Pravo na brisanje</strong> — poznato kao "pravo na zaborav". Korisnici mogu zatraziti brisanje svih svojih podataka, a vi ste obavezni da to ucinite osim ako ne postoji zakonski razlog za cuvanje.</li>
+      <li><strong>Minimizacija podataka</strong> — prikupljajte samo podatke koji su zaista neophodni za pruzanje usluge. Ne trazite vise informacija nego sto vam treba.</li>
+      <li><strong>Obavestavnje o krsenju</strong> — u slucaju curenja podataka, morate obavestiti nadlezni organ u roku od 72 sata, a pogodnjene korisnike bez nepotrebnog odlaganja.</li>
+    </ul>
+
+    <h2>3. Kolacici i trackeri</h2>
+    <p>Kolacici su jedna od najcescih oblasti neuskladjenosti sa GDPR-om. Evo sta morate znati:</p>
+    <ul>
+      <li><strong>Cookie banner je obavezan</strong> — ako koristite bilo kakve kolacice osim strogo neophodnih (za funkcionalnost sajta), morate traziti saglasnost pre njihovog postavljanja.</li>
+      <li><strong>Opcija odbijanja</strong> — korisnici moraju imati mogucnost da odbiju kolacice jednako lako kao sto ih prihvataju. Dugme "Odbij sve" mora biti jednako vidljivo kao "Prihvati sve".</li>
+      <li><strong>Tipovi kolacica</strong> — razlikujte neophoidne (sesija, korpa), analiticke (Google Analytics), marketinske (Facebook Pixel, AdSense) i funkcionalne (jezicke preference) kolacice.</li>
+      <li><strong>Google Analytics i GDPR</strong> — upotreba Google Analytics zahteva saglasnost korisnika u EU. Razmotrite alternative poput Plausible ili Umami koje su dizajnirane sa privatnoscu na umu.</li>
+    </ul>
+
+    <h2>4. Kazne za nepostovanje</h2>
+    <p>GDPR predvidja ozbiljne kazne za nepostovanje:</p>
+    <ul>
+      <li><strong>Do 20 miliona evra</strong> ili 4% globalnog godisnjeg prometa (sta god je vece) za najozbiljnije prekrsaje poput obrade podataka bez saglasnosti ili krsenja prava korisnika.</li>
+      <li><strong>Do 10 miliona evra</strong> ili 2% prometa za manje prekrsaje poput nedostatka evidencije o obradi podataka ili neobavestavanja o krsenju.</li>
+      <li><strong>Primeri iz prakse</strong> — Amazon je kaznjen sa 746 miliona evra, Meta sa 1.2 milijarde evra, a cak i manje kompanije dobijaju kazne od desetina hiljada evra za nedostatak cookie banner-a ili neadekvatnu politiku privatnosti.</li>
+    </ul>
+    <p>Kazne se primenjuju proporcionalno, tako da mali sajtovi nece dobiti milionske kazne, ali regulatorni organi sve cesce kontrolisu i manje kompanije.</p>
+
+    <h2>5. Kako nas skener proverava GDPR uskladjenost</h2>
+    <p>Nas <a href="/">Web Security Scanner</a> proverava tehnicke aspekte GDPR uskladjenosti vaseg sajta:</p>
+    <ul>
+      <li>Da li sajt ima politiku privatnosti (privacy policy stranicu)</li>
+      <li>Prisustvo cookie banner-a ili consent mehanizma</li>
+      <li>Da li se kolacici postavljaju pre dobijanja saglasnosti</li>
+      <li>HTTPS enkripcija — obavezna za zastitu podataka u prenosu</li>
+      <li>Bezbednosni headeri koji stite korisnicke podatke</li>
+      <li>Prisustvo trecih strana koje prikupljaju podatke (trackeri, analitika)</li>
+    </ul>
+    <p>GDPR uskladjenost nije samo pravna obaveza — to je i nacin da pokazete korisnicima da vam je stalo do njihove privatnosti. <a href="/">Proverite uskladjenost svog sajta &rarr;</a></p>
+  </div>
+
+  <!-- ENGLISH -->
+  <div class="en">
+    <h1>GDPR Compliance — Guide</h1>
+    <p class="subtitle">Published: April 8, 2026.</p>
+
+    <h2>1. What is GDPR and who does it affect?</h2>
+    <p>GDPR (General Data Protection Regulation) is the European Union's regulation on personal data protection, in effect since May 2018. This is not just an EU law — it applies to every website that collects data from EU visitors, regardless of where the site is located.</p>
+    <p>For Serbia, this is particularly relevant as the Law on Personal Data Protection (ZZPL), adopted in 2018, largely follows GDPR principles. If you have visitors from the EU or plan to do business in the European market, GDPR compliance is mandatory.</p>
+
+    <h2>2. Key GDPR requirements</h2>
+    <p>GDPR establishes clear rules for processing personal data:</p>
+    <ul>
+      <li><strong>Consent</strong> — you must obtain clear, informed, and freely given consent from users before collecting their data. Pre-checked checkboxes are not valid consent.</li>
+      <li><strong>Privacy policy</strong> — every website must have a clear and understandable privacy policy explaining what data you collect, why, how you use it, and how long you store it.</li>
+      <li><strong>Right of access</strong> — users have the right to request a copy of all data you hold about them, within a reasonable timeframe (usually 30 days).</li>
+      <li><strong>Right to erasure</strong> — known as the "right to be forgotten." Users can request deletion of all their data, and you are obligated to do so unless there is a legal reason to retain it.</li>
+      <li><strong>Data minimization</strong> — collect only data that is truly necessary for providing the service. Do not request more information than you need.</li>
+      <li><strong>Breach notification</strong> — in case of a data breach, you must notify the supervisory authority within 72 hours and affected users without undue delay.</li>
+    </ul>
+
+    <h2>3. Cookies and trackers</h2>
+    <p>Cookies are one of the most common areas of GDPR non-compliance. Here is what you need to know:</p>
+    <ul>
+      <li><strong>Cookie banner is mandatory</strong> — if you use any cookies beyond strictly necessary ones (for site functionality), you must request consent before setting them.</li>
+      <li><strong>Reject option</strong> — users must be able to reject cookies as easily as they accept them. The "Reject all" button must be as visible as "Accept all."</li>
+      <li><strong>Cookie types</strong> — distinguish between necessary (session, cart), analytical (Google Analytics), marketing (Facebook Pixel, AdSense), and functional (language preferences) cookies.</li>
+      <li><strong>Google Analytics and GDPR</strong> — using Google Analytics requires user consent in the EU. Consider alternatives like Plausible or Umami that are designed with privacy in mind.</li>
+    </ul>
+
+    <h2>4. Penalties for non-compliance</h2>
+    <p>GDPR provides for serious penalties for non-compliance:</p>
+    <ul>
+      <li><strong>Up to 20 million euros</strong> or 4% of global annual turnover (whichever is greater) for the most serious violations such as processing data without consent or violating user rights.</li>
+      <li><strong>Up to 10 million euros</strong> or 2% of turnover for lesser violations such as lack of processing records or failure to report breaches.</li>
+      <li><strong>Real-world examples</strong> — Amazon was fined 746 million euros, Meta 1.2 billion euros, and even smaller companies receive fines of tens of thousands of euros for missing cookie banners or inadequate privacy policies.</li>
+    </ul>
+    <p>Penalties are applied proportionally, so small websites will not receive million-euro fines, but regulatory bodies are increasingly auditing smaller companies as well.</p>
+
+    <h2>5. How our scanner checks GDPR compliance</h2>
+    <p>Our <a href="/">Web Security Scanner</a> checks the technical aspects of your site's GDPR compliance:</p>
+    <ul>
+      <li>Whether the site has a privacy policy page</li>
+      <li>Presence of a cookie banner or consent mechanism</li>
+      <li>Whether cookies are set before obtaining consent</li>
+      <li>HTTPS encryption — mandatory for protecting data in transit</li>
+      <li>Security headers that protect user data</li>
+      <li>Presence of third parties collecting data (trackers, analytics)</li>
+    </ul>
+    <p>GDPR compliance is not just a legal obligation — it is also a way to show users that you care about their privacy. <a href="/">Check your site's compliance &rarr;</a></p>
+  </div>
+
+  <div class="footer">
+    <p>Developed by: <a href="https://toske-programer.web.app" target="_blank" rel="noopener">&lt;Toske/&gt;</a> &mdash; <a href="/">Web Security Scanner</a> &copy; 2026</p>
+  </div>
+</div>
+
+<script>
+function setLang(lang) {
+  document.body.className = lang === "en" ? "lang-en" : "";
+  document.querySelectorAll(".lang-btn").forEach(function(b) {
+    b.classList.toggle("active", b.textContent === lang.toUpperCase());
+  });
+}
+</script>
+</body>
+</html>

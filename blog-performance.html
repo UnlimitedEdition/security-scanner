@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Performanse sajta — Brzina ucitavanja | Web Security Scanner</title>
+  <meta name="description" content="Saznajte zasto je brzina sajta vazna za SEO i konverzije. Vodic za Core Web Vitals, optimizaciju i alate za merenje performansi.">
+  <meta property="og:title" content="Performanse sajta — Brzina ucitavanja | Web Security Scanner">
+  <meta property="og:description" content="Vodic za optimizaciju brzine sajta: Core Web Vitals, kompresija, cache, lazy loading i CDN.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://web-security-scanner.vercel.app/blog-performance.html">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Performanse sajta — Brzina ucitavanja | Web Security Scanner">
+  <meta name="twitter:description" content="Vodic za optimizaciju brzine sajta: Core Web Vitals, kompresija, cache, lazy loading i CDN.">
+  <link rel="canonical" href="https://web-security-scanner.vercel.app/blog-performance.html">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0c15; color: #e8eaf6;
+      min-height: 100vh; line-height: 1.7;
+    }
+    .container { max-width: 720px; margin: 0 auto; padding: 3rem 1.5rem 4rem; }
+    a { color: #a78bfa; }
+    h1 { font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .subtitle { color: #7b83a6; margin-bottom: 2.5rem; font-size: 0.9rem; }
+    h2 { font-size: 1.15rem; font-weight: 700; margin: 2rem 0 0.8rem; color: #a78bfa; }
+    p, li { color: #c0c4db; font-size: 0.92rem; margin-bottom: 0.6rem; }
+    ul { padding-left: 1.5rem; margin-bottom: 1rem; }
+    .top-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 2rem;
+    }
+    .back { color: #7b83a6; text-decoration: none; font-size: 0.85rem; }
+    .back:hover { color: #a78bfa; }
+    .lang-toggle { display: flex; gap: 0.3rem; }
+    .lang-btn {
+      background: #1a1e38; border: 1px solid #252a4a; color: #7b83a6;
+      border-radius: 6px; padding: 4px 10px; font-size: 0.78rem;
+      cursor: pointer; font-family: inherit; transition: all 0.2s;
+    }
+    .lang-btn.active { background: #6c63ff; border-color: #6c63ff; color: #fff; }
+    .sr { display: block; }
+    .en { display: none; }
+    body.lang-en .sr { display: none; }
+    body.lang-en .en { display: block; }
+    .footer {
+      border-top: 1px solid #252a4a;
+      margin-top: 3rem; padding-top: 1.5rem;
+      text-align: center; color: #7b83a6; font-size: 0.8rem;
+    }
+  </style>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Performanse sajta — Brzina ucitavanja",
+    "description": "Vodic za optimizaciju brzine sajta: Core Web Vitals, kompresija, cache, lazy loading i CDN.",
+    "author": { "@type": "Person", "name": "Toske" },
+    "publisher": { "@type": "Organization", "name": "Web Security Scanner" },
+    "datePublished": "2026-04-08",
+    "mainEntityOfPage": "https://web-security-scanner.vercel.app/blog-performance.html"
+  }
+  </script>
+</head>
+<body>
+<div class="container">
+  <div class="top-bar">
+    <a href="/" class="back">&larr; <span class="sr">Nazad na skener</span><span class="en">Back to scanner</span></a>
+    <div class="lang-toggle">
+      <button class="lang-btn active" onclick="setLang('sr')">SR</button>
+      <button class="lang-btn" onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+
+  <!-- SERBIAN -->
+  <div class="sr">
+    <h1>Performanse sajta — Brzina ucitavanja</h1>
+    <p class="subtitle">Objavljeno: 8. april 2026.</p>
+
+    <h2>1. Zasto je brzina sajta bitna?</h2>
+    <p>Brzina ucitavanja vaseg sajta direktno utice na tri kljucna aspekta vase online prisutnosti:</p>
+    <ul>
+      <li><strong>Konverzije</strong> — istrazivanja pokazuju da svaka sekunda kasnjenja u ucitavanju smanjuje konverzije za 7%. Amazon je utvrdio da bi 100ms sporije ucitavanje kostalo 1% prodaje godisnje.</li>
+      <li><strong>SEO rangiranje</strong> — Google koristi brzinu sajta kao direktan faktor rangiranja. Od 2021. godine, Core Web Vitals su zvanican deo algoritma pretrage.</li>
+      <li><strong>Korisnicko iskustvo (UX)</strong> — 53% mobilnih korisnika napusta sajt koji se ucitava duze od 3 sekunde. Brz sajt znaci zadovoljne posetioce koji se vracaju.</li>
+    </ul>
+
+    <h2>2. Core Web Vitals — kljucne metrike</h2>
+    <p>Google je definisao tri kljucne metrike koje mere korisnicko iskustvo na sajtu:</p>
+    <ul>
+      <li><strong>LCP (Largest Contentful Paint)</strong> — meri koliko brzo se ucitava najveci vidljivi element na stranici (slika, video, blok teksta). Cilj: ispod 2.5 sekunde.</li>
+      <li><strong>CLS (Cumulative Layout Shift)</strong> — meri vizuelnu stabilnost stranice, tj. koliko se elementi pomeraju tokom ucitavanja. Cilj: ispod 0.1. Fiksne dimenzije za slike i oglase resavaju vecinu problema.</li>
+      <li><strong>INP (Interaction to Next Paint)</strong> — meri odzivnost stranice na korisnicke interakcije (klikove, tapove, unos teksta). Cilj: ispod 200 milisekundi. Zamenio je stariju metriku FID od marta 2024.</li>
+    </ul>
+    <p>Ove metrike mozete pratiti u Google Search Console, pod odeljkom "Core Web Vitals".</p>
+
+    <h2>3. Tehnike optimizacije brzine</h2>
+    <p>Konkretni koraci koji mogu dramaticno ubrzati vas sajt:</p>
+    <ul>
+      <li><strong>Kompresija slika</strong> — koristite moderne formate poput WebP ili AVIF umesto PNG/JPEG. Alati poput Squoosh ili TinyPNG mogu smanjiti velicinu slika za 60-80% bez vidljivog gubitka kvaliteta.</li>
+      <li><strong>Browser caching</strong> — postavite Cache-Control i Expires headere da browser cuva staticke resurse (CSS, JS, slike) lokalno, umesto da ih preuzima pri svakoj poseti.</li>
+      <li><strong>Lazy loading</strong> — ucitavajte slike i iframe elemente tek kada korisnik skroluje do njih. Jednostavno dodajte <code>loading="lazy"</code> atribut na img i iframe tagove.</li>
+      <li><strong>CDN (Content Delivery Network)</strong> — distribuirajte sadrzaj na servere sirom sveta. Posetilac dobija sadrzaj sa najblizeg servera, sto dramaticno smanjuje latenciju.</li>
+      <li><strong>Minifikacija CSS i JS</strong> — uklonite nepotrebne razmake, komentare i nekorisceni kod. Alati poput Terser (JS) i cssnano (CSS) automatizuju ovaj proces.</li>
+      <li><strong>Gzip/Brotli kompresija</strong> — omogucite kompresiju na serveru da smanjite velicinu prenosa podataka za 70-90%.</li>
+    </ul>
+
+    <h2>4. Alati za merenje performansi</h2>
+    <p>Koristite ove alate za analizu i pracenje brzine vaseg sajta:</p>
+    <ul>
+      <li><strong>Google Lighthouse</strong> — ugraden u Chrome DevTools (F12 > Lighthouse tab). Daje sveobuhvatan izvestaj o performansama, pristupacnosti, SEO-u i najboljim praksama sa ocenom od 0 do 100.</li>
+      <li><strong>PageSpeed Insights</strong> — Google-ov online alat koji analizira stranicu i daje preporuke. Prikazuje i realne podatke korisnika (CrUX) i laboratorijske testove.</li>
+      <li><strong>WebPageTest</strong> — napredniji alat koji omogucava testiranje sa razlicitih lokacija, browsera i brzina konekcije. Pruza detaljan waterfall dijagram ucitavanja.</li>
+      <li><strong>GTmetrix</strong> — kombinuje podatke iz razlicitih izvora i prikazuje istoriju performansi tokom vremena.</li>
+    </ul>
+
+    <h2>5. Sta nas skener meri</h2>
+    <p>Nas <a href="/">Web Security Scanner</a> proverava vise aspekata performansi vaseg sajta:</p>
+    <ul>
+      <li>Vreme odgovora servera i TTFB (Time to First Byte)</li>
+      <li>Da li je Gzip ili Brotli kompresija omogucena</li>
+      <li>Prisustvo Cache-Control headera za staticke resurse</li>
+      <li>Velicinu i optimizaciju HTML odgovora</li>
+      <li>SSL/TLS handshake vreme koje utice na ukupne performanse</li>
+    </ul>
+    <p>Brz i siguran sajt je pobednicki sajt. <a href="/">Proverite performanse svog sajta odmah &rarr;</a></p>
+  </div>
+
+  <!-- ENGLISH -->
+  <div class="en">
+    <h1>Website Performance — Loading Speed</h1>
+    <p class="subtitle">Published: April 8, 2026.</p>
+
+    <h2>1. Why does website speed matter?</h2>
+    <p>Your website's loading speed directly impacts three key aspects of your online presence:</p>
+    <ul>
+      <li><strong>Conversions</strong> — research shows that every second of loading delay reduces conversions by 7%. Amazon found that 100ms of additional latency would cost 1% of annual sales.</li>
+      <li><strong>SEO rankings</strong> — Google uses page speed as a direct ranking factor. Since 2021, Core Web Vitals have been an official part of the search algorithm.</li>
+      <li><strong>User experience (UX)</strong> — 53% of mobile users abandon a site that takes longer than 3 seconds to load. A fast site means satisfied visitors who return.</li>
+    </ul>
+
+    <h2>2. Core Web Vitals — key metrics</h2>
+    <p>Google has defined three key metrics that measure user experience on a website:</p>
+    <ul>
+      <li><strong>LCP (Largest Contentful Paint)</strong> — measures how quickly the largest visible element loads on the page (image, video, text block). Target: under 2.5 seconds.</li>
+      <li><strong>CLS (Cumulative Layout Shift)</strong> — measures visual stability of the page, i.e., how much elements shift during loading. Target: below 0.1. Fixed dimensions for images and ads solve most issues.</li>
+      <li><strong>INP (Interaction to Next Paint)</strong> — measures page responsiveness to user interactions (clicks, taps, text input). Target: under 200 milliseconds. Replaced the older FID metric as of March 2024.</li>
+    </ul>
+    <p>You can track these metrics in Google Search Console, under the "Core Web Vitals" section.</p>
+
+    <h2>3. Speed optimization techniques</h2>
+    <p>Concrete steps that can dramatically speed up your site:</p>
+    <ul>
+      <li><strong>Image compression</strong> — use modern formats like WebP or AVIF instead of PNG/JPEG. Tools like Squoosh or TinyPNG can reduce image size by 60-80% without visible quality loss.</li>
+      <li><strong>Browser caching</strong> — set Cache-Control and Expires headers so the browser stores static resources (CSS, JS, images) locally instead of downloading them on every visit.</li>
+      <li><strong>Lazy loading</strong> — load images and iframe elements only when the user scrolls to them. Simply add the <code>loading="lazy"</code> attribute to img and iframe tags.</li>
+      <li><strong>CDN (Content Delivery Network)</strong> — distribute content to servers worldwide. Visitors receive content from the nearest server, dramatically reducing latency.</li>
+      <li><strong>CSS and JS minification</strong> — remove unnecessary whitespace, comments, and unused code. Tools like Terser (JS) and cssnano (CSS) automate this process.</li>
+      <li><strong>Gzip/Brotli compression</strong> — enable server-side compression to reduce data transfer size by 70-90%.</li>
+    </ul>
+
+    <h2>4. Performance measurement tools</h2>
+    <p>Use these tools to analyze and monitor your site's speed:</p>
+    <ul>
+      <li><strong>Google Lighthouse</strong> — built into Chrome DevTools (F12 > Lighthouse tab). Provides a comprehensive report on performance, accessibility, SEO, and best practices with a score from 0 to 100.</li>
+      <li><strong>PageSpeed Insights</strong> — Google's online tool that analyzes a page and provides recommendations. Shows both real user data (CrUX) and lab tests.</li>
+      <li><strong>WebPageTest</strong> — an advanced tool that allows testing from different locations, browsers, and connection speeds. Provides detailed loading waterfall diagrams.</li>
+      <li><strong>GTmetrix</strong> — combines data from various sources and displays performance history over time.</li>
+    </ul>
+
+    <h2>5. What our scanner measures</h2>
+    <p>Our <a href="/">Web Security Scanner</a> checks multiple performance aspects of your site:</p>
+    <ul>
+      <li>Server response time and TTFB (Time to First Byte)</li>
+      <li>Whether Gzip or Brotli compression is enabled</li>
+      <li>Presence of Cache-Control headers for static resources</li>
+      <li>HTML response size and optimization</li>
+      <li>SSL/TLS handshake time that affects overall performance</li>
+    </ul>
+    <p>A fast and secure site is a winning site. <a href="/">Check your site's performance now &rarr;</a></p>
+  </div>
+
+  <div class="footer">
+    <p>Developed by: <a href="https://toske-programer.web.app" target="_blank" rel="noopener">&lt;Toske/&gt;</a> &mdash; <a href="/">Web Security Scanner</a> &copy; 2026</p>
+  </div>
+</div>
+
+<script>
+function setLang(lang) {
+  document.body.className = lang === "en" ? "lang-en" : "";
+  document.querySelectorAll(".lang-btn").forEach(function(b) {
+    b.classList.toggle("active", b.textContent === lang.toUpperCase());
+  });
+}
+</script>
+</body>
+</html>

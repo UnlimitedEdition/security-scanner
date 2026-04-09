@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bezbednost sajta — Zasto je vazna? | Web Security Scanner</title>
+  <meta name="description" content="Saznajte zasto je web bezbednost kriticna za vas sajt. Upoznajte najcesce napade, posledice hakovanja i kako da se zastitite.">
+  <meta property="og:title" content="Bezbednost sajta — Zasto je vazna? | Web Security Scanner">
+  <meta property="og:description" content="Vodic za web bezbednost: najcesci napadi, posledice i zastita vaseg sajta.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://web-security-scanner.vercel.app/blog-security.html">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Bezbednost sajta — Zasto je vazna? | Web Security Scanner">
+  <meta name="twitter:description" content="Vodic za web bezbednost: najcesci napadi, posledice i zastita vaseg sajta.">
+  <link rel="canonical" href="https://web-security-scanner.vercel.app/blog-security.html">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0c15; color: #e8eaf6;
+      min-height: 100vh; line-height: 1.7;
+    }
+    .container { max-width: 720px; margin: 0 auto; padding: 3rem 1.5rem 4rem; }
+    a { color: #a78bfa; }
+    h1 { font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .subtitle { color: #7b83a6; margin-bottom: 2.5rem; font-size: 0.9rem; }
+    h2 { font-size: 1.15rem; font-weight: 700; margin: 2rem 0 0.8rem; color: #a78bfa; }
+    p, li { color: #c0c4db; font-size: 0.92rem; margin-bottom: 0.6rem; }
+    ul { padding-left: 1.5rem; margin-bottom: 1rem; }
+    .top-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 2rem;
+    }
+    .back { color: #7b83a6; text-decoration: none; font-size: 0.85rem; }
+    .back:hover { color: #a78bfa; }
+    .lang-toggle { display: flex; gap: 0.3rem; }
+    .lang-btn {
+      background: #1a1e38; border: 1px solid #252a4a; color: #7b83a6;
+      border-radius: 6px; padding: 4px 10px; font-size: 0.78rem;
+      cursor: pointer; font-family: inherit; transition: all 0.2s;
+    }
+    .lang-btn.active { background: #6c63ff; border-color: #6c63ff; color: #fff; }
+    .sr { display: block; }
+    .en { display: none; }
+    body.lang-en .sr { display: none; }
+    body.lang-en .en { display: block; }
+    .footer {
+      border-top: 1px solid #252a4a;
+      margin-top: 3rem; padding-top: 1.5rem;
+      text-align: center; color: #7b83a6; font-size: 0.8rem;
+    }
+  </style>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Bezbednost sajta — Zasto je vazna?",
+    "description": "Vodic za web bezbednost: najcesci napadi, posledice hakovanja i kako da zastitite svoj sajt.",
+    "author": { "@type": "Person", "name": "Toske" },
+    "publisher": { "@type": "Organization", "name": "Web Security Scanner" },
+    "datePublished": "2026-04-08",
+    "mainEntityOfPage": "https://web-security-scanner.vercel.app/blog-security.html"
+  }
+  </script>
+</head>
+<body>
+<div class="container">
+  <div class="top-bar">
+    <a href="/" class="back">&larr; <span class="sr">Nazad na skener</span><span class="en">Back to scanner</span></a>
+    <div class="lang-toggle">
+      <button class="lang-btn active" onclick="setLang('sr')">SR</button>
+      <button class="lang-btn" onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+
+  <!-- SERBIAN -->
+  <div class="sr">
+    <h1>Bezbednost sajta — Zasto je vazna?</h1>
+    <p class="subtitle">Objavljeno: 8. april 2026.</p>
+
+    <h2>1. Sta je web bezbednost?</h2>
+    <p>Web bezbednost obuhvata sve mere i prakse koje stite veb sajtove i web aplikacije od neovlascenog pristupa, krade podataka i zlonamernih napada. U danasnje vreme, kada se sve vise posla, komunikacije i transakcija obavlja online, bezbednost veb sajta nije luksuz — vec apsolutna neophodnost.</p>
+    <p>Cak i mali sajtovi su meta napada. Automatski botovi skeniraju milione sajtova dnevno trazeci ranjivosti, bez obzira na velicinu ili popularnost sajta.</p>
+
+    <h2>2. Najcesci napadi na veb sajtove</h2>
+    <p>Razumevanje pretnji je prvi korak ka zastiti. Evo najcescih tipova napada:</p>
+    <ul>
+      <li><strong>SQL Injection</strong> — napadac ubacuje maliciozni SQL kod kroz forme na sajtu i moze pristupiti celoj bazi podataka, ukljucujuci korisnicke naloge i lozinke.</li>
+      <li><strong>Cross-Site Scripting (XSS)</strong> — zlonameran JavaScript kod se ubacuje na stranicu i izvrsava u browseru posetilaca, kradeci kolacice, sesije ili preusmeravajuci korisnike.</li>
+      <li><strong>Cross-Site Request Forgery (CSRF)</strong> — napadac navodi korisnika da nesvesno izvrsi neku akciju na sajtu na kom je ulogovan, poput promene lozinke ili transfera novca.</li>
+      <li><strong>Phishing</strong> — lazne stranice ili mejlovi koji imitiraju legitimne servise kako bi ukrali korisnicke kredencijale.</li>
+      <li><strong>DDoS napadi</strong> — masovni zahtevi koji preopterecuju server i cine sajt nedostupnim za prave korisnike.</li>
+    </ul>
+
+    <h2>3. Posledice hakovanja</h2>
+    <p>Posledice uspesnog napada mogu biti razorne i dalekosezne:</p>
+    <ul>
+      <li><strong>Gubitak podataka</strong> — licni podaci korisnika, finansijske informacije i poslovna dokumenta mogu biti ukradeni ili obrisani.</li>
+      <li><strong>Steta po reputaciju</strong> — poverenje korisnika je tesko povratiti nakon sto sajt bude kompromitovan. Google moze oznaciti sajt kao nesiguran.</li>
+      <li><strong>Finansijski gubici</strong> — troskovi oporavka, pravne posledice, gubitak prihoda i potencijalne kazne (narocito pod GDPR regulativom).</li>
+      <li><strong>SEO penali</strong> — Google kaznjava hakovane sajtove snizenjem ranga u rezultatima pretrage, sto moze trajati mesecima.</li>
+    </ul>
+
+    <h2>4. Kako da zastitite svoj sajt</h2>
+    <p>Dobra vest je da postoje konkretni koraci koje mozete preduzeti vec danas:</p>
+    <ul>
+      <li><strong>SSL/TLS sertifikat</strong> — koristite HTTPS za enkripciju svih podataka izmedju korisnika i servera. Besplatni sertifikati su dostupni putem Let's Encrypt.</li>
+      <li><strong>Bezbednosni HTTP headeri</strong> — implementirajte Content-Security-Policy, X-Frame-Options, Strict-Transport-Security i druge headere koji stite od razlicitih napada.</li>
+      <li><strong>Jake lozinke i 2FA</strong> — koristite duge, jedinstvene lozinke za admin panele i omogucite dvofaktorsku autentifikaciju gde god je moguce.</li>
+      <li><strong>Redovno azuriranje</strong> — odrzavajte CMS, plugine, teme i sve zavisnosti azurnim. Vecina napada koristi poznate ranjivosti u zastarelom softveru.</li>
+      <li><strong>Backup strategija</strong> — pravite redovne rezervne kopije sajta i baze podataka. Cuvajte ih na zasebnoj lokaciji.</li>
+    </ul>
+
+    <h2>5. Sta nas skener proverava</h2>
+    <p>Nas <a href="/">Web Security Scanner</a> vrsi pasivnu analizu vaseg sajta i proverava:</p>
+    <ul>
+      <li>Da li sajt koristi HTTPS i da li je SSL sertifikat validan</li>
+      <li>Prisustvo kljucnih bezbednosnih HTTP headera</li>
+      <li>Potencijalne ranjivosti u konfiguraciji servera</li>
+      <li>Izlozenost osetljivih fajlova i direktorijuma</li>
+      <li>Opstu bezbednosnu ocenu sa preporukama za poboljsanje</li>
+    </ul>
+    <p>Skeniranje je besplatno, brzo i ne zahteva registraciju. <a href="/">Probajte odmah &rarr;</a></p>
+
+    <h2>6. Zakljucak</h2>
+    <p>Web bezbednost je kontinuiran proces, a ne jednokratan zadatak. Redovnim proverama, azuriranjem i primenom najboljih praksi mozete znacajno smanjiti rizik od napada. Pocnite danas — skenirajte svoj sajt i identifikujte potencijalne probleme pre nego sto to ucine napadaci.</p>
+  </div>
+
+  <!-- ENGLISH -->
+  <div class="en">
+    <h1>Website Security — Why Does It Matter?</h1>
+    <p class="subtitle">Published: April 8, 2026.</p>
+
+    <h2>1. What is web security?</h2>
+    <p>Web security encompasses all measures and practices that protect websites and web applications from unauthorized access, data theft, and malicious attacks. In today's world, where business, communication, and transactions increasingly happen online, website security is not a luxury — it is an absolute necessity.</p>
+    <p>Even small websites are targeted. Automated bots scan millions of sites daily looking for vulnerabilities, regardless of the site's size or popularity.</p>
+
+    <h2>2. Most common web attacks</h2>
+    <p>Understanding threats is the first step toward protection. Here are the most common attack types:</p>
+    <ul>
+      <li><strong>SQL Injection</strong> — an attacker injects malicious SQL code through website forms, potentially accessing the entire database, including user accounts and passwords.</li>
+      <li><strong>Cross-Site Scripting (XSS)</strong> — malicious JavaScript code is injected into a page and executed in visitors' browsers, stealing cookies, sessions, or redirecting users.</li>
+      <li><strong>Cross-Site Request Forgery (CSRF)</strong> — an attacker tricks a user into unknowingly performing actions on a site where they are logged in, such as changing passwords or transferring funds.</li>
+      <li><strong>Phishing</strong> — fake pages or emails that mimic legitimate services to steal user credentials.</li>
+      <li><strong>DDoS attacks</strong> — massive requests that overwhelm the server and make the site unavailable to legitimate users.</li>
+    </ul>
+
+    <h2>3. Consequences of being hacked</h2>
+    <p>The consequences of a successful attack can be devastating and far-reaching:</p>
+    <ul>
+      <li><strong>Data loss</strong> — personal user data, financial information, and business documents can be stolen or deleted.</li>
+      <li><strong>Reputation damage</strong> — user trust is hard to rebuild after a site is compromised. Google may flag the site as unsafe.</li>
+      <li><strong>Financial losses</strong> — recovery costs, legal consequences, revenue loss, and potential fines (especially under GDPR regulations).</li>
+      <li><strong>SEO penalties</strong> — Google penalizes hacked sites by lowering their search rankings, which can last for months.</li>
+    </ul>
+
+    <h2>4. How to protect your website</h2>
+    <p>The good news is that there are concrete steps you can take today:</p>
+    <ul>
+      <li><strong>SSL/TLS certificate</strong> — use HTTPS to encrypt all data between users and the server. Free certificates are available through Let's Encrypt.</li>
+      <li><strong>Security HTTP headers</strong> — implement Content-Security-Policy, X-Frame-Options, Strict-Transport-Security, and other headers that protect against various attacks.</li>
+      <li><strong>Strong passwords and 2FA</strong> — use long, unique passwords for admin panels and enable two-factor authentication wherever possible.</li>
+      <li><strong>Regular updates</strong> — keep your CMS, plugins, themes, and all dependencies up to date. Most attacks exploit known vulnerabilities in outdated software.</li>
+      <li><strong>Backup strategy</strong> — create regular backups of your website and database. Store them in a separate location.</li>
+    </ul>
+
+    <h2>5. What our scanner checks</h2>
+    <p>Our <a href="/">Web Security Scanner</a> performs a passive analysis of your site and checks:</p>
+    <ul>
+      <li>Whether the site uses HTTPS and if the SSL certificate is valid</li>
+      <li>Presence of essential security HTTP headers</li>
+      <li>Potential vulnerabilities in server configuration</li>
+      <li>Exposure of sensitive files and directories</li>
+      <li>An overall security score with recommendations for improvement</li>
+    </ul>
+    <p>Scanning is free, fast, and requires no registration. <a href="/">Try it now &rarr;</a></p>
+
+    <h2>6. Conclusion</h2>
+    <p>Web security is an ongoing process, not a one-time task. With regular audits, updates, and best practices, you can significantly reduce the risk of attacks. Start today — scan your website and identify potential issues before attackers do.</p>
+  </div>
+
+  <div class="footer">
+    <p>Developed by: <a href="https://toske-programer.web.app" target="_blank" rel="noopener">&lt;Toske/&gt;</a> &mdash; <a href="/">Web Security Scanner</a> &copy; 2026</p>
+  </div>
+</div>
+
+<script>
+function setLang(lang) {
+  document.body.className = lang === "en" ? "lang-en" : "";
+  document.querySelectorAll(".lang-btn").forEach(function(b) {
+    b.classList.toggle("active", b.textContent === lang.toUpperCase());
+  });
+}
+</script>
+</body>
+</html>

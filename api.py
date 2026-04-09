@@ -177,6 +177,17 @@ def privacy():
         return FileResponse(path, media_type="text/html")
 
 
+@app.get("/blog-{page}.html")
+def blog_page(page: str):
+    allowed = ["security", "seo", "performance", "gdpr"]
+    if page not in allowed:
+        raise HTTPException(status_code=404, detail="Page not found")
+    path = os.path.join(os.path.dirname(__file__), f"blog-{page}.html")
+    if os.path.exists(path):
+        return FileResponse(path, media_type="text/html")
+    raise HTTPException(status_code=404, detail="Page not found")
+
+
 @app.get("/google739403949172c6ee.html")
 def google_verify():
     path = os.path.join(os.path.dirname(__file__), "google739403949172c6ee.html")
