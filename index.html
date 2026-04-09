@@ -694,13 +694,9 @@ function setLang(lang) {
 }
 
 function isAdBlocked() {
-  // Check 1: adsbygoogle script loaded?
+  // Check: did the main adsbygoogle script load?
+  // Note: googlefc (funding choices) may not load until AdSense approves the site
   if (typeof window.adsbygoogle === "undefined") return true;
-  // Check 2: funding choices loaded?
-  if (typeof window.googlefc === "undefined") return true;
-  // Check 3: create test ad element
-  var ins = document.querySelector("ins.adsbygoogle");
-  if (ins && ins.innerHTML === "" && ins.offsetHeight === 0) return true;
   return false;
 }
 
