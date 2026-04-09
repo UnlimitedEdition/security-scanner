@@ -10,8 +10,52 @@
 - ✅ privacy.html
 - ❌ 11 novih blog clanaka preostalo (6 Perf + 5 GDPR)
 - ✅ sitemap.xml (31 URL-ova, buduci clanci ukljuceni)
-- ✅ api.py (blog-common.css/js rute + wildcard bez allowed liste)
-- ❌ deploy
+- ✅ api.py (blog-common.css/js rute + wildcard + GZip + /index.html ruta)
+- ✅ scanner.py fix: SSL retry verify=False, bot detection false-positive fix, Vercel challenge retry
+- ✅ GDPR check fix: fundingchoicesmessages detekcija, privacy.html pattern
+- ✅ index.html fix: h3→h2, static footer, semantic tags, ARIA, 110+ count
+- ❌ PAID MULTI-PAGE SCANNING SYSTEM (nova faza — detalji ispod)
+- ❌ deploy Vercel radi ali challenge blokira — 3 IP-a allowovana u firewall
+
+---
+
+## PAID MULTI-PAGE SCANNING — PLAN IMPLEMENTACIJE
+
+### Koncept
+Crawler vec pronalazi do 20 stranica. Free korisnik dobija SAMO homepage analizu.
+Crawled stranice se prikazuju kao teaser → "Zelite analizu svih XX stranica? Izaberite paket."
+
+### Paketi (jednokratno placanje)
+- 5 stranica — starter
+- 10 stranica — popular
+- 30 stranica — pro
+- 50 stranica — enterprise
+
+### Queue sistem (round-robin)
+4 korisnika sa 50 stranica: a1,b1,c1,d1,a2,b2,c2,d2...
+Niko ne ceka da drugi zavrsi. Progresivni rezultati.
+
+### Boost opcija
+- Parallel obrada (3-5 concurrent) = brze ali skuplje
+- Prepaid krediti: 10/100/1000 zahteva unapred
+
+### Rate limit
+- Free: 2 skeniranja / 2 sata (smanjiti sa trenutnih 5/30min)
+- Paid: bez limita dok traje paket
+
+### Faze implementacije
+1. Smanjiti free rate limit + crawler teaser (prikaži listu stranica)
+2. Stripe payment integration
+3. Multipage scan backend (POST /scan/multipage, round-robin queue)
+4. Frontend: paketi, progress, rezultati po stranici
+5. Boost opcija + prepaid krediti
+6. Agregatni izvestaj ("15/30 stranica ima SEO probleme")
+
+### Tech stack za paid
+- Payment: Stripe Checkout
+- Database: Supabase (ili SQLite za pocetak)
+- Queue: Python asyncio queue sa round-robin
+- Auth: payment token (ne zahteva registraciju — plati i koristi)
 
 ## PRAVILA ZA SVAKI FAJL:
 - Minimum 300 linija, idealno 400-700
