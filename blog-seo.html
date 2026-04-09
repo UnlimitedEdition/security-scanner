@@ -3,210 +3,341 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SEO Optimizacija — Vodic za pocetnike | Web Security Scanner</title>
-  <meta name="description" content="Naucite osnove SEO optimizacije: on-page, tehnicki i off-page SEO. Prakticni saveti za bolji rang na Google-u.">
-  <meta property="og:title" content="SEO Optimizacija — Vodic za pocetnike | Web Security Scanner">
-  <meta property="og:description" content="Kompletan vodic za SEO optimizaciju: title tagovi, meta opisi, strukturirani podaci, brzina sajta i lokalni SEO.">
+  <title>SEO Optimizacija — Kompletni vodic | Web Security Scanner</title>
+  <meta name="description" content="Kompletni SEO vodic: on-page, tehnicki i off-page SEO. Meta tagovi, Schema.org, sitemap, lokalni SEO, Open Graph, heading struktura, mobile-first. 7 detaljnih vodicaa.">
+  <meta name="keywords" content="SEO, optimizacija, meta tagovi, Schema.org, sitemap, lokalni SEO, Open Graph, heading struktura, mobile SEO, Google rangiranje">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <link rel="canonical" href="https://security-scanner-ruddy.vercel.app/blog-seo.html">
+  <link rel="alternate" hreflang="sr" href="https://security-scanner-ruddy.vercel.app/blog-seo.html">
+  <link rel="alternate" hreflang="en" href="https://security-scanner-ruddy.vercel.app/blog-seo.html">
   <meta property="og:type" content="article">
-  <meta property="og:url" content="https://web-security-scanner.vercel.app/blog-seo.html">
-  <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="SEO Optimizacija — Vodic za pocetnike | Web Security Scanner">
-  <meta name="twitter:description" content="Kompletan vodic za SEO optimizaciju: title tagovi, meta opisi, strukturirani podaci, brzina sajta i lokalni SEO.">
-  <link rel="canonical" href="https://web-security-scanner.vercel.app/blog-seo.html">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Inter', sans-serif;
-      background: #0a0c15; color: #e8eaf6;
-      min-height: 100vh; line-height: 1.7;
-    }
-    .container { max-width: 720px; margin: 0 auto; padding: 3rem 1.5rem 4rem; }
-    a { color: #a78bfa; }
-    h1 { font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; }
-    .subtitle { color: #7b83a6; margin-bottom: 2.5rem; font-size: 0.9rem; }
-    h2 { font-size: 1.15rem; font-weight: 700; margin: 2rem 0 0.8rem; color: #a78bfa; }
-    p, li { color: #c0c4db; font-size: 0.92rem; margin-bottom: 0.6rem; }
-    ul { padding-left: 1.5rem; margin-bottom: 1rem; }
-    .top-bar {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 2rem;
-    }
-    .back { color: #7b83a6; text-decoration: none; font-size: 0.85rem; }
-    .back:hover { color: #a78bfa; }
-    .lang-toggle { display: flex; gap: 0.3rem; }
-    .lang-btn {
-      background: #1a1e38; border: 1px solid #252a4a; color: #7b83a6;
-      border-radius: 6px; padding: 4px 10px; font-size: 0.78rem;
-      cursor: pointer; font-family: inherit; transition: all 0.2s;
-    }
-    .lang-btn.active { background: #6c63ff; border-color: #6c63ff; color: #fff; }
-    .sr { display: block; }
-    .en { display: none; }
-    body.lang-en .sr { display: none; }
-    body.lang-en .en { display: block; }
-    .footer {
-      border-top: 1px solid #252a4a;
-      margin-top: 3rem; padding-top: 1.5rem;
-      text-align: center; color: #7b83a6; font-size: 0.8rem;
-    }
-  </style>
+  <meta property="og:title" content="SEO Optimizacija — Kompletni vodic sa 7 detaljnih vodicaa">
+  <meta property="og:description" content="On-page, tehnicki i off-page SEO: meta tagovi, Schema.org, sitemap, lokalni SEO, Open Graph, headings, mobile-first.">
+  <meta property="og:url" content="https://security-scanner-ruddy.vercel.app/blog-seo.html">
+  <meta property="og:site_name" content="Web Security Scanner">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="SEO Optimizacija — Kompletni vodic sa 7 detaljnih vodicaa">
+  <meta name="twitter:description" content="On-page, tehnicki i off-page SEO: meta tagovi, Schema.org, sitemap, lokalni SEO, Open Graph, headings, mobile-first.">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "Article",
-    "headline": "SEO Optimizacija — Vodic za pocetnike",
-    "description": "Kompletan vodic za SEO optimizaciju: on-page, tehnicki i off-page SEO sa prakticnim savetima.",
-    "author": { "@type": "Person", "name": "Toske" },
-    "publisher": { "@type": "Organization", "name": "Web Security Scanner" },
+    "headline": "SEO Optimizacija — Kompletni vodic",
+    "author": {"@type": "Person", "name": "Toske", "url": "https://toske-programer.web.app"},
+    "publisher": {"@type": "Organization", "name": "Web Security Scanner"},
     "datePublished": "2026-04-08",
-    "mainEntityOfPage": "https://web-security-scanner.vercel.app/blog-seo.html"
+    "dateModified": "2026-04-09",
+    "description": "Kompletni SEO vodic: on-page, tehnicki i off-page SEO sa 7 detaljnih vodicaa.",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://security-scanner-ruddy.vercel.app/blog-seo.html"
+    }
   }
   </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Sta je SEO i zasto je bitan?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "SEO (Search Engine Optimization) je skup tehnika za bolje rangiranje sajta u Google rezultatima. Preko 90% online iskustava pocinje pretragom, a prva stranica dobija 95%+ klikova. Bez SEO-a, vas sajt je prakticno nevidljiv."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Koji su najvazniji SEO faktori?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Najvazniji faktori su: kvalitetan sadrzaj, title tag i meta description, brzina ucitavanja (Core Web Vitals), mobile-friendly dizajn, HTTPS, kvalitetni backlinks, strukturirani podaci (Schema.org) i interni linkovi."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Koliko dugo traje da SEO da rezultate?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "SEO je dugorocna strategija. Prve promene se mogu videti za 2-4 nedelje, ali znacajni rezultati obicno dolaze posle 3-6 meseci konzistentnog rada na optimizaciji."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Da li HTTPS utice na SEO?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Da, Google je potvrdio da je HTTPS faktor rangiranja od 2014. godine. Sajtovi bez SSL sertifikata dobijaju upozorenje 'Not Secure' u browseru, sto smanjuje poverenje korisnika i CTR."
+        }
+      }
+    ]
+  }
+  </script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+  <style>
+    .article-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+    .article-card { background: #12152a; border: 1px solid #252a4a; border-radius: 10px; padding: 1.2rem; transition: all 0.2s; text-decoration: none; display: block; }
+    .article-card:hover { border-color: #6c63ff; transform: translateY(-2px); box-shadow: 0 4px 20px rgba(108,99,255,0.15); }
+    .article-card h3 { color: #e8eaf6; font-size: 0.95rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .article-card p { color: #7b83a6; font-size: 0.82rem; margin: 0; line-height: 1.5; }
+    .article-card .card-tag { display: inline-block; background: #1a1e38; color: #6c63ff; font-size: 0.7rem; font-weight: 600; padding: 2px 8px; border-radius: 4px; margin-bottom: 0.5rem; }
+  </style>
 </head>
 <body>
-<div class="container">
-  <div class="top-bar">
-    <a href="/" class="back">&larr; <span class="sr">Nazad na skener</span><span class="en">Back to scanner</span></a>
-    <div class="lang-toggle">
-      <button class="lang-btn active" onclick="setLang('sr')">SR</button>
-      <button class="lang-btn" onclick="setLang('en')">EN</button>
-    </div>
-  </div>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr"><div class="timeline-title">Sadrzaj</div><ol id="timeline-sr"></ol></div>
+    <div class="en"><div class="timeline-title">Contents</div><ol id="timeline-en"></ol></div>
+  </aside>
+  <main class="blog-content">
 
   <!-- SERBIAN -->
   <div class="sr">
-    <h1>SEO Optimizacija — Vodic za pocetnike</h1>
-    <p class="subtitle">Objavljeno: 8. april 2026.</p>
+    <h1>SEO Optimizacija &mdash; Kompletni vodic</h1>
+    <p class="subtitle">Sve o SEO optimizaciji: on-page, tehnicki, off-page i lokalni SEO sa 7 detaljnih vodicaa</p>
 
-    <h2>1. Sta je SEO i zasto je bitan?</h2>
-    <p>SEO (Search Engine Optimization) je skup tehnika koje pomazu vasem sajtu da se bolje rangira u rezultatima pretrazivaca poput Google-a. Veci rang znaci vise organskog saobracaja — posetilaca koji dolaze na vas sajt bez placenih reklama.</p>
-    <p>Preko 90% online iskustava pocinje pretragom na Google-u, a prva stranica rezultata dobija preko 95% svih klikova. Ako vas sajt nije na prvoj strani — kao da ne postoji.</p>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">90%+</div><div class="stat-label">Online iskustava pocinje Google pretragom</div></div>
+      <div class="stat-card"><div class="stat-num">95%</div><div class="stat-label">Klikova ide na prvu stranicu</div></div>
+      <div class="stat-card"><div class="stat-num">7</div><div class="stat-label">Detaljnih SEO vodicaa</div></div>
+      <div class="stat-card"><div class="stat-num">12</div><div class="stat-label">SEO provera u skeneru</div></div>
+    </div>
 
-    <h2>2. On-page SEO: osnove koje morate znati</h2>
+    <h2 id="seo1">1. Sta je SEO i zasto je bitan?</h2>
+    <p>SEO (Search Engine Optimization) je skup tehnika koje pomazu vasem sajtu da se bolje rangira u rezultatima pretrazivaca poput Google-a. Veci rang znaci vise organskog saobracaja &mdash; posetilaca koji dolaze na vas sajt bez placenih reklama.</p>
+    <p>Preko 90% online iskustava pocinje pretragom na Google-u, a prva stranica rezultata dobija preko 95% svih klikova. Ako vas sajt nije na prvoj strani &mdash; kao da ne postoji.</p>
+    <div class="callout"><strong>Cinjenica:</strong> Organski rezultati dobijaju 5.66x vise klikova od placenih reklama (Backlinko studija). SEO je dugorocno isplativija investicija od PPC-a.</div>
+
+    <h2 id="seo2">2. On-page SEO: osnove koje morate znati</h2>
     <p>On-page SEO se odnosi na optimizaciju sadrzaja i HTML elemenata na samoj stranici:</p>
     <ul>
-      <li><strong>Title tag</strong> — najvazniji SEO element. Treba da bude jedinstven za svaku stranicu, sadrzi kljucnu rec i ima 50-60 karaktera.</li>
-      <li><strong>Meta description</strong> — kratak opis stranice koji se prikazuje u rezultatima pretrage. Optimalna duzina je 150-160 karaktera.</li>
-      <li><strong>H1 naslov</strong> — svaka stranica treba da ima tacno jedan H1 tag koji jasno opisuje sadrzaj. Koristite H2 i H3 za podnaslove.</li>
-      <li><strong>Alt tekst za slike</strong> — opisujte slike za pretrazivace i korisnike sa citacima ekrana. Ukljucite relevantne kljucne reci prirodno.</li>
-      <li><strong>Canonical tag</strong> — sprecava probleme sa dupliranim sadrzajem tako sto oznacava preferiranu verziju stranice.</li>
-      <li><strong>Interni linkovi</strong> — povezujte stranice medjusobno da pomognete pretrazivacima da razumeju strukturu sajta.</li>
+      <li><strong>Title tag</strong> &mdash; najvazniji SEO element. Jedinstven za svaku stranicu, 50-60 karaktera, sadrzi kljucnu rec.</li>
+      <li><strong>Meta description</strong> &mdash; kratak opis koji privlaci klikove iz rezultata pretrage. 150-160 karaktera.</li>
+      <li><strong>H1 naslov</strong> &mdash; tacno jedan H1 po stranici koji jasno opisuje sadrzaj. H2/H3 za podnaslove.</li>
+      <li><strong>Alt tekst za slike</strong> &mdash; opisujte slike za pretrazivace i screen reader korisnike.</li>
+      <li><strong>Canonical tag</strong> &mdash; sprecava probleme sa dupliranim sadrzajem.</li>
+      <li><strong>Interni linkovi</strong> &mdash; povezujte stranice da pomognete pretrazivacima da razumeju strukturu.</li>
     </ul>
+    <table>
+      <tr><th>Element</th><th>Optimalna duzina</th><th>Uticaj na SEO</th></tr>
+      <tr><td>Title tag</td><td>50-60 karaktera</td><td>Vrlo visok</td></tr>
+      <tr><td>Meta description</td><td>150-160 karaktera</td><td>Visok (CTR)</td></tr>
+      <tr><td>H1 naslov</td><td>1 po stranici</td><td>Visok</td></tr>
+      <tr><td>Alt tekst</td><td>Opisni, do 125 kar.</td><td>Srednji</td></tr>
+      <tr><td>URL slug</td><td>Kratak, sa kljucnom reci</td><td>Srednji</td></tr>
+    </table>
 
-    <h2>3. Tehnicki SEO</h2>
+    <h2 id="seo3">3. Tehnicki SEO</h2>
     <p>Tehnicki SEO osigurava da pretrazivaci mogu efikasno da pristupe i indeksiraju vas sajt:</p>
     <ul>
-      <li><strong>XML Sitemap</strong> — mapa sajta koja pomaze Google-u da pronadje sve vase stranice. Postavite je u koren sajta i prijavite u Google Search Console.</li>
-      <li><strong>Robots.txt</strong> — fajl koji kontrolise koje delove sajta pretrazivaci smeju da indeksiraju. Pazljivo konfiguriste da ne blokirate vazne stranice.</li>
-      <li><strong>Strukturirani podaci (Schema.org)</strong> — dodajte strukturirane podatke da pomognete Google-u da bolje razume sadrzaj i prikaze bogate rezultate (rich snippets).</li>
-      <li><strong>Brzina sajta</strong> — Google koristi brzinu ucitavanja kao faktor rangiranja. Optimizujte slike, koristite kompresiju i kesirajte resurse.</li>
-      <li><strong>Mobile-first indeksiranje</strong> — Google primarno koristi mobilnu verziju sajta za rangiranje. Sajt mora biti responzivan.</li>
-      <li><strong>HTTPS</strong> — SSL sertifikat je faktor rangiranja. Google favorizuje sajke sigurne sajtove.</li>
+      <li><strong>XML Sitemap</strong> &mdash; mapa sajta za Google. Postavite u koren i prijavite u Search Console.</li>
+      <li><strong>Robots.txt</strong> &mdash; kontrolise indeksiranje. Pazljivo konfiguriste da ne blokirate vazne stranice.</li>
+      <li><strong>Strukturirani podaci (Schema.org)</strong> &mdash; pomazu Google-u da prikaze rich snippets u rezultatima.</li>
+      <li><strong>Brzina sajta (Core Web Vitals)</strong> &mdash; LCP, CLS i INP su faktori rangiranja od 2021.</li>
+      <li><strong>Mobile-first indeksiranje</strong> &mdash; Google koristi mobilnu verziju za rangiranje od 2019.</li>
+      <li><strong>HTTPS</strong> &mdash; SSL sertifikat je faktor rangiranja. Google favorizuje sigurne sajtove.</li>
     </ul>
+    <div class="callout callout-warn"><strong>Vazno:</strong> Od marta 2024, Google koristi INP (Interaction to Next Paint) umesto FID kao Core Web Vital metriku. Sajtovi koji ne prolaze CWV mogu izgubiti rang.</div>
 
-    <h2>4. Off-page SEO: backlinks i autoritet</h2>
+    <h2 id="seo4">4. Off-page SEO: backlinks i autoritet</h2>
     <p>Off-page SEO se odnosi na aktivnosti van vaseg sajta koje uticu na rangiranje:</p>
     <ul>
-      <li><strong>Backlinks (povratni linkovi)</strong> — linkovi sa drugih sajtova ka vasem su jedan od najjacih signala rangiranja. Kvalitet je vazniji od kvantiteta — jedan link sa autoritativnog sajta vredi vise od stotinu sa losih.</li>
-      <li><strong>Social signals</strong> — deljenje sadrzaja na drustvenim mrezama indirektno utice na SEO tako sto povecava vidljivost i mogucnost dobijanja backlink-ova.</li>
-      <li><strong>Brand mentions</strong> — pominjanje vaseg brenda online, cak i bez linka, moze pozitivno uticati na autoritet domena.</li>
+      <li><strong>Backlinks</strong> &mdash; linkovi sa drugih sajtova su najjaci signal rangiranja. Kvalitet &gt; kvantitet.</li>
+      <li><strong>Social signals</strong> &mdash; deljenje na drustvenim mrezama povecava vidljivost i mogucnost dobijanja backlink-ova.</li>
+      <li><strong>Brand mentions</strong> &mdash; pominjanje brenda online pozitivno utice na autoritet domena.</li>
+      <li><strong>Guest posting</strong> &mdash; pisanje za druge sajtove sa linkom nazad na vas sajt.</li>
     </ul>
 
-    <h2>5. Lokalni SEO za Srbiju i region</h2>
-    <p>Ako imate lokalni biznis, lokalni SEO je kljucan za privlacenje kupaca iz vase okoline:</p>
+    <h2 id="seo5">5. Lokalni SEO za Srbiju i region</h2>
+    <p>Ako imate lokalni biznis, lokalni SEO je kljucan:</p>
     <ul>
-      <li><strong>Google Business Profile</strong> — napravite i optimizujte profil sa tacnim podacima, radnim vremenom, slikama i kategorijama.</li>
-      <li><strong>NAP konzistentnost</strong> — ime firme, adresa i telefon (Name, Address, Phone) moraju biti identicni svuda na internetu.</li>
-      <li><strong>Lokalne kljucne reci</strong> — koristite termine poput "web dizajn Beograd" ili "SEO agencija Novi Sad" u sadrzaju.</li>
-      <li><strong>Recenzije</strong> — aktivno trazite recenzije na Google-u. Veci broj pozitivnih recenzija poboljsava lokalni rang.</li>
+      <li><strong>Google Business Profile</strong> &mdash; optimizujte profil sa tacnim podacima i slikama.</li>
+      <li><strong>NAP konzistentnost</strong> &mdash; ime, adresa, telefon moraju biti identicni svuda.</li>
+      <li><strong>Lokalne kljucne reci</strong> &mdash; "web dizajn Beograd", "SEO agencija Novi Sad".</li>
+      <li><strong>Recenzije</strong> &mdash; vise pozitivnih Google recenzija = bolji lokalni rang.</li>
+      <li><strong>Lokalni direktorijumi</strong> &mdash; Zlatne Strane, 011info, Infostud.</li>
     </ul>
+    <div class="callout"><strong>Statistika:</strong> 46% svih Google pretraga ima lokalni intent. "Blizu mene" pretrage su porasle 500% u poslednjih 5 godina.</div>
 
-    <h2>6. Kako nas skener pomaze</h2>
-    <p>Nas <a href="/">Web Security Scanner</a> proverava kljucne SEO elemente vaseg sajta:</p>
+    <h2 id="seo6">6. Nasi detaljni SEO vodici</h2>
+    <p>Svaki aspekt SEO-a obradjujemo u posebnom, detaljnom vodicu:</p>
+    <div class="article-cards">
+      <a href="./blog-seo-meta.html" class="article-card">
+        <span class="card-tag">On-page</span>
+        <h3>Meta Tagovi</h3>
+        <p>Title i description optimizacija, meta robots, viewport, charset. Formula za savrseni title tag.</p>
+      </a>
+      <a href="./blog-seo-schema.html" class="article-card">
+        <span class="card-tag">Structured Data</span>
+        <h3>Schema.org</h3>
+        <p>JSON-LD formati: Article, FAQPage, HowTo, Product, LocalBusiness. Rich snippets u Google-u.</p>
+      </a>
+      <a href="./blog-seo-sitemap.html" class="article-card">
+        <span class="card-tag">Tehnicki</span>
+        <h3>Sitemap.xml</h3>
+        <p>XML sitemap format, Sitemap Index, robots.txt integracija, Google Search Console submit.</p>
+      </a>
+      <a href="./blog-seo-local.html" class="article-card">
+        <span class="card-tag">Lokalni</span>
+        <h3>Lokalni SEO za Srbiju</h3>
+        <p>Google Business Profile, NAP, lokalni direktorijumi, recenzije, regionalni SEO za Balkan.</p>
+      </a>
+      <a href="./blog-seo-opengraph.html" class="article-card">
+        <span class="card-tag">Social</span>
+        <h3>Open Graph i Twitter Cards</h3>
+        <p>OG tagovi, Twitter Cards, optimalne dimenzije slika, alati za testiranje deljenja.</p>
+      </a>
+      <a href="./blog-seo-headings.html" class="article-card">
+        <span class="card-tag">Struktura</span>
+        <h3>H1-H6 Heading Struktura</h3>
+        <p>Pravilna hijerarhija naslova, SEO uticaj, pristupacnost, najcesce greske.</p>
+      </a>
+      <a href="./blog-seo-mobile.html" class="article-card">
+        <span class="card-tag">Mobile</span>
+        <h3>Mobile-First SEO</h3>
+        <p>Mobile-first indeksiranje, responsive dizajn, Core Web Vitals na mobilnom, AMP.</p>
+      </a>
+    </div>
+
+    <h2 id="seo7">7. Kako nas skener pomaze</h2>
+    <p>Nas <a href="./index.html">Web Security Scanner</a> proverava 12 kljucnih SEO elemenata:</p>
     <ul>
-      <li>Prisustvo i ispravnost title taga i meta opisa</li>
-      <li>Strukturu naslova (H1, H2, H3)</li>
-      <li>Canonical tag i osnovne tehnicke SEO elemente</li>
-      <li>HTTPS konfiguraciju koja utice na rangiranje</li>
-      <li>Bezbednosne headere koji indirektno uticu na SEO</li>
+      <li>Title tag &mdash; prisustvo, duzina, jedinstvenost</li>
+      <li>Meta description &mdash; prisustvo i optimalna duzina</li>
+      <li>Viewport meta tag za mobilne uredjaje</li>
+      <li>Canonical URL za sprecavanje duplikata</li>
+      <li>H1 naslov &mdash; prisustvo i jedinstvenost</li>
+      <li>Alt tekst za slike</li>
+      <li>Open Graph i Twitter Card tagovi</li>
+      <li>Lang atribut za jezicku identifikaciju</li>
+      <li>Sitemap.xml i robots.txt prisustvo</li>
+      <li>Strukturirani podaci (Schema.org)</li>
+      <li>HTTPS koji utice na rangiranje</li>
+      <li>Brzina ucitavanja (TTFB, velicina stranice)</li>
     </ul>
-    <p>Proverite svoj sajt besplatno i saznajte sta mozete poboljsati. <a href="/">Skenirajte sada &rarr;</a></p>
+    <a href="./index.html" class="cta">Skenirajte SEO vaseg sajta besplatno &rarr;</a>
   </div>
 
   <!-- ENGLISH -->
   <div class="en">
-    <h1>SEO Optimization — Beginner's Guide</h1>
-    <p class="subtitle">Published: April 8, 2026.</p>
+    <h1>SEO Optimization &mdash; Complete Guide</h1>
+    <p class="subtitle">Everything about SEO: on-page, technical, off-page and local SEO with 7 detailed guides</p>
 
-    <h2>1. What is SEO and why does it matter?</h2>
-    <p>SEO (Search Engine Optimization) is a set of techniques that help your website rank better in search engine results like Google. Higher rankings mean more organic traffic — visitors coming to your site without paid advertising.</p>
-    <p>Over 90% of online experiences begin with a Google search, and the first page of results receives over 95% of all clicks. If your site is not on the first page — it practically does not exist.</p>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">90%+</div><div class="stat-label">Online experiences start with Google</div></div>
+      <div class="stat-card"><div class="stat-num">95%</div><div class="stat-label">Clicks go to page 1</div></div>
+      <div class="stat-card"><div class="stat-num">7</div><div class="stat-label">Detailed SEO guides</div></div>
+      <div class="stat-card"><div class="stat-num">12</div><div class="stat-label">SEO checks in scanner</div></div>
+    </div>
 
-    <h2>2. On-page SEO: essentials you must know</h2>
-    <p>On-page SEO refers to optimizing the content and HTML elements on the page itself:</p>
+    <h2 id="seo1e">1. What is SEO and why does it matter?</h2>
+    <p>SEO (Search Engine Optimization) helps your website rank better in Google results. Higher rankings mean more organic traffic without paid advertising.</p>
+    <p>Over 90% of online experiences begin with a Google search, and the first page receives 95%+ of all clicks.</p>
+    <div class="callout"><strong>Fact:</strong> Organic results get 5.66x more clicks than paid ads (Backlinko study). SEO is a more cost-effective long-term investment than PPC.</div>
+
+    <h2 id="seo2e">2. On-page SEO essentials</h2>
     <ul>
-      <li><strong>Title tag</strong> — the most important SEO element. It should be unique for each page, contain a keyword, and be 50-60 characters long.</li>
-      <li><strong>Meta description</strong> — a short description displayed in search results. Optimal length is 150-160 characters.</li>
-      <li><strong>H1 heading</strong> — each page should have exactly one H1 tag that clearly describes the content. Use H2 and H3 for subheadings.</li>
-      <li><strong>Image alt text</strong> — describe images for search engines and screen reader users. Include relevant keywords naturally.</li>
-      <li><strong>Canonical tag</strong> — prevents duplicate content issues by indicating the preferred version of a page.</li>
-      <li><strong>Internal links</strong> — connect pages to help search engines understand site structure.</li>
+      <li><strong>Title tag</strong> &mdash; most important SEO element. Unique per page, 50-60 chars, include keyword.</li>
+      <li><strong>Meta description</strong> &mdash; 150-160 chars, drives click-through rate from search results.</li>
+      <li><strong>H1 heading</strong> &mdash; exactly one per page, clearly describes content.</li>
+      <li><strong>Image alt text</strong> &mdash; describe images for search engines and accessibility.</li>
+      <li><strong>Canonical tag</strong> &mdash; prevents duplicate content issues.</li>
+      <li><strong>Internal links</strong> &mdash; help search engines understand site structure.</li>
+    </ul>
+    <table>
+      <tr><th>Element</th><th>Optimal length</th><th>SEO impact</th></tr>
+      <tr><td>Title tag</td><td>50-60 chars</td><td>Very high</td></tr>
+      <tr><td>Meta description</td><td>150-160 chars</td><td>High (CTR)</td></tr>
+      <tr><td>H1 heading</td><td>1 per page</td><td>High</td></tr>
+      <tr><td>Alt text</td><td>Descriptive, up to 125 chars</td><td>Medium</td></tr>
+      <tr><td>URL slug</td><td>Short, with keyword</td><td>Medium</td></tr>
+    </table>
+
+    <h2 id="seo3e">3. Technical SEO</h2>
+    <ul>
+      <li><strong>XML Sitemap</strong> &mdash; helps Google find all your pages.</li>
+      <li><strong>Robots.txt</strong> &mdash; controls search engine crawling.</li>
+      <li><strong>Structured data (Schema.org)</strong> &mdash; enables rich snippets in results.</li>
+      <li><strong>Core Web Vitals</strong> &mdash; LCP, CLS, INP are ranking factors since 2021.</li>
+      <li><strong>Mobile-first indexing</strong> &mdash; Google uses mobile version for ranking since 2019.</li>
+      <li><strong>HTTPS</strong> &mdash; SSL certificate is a ranking factor.</li>
+    </ul>
+    <div class="callout callout-warn"><strong>Important:</strong> Since March 2024, Google uses INP (Interaction to Next Paint) instead of FID as a Core Web Vital metric.</div>
+
+    <h2 id="seo4e">4. Off-page SEO: backlinks and authority</h2>
+    <ul>
+      <li><strong>Backlinks</strong> &mdash; strongest ranking signal. Quality &gt; quantity.</li>
+      <li><strong>Social signals</strong> &mdash; increase visibility and backlink potential.</li>
+      <li><strong>Brand mentions</strong> &mdash; positive impact on domain authority.</li>
+      <li><strong>Guest posting</strong> &mdash; write for other sites with link back to yours.</li>
     </ul>
 
-    <h2>3. Technical SEO</h2>
-    <p>Technical SEO ensures that search engines can efficiently access and index your site:</p>
+    <h2 id="seo5e">5. Local SEO</h2>
     <ul>
-      <li><strong>XML Sitemap</strong> — a site map that helps Google find all your pages. Place it in the site root and submit it in Google Search Console.</li>
-      <li><strong>Robots.txt</strong> — a file that controls which parts of your site search engines can index. Configure carefully to avoid blocking important pages.</li>
-      <li><strong>Structured data (Schema.org)</strong> — add structured data to help Google better understand your content and display rich snippets.</li>
-      <li><strong>Page speed</strong> — Google uses loading speed as a ranking factor. Optimize images, use compression, and cache resources.</li>
-      <li><strong>Mobile-first indexing</strong> — Google primarily uses the mobile version of your site for ranking. Your site must be responsive.</li>
-      <li><strong>HTTPS</strong> — an SSL certificate is a ranking factor. Google favors secure websites.</li>
+      <li><strong>Google Business Profile</strong> &mdash; optimize with accurate data and photos.</li>
+      <li><strong>NAP consistency</strong> &mdash; name, address, phone identical everywhere.</li>
+      <li><strong>Local keywords</strong> &mdash; include city/region in content.</li>
+      <li><strong>Reviews</strong> &mdash; more positive Google reviews = better local rankings.</li>
     </ul>
+    <div class="callout"><strong>Statistic:</strong> 46% of all Google searches have local intent. "Near me" searches grew 500% in the last 5 years.</div>
 
-    <h2>4. Off-page SEO: backlinks and authority</h2>
-    <p>Off-page SEO refers to activities outside your website that influence rankings:</p>
-    <ul>
-      <li><strong>Backlinks</strong> — links from other websites to yours are one of the strongest ranking signals. Quality matters more than quantity — one link from an authoritative site is worth more than a hundred from poor ones.</li>
-      <li><strong>Social signals</strong> — sharing content on social media indirectly affects SEO by increasing visibility and the potential for earning backlinks.</li>
-      <li><strong>Brand mentions</strong> — mentions of your brand online, even without a link, can positively impact domain authority.</li>
-    </ul>
+    <h2 id="seo6e">6. Our detailed SEO guides</h2>
+    <div class="article-cards">
+      <a href="./blog-seo-meta.html" class="article-card">
+        <span class="card-tag">On-page</span>
+        <h3>Meta Tags</h3>
+        <p>Title and description optimization, meta robots, viewport, charset.</p>
+      </a>
+      <a href="./blog-seo-schema.html" class="article-card">
+        <span class="card-tag">Structured Data</span>
+        <h3>Schema.org</h3>
+        <p>JSON-LD formats: Article, FAQPage, HowTo, Product, LocalBusiness.</p>
+      </a>
+      <a href="./blog-seo-sitemap.html" class="article-card">
+        <span class="card-tag">Technical</span>
+        <h3>Sitemap.xml</h3>
+        <p>XML sitemap format, Sitemap Index, robots.txt integration.</p>
+      </a>
+      <a href="./blog-seo-local.html" class="article-card">
+        <span class="card-tag">Local</span>
+        <h3>Local SEO</h3>
+        <p>Google Business Profile, NAP, local directories, reviews.</p>
+      </a>
+      <a href="./blog-seo-opengraph.html" class="article-card">
+        <span class="card-tag">Social</span>
+        <h3>Open Graph &amp; Twitter Cards</h3>
+        <p>OG tags, Twitter Cards, optimal image sizes, sharing tools.</p>
+      </a>
+      <a href="./blog-seo-headings.html" class="article-card">
+        <span class="card-tag">Structure</span>
+        <h3>H1-H6 Heading Structure</h3>
+        <p>Proper heading hierarchy, SEO impact, accessibility.</p>
+      </a>
+      <a href="./blog-seo-mobile.html" class="article-card">
+        <span class="card-tag">Mobile</span>
+        <h3>Mobile-First SEO</h3>
+        <p>Mobile-first indexing, responsive design, Core Web Vitals.</p>
+      </a>
+    </div>
 
-    <h2>5. Local SEO for Serbia and the region</h2>
-    <p>If you have a local business, local SEO is key to attracting customers from your area:</p>
+    <h2 id="seo7e">7. How our scanner helps</h2>
+    <p>Our <a href="./index.html">Web Security Scanner</a> checks 12 key SEO elements:</p>
     <ul>
-      <li><strong>Google Business Profile</strong> — create and optimize your profile with accurate data, business hours, photos, and categories.</li>
-      <li><strong>NAP consistency</strong> — your business name, address, and phone number must be identical everywhere online.</li>
-      <li><strong>Local keywords</strong> — use terms like "web design Belgrade" or "SEO agency Novi Sad" in your content.</li>
-      <li><strong>Reviews</strong> — actively request Google reviews. More positive reviews improve local rankings.</li>
+      <li>Title tag, meta description, viewport</li>
+      <li>Canonical URL, H1, image alt text</li>
+      <li>Open Graph and Twitter Card tags</li>
+      <li>Lang attribute, sitemap.xml, robots.txt</li>
+      <li>Structured data (Schema.org)</li>
+      <li>HTTPS and page speed (TTFB, page size)</li>
     </ul>
-
-    <h2>6. How our scanner helps</h2>
-    <p>Our <a href="/">Web Security Scanner</a> checks key SEO elements of your website:</p>
-    <ul>
-      <li>Presence and correctness of title tag and meta description</li>
-      <li>Heading structure (H1, H2, H3)</li>
-      <li>Canonical tag and basic technical SEO elements</li>
-      <li>HTTPS configuration that affects rankings</li>
-      <li>Security headers that indirectly impact SEO</li>
-    </ul>
-    <p>Check your site for free and find out what you can improve. <a href="/">Scan now &rarr;</a></p>
+    <a href="./index.html" class="cta">Scan your site's SEO for free &rarr;</a>
   </div>
 
-  <div class="footer">
-    <p>Developed by: <a href="https://toske-programer.web.app" target="_blank" rel="noopener">&lt;Toske/&gt;</a> &mdash; <a href="/">Web Security Scanner</a> &copy; 2026</p>
-  </div>
+  </main>
 </div>
-
-<script>
-function setLang(lang) {
-  document.body.className = lang === "en" ? "lang-en" : "";
-  document.querySelectorAll(".lang-btn").forEach(function(b) {
-    b.classList.toggle("active", b.textContent === lang.toUpperCase());
-  });
-}
-</script>
+<script src="./blog-common.js" defer></script>
 </body>
 </html>

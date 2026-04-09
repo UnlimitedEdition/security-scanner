@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mobile-First SEO — Optimizacija za mobilne uredjaje | Web Security Scanner</title>
+  <meta name="description" content="Kompletni vodic za mobile-first SEO: Google mobile-first indexing, responsive design, viewport, touch-friendly dizajn, Core Web Vitals na mobilnom, AMP i testiranje.">
+  <meta name="keywords" content="mobile SEO, responsive design, mobile-first indexing, viewport, AMP, Core Web Vitals, mobilni, Google">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <link rel="canonical" href="https://security-scanner-ruddy.vercel.app/blog-seo-mobile.html">
+  <link rel="alternate" hreflang="sr" href="https://security-scanner-ruddy.vercel.app/blog-seo-mobile.html">
+  <link rel="alternate" hreflang="en" href="https://security-scanner-ruddy.vercel.app/blog-seo-mobile.html">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Mobile-First SEO — Optimizacija za mobilne uredjaje">
+  <meta property="og:description" content="Mobile-first indexing, responsive design, viewport, CWV na mobilnom, AMP i testiranje.">
+  <meta property="og:url" content="https://security-scanner-ruddy.vercel.app/blog-seo-mobile.html">
+  <meta property="og:site_name" content="Web Security Scanner">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Mobile-First SEO — Optimizacija za mobilne uredjaje">
+  <meta name="twitter:description" content="Mobile-first indexing, responsive design, viewport, CWV na mobilnom, AMP i testiranje.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Mobile-First SEO — Optimizacija za mobilne uredjaje",
+    "author": {"@type": "Person", "name": "Toske", "url": "https://toske-programer.web.app"},
+    "publisher": {"@type": "Organization", "name": "Web Security Scanner"},
+    "datePublished": "2026-04-09",
+    "dateModified": "2026-04-09",
+    "description": "Kompletni vodic za mobile-first SEO: indexing, responsive design, viewport, Core Web Vitals, AMP i testiranje.",
+    "mainEntityOfPage": {"@type": "WebPage", "@id": "https://security-scanner-ruddy.vercel.app/blog-seo-mobile.html"}
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Sta je mobile-first indexing?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Mobile-first indexing znaci da Google primarno koristi mobilnu verziju vaseg sajta za rangiranje i indeksiranje. Od jula 2019. svi novi sajtovi su automatski na mobile-first, a od oktobra 2023. svi postojeci sajtovi su prebaceni. Ako mobilna verzija ima manje sadrzaja od desktop verzije, gubite rang."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Da li mi treba AMP?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Uglavnom NE. AMP (Accelerated Mobile Pages) je Google-ov format za brze mobilne stranice, ali je izgubio na znacaju. Od 2021. AMP nije uslov za Top Stories, a Core Web Vitals su postali vazniji. Ako vec imate brz, responsive sajt, AMP ne donosi dodatnu vrednost."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Kako testirati da li je sajt mobile-friendly?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Koristite: 1) Google PageSpeed Insights — prikazuje mobile skor i CWV, 2) Chrome DevTools Device Mode (F12 > Toggle Device), 3) Google Search Console Mobile Usability izvestaj, 4) Web Security Scanner koji proverava viewport tag i responsive elemente."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Koliko Google pretraga dolazi sa mobilnog?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Preko 60% svih Google pretraga dolazi sa mobilnih uredjaja (Statista, 2024). U nekim kategorijama (restorani, lokalne pretrage, vremenska prognoza) mobilni saobracaj prelazi 80%. Mobilni korisnici su vasa primarna publika."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Koja je minimalna velicina dugmeta za mobilne uredjaje?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Google preporucuje minimum 48x48 CSS piksela za sve interaktivne elemente (dugmad, linkove, polja za unos). Razmak izmedju dva tap target-a treba biti minimum 8px. Apple preporucuje 44x44 poena. Manji elementi frustriraju korisnike i uticu na bounce rate."
+        }
+      }
+    ]
+  }
+  </script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+</head>
+<body>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr"><div class="timeline-title">Sadrzaj</div><ol id="timeline-sr"></ol></div>
+    <div class="en"><div class="timeline-title">Contents</div><ol id="timeline-en"></ol></div>
+  </aside>
+  <main class="blog-content">
+
+  <!-- ==================== SRPSKI ==================== -->
+  <div class="sr">
+    <h1>Mobile-First SEO &mdash; Optimizacija za mobilne uredjaje</h1>
+    <p class="subtitle">Kompletni vodic za mobilnu optimizaciju: indexing, responsive design, viewport, Core Web Vitals i testiranje</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">60%+</div><div class="stat-label">Google pretraga sa mobilnog</div></div>
+      <div class="stat-card"><div class="stat-num">53%</div><div class="stat-label">Napusta sajt posle 3 sekunde</div></div>
+      <div class="stat-card"><div class="stat-num">2019</div><div class="stat-label">Mobile-first indexing za nove sajtove</div></div>
+      <div class="stat-card"><div class="stat-num">48px</div><div class="stat-label">Min velicina tap target-a</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Sadrzaj</h3>
+      <ol>
+        <li><a href="#mb1">Mobile-First Indexing</a></li>
+        <li><a href="#mb2">Responsive vs Separate vs Dynamic</a></li>
+        <li><a href="#mb3">Viewport meta tag</a></li>
+        <li><a href="#mb4">Touch-friendly dizajn</a></li>
+        <li><a href="#mb5">Core Web Vitals na mobilnom</a></li>
+        <li><a href="#mb6">Brzina na mobilnom</a></li>
+        <li><a href="#mb7">AMP — da li jos treba</a></li>
+        <li><a href="#mb8">Najcesce greske</a></li>
+        <li><a href="#mb9">Alati za testiranje</a></li>
+        <li><a href="#mb10">Reference i resursi</a></li>
+      </ol>
+    </div>
+
+    <h2 id="mb1">1. Mobile-First Indexing &mdash; sta znaci</h2>
+    <p>Mobile-first indexing znaci da Google <strong>primarno koristi mobilnu verziju</strong> vaseg sajta za rangiranje i indeksiranje. Ovo je fundamentalna promena u nacinu na koji Google radi:</p>
+    <ul>
+      <li><strong>Jul 2019</strong> &mdash; svi novi sajtovi automatski na mobile-first indexing</li>
+      <li><strong>Mart 2021</strong> &mdash; Google najavio migraciju svih preostalih sajtova</li>
+      <li><strong>Oktobar 2023</strong> &mdash; svi sajtovi su na mobile-first indexing, bez izuzetaka</li>
+    </ul>
+    <p>Sta to znaci u praksi:</p>
+    <ul>
+      <li>Ako mobilna verzija ima <strong>manje sadrzaja</strong> od desktop-a, gubite rang &mdash; Google vidi samo mobilnu verziju</li>
+      <li>Ako su slike/video sakriveni na mobilnom, Google ih <strong>ne indeksira</strong></li>
+      <li>Ako je mobilna navigacija drugacija, Google koristi <strong>mobilne linkove</strong> za crawling</li>
+      <li>Structured data (Schema) mora biti na <strong>mobilnoj verziji</strong>, ne samo desktop</li>
+    </ul>
+    <div class="callout callout-danger"><strong>Kriticno:</strong> Ako koristite responsive dizajn (isti HTML za desktop i mobile), vec ste OK. Problem nastaje samo ako imate odvojenu mobilnu verziju (m.vasajt.rs) sa manje sadrzaja.</div>
+
+    <h2 id="mb2">2. Responsive vs Separate vs Dynamic Serving</h2>
+    <table>
+      <tr><th>Pristup</th><th>Kako radi</th><th>Google preporuka</th><th>Odrzavanje</th></tr>
+      <tr><td><strong>Responsive Design</strong></td><td>Isti HTML, CSS media queries prilagodjavaju izgled</td><td>Preporuceno &#10004;</td><td>Lako &mdash; 1 verzija</td></tr>
+      <tr><td>Separate mobile site</td><td>Odvojen sajt na m.vasajt.rs</td><td>Prihvatljivo</td><td>Tesko &mdash; 2 verzije</td></tr>
+      <tr><td>Dynamic serving</td><td>Isti URL, server salje razlicit HTML po User-Agent</td><td>Prihvatljivo</td><td>Srednje</td></tr>
+    </table>
+    <p><strong>Responsive design je jasni pobednik</strong> &mdash; jedan URL, jedan HTML, jedan set meta tagova, jedan sitemap. Google ga eksplicitno preporucuje.</p>
+    <pre><code>&lt;!-- Responsive design osnova --&gt;
+&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+
+&lt;style&gt;
+  /* Mobile-first pristup: osnova je za mobilne, pa prosirujete za desktop */
+  .container { padding: 1rem; }
+
+  @media (min-width: 768px) {
+    .container { padding: 2rem; max-width: 800px; margin: 0 auto; }
+  }
+
+  @media (min-width: 1200px) {
+    .container { max-width: 1100px; }
+  }
+&lt;/style&gt;</code></pre>
+    <div class="callout"><strong>Mobile-first CSS:</strong> Pisite CSS najpre za mobilne (bez media query-ja), pa dodajte <code>@media (min-width: ...)</code> za vece ekrane. Ovo je efikasnije i prirodnije za mobile-first pristup.</div>
+
+    <h2 id="mb3">3. Viewport meta tag</h2>
+    <p>Viewport tag je <strong>obavezan</strong> za svaki mobile-friendly sajt. Bez njega, browser prikazuje stranicu kao desktop sirine (obicno 980px) smanjenu na mali ekran.</p>
+    <pre><code>&lt;!-- OBAVEZNO — staviti u &lt;head&gt; svake stranice --&gt;
+&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+
+&lt;!-- NIKAD ne blokirajte zoom (accessibility problem) --&gt;
+&lt;meta name="viewport" content="width=device-width, initial-scale=1.0,
+  maximum-scale=1.0, user-scalable=no"&gt;  &lt;!-- ✗ LOSE --&gt;</code></pre>
+    <p>Parametri:</p>
+    <ul>
+      <li><code>width=device-width</code> &mdash; sirina stranice = sirina ekrana uredjaja</li>
+      <li><code>initial-scale=1.0</code> &mdash; pocetni zoom nivo 100%</li>
+      <li><code>user-scalable=no</code> &mdash; <strong>NIKAD ne koristite</strong> &mdash; blokira zoom za korisnike sa slabim vidom (WCAG 1.4.4)</li>
+    </ul>
+    <p>Detaljnije o viewport tagu u nasem <a href="./blog-seo-meta.html">Meta Tagovi vodicu</a>.</p>
+
+    <h2 id="mb4">4. Touch-friendly dizajn</h2>
+    <p>Mobilni korisnici koriste prste umesto preciznog misa. Dizajn mora biti prilagodjen:</p>
+    <h3>Velicina interaktivnih elemenata</h3>
+    <table>
+      <tr><th>Element</th><th>Min velicina</th><th>Preporuceni razmak</th></tr>
+      <tr><td>Dugmad (buttons)</td><td>48 x 48 CSS px (Google)</td><td>8px izmedju</td></tr>
+      <tr><td>Linkovi u tekstu</td><td>Dovoljno padding-a za tap</td><td>Ne slepljeni jedan uz drugi</td></tr>
+      <tr><td>Input polja</td><td>48px visine minimum</td><td>16px margine</td></tr>
+      <tr><td>Navigacija</td><td>44 x 44 pt (Apple HIG)</td><td>Jasno razdvojeni linkovi</td></tr>
+      <tr><td>Checkbox/Radio</td><td>24 x 24px minimum</td><td>Klikabilan label</td></tr>
+    </table>
+
+    <h3>Ostala pravila</h3>
+    <ul>
+      <li><strong>Font velicina</strong> &mdash; minimum 16px za body tekst. Manji tekst prisiljava korisnike na zoom.</li>
+      <li><strong>Line height</strong> &mdash; minimum 1.5 za citljivost na malim ekranima</li>
+      <li><strong>Horizontalni scroll</strong> &mdash; NIKAD. Koristite <code>max-width: 100%</code> na slikama i <code>overflow-x: auto</code> na tabelama.</li>
+      <li><strong>Forme</strong> &mdash; koristite odgovarajuce <code>type</code> atribute (<code>email</code>, <code>tel</code>, <code>number</code>) za prikaz prave tastature.</li>
+      <li><strong>Hamburger meni</strong> &mdash; za navigaciju sa 5+ linkova na mobilnom. Ali glavni CTA treba uvek biti vidljiv.</li>
+    </ul>
+    <pre><code>&lt;!-- Prava tastatura za razlicite tipove unosa --&gt;
+&lt;input type="email" placeholder="email@primer.rs"&gt;    &lt;!-- @ tastatura --&gt;
+&lt;input type="tel" placeholder="+381..."&gt;               &lt;!-- numerička --&gt;
+&lt;input type="number" inputmode="numeric"&gt;              &lt;!-- numerička --&gt;
+&lt;input type="url" placeholder="https://..."&gt;           &lt;!-- URL tastatura --&gt;
+&lt;input type="search" placeholder="Pretrazite..."&gt;      &lt;!-- sa Search dugmetom --&gt;</code></pre>
+
+    <h2 id="mb5">5. Core Web Vitals na mobilnom</h2>
+    <p>Core Web Vitals se mere <strong>odvojeno za mobile i desktop</strong> u Google Search Console. Mobilni rezultati su obicno losiji zbog sporije konekcije i slabijeg hardvera.</p>
+    <table>
+      <tr><th>Metrika</th><th>Dobar (mobile)</th><th>Tipicni problemi na mobilnom</th></tr>
+      <tr><td><strong>LCP</strong> (ucitavanje)</td><td>&lt; 2.5s</td><td>Velike slike bez srcset, spor server, render-blocking CSS/JS</td></tr>
+      <tr><td><strong>CLS</strong> (stabilnost)</td><td>&lt; 0.1</td><td>Slike bez width/height, dinamicki ads, web fontovi (FOUT)</td></tr>
+      <tr><td><strong>INP</strong> (odzivnost)</td><td>&lt; 200ms</td><td>Tezak JavaScript, main thread blokiran, neoptimizovani event handleri</td></tr>
+    </table>
+    <h3>Optimizacija za mobilni CWV</h3>
+    <ul>
+      <li><strong>Responsive slike</strong> &mdash; koristite <code>srcset</code> i <code>sizes</code> da saljete manje slike mobilnim uredjajima</li>
+      <li><strong>Lazy loading</strong> &mdash; <code>loading="lazy"</code> za slike ispod fold-a (ali NE za hero sliku!)</li>
+      <li><strong>Font display: swap</strong> &mdash; prikazite tekst odmah sa fallback fontom dok se web font ucitava</li>
+      <li><strong>Critical CSS inline</strong> &mdash; inline-ujte CSS za above-the-fold sadrzaj, ostatak ucitajte asinhrono</li>
+      <li><strong>Minimalni JS</strong> &mdash; svaki KB JavaScript kosta vise na mobilnom (parsiranje + izvrsavanje)</li>
+    </ul>
+    <pre><code>&lt;!-- Responsive slike — mobilni dobija manju sliku --&gt;
+&lt;img
+  srcset="slika-400.jpg 400w, slika-800.jpg 800w, slika-1200.jpg 1200w"
+  sizes="(max-width: 600px) 400px, (max-width: 1000px) 800px, 1200px"
+  src="slika-800.jpg"
+  alt="Opis slike"
+  width="800" height="450"
+  loading="lazy"
+&gt;</code></pre>
+    <p>Detaljnije o Core Web Vitals u nasem <a href="./blog-perf-cwv.html">CWV vodicu</a>.</p>
+
+    <h2 id="mb6">6. Brzina na mobilnom</h2>
+    <p>Mobilni korisnici su nestrpljivi &mdash; ocekuju da se sajt ucita za 1-2 sekunde:</p>
+    <ul>
+      <li><strong>53%</strong> mobilnih korisnika napusta sajt koji se ucitava duze od 3 sekunde (Google)</li>
+      <li><strong>70%</strong> mobilnih korisnika ocekuje da sajt radi jednako brzo kao na desktopu</li>
+      <li>Prosecna 4G konekcija ima <strong>50ms latencije</strong> i <strong>10-30 Mbps</strong> propusnosti</li>
+      <li>Prosecni mobilni uredjaj ima <strong>4-8x slabiji CPU</strong> od prosecnog laptopa</li>
+    </ul>
+    <div class="callout callout-danger"><strong>Budget za performanse:</strong> Za 3-sekundno ucitavanje na 4G, vasa stranica treba biti ispod 170KB kompresovanog sadrzaja (HTML + CSS + JS + slike iznad fold-a). Svaki KB se broji na mobilnom.</div>
+
+    <h2 id="mb7">7. AMP &mdash; da li jos treba</h2>
+    <p>AMP (Accelerated Mobile Pages) je Google-ov open-source framework za ultra-brze mobilne stranice. Kreiran 2015, bio je de facto obavezan za Top Stories u Google-u.</p>
+    <p><strong>Status u 2026:</strong></p>
+    <ul>
+      <li><strong>Jun 2021</strong> &mdash; AMP vise nije uslov za Top Stories. Core Web Vitals su postali kriterijum.</li>
+      <li><strong>2022-2023</strong> &mdash; mnogi veliki publisheri (BBC, Washington Post) su napustili AMP</li>
+      <li><strong>2024-2026</strong> &mdash; AMP je i dalje ziv ali gubu na relevantnosti. Google ga tretira isto kao obicne stranice.</li>
+    </ul>
+    <div class="callout callout-warn"><strong>Preporuka:</strong> Za nove sajtove, <strong>NE koristite AMP</strong>. Fokusirajte se na brz, responsive sajt sa dobrim Core Web Vitals. AMP donosi kompleksnost (odvojen codebase, ogranicenja u JS) bez znacajne prednosti. Ako vec imate AMP, razmotrite migraciju nazad na standardni HTML.</div>
+
+    <h2 id="mb8">8. Najcesce greske u mobilnom SEO</h2>
+    <ul>
+      <li><strong>Nedostaje viewport tag</strong> &mdash; sajt se prikazuje kao desktop smanjen na mali ekran. Necitljiv tekst, nemoguce kliknuti linkove.</li>
+      <li><strong>user-scalable=no</strong> &mdash; blokira zoom, accessibility problem, Google moze penalizovati.</li>
+      <li><strong>Tekst premali</strong> &mdash; ispod 16px body tekst prisiljava korisnike na zoom.</li>
+      <li><strong>Elementi preblizu</strong> &mdash; tap target-i ispod 48px ili bez dovoljnog razmaka. Korisnici pogresno kliknu.</li>
+      <li><strong>Horizontalni scroll</strong> &mdash; slike ili tabele sire od ekrana. Koristite <code>max-width: 100%</code>.</li>
+      <li><strong>Blokirani resursi</strong> &mdash; robots.txt blokira CSS/JS koje Google treba za renderovanje mobilne verzije.</li>
+      <li><strong>Interstitial pop-ups</strong> &mdash; Google kaznjava intrusive interstitials na mobilnom od 2017. Cookie banner je OK, ali full-screen reklama nije.</li>
+      <li><strong>Razlicit sadrzaj na mobilnom</strong> &mdash; skriveni tekst, manje slika, uklonjene sekcije. Google indeksira mobilnu verziju &mdash; sto sakrijete, to gubite.</li>
+      <li><strong>Spor server</strong> &mdash; TTFB preko 600ms na mobilnom je kriticno. Koristite CDN i optimizujte backend.</li>
+      <li><strong>Nema srcset za slike</strong> &mdash; desktop slike (1200px+) na mobilnom trose bandwidth i usporavaju LCP.</li>
+    </ul>
+
+    <h2 id="mb9">9. Alati za testiranje</h2>
+    <ul>
+      <li><strong><a href="./index.html">Web Security Scanner</a></strong> &mdash; proverava viewport tag, responsive elemente i osnovne mobile-friendly signale.</li>
+      <li><strong><a href="https://pagespeed.web.dev/" target="_blank">PageSpeed Insights</a></strong> &mdash; mobilni i desktop skor sa CWV, preporuke za optimizaciju.</li>
+      <li><strong>Chrome DevTools Device Mode</strong> &mdash; F12 &rarr; Toggle Device Toolbar. Simulira razlicite uredjaje, velicine ekrana i brzine konekcije.</li>
+      <li><strong>Google Search Console</strong> &mdash; "Mobile Usability" izvestaj prikazuje probleme na celom sajtu.</li>
+      <li><strong><a href="https://www.browserstack.com/" target="_blank">BrowserStack</a></strong> &mdash; testiranje na stvarnim uredjajima (iPhone, Samsung, Pixel) u browseru.</li>
+      <li><strong>Lighthouse CI</strong> &mdash; automatsko testiranje u CI/CD pipeline-u. Blokira deploy ako mobile skor padne ispod praga.</li>
+    </ul>
+
+    <h2 id="mb10">10. Reference i resursi</h2>
+    <ul>
+      <li><a href="https://developers.google.com/search/docs/crawling-indexing/mobile/mobile-sites-mobile-first-indexing" target="_blank">Google &mdash; Mobile-First Indexing</a></li>
+      <li><a href="https://web.dev/articles/responsive-web-design-basics" target="_blank">web.dev &mdash; Responsive Web Design Basics</a></li>
+      <li><a href="https://web.dev/articles/vitals" target="_blank">web.dev &mdash; Core Web Vitals</a></li>
+      <li><a href="https://developers.google.com/search/docs/appearance/avoid-intrusive-interstitials" target="_blank">Google &mdash; Avoid Intrusive Interstitials</a></li>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Viewport_meta_tag" target="_blank">MDN &mdash; Viewport Meta Tag</a></li>
+      <li><a href="https://www.nngroup.com/articles/mobile-usability/" target="_blank">Nielsen Norman Group &mdash; Mobile Usability</a></li>
+      <li><a href="https://amp.dev/" target="_blank">AMP Project &mdash; Official Site</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Proverite mobilnu optimizaciju vaseg sajta &rarr;</a>
+  </div>
+
+  <!-- ==================== ENGLISH ==================== -->
+  <div class="en">
+    <h1>Mobile-First SEO &mdash; Optimization for Mobile Devices</h1>
+    <p class="subtitle">Complete mobile optimization guide: indexing, responsive design, viewport, Core Web Vitals and testing</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">60%+</div><div class="stat-label">Google searches from mobile</div></div>
+      <div class="stat-card"><div class="stat-num">53%</div><div class="stat-label">Leave site after 3 seconds</div></div>
+      <div class="stat-card"><div class="stat-num">2019</div><div class="stat-label">Mobile-first indexing for new sites</div></div>
+      <div class="stat-card"><div class="stat-num">48px</div><div class="stat-label">Min tap target size</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#mb1e">Mobile-First Indexing</a></li>
+        <li><a href="#mb2e">Responsive vs Separate vs Dynamic</a></li>
+        <li><a href="#mb3e">Viewport meta tag</a></li>
+        <li><a href="#mb4e">Touch-friendly design</a></li>
+        <li><a href="#mb5e">Core Web Vitals on mobile</a></li>
+        <li><a href="#mb6e">Mobile speed</a></li>
+        <li><a href="#mb7e">AMP — still needed?</a></li>
+        <li><a href="#mb8e">Common mistakes</a></li>
+        <li><a href="#mb9e">Testing tools</a></li>
+        <li><a href="#mb10e">References</a></li>
+      </ol>
+    </div>
+
+    <h2 id="mb1e">1. Mobile-First Indexing</h2>
+    <p>Mobile-first indexing means Google <strong>primarily uses the mobile version</strong> of your site for ranking. Since October 2023, ALL sites are on mobile-first indexing.</p>
+    <ul>
+      <li>If mobile version has <strong>less content</strong>, you lose rankings</li>
+      <li>Hidden images/video on mobile are <strong>not indexed</strong></li>
+      <li>Structured data must be on the <strong>mobile version</strong></li>
+    </ul>
+    <div class="callout callout-danger"><strong>Critical:</strong> If you use responsive design (same HTML for all devices), you're fine. Problems arise only with separate mobile sites (m.yoursite.com) with less content.</div>
+
+    <h2 id="mb2e">2. Responsive vs Separate vs Dynamic</h2>
+    <table>
+      <tr><th>Approach</th><th>How it works</th><th>Google recommendation</th></tr>
+      <tr><td><strong>Responsive</strong></td><td>Same HTML, CSS adapts layout</td><td>Recommended &#10004;</td></tr>
+      <tr><td>Separate site</td><td>Different site at m.yoursite.com</td><td>Acceptable</td></tr>
+      <tr><td>Dynamic serving</td><td>Same URL, different HTML per User-Agent</td><td>Acceptable</td></tr>
+    </table>
+    <p><strong>Responsive design is the clear winner</strong> &mdash; one URL, one HTML, one sitemap.</p>
+    <div class="callout"><strong>Mobile-first CSS:</strong> Write CSS for mobile first (no media queries), then add <code>@media (min-width: ...)</code> for larger screens.</div>
+
+    <h2 id="mb3e">3. Viewport meta tag</h2>
+    <pre><code>&lt;!-- REQUIRED --&gt;
+&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+
+&lt;!-- NEVER block zoom --&gt;
+&lt;meta name="viewport" content="..., user-scalable=no"&gt;  &lt;!-- ✗ BAD --&gt;</code></pre>
+    <p>More about viewport in our <a href="./blog-seo-meta.html">Meta Tags guide</a>.</p>
+
+    <h2 id="mb4e">4. Touch-friendly design</h2>
+    <table>
+      <tr><th>Element</th><th>Min size</th><th>Spacing</th></tr>
+      <tr><td>Buttons</td><td>48 x 48 CSS px</td><td>8px between</td></tr>
+      <tr><td>Text links</td><td>Enough padding for tap</td><td>Not stacked together</td></tr>
+      <tr><td>Input fields</td><td>48px height</td><td>16px margins</td></tr>
+      <tr><td>Navigation</td><td>44 x 44 pt (Apple)</td><td>Clear separation</td></tr>
+    </table>
+    <ul>
+      <li><strong>Font size:</strong> min 16px body text</li>
+      <li><strong>No horizontal scroll</strong> &mdash; use <code>max-width: 100%</code> on images</li>
+      <li><strong>Input types:</strong> use <code>email</code>, <code>tel</code>, <code>number</code> for correct keyboard</li>
+    </ul>
+
+    <h2 id="mb5e">5. Core Web Vitals on mobile</h2>
+    <p>CWV are measured <strong>separately for mobile and desktop</strong>. Mobile scores are typically worse due to slower connections and weaker hardware.</p>
+    <table>
+      <tr><th>Metric</th><th>Good (mobile)</th><th>Typical mobile issues</th></tr>
+      <tr><td>LCP</td><td>&lt; 2.5s</td><td>Large images without srcset, slow server</td></tr>
+      <tr><td>CLS</td><td>&lt; 0.1</td><td>Images without dimensions, dynamic ads, fonts</td></tr>
+      <tr><td>INP</td><td>&lt; 200ms</td><td>Heavy JavaScript, blocked main thread</td></tr>
+    </table>
+    <p>Use <code>srcset</code>, <code>loading="lazy"</code>, <code>font-display: swap</code>, critical CSS inlining. More in our <a href="./blog-perf-cwv.html">CWV guide</a>.</p>
+
+    <h2 id="mb6e">6. Mobile speed</h2>
+    <ul>
+      <li><strong>53%</strong> of mobile users leave sites that take over 3 seconds to load</li>
+      <li>Average 4G: <strong>50ms latency</strong>, <strong>10-30 Mbps</strong> bandwidth</li>
+      <li>Average mobile device: <strong>4-8x weaker CPU</strong> than average laptop</li>
+    </ul>
+    <div class="callout callout-danger"><strong>Performance budget:</strong> For 3-second load on 4G, keep under 170KB compressed (HTML + CSS + JS + above-fold images).</div>
+
+    <h2 id="mb7e">7. AMP &mdash; still needed?</h2>
+    <p><strong>Short answer: NO for new sites.</strong> AMP lost relevance after June 2021 when it stopped being required for Top Stories. Many publishers (BBC, WaPo) abandoned it. Focus on fast, responsive sites with good Core Web Vitals instead.</p>
+    <div class="callout callout-warn"><strong>Recommendation:</strong> Don't use AMP for new sites. If you have AMP, consider migrating back to standard HTML.</div>
+
+    <h2 id="mb8e">8. Common mobile SEO mistakes</h2>
+    <ul>
+      <li><strong>Missing viewport tag</strong> &mdash; site renders as zoomed-out desktop</li>
+      <li><strong>user-scalable=no</strong> &mdash; blocks zoom, accessibility violation</li>
+      <li><strong>Text too small</strong> &mdash; below 16px requires zooming</li>
+      <li><strong>Elements too close</strong> &mdash; tap targets under 48px or without spacing</li>
+      <li><strong>Horizontal scroll</strong> &mdash; images/tables wider than viewport</li>
+      <li><strong>Intrusive interstitials</strong> &mdash; full-screen popups penalized since 2017</li>
+      <li><strong>Hidden content on mobile</strong> &mdash; Google indexes mobile version only</li>
+      <li><strong>Slow server</strong> &mdash; TTFB over 600ms is critical on mobile</li>
+      <li><strong>No srcset</strong> &mdash; desktop images (1200px+) waste mobile bandwidth</li>
+    </ul>
+
+    <h2 id="mb9e">9. Testing tools</h2>
+    <ul>
+      <li><strong><a href="./index.html">Web Security Scanner</a></strong> &mdash; checks viewport, responsive elements</li>
+      <li><strong><a href="https://pagespeed.web.dev/" target="_blank">PageSpeed Insights</a></strong> &mdash; mobile/desktop scores with CWV</li>
+      <li><strong>Chrome DevTools Device Mode</strong> &mdash; F12 &rarr; Toggle Device Toolbar</li>
+      <li><strong>Google Search Console</strong> &mdash; Mobile Usability report</li>
+      <li><strong><a href="https://www.browserstack.com/" target="_blank">BrowserStack</a></strong> &mdash; test on real devices</li>
+    </ul>
+
+    <h2 id="mb10e">10. References and resources</h2>
+    <ul>
+      <li><a href="https://developers.google.com/search/docs/crawling-indexing/mobile/mobile-sites-mobile-first-indexing" target="_blank">Google &mdash; Mobile-First Indexing</a></li>
+      <li><a href="https://web.dev/articles/responsive-web-design-basics" target="_blank">web.dev &mdash; Responsive Design</a></li>
+      <li><a href="https://web.dev/articles/vitals" target="_blank">web.dev &mdash; Core Web Vitals</a></li>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Viewport_meta_tag" target="_blank">MDN &mdash; Viewport Meta Tag</a></li>
+      <li><a href="https://www.nngroup.com/articles/mobile-usability/" target="_blank">NN Group &mdash; Mobile Usability</a></li>
+      <li><a href="https://amp.dev/" target="_blank">AMP Project</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Check your mobile optimization &rarr;</a>
+  </div>
+
+  <div class="nav-links">
+    <a href="./blog-seo.html"><span class="sr">SEO vodic</span><span class="en">SEO Guide</span></a>
+    <a href="./blog-seo-meta.html"><span class="sr">Meta Tagovi</span><span class="en">Meta Tags</span></a>
+    <a href="./blog-seo-schema.html"><span class="sr">Schema.org</span><span class="en">Schema.org</span></a>
+    <a href="./blog-seo-sitemap.html"><span class="sr">Sitemap.xml</span><span class="en">Sitemap.xml</span></a>
+    <a href="./blog-seo-opengraph.html"><span class="sr">Open Graph</span><span class="en">Open Graph</span></a>
+    <a href="./blog-seo-headings.html"><span class="sr">Heading struktura</span><span class="en">Heading Structure</span></a>
+    <a href="./blog-seo-local.html"><span class="sr">Lokalni SEO</span><span class="en">Local SEO</span></a>
+  </div>
+
+  </main>
+</div>
+<script src="./blog-common.js" defer></script>
+</body>
+</html>

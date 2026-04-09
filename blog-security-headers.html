@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTTP Security Headers — 7 obaveznih headera | Web Security Scanner</title>
+  <meta name="description" content="Detaljan vodic za 7 kljucnih HTTP security headera: CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy i COOP sa primerima konfiguracije.">
+  <meta name="keywords" content="security headers, CSP, HSTS, X-Frame-Options, Content-Security-Policy, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, COOP">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <link rel="canonical" href="https://security-scanner-ruddy.vercel.app/blog-security-headers.html">
+  <link rel="alternate" hreflang="sr" href="https://security-scanner-ruddy.vercel.app/blog-security-headers.html">
+  <link rel="alternate" hreflang="en" href="https://security-scanner-ruddy.vercel.app/blog-security-headers.html">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="HTTP Security Headers — 7 obaveznih headera za vas sajt">
+  <meta property="og:description" content="Naucite kako da pravilno konfiguresite CSP, HSTS, X-Frame-Options i ostale security headere za zastitu vaseg sajta.">
+  <meta property="og:url" content="https://security-scanner-ruddy.vercel.app/blog-security-headers.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="HTTP Security Headers — 7 obaveznih headera za vas sajt">
+  <meta name="twitter:description" content="Naucite kako da pravilno konfiguresite CSP, HSTS, X-Frame-Options i ostale security headere za zastitu vaseg sajta.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "HTTP Security Headers — 7 obaveznih headera za vas sajt",
+    "author": {"@type": "Person", "name": "Toske", "url": "https://toske-programer.web.app"},
+    "publisher": {"@type": "Organization", "name": "Web Security Scanner"},
+    "datePublished": "2026-04-09",
+    "dateModified": "2026-04-09",
+    "description": "Detaljan vodic za 7 kljucnih HTTP security headera sa primerima konfiguracije za Nginx, Apache i Express.js.",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://security-scanner-ruddy.vercel.app/blog-security-headers.html"
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Sta su HTTP security headeri?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "HTTP security headeri su direktive koje server salje browser-u kao deo HTTP odgovora. Oni instruisu browser da primeni odredjene bezbednosne politike, kao sto su zabrana ucitavanja resursa sa neodobrenih domena (CSP), forsiranje HTTPS-a (HSTS), ili sprecavanje clickjacking napada (X-Frame-Options)."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Koji je najvazniji security header?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Content-Security-Policy (CSP) se smatra najvaznijim security headerom jer pruza najsiru zastitu — sprjecava XSS napade, data injection, clickjacking i druge napade kontrolisuci koje resurse browser sme da ucita. Medjutim, HSTS je takodje kritican za zastitu od downgrade napada."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Kako da testiram security headere mog sajta?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Mozete koristiti Mozilla Observatory (observatory.mozilla.org), SecurityHeaders.com, ili Web Security Scanner za automatski pregled vasih headera. Takodje mozete otvoriti DevTools u browser-u (F12), ici na Network tab, kliknuti na prvi zahtev i pogledati Response Headers sekciju."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Da li security headeri uticu na performanse?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ne, security headeri imaju zanemarljiv uticaj na performanse. Oni su mali tekstualni stringovi koji se dodaju HTTP odgovoru (obicno manje od 1KB ukupno). Zapravo, dobra CSP politika moze poboljsati performanse jer sprecava ucitavanje nezelejnih resursa."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Da li security headeri zamenjuju server-side validaciju?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ne. Security headeri su dodatni sloj zastite koji radi na klijentskoj strani (u browser-u). Oni ne zamenjuju input validaciju, output encoding, parameterized queries i druge server-side mere. Princip defense-in-depth nalaze da koristite oba pristupa."
+        }
+      }
+    ]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "Kako dodati security headere na vas sajt",
+    "step": [
+      {
+        "@type": "HowToStep",
+        "name": "Analizirajte trenutno stanje",
+        "text": "Koristite Mozilla Observatory ili SecurityHeaders.com da skenirate vas sajt i vidite koji headeri nedostaju."
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Dodajte headere u konfiguraciju servera",
+        "text": "Dodajte preporucene headere u Nginx, Apache, ili vas framework (Express.js, Django, itd.)."
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Testirajte CSP u report-only modu",
+        "text": "Pre primene stroge CSP politike, koristite Content-Security-Policy-Report-Only header da otkrijete probleme bez blokiranja resursa."
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Verifikujte i monitujte",
+        "text": "Ponovo skenirajte sajt, proverite da sve radi ispravno, i postavite CSP reporting endpoint za kontinuirano pracenje."
+      }
+    ]
+  }
+  </script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+</head>
+<body>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr">
+      <div class="timeline-title">Sadrzaj</div>
+      <ol id="timeline-sr"></ol>
+    </div>
+    <div class="en">
+      <div class="timeline-title">Contents</div>
+      <ol id="timeline-en"></ol>
+    </div>
+  </aside>
+  <main class="blog-content">
+
+  <!-- ==================== SR CONTENT ==================== -->
+  <div class="sr">
+    <h1>HTTP Security Headers — 7 obaveznih headera</h1>
+    <p class="subtitle">Kompletni vodic za konfiguraciju bezbednosnih headera koji stite vas sajt od XSS, clickjacking i drugih napada</p>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-num">93%</div>
+        <div class="stat-label">Sajtova nema CSP header</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">7</div>
+        <div class="stat-label">Kljucnih security headera</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">A+</div>
+        <div class="stat-label">Mozilla Observatory cilj</div>
+      </div>
+    </div>
+
+    <div class="toc">
+      <h3>Sadrzaj</h3>
+      <ol>
+        <li><a href="#hdr-intro">Sta su HTTP security headeri</a></li>
+        <li><a href="#hdr-hsts">Strict-Transport-Security (HSTS)</a></li>
+        <li><a href="#hdr-csp">Content-Security-Policy (CSP)</a></li>
+        <li><a href="#hdr-xframe">X-Frame-Options</a></li>
+        <li><a href="#hdr-xcto">X-Content-Type-Options</a></li>
+        <li><a href="#hdr-referrer">Referrer-Policy</a></li>
+        <li><a href="#hdr-permissions">Permissions-Policy</a></li>
+        <li><a href="#hdr-coop">Cross-Origin-Opener-Policy (COOP)</a></li>
+        <li><a href="#hdr-pregled">Pregled svih headera</a></li>
+        <li><a href="#hdr-reference">Reference i resursi</a></li>
+      </ol>
+    </div>
+
+    <h2 id="hdr-intro">1. Sta su HTTP security headeri</h2>
+    <p>HTTP headeri su meta-podaci koji se razmenjuju izmedju klijenta (browser-a) i servera prilikom svakog HTTP zahteva i odgovora. Security headeri su specificna podgrupa response headera koji instruisu browser da primeni bezbednosne politike.</p>
+    <p>Bez security headera, vas sajt je podlozan:</p>
+    <ul>
+      <li><strong>XSS napadima</strong> — Napadac ubacuje maliciozne skripte (sprecava CSP)</li>
+      <li><strong>Clickjacking napadima</strong> — Vas sajt se ucitava u nevidljiv iframe (sprecava X-Frame-Options)</li>
+      <li><strong>MIME sniffing napadima</strong> — Browser pogresno interpretira tip fajla (sprecava X-Content-Type-Options)</li>
+      <li><strong>Downgrade napadima</strong> — Forsiranje HTTP umesto HTTPS (sprecava HSTS)</li>
+      <li><strong>Data leaking</strong> — Curenje podataka kroz Referer header (sprecava Referrer-Policy)</li>
+    </ul>
+    <p>Prema Mozilla Observatory podacima, samo oko 7% sajtova ima implementiran Content-Security-Policy header, sto znaci da je ogromna vecina web sajtova ranjiva na napade koje CSP moze da spreci.</p>
+    <p class="ref">Referenca: <a href="https://owasp.org/www-project-secure-headers/" target="_blank">OWASP Secure Headers Project</a></p>
+
+    <h2 id="hdr-hsts">2. Strict-Transport-Security (HSTS)</h2>
+    <p>HSTS je header koji nareduje browser-u da uvek koristi HTTPS za komunikaciju sa vasim sajtom. Definisan je u <a href="https://datatracker.ietf.org/doc/html/rfc6797" target="_blank">RFC 6797</a>.</p>
+
+    <h3>Zasto je HSTS vazan</h3>
+    <p>Bez HSTS-a, cak i sajtovi sa HTTPS-om su ranjivi na SSL stripping napad (alat: sslstrip). Napadac na istoj mrezi moze presresti prvu HTTP konekciju pre nego sto se redirekcija na HTTPS izvrsi.</p>
+
+    <h3>Parametri</h3>
+    <ul>
+      <li><code>max-age</code> — Vreme u sekundama koliko browser pamti da koristi HTTPS (preporuka: 63072000 = 2 godine)</li>
+      <li><code>includeSubDomains</code> — Primenjuje politiku i na sve poddomene</li>
+      <li><code>preload</code> — Dozvoljava dodavanje na browser-ovu preload listu</li>
+    </ul>
+
+    <h3>Konfiguracija</h3>
+    <pre><code># Nginx
+add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+
+# Apache
+Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+
+# Express.js (sa helmet middleware-om)
+const helmet = require('helmet');
+app.use(helmet.hsts({
+  maxAge: 63072000,
+  includeSubDomains: true,
+  preload: true
+}));</code></pre>
+    <p class="ref">Referenca: <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security" target="_blank">MDN — Strict-Transport-Security</a></p>
+
+    <h2 id="hdr-csp">3. Content-Security-Policy (CSP)</h2>
+    <p>Content-Security-Policy je najmocaniji security header. On kontrolise koje resurse browser sme da ucita i izvrsi na vasoj stranici. CSP je definisan u <a href="https://www.w3.org/TR/CSP3/" target="_blank">W3C CSP Level 3</a> specifikaciji.</p>
+
+    <h3>Kljucne direktive</h3>
+    <table>
+      <tr><th>Direktiva</th><th>Kontrolise</th><th>Primer</th></tr>
+      <tr><td><code>default-src</code></td><td>Fallback za sve tipove</td><td><code>'self'</code></td></tr>
+      <tr><td><code>script-src</code></td><td>JavaScript izvore</td><td><code>'self' 'nonce-abc123'</code></td></tr>
+      <tr><td><code>style-src</code></td><td>CSS izvore</td><td><code>'self' 'unsafe-inline'</code></td></tr>
+      <tr><td><code>img-src</code></td><td>Izvore slika</td><td><code>'self' data: https:</code></td></tr>
+      <tr><td><code>connect-src</code></td><td>API/fetch/WebSocket</td><td><code>'self' https://api.example.com</code></td></tr>
+      <tr><td><code>font-src</code></td><td>Font izvore</td><td><code>'self' https://fonts.gstatic.com</code></td></tr>
+      <tr><td><code>frame-src</code></td><td>Iframe izvore</td><td><code>'none'</code></td></tr>
+      <tr><td><code>object-src</code></td><td>Plugin-e (Flash, Java)</td><td><code>'none'</code></td></tr>
+      <tr><td><code>base-uri</code></td><td>&lt;base&gt; tag</td><td><code>'self'</code></td></tr>
+      <tr><td><code>form-action</code></td><td>Forme (action URL)</td><td><code>'self'</code></td></tr>
+      <tr><td><code>report-uri</code></td><td>URL za prijavu krsenja</td><td><code>/csp-report</code></td></tr>
+    </table>
+
+    <h3>Primer stroge CSP politike</h3>
+    <pre><code># Nginx
+add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'nonce-RANDOM'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';" always;
+
+# Apache
+Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; frame-ancestors 'none';"
+
+# Express.js
+app.use(helmet.contentSecurityPolicy({
+  directives: {
+    defaultSrc: ["'self'"],
+    scriptSrc: ["'self'"],
+    styleSrc: ["'self'", "'unsafe-inline'"],
+    imgSrc: ["'self'", "data:", "https:"],
+    objectSrc: ["'none'"],
+    frameAncestors: ["'none'"]
+  }
+}));</code></pre>
+
+    <div class="callout">
+      <strong>Report-Only mod:</strong> Pre primene stroge CSP politike, koristite <code>Content-Security-Policy-Report-Only</code> header. On prijavljuje krsenja bez blokiranja resursa, sto vam omogucava da testirate politiku bez rizika da pokvarite sajt.
+    </div>
+
+    <div class="callout callout-warn">
+      <strong>Izbegavajte 'unsafe-inline' i 'unsafe-eval':</strong> Ove vrednosti znacajno oslabljuju CSP. Umesto <code>'unsafe-inline'</code> za skripte, koristite nonce-based pristup (<code>'nonce-abc123'</code>) ili hash-based pristup (<code>'sha256-...'</code>).
+    </div>
+    <p class="ref">Referenca: <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP" target="_blank">MDN — Content Security Policy</a></p>
+
+    <h2 id="hdr-xframe">4. X-Frame-Options</h2>
+    <p>X-Frame-Options kontrolise da li se vasa stranica moze prikazati unutar <code>&lt;iframe&gt;</code>, <code>&lt;frame&gt;</code> ili <code>&lt;object&gt;</code> elementa. Ovo je kljucna zastita od clickjacking napada.</p>
+
+    <h3>Sta je clickjacking</h3>
+    <p>U clickjacking napadu, napadac ucitava vas sajt u nevidljiv iframe na svojoj stranici. Korisnik misli da klikce na napadacevu stranicu, ali zapravo klikce na dugmad na vasem sajtu — moze nesvesno promeniti lozinku, obrisati nalog ili izvrsiti transakciju.</p>
+
+    <h3>Vrednosti</h3>
+    <ul>
+      <li><code>DENY</code> — Stranica se nikada ne moze prikazati u iframe-u (najbezbednije)</li>
+      <li><code>SAMEORIGIN</code> — Samo sa istog domena</li>
+      <li><code>ALLOW-FROM uri</code> — Dozvoljeno samo sa navedenog URI-ja (deprecated, slaba podrska)</li>
+    </ul>
+
+    <h3>Konfiguracija</h3>
+    <pre><code># Nginx
+add_header X-Frame-Options "DENY" always;
+
+# Apache
+Header always set X-Frame-Options "DENY"
+
+# Express.js
+app.use(helmet.frameguard({ action: 'deny' }));</code></pre>
+
+    <div class="callout">
+      <strong>Napomena:</strong> CSP direktiva <code>frame-ancestors</code> je modernija zamena za X-Frame-Options i pruza vecu fleksibilnost. Preporuka je da koristite oba headera za maksimalnu kompatibilnost.
+    </div>
+    <p class="ref">Referenca: <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options" target="_blank">MDN — X-Frame-Options</a></p>
+
+    <h2 id="hdr-xcto">5. X-Content-Type-Options</h2>
+    <p>Ovaj header sprecava MIME type sniffing — ponasanje browser-a gde on ignorise deklarisani Content-Type i pokusava da "pogodi" tip sadrzaja na osnovu samog sadrzaja fajla.</p>
+
+    <h3>Kako MIME sniffing napad radi</h3>
+    <p>Napadac uploada fajl koji izgleda kao slika (npr. image.jpg) ali zapravo sadrzi JavaScript kod. Bez ovog headera, browser moze da izvrsi taj kod umesto da ga prikaze kao sliku. Ovo je posebno opasno na sajtovima koji dozvoljavaju upload fajlova.</p>
+
+    <h3>Jedina vrednost</h3>
+    <pre><code>X-Content-Type-Options: nosniff</code></pre>
+
+    <h3>Konfiguracija</h3>
+    <pre><code># Nginx
+add_header X-Content-Type-Options "nosniff" always;
+
+# Apache
+Header always set X-Content-Type-Options "nosniff"
+
+# Express.js
+app.use(helmet.noSniff());</code></pre>
+    <p class="ref">Referenca: <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options" target="_blank">MDN — X-Content-Type-Options</a></p>
+
+    <h2 id="hdr-referrer">6. Referrer-Policy</h2>
+    <p>Referrer-Policy kontrolise koliko informacija o URL-u se salje u <code>Referer</code> header-u kada korisnik navigira sa vaseg sajta na drugi sajt. Ovo je vazno za privatnost korisnika i sprecavanje curenja osetljivih podataka u URL-ovima.</p>
+
+    <h3>Dostupne opcije</h3>
+    <table>
+      <tr><th>Vrednost</th><th>Ponasanje</th><th>Preporuka</th></tr>
+      <tr><td><code>no-referrer</code></td><td>Nikada ne salje Referer</td><td>Maksimalna privatnost</td></tr>
+      <tr><td><code>no-referrer-when-downgrade</code></td><td>Salje za HTTPS-&gt;HTTPS, ne za HTTPS-&gt;HTTP</td><td>Browser default</td></tr>
+      <tr><td><code>origin</code></td><td>Salje samo origin (domen bez putanje)</td><td>Dobar balans</td></tr>
+      <tr><td><code>origin-when-cross-origin</code></td><td>Pun URL za isti domen, samo origin za drugi</td><td>Dobar balans</td></tr>
+      <tr><td><code>same-origin</code></td><td>Salje samo za isti domen</td><td>Stroga privatnost</td></tr>
+      <tr><td><code>strict-origin</code></td><td>Samo origin, ne za downgrade</td><td>Preporuceno</td></tr>
+      <tr><td><code>strict-origin-when-cross-origin</code></td><td>Pun URL za isti domen, origin za drugi, nista za downgrade</td><td>Najbolja preporuka</td></tr>
+      <tr><td><code>unsafe-url</code></td><td>Uvek salje pun URL</td><td>Ne koristiti</td></tr>
+    </table>
+
+    <h3>Konfiguracija</h3>
+    <pre><code># Nginx
+add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+# Apache
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+# Express.js
+app.use(helmet.referrerPolicy({
+  policy: 'strict-origin-when-cross-origin'
+}));</code></pre>
+    <p class="ref">Referenca: <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy" target="_blank">MDN — Referrer-Policy</a></p>
+
+    <h2 id="hdr-permissions">7. Permissions-Policy</h2>
+    <p>Permissions-Policy (ranije Feature-Policy) kontrolise koje browser API-je i funkcije vas sajt i ugradjeni iframe-ovi smeju da koriste. Ovo sprecava zloupotrebe poput neovlascenog pristupa kameri, mikrofonu ili lokaciji.</p>
+
+    <h3>Kljucne funkcije za kontrolu</h3>
+    <ul>
+      <li><code>camera</code> — Pristup kameri</li>
+      <li><code>microphone</code> — Pristup mikrofonu</li>
+      <li><code>geolocation</code> — Pristup lokaciji</li>
+      <li><code>payment</code> — Payment Request API</li>
+      <li><code>usb</code> — WebUSB API</li>
+      <li><code>autoplay</code> — Automatsko pustanje medija</li>
+      <li><code>fullscreen</code> — Fullscreen API</li>
+      <li><code>interest-cohort</code> — FLoC (Google Privacy Sandbox)</li>
+    </ul>
+
+    <h3>Konfiguracija</h3>
+    <pre><code># Nginx
+add_header Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()" always;
+
+# Apache
+Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
+
+# Express.js
+app.use(helmet.permittedCrossDomainPolicies());
+// Ili rucno:
+app.use((req, res, next) => {
+  res.setHeader('Permissions-Policy',
+    'camera=(), microphone=(), geolocation=(), payment=()');
+  next();
+});</code></pre>
+
+    <div class="callout">
+      <strong>Sintaksa:</strong> <code>()</code> znaci "zabranjeno za sve", <code>(self)</code> znaci "dozvoljeno samo za vas domen", <code>(self "https://primer.com")</code> znaci "dozvoljeno za vas domen i navedeni sajt".
+    </div>
+    <p class="ref">Referenca: <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy" target="_blank">MDN — Permissions-Policy</a></p>
+
+    <h2 id="hdr-coop">8. Cross-Origin-Opener-Policy (COOP)</h2>
+    <p>COOP izoluje vas browsing kontekst od cross-origin prozora. Ovo je zastita od Spectre-klase napada koji mogu da procitaju memoriju iz drugih procesa browser-a.</p>
+
+    <h3>Zasto je COOP vazan</h3>
+    <p>Spectre napadi (CVE-2017-5753, CVE-2017-5715) su otkrili da JavaScript u browser-u moze da cita memoriju iz drugih procesa koristeci speculative execution. COOP, zajedno sa COEP (Cross-Origin-Embedder-Policy), omogucava site isolation i pristup high-resolution timer-ima (SharedArrayBuffer) na bezbedan nacin.</p>
+
+    <h3>Vrednosti</h3>
+    <ul>
+      <li><code>unsafe-none</code> — Nema izolacije (default)</li>
+      <li><code>same-origin</code> — Izoluje prozor od cross-origin opener-a</li>
+      <li><code>same-origin-allow-popups</code> — Izolacija, ali dozvoljava popupe</li>
+    </ul>
+
+    <h3>Konfiguracija</h3>
+    <pre><code># Nginx
+add_header Cross-Origin-Opener-Policy "same-origin" always;
+
+# Apache
+Header always set Cross-Origin-Opener-Policy "same-origin"
+
+# Express.js
+app.use(helmet.crossOriginOpenerPolicy({ policy: 'same-origin' }));</code></pre>
+    <p class="ref">Referenca: <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cross-Origin-Opener-Policy" target="_blank">MDN — Cross-Origin-Opener-Policy</a></p>
+
+    <h2 id="hdr-pregled">9. Pregled svih headera</h2>
+    <table>
+      <tr><th>Header</th><th>Preporucena vrednost</th><th>Stiti od</th><th>Severity</th></tr>
+      <tr><td>Strict-Transport-Security</td><td><code>max-age=63072000; includeSubDomains; preload</code></td><td>SSL stripping, downgrade</td><td>Kriticno</td></tr>
+      <tr><td>Content-Security-Policy</td><td><code>default-src 'self'; script-src 'self'</code></td><td>XSS, injection</td><td>Kriticno</td></tr>
+      <tr><td>X-Frame-Options</td><td><code>DENY</code></td><td>Clickjacking</td><td>Visoko</td></tr>
+      <tr><td>X-Content-Type-Options</td><td><code>nosniff</code></td><td>MIME sniffing</td><td>Srednje</td></tr>
+      <tr><td>Referrer-Policy</td><td><code>strict-origin-when-cross-origin</code></td><td>Data leaking</td><td>Srednje</td></tr>
+      <tr><td>Permissions-Policy</td><td><code>camera=(), microphone=()</code></td><td>Neovlasceni pristup</td><td>Srednje</td></tr>
+      <tr><td>Cross-Origin-Opener-Policy</td><td><code>same-origin</code></td><td>Spectre napadi</td><td>Srednje</td></tr>
+    </table>
+
+    <h3>Kompletna Nginx konfiguracija</h3>
+    <pre><code># Dodajte u server blok ili http blok
+add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';" always;
+add_header X-Frame-Options "DENY" always;
+add_header X-Content-Type-Options "nosniff" always;
+add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+add_header Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()" always;
+add_header Cross-Origin-Opener-Policy "same-origin" always;</code></pre>
+
+    <h2 id="hdr-reference">10. Reference i resursi</h2>
+    <ul>
+      <li><a href="https://owasp.org/www-project-secure-headers/" target="_blank">OWASP Secure Headers Project</a> — Kompletna lista preporucenih headera</li>
+      <li><a href="https://observatory.mozilla.org/" target="_blank">Mozilla Observatory</a> — Besplatan skener za security headere</li>
+      <li><a href="https://securityheaders.com/" target="_blank">SecurityHeaders.com</a> — Brzi skener headera</li>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers" target="_blank">MDN — HTTP Headers</a> — Kompletna referenca</li>
+      <li><a href="https://helmetjs.github.io/" target="_blank">Helmet.js</a> — Security headers middleware za Express.js</li>
+      <li><a href="https://datatracker.ietf.org/doc/html/rfc6797" target="_blank">RFC 6797 — HSTS</a></li>
+      <li><a href="https://www.w3.org/TR/CSP3/" target="_blank">W3C — Content Security Policy Level 3</a></li>
+      <li><a href="https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Headers_Cheat_Sheet.html" target="_blank">OWASP HTTP Headers Cheat Sheet</a></li>
+    </ul>
+
+    <a href="./index.html" class="cta">Skenirajte security headere vaseg sajta</a>
+  </div>
+
+  <!-- ==================== EN CONTENT ==================== -->
+  <div class="en">
+    <h1>HTTP Security Headers — 7 essential headers</h1>
+    <p class="subtitle">Complete guide to configuring security headers that protect your site from XSS, clickjacking, and other attacks</p>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-num">93%</div>
+        <div class="stat-label">Sites lack CSP header</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">7</div>
+        <div class="stat-label">Key security headers</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">A+</div>
+        <div class="stat-label">Mozilla Observatory goal</div>
+      </div>
+    </div>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#hdr-intro">What are HTTP security headers</a></li>
+        <li><a href="#hdr-hsts">Strict-Transport-Security (HSTS)</a></li>
+        <li><a href="#hdr-csp">Content-Security-Policy (CSP)</a></li>
+        <li><a href="#hdr-xframe">X-Frame-Options</a></li>
+        <li><a href="#hdr-xcto">X-Content-Type-Options</a></li>
+        <li><a href="#hdr-referrer">Referrer-Policy</a></li>
+        <li><a href="#hdr-permissions">Permissions-Policy</a></li>
+        <li><a href="#hdr-coop">Cross-Origin-Opener-Policy (COOP)</a></li>
+        <li><a href="#hdr-pregled">Complete header overview</a></li>
+        <li><a href="#hdr-reference">References and resources</a></li>
+      </ol>
+    </div>
+
+    <h2 id="hdr-e1">1. What are HTTP security headers</h2>
+    <p>HTTP headers are metadata exchanged between the client (browser) and server with every HTTP request and response. Security headers are a specific subset of response headers that instruct the browser to enforce security policies.</p>
+    <p>Without security headers, your site is vulnerable to:</p>
+    <ul>
+      <li><strong>XSS attacks</strong> — Attacker injects malicious scripts (prevented by CSP)</li>
+      <li><strong>Clickjacking attacks</strong> — Your site is loaded in an invisible iframe (prevented by X-Frame-Options)</li>
+      <li><strong>MIME sniffing attacks</strong> — Browser misinterprets file type (prevented by X-Content-Type-Options)</li>
+      <li><strong>Downgrade attacks</strong> — Forcing HTTP instead of HTTPS (prevented by HSTS)</li>
+      <li><strong>Data leaking</strong> — Data leakage through the Referer header (prevented by Referrer-Policy)</li>
+    </ul>
+    <p>According to Mozilla Observatory data, only about 7% of websites have the Content-Security-Policy header implemented, meaning the vast majority of websites are vulnerable to attacks that CSP can prevent.</p>
+    <p class="ref">Reference: <a href="https://owasp.org/www-project-secure-headers/" target="_blank">OWASP Secure Headers Project</a></p>
+
+    <h2 id="hdr-e2">2. Strict-Transport-Security (HSTS)</h2>
+    <p>HSTS is a header that instructs the browser to always use HTTPS when communicating with your site. It is defined in <a href="https://datatracker.ietf.org/doc/html/rfc6797" target="_blank">RFC 6797</a>.</p>
+
+    <h3>Why HSTS matters</h3>
+    <p>Without HSTS, even sites with HTTPS are vulnerable to SSL stripping attacks (tool: sslstrip). An attacker on the same network can intercept the initial HTTP connection before the HTTPS redirect occurs.</p>
+
+    <h3>Parameters</h3>
+    <ul>
+      <li><code>max-age</code> — Time in seconds the browser remembers to use HTTPS (recommended: 63072000 = 2 years)</li>
+      <li><code>includeSubDomains</code> — Applies the policy to all subdomains</li>
+      <li><code>preload</code> — Allows addition to the browser's preload list</li>
+    </ul>
+
+    <h3>Configuration</h3>
+    <pre><code># Nginx
+add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+
+# Apache
+Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+
+# Express.js (with helmet middleware)
+const helmet = require('helmet');
+app.use(helmet.hsts({
+  maxAge: 63072000,
+  includeSubDomains: true,
+  preload: true
+}));</code></pre>
+    <p class="ref">Reference: <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security" target="_blank">MDN — Strict-Transport-Security</a></p>
+
+    <h2 id="hdr-e3">3. Content-Security-Policy (CSP)</h2>
+    <p>Content-Security-Policy is the most powerful security header. It controls which resources the browser is allowed to load and execute on your page. CSP is defined in the <a href="https://www.w3.org/TR/CSP3/" target="_blank">W3C CSP Level 3</a> specification.</p>
+
+    <h3>Key directives</h3>
+    <table>
+      <tr><th>Directive</th><th>Controls</th><th>Example</th></tr>
+      <tr><td><code>default-src</code></td><td>Fallback for all types</td><td><code>'self'</code></td></tr>
+      <tr><td><code>script-src</code></td><td>JavaScript sources</td><td><code>'self' 'nonce-abc123'</code></td></tr>
+      <tr><td><code>style-src</code></td><td>CSS sources</td><td><code>'self' 'unsafe-inline'</code></td></tr>
+      <tr><td><code>img-src</code></td><td>Image sources</td><td><code>'self' data: https:</code></td></tr>
+      <tr><td><code>connect-src</code></td><td>API/fetch/WebSocket</td><td><code>'self' https://api.example.com</code></td></tr>
+      <tr><td><code>font-src</code></td><td>Font sources</td><td><code>'self' https://fonts.gstatic.com</code></td></tr>
+      <tr><td><code>frame-src</code></td><td>Iframe sources</td><td><code>'none'</code></td></tr>
+      <tr><td><code>object-src</code></td><td>Plugins (Flash, Java)</td><td><code>'none'</code></td></tr>
+      <tr><td><code>report-uri</code></td><td>URL for violation reports</td><td><code>/csp-report</code></td></tr>
+    </table>
+
+    <h3>Strict CSP policy example</h3>
+    <pre><code># Nginx
+add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'nonce-RANDOM'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';" always;
+
+# Apache
+Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; frame-ancestors 'none';"
+
+# Express.js
+app.use(helmet.contentSecurityPolicy({
+  directives: {
+    defaultSrc: ["'self'"],
+    scriptSrc: ["'self'"],
+    styleSrc: ["'self'", "'unsafe-inline'"],
+    imgSrc: ["'self'", "data:", "https:"],
+    objectSrc: ["'none'"],
+    frameAncestors: ["'none'"]
+  }
+}));</code></pre>
+
+    <div class="callout">
+      <strong>Report-Only mode:</strong> Before enforcing a strict CSP policy, use the <code>Content-Security-Policy-Report-Only</code> header. It reports violations without blocking resources, allowing you to test the policy without risking breaking your site.
+    </div>
+
+    <div class="callout callout-warn">
+      <strong>Avoid 'unsafe-inline' and 'unsafe-eval':</strong> These values significantly weaken CSP. Instead of <code>'unsafe-inline'</code> for scripts, use nonce-based approach (<code>'nonce-abc123'</code>) or hash-based approach (<code>'sha256-...'</code>).
+    </div>
+    <p class="ref">Reference: <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP" target="_blank">MDN — Content Security Policy</a></p>
+
+    <h2 id="hdr-e4">4. X-Frame-Options</h2>
+    <p>X-Frame-Options controls whether your page can be displayed inside an <code>&lt;iframe&gt;</code>, <code>&lt;frame&gt;</code>, or <code>&lt;object&gt;</code> element. This is a key protection against clickjacking attacks.</p>
+
+    <h3>What is clickjacking</h3>
+    <p>In a clickjacking attack, the attacker loads your site in an invisible iframe on their page. The user thinks they are clicking on the attacker's page, but they are actually clicking buttons on your site — they can unknowingly change their password, delete their account, or execute a transaction.</p>
+
+    <h3>Values</h3>
+    <ul>
+      <li><code>DENY</code> — Page can never be displayed in an iframe (most secure)</li>
+      <li><code>SAMEORIGIN</code> — Only from the same origin</li>
+      <li><code>ALLOW-FROM uri</code> — Allowed only from the specified URI (deprecated, poor support)</li>
+    </ul>
+
+    <h3>Configuration</h3>
+    <pre><code># Nginx
+add_header X-Frame-Options "DENY" always;
+
+# Apache
+Header always set X-Frame-Options "DENY"
+
+# Express.js
+app.use(helmet.frameguard({ action: 'deny' }));</code></pre>
+    <p class="ref">Reference: <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options" target="_blank">MDN — X-Frame-Options</a></p>
+
+    <h2 id="hdr-e5">5. X-Content-Type-Options</h2>
+    <p>This header prevents MIME type sniffing — a browser behavior where it ignores the declared Content-Type and tries to "guess" the content type based on the file contents itself.</p>
+
+    <h3>How MIME sniffing attacks work</h3>
+    <p>An attacker uploads a file that looks like an image (e.g., image.jpg) but actually contains JavaScript code. Without this header, the browser may execute that code instead of displaying it as an image. This is especially dangerous on sites that allow file uploads.</p>
+
+    <h3>Configuration</h3>
+    <pre><code># Nginx
+add_header X-Content-Type-Options "nosniff" always;
+
+# Apache
+Header always set X-Content-Type-Options "nosniff"
+
+# Express.js
+app.use(helmet.noSniff());</code></pre>
+    <p class="ref">Reference: <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options" target="_blank">MDN — X-Content-Type-Options</a></p>
+
+    <h2 id="hdr-e6">6. Referrer-Policy</h2>
+    <p>Referrer-Policy controls how much URL information is sent in the <code>Referer</code> header when a user navigates from your site to another site. This is important for user privacy and preventing sensitive data leakage in URLs.</p>
+
+    <h3>Available options</h3>
+    <table>
+      <tr><th>Value</th><th>Behavior</th><th>Recommendation</th></tr>
+      <tr><td><code>no-referrer</code></td><td>Never sends Referer</td><td>Maximum privacy</td></tr>
+      <tr><td><code>origin</code></td><td>Sends only origin (domain without path)</td><td>Good balance</td></tr>
+      <tr><td><code>strict-origin</code></td><td>Only origin, not on downgrade</td><td>Recommended</td></tr>
+      <tr><td><code>strict-origin-when-cross-origin</code></td><td>Full URL same-origin, origin cross-origin, nothing on downgrade</td><td>Best recommendation</td></tr>
+      <tr><td><code>unsafe-url</code></td><td>Always sends full URL</td><td>Do not use</td></tr>
+    </table>
+
+    <h3>Configuration</h3>
+    <pre><code># Nginx
+add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+# Apache
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+# Express.js
+app.use(helmet.referrerPolicy({
+  policy: 'strict-origin-when-cross-origin'
+}));</code></pre>
+    <p class="ref">Reference: <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy" target="_blank">MDN — Referrer-Policy</a></p>
+
+    <h2 id="hdr-e7">7. Permissions-Policy</h2>
+    <p>Permissions-Policy (formerly Feature-Policy) controls which browser APIs and features your site and embedded iframes are allowed to use. This prevents abuse such as unauthorized access to camera, microphone, or location.</p>
+
+    <h3>Key features to control</h3>
+    <ul>
+      <li><code>camera</code> — Camera access</li>
+      <li><code>microphone</code> — Microphone access</li>
+      <li><code>geolocation</code> — Location access</li>
+      <li><code>payment</code> — Payment Request API</li>
+      <li><code>usb</code> — WebUSB API</li>
+      <li><code>autoplay</code> — Auto-playing media</li>
+      <li><code>fullscreen</code> — Fullscreen API</li>
+    </ul>
+
+    <h3>Configuration</h3>
+    <pre><code># Nginx
+add_header Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()" always;
+
+# Apache
+Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
+
+# Express.js
+app.use((req, res, next) => {
+  res.setHeader('Permissions-Policy',
+    'camera=(), microphone=(), geolocation=(), payment=()');
+  next();
+});</code></pre>
+    <p class="ref">Reference: <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy" target="_blank">MDN — Permissions-Policy</a></p>
+
+    <h2 id="hdr-e8">8. Cross-Origin-Opener-Policy (COOP)</h2>
+    <p>COOP isolates your browsing context from cross-origin windows. This protects against Spectre-class attacks that can read memory from other browser processes.</p>
+
+    <h3>Why COOP matters</h3>
+    <p>Spectre attacks (CVE-2017-5753, CVE-2017-5715) revealed that JavaScript in the browser can read memory from other processes using speculative execution. COOP, together with COEP (Cross-Origin-Embedder-Policy), enables site isolation and safe access to high-resolution timers (SharedArrayBuffer).</p>
+
+    <h3>Values</h3>
+    <ul>
+      <li><code>unsafe-none</code> — No isolation (default)</li>
+      <li><code>same-origin</code> — Isolates window from cross-origin openers</li>
+      <li><code>same-origin-allow-popups</code> — Isolation, but allows popups</li>
+    </ul>
+
+    <h3>Configuration</h3>
+    <pre><code># Nginx
+add_header Cross-Origin-Opener-Policy "same-origin" always;
+
+# Apache
+Header always set Cross-Origin-Opener-Policy "same-origin"
+
+# Express.js
+app.use(helmet.crossOriginOpenerPolicy({ policy: 'same-origin' }));</code></pre>
+    <p class="ref">Reference: <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cross-Origin-Opener-Policy" target="_blank">MDN — Cross-Origin-Opener-Policy</a></p>
+
+    <h2 id="hdr-e9">9. Complete header overview</h2>
+    <table>
+      <tr><th>Header</th><th>Recommended value</th><th>Protects against</th><th>Severity</th></tr>
+      <tr><td>Strict-Transport-Security</td><td><code>max-age=63072000; includeSubDomains; preload</code></td><td>SSL stripping, downgrade</td><td>Critical</td></tr>
+      <tr><td>Content-Security-Policy</td><td><code>default-src 'self'; script-src 'self'</code></td><td>XSS, injection</td><td>Critical</td></tr>
+      <tr><td>X-Frame-Options</td><td><code>DENY</code></td><td>Clickjacking</td><td>High</td></tr>
+      <tr><td>X-Content-Type-Options</td><td><code>nosniff</code></td><td>MIME sniffing</td><td>Medium</td></tr>
+      <tr><td>Referrer-Policy</td><td><code>strict-origin-when-cross-origin</code></td><td>Data leaking</td><td>Medium</td></tr>
+      <tr><td>Permissions-Policy</td><td><code>camera=(), microphone=()</code></td><td>Unauthorized access</td><td>Medium</td></tr>
+      <tr><td>Cross-Origin-Opener-Policy</td><td><code>same-origin</code></td><td>Spectre attacks</td><td>Medium</td></tr>
+    </table>
+
+    <h3>Complete Nginx configuration</h3>
+    <pre><code># Add to server or http block
+add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';" always;
+add_header X-Frame-Options "DENY" always;
+add_header X-Content-Type-Options "nosniff" always;
+add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+add_header Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()" always;
+add_header Cross-Origin-Opener-Policy "same-origin" always;</code></pre>
+
+    <h2 id="hdr-e10">10. References and resources</h2>
+    <ul>
+      <li><a href="https://owasp.org/www-project-secure-headers/" target="_blank">OWASP Secure Headers Project</a> — Complete list of recommended headers</li>
+      <li><a href="https://observatory.mozilla.org/" target="_blank">Mozilla Observatory</a> — Free security header scanner</li>
+      <li><a href="https://securityheaders.com/" target="_blank">SecurityHeaders.com</a> — Quick header scanner</li>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers" target="_blank">MDN — HTTP Headers</a> — Complete reference</li>
+      <li><a href="https://helmetjs.github.io/" target="_blank">Helmet.js</a> — Security headers middleware for Express.js</li>
+      <li><a href="https://datatracker.ietf.org/doc/html/rfc6797" target="_blank">RFC 6797 — HSTS</a></li>
+      <li><a href="https://www.w3.org/TR/CSP3/" target="_blank">W3C — Content Security Policy Level 3</a></li>
+      <li><a href="https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Headers_Cheat_Sheet.html" target="_blank">OWASP HTTP Headers Cheat Sheet</a></li>
+    </ul>
+
+    <a href="./index.html" class="cta">Scan your site's security headers</a>
+  </div>
+
+  <div class="nav-links">
+    <a href="./blog-security-ssl.html"><span class="sr">SSL/TLS vodic</span><span class="en">SSL/TLS Guide</span></a>
+    <a href="./blog-security-xss.html"><span class="sr">XSS napadi</span><span class="en">XSS Attacks</span></a>
+    <a href="./blog-security-sql.html"><span class="sr">SQL Injection</span><span class="en">SQL Injection</span></a>
+    <a href="./blog-security-csrf.html"><span class="sr">CSRF napadi</span><span class="en">CSRF Attacks</span></a>
+    <a href="./blog-security-dns.html"><span class="sr">DNS bezbednost</span><span class="en">DNS Security</span></a>
+    <a href="./blog-security-ports.html"><span class="sr">Port skeniranje</span><span class="en">Port Scanning</span></a>
+    <a href="./blog-security-api.html"><span class="sr">API bezbednost</span><span class="en">API Security</span></a>
+  </div>
+
+  </main>
+</div>
+<script src="./blog-common.js" defer></script>
+</body>
+</html>

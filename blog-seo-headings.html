@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>H1-H6 Heading Struktura — SEO vodic | Web Security Scanner</title>
+  <meta name="description" content="Kompletni vodic za HTML heading strukturu: H1 pravila, hijerarhija H1-H6, SEO uticaj, pristupacnost, featured snippets, najcesce greske i alati za proveru.">
+  <meta name="keywords" content="H1, heading, heading struktura, SEO, pristupacnost, HTML, H2, H3, screen reader, featured snippets">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <link rel="canonical" href="https://security-scanner-ruddy.vercel.app/blog-seo-headings.html">
+  <link rel="alternate" hreflang="sr" href="https://security-scanner-ruddy.vercel.app/blog-seo-headings.html">
+  <link rel="alternate" hreflang="en" href="https://security-scanner-ruddy.vercel.app/blog-seo-headings.html">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="H1-H6 Heading Struktura — SEO i pristupacnost vodic">
+  <meta property="og:description" content="Pravila za H1, hijerarhija naslova, featured snippets, screen readeri i najcesce greske.">
+  <meta property="og:url" content="https://security-scanner-ruddy.vercel.app/blog-seo-headings.html">
+  <meta property="og:site_name" content="Web Security Scanner">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="H1-H6 Heading Struktura — SEO i pristupacnost vodic">
+  <meta name="twitter:description" content="Pravila za H1, hijerarhija naslova, featured snippets, screen readeri i najcesce greske.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "H1-H6 Heading Struktura — SEO vodic",
+    "author": {"@type": "Person", "name": "Toske", "url": "https://toske-programer.web.app"},
+    "publisher": {"@type": "Organization", "name": "Web Security Scanner"},
+    "datePublished": "2026-04-09",
+    "dateModified": "2026-04-09",
+    "description": "Kompletni vodic za HTML heading strukturu: H1 pravila, hijerarhija, SEO uticaj, pristupacnost i alati.",
+    "mainEntityOfPage": {"@type": "WebPage", "@id": "https://security-scanner-ruddy.vercel.app/blog-seo-headings.html"}
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Koliko H1 tagova treba imati na stranici?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Preporuka je JEDAN H1 po stranici. HTML5 specifikacija tehincki dozvoljava vise H1 tagova u razlicitim <section> elementima, ali Google-ov John Mueller je potvrdio da jedan H1 daje najjasniji signal o glavnoj temi stranice. Vise H1 tagova nije kazna, ali razvodnjava SEO fokus."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Da li H2 i H3 tagovi uticu na SEO rangiranje?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Da, indirektno. Google koristi headinge da razume strukturu i teme na stranici. H2/H3 sa kljucnim recima pomazu Google-u da shvati podteme. Takodje, dobra heading struktura povecava vreme na stranici i smanjuje bounce rate, sto su pozitivni signali."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Sta se desava ako preskocim heading nivoe (H1 pa H3, bez H2)?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Google nece kazniti za preskocene nivoe, ali to steti pristupacnosti. Screen readeri koriste heading hijerarhiju za navigaciju — preskoceni nivoi zbunjuju korisnike sa invaliditetom. Takodje, Google bolje razume sadrzaj sa pravilnom hijerarhijom. Uvek idite redom: H1 > H2 > H3."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Da li H1 treba biti isti kao title tag?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ne mora biti identican, ali treba da pokriva istu temu. Title tag je optimizovan za SERP (do 60 karaktera sa brendom), dok H1 moze biti duzi i fokusiran na korisnike na stranici. Kljucna rec treba da bude u oba."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Da li je greska staviti H1 na logo?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Da, to je cesta greska. Logo sa H1 tagom znaci da je ime firme glavni naslov SVAKE stranice — umesto da to bude sadrzaj te konkretne stranice. H1 treba da opisuje sadrzaj te specificne stranice. Logo treba biti obican <a> ili <div>, ne H1."
+        }
+      }
+    ]
+  }
+  </script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+</head>
+<body>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr"><div class="timeline-title">Sadrzaj</div><ol id="timeline-sr"></ol></div>
+    <div class="en"><div class="timeline-title">Contents</div><ol id="timeline-en"></ol></div>
+  </aside>
+  <main class="blog-content">
+
+  <!-- ==================== SRPSKI ==================== -->
+  <div class="sr">
+    <h1>H1-H6 Heading Struktura &mdash; SEO vodic</h1>
+    <p class="subtitle">Kako pravilno koristiti HTML naslove za SEO, pristupacnost i featured snippets</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">1</div><div class="stat-label">H1 po stranici (preporuka)</div></div>
+      <div class="stat-card"><div class="stat-num">6</div><div class="stat-label">Nivoa naslova (H1-H6)</div></div>
+      <div class="stat-card"><div class="stat-num">36%</div><div class="stat-label">Sajtova ima heading greske (Semrush)</div></div>
+      <div class="stat-card"><div class="stat-num">68%</div><div class="stat-label">Screen reader korisnika koristi headinge za navigaciju</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Sadrzaj</h3>
+      <ol>
+        <li><a href="#h1">Sta su HTML headings</a></li>
+        <li><a href="#h2">Zasto je heading struktura bitna</a></li>
+        <li><a href="#h3">H1 pravila</a></li>
+        <li><a href="#h4">Hijerarhija: H1 &gt; H2 &gt; H3</a></li>
+        <li><a href="#h5">Primeri dobre i lose strukture</a></li>
+        <li><a href="#h6">Headings i pristupacnost</a></li>
+        <li><a href="#h7">Headings i featured snippets</a></li>
+        <li><a href="#h8">H1 vs Title tag</a></li>
+        <li><a href="#h9">Najcesce greske</a></li>
+        <li><a href="#h10">Alati za proveru</a></li>
+        <li><a href="#h11">Reference i resursi</a></li>
+      </ol>
+    </div>
+
+    <h2 id="h1">1. Sta su HTML headings (H1-H6)</h2>
+    <p>HTML headings su tagovi od <code>&lt;h1&gt;</code> do <code>&lt;h6&gt;</code> koji definisu naslove i podnaslove na web stranici. Funkcionisu kao sadrzaj knjige &mdash; H1 je naslov poglavlja, H2 su sekcije, H3 podsekcije.</p>
+    <pre><code>&lt;h1&gt;Glavni naslov stranice&lt;/h1&gt;              &lt;!-- Poglavlje --&gt;
+  &lt;h2&gt;Prva sekcija&lt;/h2&gt;                      &lt;!-- Sekcija --&gt;
+    &lt;h3&gt;Podsekcija 1.1&lt;/h3&gt;                  &lt;!-- Podsekcija --&gt;
+    &lt;h3&gt;Podsekcija 1.2&lt;/h3&gt;
+  &lt;h2&gt;Druga sekcija&lt;/h2&gt;
+    &lt;h3&gt;Podsekcija 2.1&lt;/h3&gt;
+      &lt;h4&gt;Detalj 2.1.1&lt;/h4&gt;                  &lt;!-- Detalj --&gt;
+      &lt;h4&gt;Detalj 2.1.2&lt;/h4&gt;</code></pre>
+    <p>Headings imaju trojaku ulogu:</p>
+    <ul>
+      <li><strong>SEO</strong> &mdash; pomazu Google-u da razume strukturu i teme sadrzaja</li>
+      <li><strong>Pristupacnost</strong> &mdash; screen readeri koriste headinge za navigaciju</li>
+      <li><strong>Korisnicko iskustvo</strong> &mdash; vizuelno razbijaju tekst i pomazu citaocima da skeniraju sadrzaj</li>
+    </ul>
+
+    <h2 id="h2">2. Zasto je heading struktura bitna za SEO</h2>
+    <p>Google koristi headinge da razume o cemu je stranica i koje podteme pokriva. John Mueller (Google) je potvrdio: <em>"Headings on a page help us to better understand the sections of the page."</em></p>
+    <ul>
+      <li><strong>Razumevanje sadrzaja</strong> &mdash; H1 govori glavnu temu, H2/H3 govore podteme. Google ovo koristi za rangiranje relevantnih upita.</li>
+      <li><strong>Featured Snippets</strong> &mdash; Google cesto bira H2/H3 sadrzaj za featured snippet (pozicija #0). Stranice sa cistom heading strukturom imaju vece sanse.</li>
+      <li><strong>Passage Ranking</strong> &mdash; od 2021. Google moze rangirati SPECIFICNU sekciju stranice za odgovarajuci upit. Headings pomazu Google-u da identifikuje te sekcije.</li>
+      <li><strong>Korisnicko ponasanje</strong> &mdash; dobra struktura smanjuje bounce rate i povecava vreme na stranici &mdash; oba su indirektni SEO signali.</li>
+    </ul>
+    <div class="callout"><strong>Semrush studija (2023):</strong> 36% sajtova ima probleme sa heading strukturom. Najcesca greska: nedostaje H1 ili vise H1 tagova na istoj stranici.</div>
+
+    <h2 id="h3">3. H1 pravila</h2>
+    <p>H1 je najvazniji heading na stranici. Evo pravila:</p>
+    <table>
+      <tr><th>Pravilo</th><th>Objasnjenje</th></tr>
+      <tr><td><strong>Samo jedan H1</strong></td><td>Jedan H1 po stranici daje najjasniji signal o glavnoj temi. Vise H1 razvodnjava fokus.</td></tr>
+      <tr><td><strong>Sadrzi kljucnu rec</strong></td><td>Primarna kljucna rec treba da bude u H1 &mdash; prirodno, ne forsiran keyword stuffing.</td></tr>
+      <tr><td><strong>Jedinstven za svaku stranicu</strong></td><td>Svaka stranica mora imati drugaciji H1. Duplirani H1 = duplirani signal za Google.</td></tr>
+      <tr><td><strong>Opisuje sadrzaj stranice</strong></td><td>H1 treba tacno da govori o cemu je ta konkretna stranica, ne o sajtu generalno.</td></tr>
+      <tr><td><strong>Optimalna duzina</strong></td><td>20-70 karaktera. Dovoljno dugacak da bude opisan, dovoljno kratak da bude citljiv.</td></tr>
+      <tr><td><strong>Vidljiv korisnicima</strong></td><td>H1 mora biti vidljiv na stranici. Sakriveni H1 (display:none) je sumnjiv za Google.</td></tr>
+    </table>
+    <pre><code>&lt;!-- DOBRO --&gt;
+&lt;h1&gt;Meta Tagovi — Title i Description optimizacija&lt;/h1&gt;
+&lt;h1&gt;Lokalni SEO za Srbiju — Vodic za 2026.&lt;/h1&gt;
+&lt;h1&gt;10 najcescih gresaka u heading strukturi&lt;/h1&gt;
+
+&lt;!-- LOSE --&gt;
+&lt;h1&gt;Dobrodosli&lt;/h1&gt;                     &lt;!-- nema kljucnu rec --&gt;
+&lt;h1&gt;Web Security Scanner&lt;/h1&gt;           &lt;!-- ime sajta, ne sadrzaj stranice --&gt;
+&lt;h1&gt;&lt;img src="logo.png" alt="Logo"&gt;&lt;/h1&gt; &lt;!-- logo kao H1 --&gt;
+&lt;h1&gt;SEO, meta tagovi, heading, optimizacija, vodic&lt;/h1&gt; &lt;!-- keyword stuffing --&gt;</code></pre>
+
+    <h2 id="h4">4. Hijerarhija: H1 &gt; H2 &gt; H3</h2>
+    <p>Headings moraju pratiti logicku hijerarhiju &mdash; kao sadrzaj knjige. Ne preskacite nivoe.</p>
+    <pre><code>&lt;!-- ISPRAVNA hijerarhija ✓ --&gt;
+&lt;h1&gt;SSL Sertifikati — Kompletni vodic&lt;/h1&gt;
+  &lt;h2&gt;1. Sta je SSL/TLS&lt;/h2&gt;
+    &lt;h3&gt;Kako radi TLS handshake&lt;/h3&gt;
+    &lt;h3&gt;Razlika izmedju SSL i TLS&lt;/h3&gt;
+  &lt;h2&gt;2. Tipovi sertifikata&lt;/h2&gt;
+    &lt;h3&gt;DV sertifikati&lt;/h3&gt;
+    &lt;h3&gt;OV sertifikati&lt;/h3&gt;
+    &lt;h3&gt;EV sertifikati&lt;/h3&gt;
+  &lt;h2&gt;3. Let's Encrypt&lt;/h2&gt;
+
+&lt;!-- POGRESNA hijerarhija ✗ --&gt;
+&lt;h1&gt;SSL Vodic&lt;/h1&gt;
+  &lt;h3&gt;Sta je SSL&lt;/h3&gt;          &lt;!-- preskocen H2! --&gt;
+  &lt;h2&gt;Tipovi&lt;/h2&gt;
+    &lt;h5&gt;DV sertifikati&lt;/h5&gt;  &lt;!-- preskoceni H3 i H4! --&gt;
+  &lt;h2&gt;Instalacija&lt;/h2&gt;
+&lt;h1&gt;Drugi naslov&lt;/h1&gt;         &lt;!-- dva H1! --&gt;</code></pre>
+    <div class="callout callout-warn"><strong>Pravilo palca:</strong> Ako imate sadrzaj knjige, H1 je naslov knjige, H2 su poglavlja, H3 sekcije u poglavlju, H4 podsekcije. Retko cete trebati H5 i H6.</div>
+
+    <h2 id="h5">5. Primeri dobre i lose heading strukture</h2>
+    <h3>Dobra struktura (blog clanak)</h3>
+    <pre><code>H1: Lokalni SEO za Srbiju — Kompletni vodic
+  H2: 1. Sta je lokalni SEO
+  H2: 2. Google Business Profile
+    H3: Kako kreirati profil
+    H3: Optimizacija profila
+    H3: Google recenzije
+  H2: 3. NAP konzistentnost
+  H2: 4. Lokalni direktorijumi
+    H3: Zlatne Strane
+    H3: 011info
+  H2: 5. Schema LocalBusiness
+  H2: 6. Reference</code></pre>
+    <h3>Losa struktura (tipican WordPress sajt)</h3>
+    <pre><code>H1: [Logo — ime firme]        &lt;!-- greska: logo kao H1 --&gt;
+H2: Dobrodosli na nas sajt    &lt;!-- greska: nema kljucnu rec --&gt;
+H4: Nase usluge               &lt;!-- greska: preskocen H3 --&gt;
+H2: Web dizajn
+H2: SEO optimizacija
+H2: Kontaktirajte nas
+H1: Footer naslov             &lt;!-- greska: drugi H1 --&gt;</code></pre>
+
+    <h2 id="h6">6. Headings i pristupacnost (Accessibility)</h2>
+    <p>Za korisnike sa invaliditetom koji koriste screen readere (JAWS, NVDA, VoiceOver), headings su <strong>primarni nacin navigacije</strong>. WebAIM istrazivanje pokazuje da <strong>68% screen reader korisnika koristi headinge za navigaciju</strong> po stranici.</p>
+    <ul>
+      <li><strong>Navigacija</strong> &mdash; screen readeri imaju precicu (obicno H taster) za skakanje izmedju headinga. Bez headinga, korisnik mora slusati celu stranicu od pocetka.</li>
+      <li><strong>Outline</strong> &mdash; screen readeri mogu prikazati listu svih headinga kao sadrzaj &mdash; kao timeline na nasim blog stranicama.</li>
+      <li><strong>Preskoceni nivoi</strong> &mdash; H1 pa H3 (bez H2) zbunjuje korisnike jer misle da su propustili sekciju.</li>
+      <li><strong>WCAG 2.1 zahtev</strong> &mdash; kriterijum 1.3.1 (Info and Relationships) i 2.4.6 (Headings and Labels) zahtevaju pravilnu heading strukturu.</li>
+    </ul>
+    <div class="callout"><strong>Test:</strong> Zatvorite oci i zamislite da slusate samo naslove vase stranice. Da li mozete razumeti strukturu i sadrzaj? Ako ne, heading struktura treba popravku.</div>
+
+    <h2 id="h7">7. Headings i featured snippets</h2>
+    <p>Google Featured Snippets (pozicija #0) cesto koriste sadrzaj ispod H2/H3 tagova. Dva tipa su posebno povezana sa headingima:</p>
+    <h3>Paragraph snippet</h3>
+    <p>Google bira paragraf ispod H2/H3 koji direktno odgovara na upit. Primer: korisnik trazi "sta je H1 tag", Google prikazuje paragraf ispod vaseg H2 "Sta su HTML headings".</p>
+    <h3>List snippet</h3>
+    <p>Google automatski konstruise listu iz vasih H2 ili H3 tagova. Primer: "koraci za SEO optimizaciju" &mdash; Google uzima vase H2 naslove kao korake.</p>
+    <ul>
+      <li>Koristite <strong>pitanja kao H2/H3</strong> &mdash; "Sta je H1 tag?", "Kako popraviti heading strukturu?"</li>
+      <li>Odgovorite <strong>u prva 1-2 recenica</strong> ispod heading-a &mdash; Google bira kratke, direktne odgovore</li>
+      <li>Koristite <strong>numericke liste</strong> ispod heading-a za list snippets</li>
+    </ul>
+
+    <h2 id="h8">8. H1 vs Title tag</h2>
+    <table>
+      <tr><th>Aspekt</th><th>Title tag</th><th>H1</th></tr>
+      <tr><td>Gde se prikazuje</td><td>Google SERP, browser tab</td><td>Na samoj stranici</td></tr>
+      <tr><td>Optimalna duzina</td><td>50-60 karaktera</td><td>20-70 karaktera</td></tr>
+      <tr><td>Brend</td><td>Obicno ukljucuje " | Brend"</td><td>Obicno bez brenda</td></tr>
+      <tr><td>Fokus</td><td>Optimizovan za SERP klikove</td><td>Optimizovan za citaoce na stranici</td></tr>
+      <tr><td>Kljucna rec</td><td>Na pocetku</td><td>Prirodno uklopljena</td></tr>
+      <tr><td>Koliko</td><td>1 po stranici</td><td>1 po stranici</td></tr>
+    </table>
+    <pre><code>&lt;!-- Title za Google, H1 za korisnike --&gt;
+&lt;title&gt;H1-H6 Heading Struktura — SEO vodic | Web Security Scanner&lt;/title&gt;
+&lt;h1&gt;H1-H6 Heading Struktura — Kako pravilno koristiti HTML naslove&lt;/h1&gt;</code></pre>
+    <div class="callout"><strong>Savez:</strong> Title i H1 ne moraju biti identicni, ali treba da pokrivaju istu temu i imaju istu primarnu kljucnu rec. Google koristi oba za razumevanje stranice.</div>
+
+    <h2 id="h9">9. Najcesce greske</h2>
+    <ul>
+      <li><strong>Vise H1 tagova</strong> &mdash; razvodnjava SEO fokus. Koristite samo jedan H1 po stranici.</li>
+      <li><strong>H1 na logu</strong> &mdash; logo je navigacija, ne sadrzaj stranice. Koristite <code>&lt;a&gt;</code> ili <code>&lt;div&gt;</code> za logo.</li>
+      <li><strong>Nedostaje H1</strong> &mdash; svaka stranica MORA imati H1. Bez njega, Google nema jasan signal o glavnoj temi.</li>
+      <li><strong>Preskoceni nivoi</strong> &mdash; H1 &rarr; H3 (bez H2) steti pristupacnosti i Google razumevanju.</li>
+      <li><strong>Headings za stilizovanje</strong> &mdash; koriscenje H2 za veliki tekst umesto za strukturu. Koristite CSS za velicinu fonta.</li>
+      <li><strong>Predugacak H1</strong> &mdash; 100+ karaktera. Drzite 20-70 karaktera za citljivost.</li>
+      <li><strong>Genericni headings</strong> &mdash; "Vise informacija", "Detolji", "Sekcija 1" &mdash; ne daju Google-u nikakvu informaciju.</li>
+      <li><strong>Keyword stuffing u headings</strong> &mdash; "SEO SEO optimizacija SEO vodic SEO saveti" &mdash; Google ovo kaznjava.</li>
+      <li><strong>Sakriveni H1</strong> &mdash; H1 sa <code>display:none</code> ili <code>font-size:0</code>. Google ovo tretira kao pokusaj manipulacije.</li>
+      <li><strong>Duplirani H1 na razlicitim stranicama</strong> &mdash; svaka stranica mora imati jedinstven H1.</li>
+    </ul>
+
+    <h2 id="h10">10. Alati za proveru heading strukture</h2>
+    <ul>
+      <li><strong><a href="./index.html">Web Security Scanner</a></strong> &mdash; proverava H1 prisustvo, jedinstvenost i heading strukturu vaseg sajta.</li>
+      <li><strong>HeadingsMap</strong> &mdash; Chrome/Firefox extension koji prikazuje heading outline svake stranice u sidebaru. Odmah vidite preskocene nivoe i lose strukture.</li>
+      <li><strong>WAVE</strong> &mdash; Web Accessibility Evaluation Tool. Prikazuje heading strukturu i upozorava na pristupacnost probleme.</li>
+      <li><strong>Chrome DevTools</strong> &mdash; Elements tab &rarr; pretrazite <code>h1</code>, <code>h2</code>, <code>h3</code> da vidite sve headinge na stranici.</li>
+      <li><strong>Screaming Frog</strong> &mdash; crawla ceo sajt i prikazuje H1/H2 za svaku stranicu. Detektuje duplikate i nedostajuce.</li>
+      <li><strong>Ahrefs Site Audit</strong> &mdash; skenira sajt i prijavljuje heading probleme: vise H1, nedostaje H1, preskoceni nivoi.</li>
+      <li><strong>axe DevTools</strong> &mdash; accessibility testing extension koji proverava heading hijerarhiju prema WCAG standardima.</li>
+    </ul>
+
+    <h2 id="h11">11. Reference i resursi</h2>
+    <ul>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Heading_Elements" target="_blank">MDN &mdash; HTML Heading Elements</a></li>
+      <li><a href="https://webaim.org/techniques/headings/" target="_blank">WebAIM &mdash; Headings</a></li>
+      <li><a href="https://www.w3.org/WAI/tutorials/page-structure/headings/" target="_blank">W3C WAI &mdash; Page Structure: Headings</a></li>
+      <li><a href="https://developers.google.com/search/docs/fundamentals/seo-starter-guide#use-heading-tags" target="_blank">Google SEO Starter Guide &mdash; Headings</a></li>
+      <li><a href="https://www.semrush.com/blog/heading-tags/" target="_blank">Semrush &mdash; Heading Tags Best Practices</a></li>
+      <li><a href="https://ahrefs.com/blog/h1-tag/" target="_blank">Ahrefs &mdash; H1 Tag Study</a></li>
+      <li><a href="https://www.wcag.com/designers/1-3-1-info-and-relationships/" target="_blank">WCAG 2.1 &mdash; 1.3.1 Info and Relationships</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Proverite heading strukturu vaseg sajta &rarr;</a>
+  </div>
+
+  <!-- ==================== ENGLISH ==================== -->
+  <div class="en">
+    <h1>H1-H6 Heading Structure &mdash; SEO Guide</h1>
+    <p class="subtitle">How to properly use HTML headings for SEO, accessibility and featured snippets</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">1</div><div class="stat-label">H1 per page (recommended)</div></div>
+      <div class="stat-card"><div class="stat-num">6</div><div class="stat-label">Heading levels (H1-H6)</div></div>
+      <div class="stat-card"><div class="stat-num">36%</div><div class="stat-label">Sites have heading issues (Semrush)</div></div>
+      <div class="stat-card"><div class="stat-num">68%</div><div class="stat-label">Screen reader users navigate by headings</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#h1e">What are HTML headings</a></li>
+        <li><a href="#h2e">Why heading structure matters</a></li>
+        <li><a href="#h3e">H1 rules</a></li>
+        <li><a href="#h4e">Hierarchy: H1 &gt; H2 &gt; H3</a></li>
+        <li><a href="#h5e">Good vs bad examples</a></li>
+        <li><a href="#h6e">Headings and accessibility</a></li>
+        <li><a href="#h7e">Headings and featured snippets</a></li>
+        <li><a href="#h8e">H1 vs Title tag</a></li>
+        <li><a href="#h9e">Common mistakes</a></li>
+        <li><a href="#h10e">Verification tools</a></li>
+        <li><a href="#h11e">References</a></li>
+      </ol>
+    </div>
+
+    <h2 id="h1e">1. What are HTML headings (H1-H6)</h2>
+    <p>HTML headings are tags from <code>&lt;h1&gt;</code> to <code>&lt;h6&gt;</code> that define titles and subtitles. They function like a book's table of contents &mdash; H1 is the chapter title, H2 are sections, H3 subsections.</p>
+    <p>Headings serve three purposes: <strong>SEO</strong> (help Google understand content), <strong>accessibility</strong> (screen reader navigation), and <strong>UX</strong> (visual content scanning).</p>
+
+    <h2 id="h2e">2. Why heading structure matters for SEO</h2>
+    <p>Google's John Mueller confirmed: <em>"Headings on a page help us to better understand the sections of the page."</em></p>
+    <ul>
+      <li><strong>Content understanding</strong> &mdash; H1 signals main topic, H2/H3 signal subtopics</li>
+      <li><strong>Featured Snippets</strong> &mdash; Google often picks H2/H3 content for position #0</li>
+      <li><strong>Passage Ranking</strong> &mdash; since 2021, Google can rank specific page sections. Headings help identify them.</li>
+      <li><strong>User behavior</strong> &mdash; good structure reduces bounce rate, increases time on page</li>
+    </ul>
+    <div class="callout"><strong>Semrush study (2023):</strong> 36% of sites have heading structure problems. Most common: missing H1 or multiple H1 tags.</div>
+
+    <h2 id="h3e">3. H1 rules</h2>
+    <table>
+      <tr><th>Rule</th><th>Explanation</th></tr>
+      <tr><td><strong>One H1 per page</strong></td><td>Gives clearest signal about main topic</td></tr>
+      <tr><td><strong>Contains keyword</strong></td><td>Primary keyword, naturally placed</td></tr>
+      <tr><td><strong>Unique per page</strong></td><td>Each page needs a different H1</td></tr>
+      <tr><td><strong>Describes page content</strong></td><td>About THIS page, not the site in general</td></tr>
+      <tr><td><strong>20-70 characters</strong></td><td>Descriptive enough, short enough to read</td></tr>
+      <tr><td><strong>Visible to users</strong></td><td>Hidden H1 (display:none) is suspicious to Google</td></tr>
+    </table>
+
+    <h2 id="h4e">4. Hierarchy: H1 &gt; H2 &gt; H3</h2>
+    <p>Headings must follow logical hierarchy &mdash; don't skip levels.</p>
+    <pre><code>&lt;!-- CORRECT ✓ --&gt;
+&lt;h1&gt;SSL Certificates — Complete Guide&lt;/h1&gt;
+  &lt;h2&gt;1. What is SSL/TLS&lt;/h2&gt;
+    &lt;h3&gt;TLS handshake explained&lt;/h3&gt;
+  &lt;h2&gt;2. Certificate types&lt;/h2&gt;
+    &lt;h3&gt;DV certificates&lt;/h3&gt;
+    &lt;h3&gt;OV certificates&lt;/h3&gt;
+
+&lt;!-- WRONG ✗ --&gt;
+&lt;h1&gt;SSL Guide&lt;/h1&gt;
+  &lt;h3&gt;What is SSL&lt;/h3&gt;          &lt;!-- skipped H2! --&gt;
+&lt;h1&gt;Another title&lt;/h1&gt;         &lt;!-- two H1s! --&gt;</code></pre>
+    <div class="callout callout-warn"><strong>Rule of thumb:</strong> H1 = book title, H2 = chapters, H3 = chapter sections, H4 = subsections. You'll rarely need H5/H6.</div>
+
+    <h2 id="h5e">5. Good vs bad examples</h2>
+    <h3>Good structure (blog article)</h3>
+    <pre><code>H1: Local SEO Guide — Complete 2026 Guide
+  H2: 1. What is local SEO
+  H2: 2. Google Business Profile
+    H3: Creating a profile
+    H3: Optimization tips
+  H2: 3. NAP consistency
+  H2: 4. References</code></pre>
+    <h3>Bad structure (typical WordPress site)</h3>
+    <pre><code>H1: [Company Logo]           &lt;!-- logo as H1 --&gt;
+H2: Welcome                  &lt;!-- no keyword --&gt;
+H4: Our services             &lt;!-- skipped H3 --&gt;
+H1: Footer title             &lt;!-- second H1 --&gt;</code></pre>
+
+    <h2 id="h6e">6. Headings and accessibility</h2>
+    <p>For users with disabilities using screen readers, headings are the <strong>primary navigation method</strong>. WebAIM survey: <strong>68% of screen reader users navigate by headings</strong>.</p>
+    <ul>
+      <li>Screen readers have shortcuts (H key) to jump between headings</li>
+      <li>Skipped levels confuse users who think they missed a section</li>
+      <li>WCAG 2.1 criteria 1.3.1 and 2.4.6 require proper heading structure</li>
+    </ul>
+    <div class="callout"><strong>Test:</strong> Close your eyes and imagine hearing only your page headings. Can you understand the structure? If not, fix it.</div>
+
+    <h2 id="h7e">7. Headings and featured snippets</h2>
+    <p>Google Featured Snippets (position #0) often use content under H2/H3 tags.</p>
+    <ul>
+      <li>Use <strong>questions as H2/H3</strong> &mdash; matches how people search</li>
+      <li>Answer in the <strong>first 1-2 sentences</strong> below the heading</li>
+      <li>Use <strong>numbered lists</strong> under headings for list snippets</li>
+    </ul>
+
+    <h2 id="h8e">8. H1 vs Title tag</h2>
+    <table>
+      <tr><th>Aspect</th><th>Title tag</th><th>H1</th></tr>
+      <tr><td>Appears in</td><td>Google SERP, browser tab</td><td>On the page itself</td></tr>
+      <tr><td>Length</td><td>50-60 chars</td><td>20-70 chars</td></tr>
+      <tr><td>Brand</td><td>Usually includes " | Brand"</td><td>Usually without brand</td></tr>
+      <tr><td>Focus</td><td>Optimized for SERP clicks</td><td>Optimized for page readers</td></tr>
+    </table>
+
+    <h2 id="h9e">9. Common mistakes</h2>
+    <ul>
+      <li><strong>Multiple H1 tags</strong> &mdash; dilutes SEO focus</li>
+      <li><strong>H1 on logo</strong> &mdash; logo is navigation, not page content</li>
+      <li><strong>Missing H1</strong> &mdash; every page MUST have an H1</li>
+      <li><strong>Skipped levels</strong> &mdash; H1 &rarr; H3 without H2 hurts accessibility</li>
+      <li><strong>Headings for styling</strong> &mdash; use CSS for font size, not heading tags</li>
+      <li><strong>Generic headings</strong> &mdash; "More info", "Details", "Section 1"</li>
+      <li><strong>Keyword stuffing</strong> in headings</li>
+      <li><strong>Hidden H1</strong> &mdash; display:none or font-size:0</li>
+      <li><strong>Duplicate H1</strong> across different pages</li>
+    </ul>
+
+    <h2 id="h10e">10. Verification tools</h2>
+    <ul>
+      <li><strong><a href="./index.html">Web Security Scanner</a></strong> &mdash; checks H1, heading structure</li>
+      <li><strong>HeadingsMap</strong> &mdash; Chrome/Firefox extension showing heading outline</li>
+      <li><strong>WAVE</strong> &mdash; Web Accessibility Evaluation Tool</li>
+      <li><strong>Screaming Frog</strong> &mdash; crawls entire site, shows H1/H2 for every page</li>
+      <li><strong>axe DevTools</strong> &mdash; accessibility testing, checks heading hierarchy per WCAG</li>
+    </ul>
+
+    <h2 id="h11e">11. References and resources</h2>
+    <ul>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Heading_Elements" target="_blank">MDN &mdash; HTML Heading Elements</a></li>
+      <li><a href="https://webaim.org/techniques/headings/" target="_blank">WebAIM &mdash; Headings</a></li>
+      <li><a href="https://www.w3.org/WAI/tutorials/page-structure/headings/" target="_blank">W3C WAI &mdash; Headings</a></li>
+      <li><a href="https://developers.google.com/search/docs/fundamentals/seo-starter-guide#use-heading-tags" target="_blank">Google SEO Starter Guide</a></li>
+      <li><a href="https://www.semrush.com/blog/heading-tags/" target="_blank">Semrush &mdash; Heading Tags</a></li>
+      <li><a href="https://ahrefs.com/blog/h1-tag/" target="_blank">Ahrefs &mdash; H1 Tag Study</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Check your heading structure &rarr;</a>
+  </div>
+
+  <div class="nav-links">
+    <a href="./blog-seo.html"><span class="sr">SEO vodic</span><span class="en">SEO Guide</span></a>
+    <a href="./blog-seo-meta.html"><span class="sr">Meta Tagovi</span><span class="en">Meta Tags</span></a>
+    <a href="./blog-seo-schema.html"><span class="sr">Schema.org</span><span class="en">Schema.org</span></a>
+    <a href="./blog-seo-sitemap.html"><span class="sr">Sitemap.xml</span><span class="en">Sitemap.xml</span></a>
+    <a href="./blog-seo-opengraph.html"><span class="sr">Open Graph</span><span class="en">Open Graph</span></a>
+    <a href="./blog-seo-mobile.html"><span class="sr">Mobile SEO</span><span class="en">Mobile SEO</span></a>
+    <a href="./blog-seo-local.html"><span class="sr">Lokalni SEO</span><span class="en">Local SEO</span></a>
+  </div>
+
+  </main>
+</div>
+<script src="./blog-common.js" defer></script>
+</body>
+</html>

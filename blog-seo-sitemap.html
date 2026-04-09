@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sitemap.xml — Zasto vam treba i kako ga napraviti | Web Security Scanner</title>
+  <meta name="description" content="Kompletni vodic za sitemap.xml: XML format, Sitemap Index, robots.txt integracija, Google Search Console submit, automatsko generisanje. Limiti, primeri i alati.">
+  <meta name="keywords" content="sitemap, sitemap.xml, Google Search Console, indeksiranje, crawling, XML sitemap, robots.txt, SEO">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <link rel="canonical" href="https://security-scanner-ruddy.vercel.app/blog-seo-sitemap.html">
+  <link rel="alternate" hreflang="sr" href="https://security-scanner-ruddy.vercel.app/blog-seo-sitemap.html">
+  <link rel="alternate" hreflang="en" href="https://security-scanner-ruddy.vercel.app/blog-seo-sitemap.html">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Sitemap.xml — Kompletni vodic za kreiranje i optimizaciju">
+  <meta property="og:description" content="XML format, Sitemap Index, robots.txt, Search Console submit, automatsko generisanje. Sve o sitemap-u.">
+  <meta property="og:url" content="https://security-scanner-ruddy.vercel.app/blog-seo-sitemap.html">
+  <meta property="og:site_name" content="Web Security Scanner">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Sitemap.xml — Kompletni vodic za kreiranje i optimizaciju">
+  <meta name="twitter:description" content="XML format, Sitemap Index, robots.txt, Search Console submit, automatsko generisanje. Sve o sitemap-u.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Sitemap.xml — Zasto vam treba i kako ga napraviti",
+    "author": {"@type": "Person", "name": "Toske", "url": "https://toske-programer.web.app"},
+    "publisher": {"@type": "Organization", "name": "Web Security Scanner"},
+    "datePublished": "2026-04-09",
+    "dateModified": "2026-04-09",
+    "description": "Kompletni vodic za sitemap.xml: XML format, Sitemap Index, robots.txt, Google Search Console, automatsko generisanje.",
+    "mainEntityOfPage": {"@type": "WebPage", "@id": "https://security-scanner-ruddy.vercel.app/blog-seo-sitemap.html"}
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Da li sitemap pomaze SEO rangiranju?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Sitemap ne utice direktno na rangiranje, ali ubrzava indeksiranje novih i azuriranih stranica. Google brze otkriva vas sadrzaj, sto znaci da se brze pojavljuje u rezultatima. Za velike sajtove i nove domene, sitemap je prakticno obavezan."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Koliko cesto treba azurirati sitemap?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Idealno pri svakoj promeni sadrzaja. Za dinamicke sajtove koristite automatsko generisanje pri deploy-u. Za staticke, azurirajte kad dodate ili uklonite stranice. lastmod datum pomaze Google-u da zna sta je novo."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Da li mali sajt treba sitemap?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Google kaze da sajt sa manje od 500 stranica gde su sve dobro povezane internim linkovima ne mora imati sitemap. Ipak, preporuka je da ga imate — lako je napraviti, ne steti, i pomaze novim stranicama da budu brze otkrivene."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Koliko URL-ova moze biti u jednom sitemap-u?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Maksimalno 50,000 URL-ova i 50MB velicine po fajlu. Za vece sajtove koristite Sitemap Index koji referencira vise sitemap fajlova. Nema ogranicenja na broj fajlova u Sitemap Index-u."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Da li robots.txt i sitemap rade zajedno?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Da. U robots.txt dodajte liniju 'Sitemap: https://vasajt.rs/sitemap.xml' da Google automatski pronadje vas sitemap. Ovo je dodatak submitovanju u Search Console — oba metoda se preporucuju."
+        }
+      }
+    ]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "Kako napraviti i submitovati sitemap.xml",
+    "step": [
+      {"@type": "HowToStep", "name": "Kreirajte XML fajl", "text": "Napravite sitemap.xml sa svim javnim URL-ovima vaseg sajta u XML formatu."},
+      {"@type": "HowToStep", "name": "Postavite u root", "text": "Upload sitemap.xml u koren vaseg sajta (https://vasajt.rs/sitemap.xml)."},
+      {"@type": "HowToStep", "name": "Dodajte u robots.txt", "text": "Dodajte liniju 'Sitemap: https://vasajt.rs/sitemap.xml' u robots.txt."},
+      {"@type": "HowToStep", "name": "Submitujte u Search Console", "text": "Otvorite Google Search Console > Sitemaps > unesite URL i kliknite Submit."}
+    ]
+  }
+  </script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+</head>
+<body>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr"><div class="timeline-title">Sadrzaj</div><ol id="timeline-sr"></ol></div>
+    <div class="en"><div class="timeline-title">Contents</div><ol id="timeline-en"></ol></div>
+  </aside>
+  <main class="blog-content">
+
+  <!-- ==================== SRPSKI ==================== -->
+  <div class="sr">
+    <h1>Sitemap.xml &mdash; Zasto vam treba i kako ga napraviti</h1>
+    <p class="subtitle">Kompletni vodic za XML sitemap: format, limiti, robots.txt, Search Console i automatsko generisanje</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">50%</div><div class="stat-label">Brze indeksiranje sa sitemap-om</div></div>
+      <div class="stat-card"><div class="stat-num">50K</div><div class="stat-label">Max URL-ova po fajlu</div></div>
+      <div class="stat-card"><div class="stat-num">50MB</div><div class="stat-label">Max velicina fajla</div></div>
+      <div class="stat-card"><div class="stat-num">2005</div><div class="stat-label">Godina nastanka Sitemaps protokola</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Sadrzaj</h3>
+      <ol>
+        <li><a href="#sm1">Sta je sitemap i cemu sluzi</a></li>
+        <li><a href="#sm2">XML Sitemap format</a></li>
+        <li><a href="#sm3">Sitemap Index za velike sajtove</a></li>
+        <li><a href="#sm4">Koje stranice ukljuciti, koje ne</a></li>
+        <li><a href="#sm5">Sitemap i robots.txt</a></li>
+        <li><a href="#sm6">Submitovanje u Google Search Console</a></li>
+        <li><a href="#sm7">Automatsko generisanje</a></li>
+        <li><a href="#sm8">Dinamicki vs staticki sitemap</a></li>
+        <li><a href="#sm9">Limiti i pravila</a></li>
+        <li><a href="#sm10">Najcesce greske</a></li>
+        <li><a href="#sm11">Reference i resursi</a></li>
+      </ol>
+    </div>
+
+    <h2 id="sm1">1. Sta je sitemap i cemu sluzi</h2>
+    <p>Sitemap.xml je fajl koji sadrzi listu svih javnih URL-ova na vasem sajtu. To je "mapa" koju dajete Google-u da brze i efikasnije pronadje, indeksira i razume strukturu vaseg sajta.</p>
+    <p>Zamislite Google-ovog crawlera (Googlebot) kao posetioca koji istrazuje vas sajt prateci linkove. Bez sitemap-a, crawler mora sam da otkrije sve stranice &mdash; sto moze propustiti duboko ugnezdene ili izolovane stranice. Sa sitemap-om, Google tacno zna koje stranice postoje.</p>
+    <ul>
+      <li><strong>Ubrzava indeksiranje</strong> &mdash; nove stranice se pojavljuju u Google-u brze</li>
+      <li><strong>Pomaze sa izolovanim stranicama</strong> &mdash; stranice bez internih linkova ka njima</li>
+      <li><strong>Daje prioritet</strong> &mdash; oznacava koje stranice su vaznije</li>
+      <li><strong>Saopstava promene</strong> &mdash; <code>lastmod</code> govori Google-u sta je azurirano</li>
+    </ul>
+    <div class="callout"><strong>Google kaze:</strong> "Sitemap nije garancija da ce Google indeksirati sve URL-ove, ali se snazno preporucuje, posebno za nove sajtove, velike sajtove i sajtove sa mnogo medija sadrzaja."</div>
+
+    <h2 id="sm2">2. XML Sitemap format</h2>
+    <p>XML sitemap ima strogu strukturu definisanu Sitemaps protokolom (sitemaps.org). Evo kompletnog primera:</p>
+    <pre><code>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"&gt;
+
+  &lt;!-- Glavna stranica — najvisi prioritet --&gt;
+  &lt;url&gt;
+    &lt;loc&gt;https://vasajt.rs/&lt;/loc&gt;
+    &lt;lastmod&gt;2026-04-09&lt;/lastmod&gt;
+    &lt;changefreq&gt;weekly&lt;/changefreq&gt;
+    &lt;priority&gt;1.0&lt;/priority&gt;
+  &lt;/url&gt;
+
+  &lt;!-- Blog clanak --&gt;
+  &lt;url&gt;
+    &lt;loc&gt;https://vasajt.rs/blog/seo-vodic&lt;/loc&gt;
+    &lt;lastmod&gt;2026-04-08&lt;/lastmod&gt;
+    &lt;changefreq&gt;monthly&lt;/changefreq&gt;
+    &lt;priority&gt;0.7&lt;/priority&gt;
+  &lt;/url&gt;
+
+  &lt;!-- Kontakt stranica — nizi prioritet --&gt;
+  &lt;url&gt;
+    &lt;loc&gt;https://vasajt.rs/kontakt&lt;/loc&gt;
+    &lt;lastmod&gt;2026-01-15&lt;/lastmod&gt;
+    &lt;changefreq&gt;yearly&lt;/changefreq&gt;
+    &lt;priority&gt;0.3&lt;/priority&gt;
+  &lt;/url&gt;
+
+&lt;/urlset&gt;</code></pre>
+
+    <h3>Elementi objasnjeni</h3>
+    <table>
+      <tr><th>Element</th><th>Obavezan?</th><th>Opis</th></tr>
+      <tr><td><code>&lt;loc&gt;</code></td><td>DA</td><td>Pun URL stranice (sa https:// i domenom)</td></tr>
+      <tr><td><code>&lt;lastmod&gt;</code></td><td>Preporuceno</td><td>Datum poslednje izmene (YYYY-MM-DD format)</td></tr>
+      <tr><td><code>&lt;changefreq&gt;</code></td><td>Opciono</td><td>Koliko cesto se menja: always, hourly, daily, weekly, monthly, yearly, never</td></tr>
+      <tr><td><code>&lt;priority&gt;</code></td><td>Opciono</td><td>Relativni prioritet 0.0-1.0 (samo za vas sajt, ne utice na rang vs konkurencija)</td></tr>
+    </table>
+    <div class="callout callout-warn"><strong>Vazno:</strong> Google je potvrdio da <strong>ignorise</strong> <code>changefreq</code> i <code>priority</code> tagove. Jedino <code>loc</code> i <code>lastmod</code> su korisni. Ipak, mnogi ih dodaju jer ih koriste drugi pretrazivaci (Bing, Yandex).</div>
+
+    <h2 id="sm3">3. Sitemap Index za velike sajtove</h2>
+    <p>Kada sajt ima vise od 50,000 URL-ova (ili sitemap prelazi 50MB), koristite Sitemap Index &mdash; master fajl koji referencira vise manjih sitemap fajlova:</p>
+    <pre><code>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"&gt;
+
+  &lt;sitemap&gt;
+    &lt;loc&gt;https://vasajt.rs/sitemap-blog.xml&lt;/loc&gt;
+    &lt;lastmod&gt;2026-04-09&lt;/lastmod&gt;
+  &lt;/sitemap&gt;
+
+  &lt;sitemap&gt;
+    &lt;loc&gt;https://vasajt.rs/sitemap-products.xml&lt;/loc&gt;
+    &lt;lastmod&gt;2026-04-08&lt;/lastmod&gt;
+  &lt;/sitemap&gt;
+
+  &lt;sitemap&gt;
+    &lt;loc&gt;https://vasajt.rs/sitemap-categories.xml&lt;/loc&gt;
+    &lt;lastmod&gt;2026-03-15&lt;/lastmod&gt;
+  &lt;/sitemap&gt;
+
+&lt;/sitemapindex&gt;</code></pre>
+    <p>Prednosti Sitemap Index pristupa:</p>
+    <ul>
+      <li>Organizacija po tipu sadrzaja (blog, proizvodi, kategorije)</li>
+      <li>Lakse azuriranje &mdash; menjate samo sitemap koji se promenio</li>
+      <li>Nema ogranicenja na broj fajlova u index-u</li>
+      <li>Brze procesiranje od strane Google-a</li>
+    </ul>
+
+    <h2 id="sm4">4. Koje stranice ukljuciti, koje ne</h2>
+    <h3>UKLJUCITI &#10004;</h3>
+    <ul>
+      <li>Sve javne stranice koje zelite u Google rezultatima</li>
+      <li>Glavna stranica, blog clanci, kategorije, proizvodi</li>
+      <li>Stranice sa canonical tagom koji pokazuje na samu sebe</li>
+      <li>Stranice sa statusom 200 (OK)</li>
+    </ul>
+    <h3>NE UKLJUCIVATI &#10008;</h3>
+    <ul>
+      <li><strong>noindex stranice</strong> &mdash; kontradiktorno je ubaciti stranicu u sitemap a reci Google-u da je ne indeksira</li>
+      <li><strong>Redirect stranice (301/302)</strong> &mdash; ubacite samo finalnu destinaciju</li>
+      <li><strong>404 stranice</strong> &mdash; mrtvi linkovi u sitemap-u smanjuju "crawl budget"</li>
+      <li><strong>Duplikati</strong> &mdash; samo canonical verziju svake stranice</li>
+      <li><strong>Parametrizovane URL-ove</strong> &mdash; /proizvod?color=red (koristite canonical)</li>
+      <li><strong>Admin, login, thank-you</strong> &mdash; privatne stranice</li>
+      <li><strong>Paginacija</strong> &mdash; /blog?page=2, /blog?page=3 (opciono, zavisi od strategije)</li>
+    </ul>
+    <div class="callout callout-danger"><strong>Greska #1:</strong> Sitemap sa 404 i noindex stranicama trosi Google-ov crawl budget i signalizira los kvalitet sajta. Redovno cisitite sitemap!</div>
+
+    <h2 id="sm5">5. Sitemap i robots.txt</h2>
+    <p>Robots.txt i sitemap rade zajedno. U robots.txt dodajte referencu na vas sitemap:</p>
+    <pre><code># robots.txt
+User-agent: *
+Allow: /
+
+# Blokirajte privatne sekcije
+Disallow: /admin/
+Disallow: /api/
+Disallow: /tmp/
+
+# Referencira sitemap — OBAVEZNO
+Sitemap: https://vasajt.rs/sitemap.xml</code></pre>
+    <p><strong>Zasto oba?</strong></p>
+    <ul>
+      <li><code>Sitemap:</code> direktiva u robots.txt pomaze SVIM pretrazivacima da automatski pronadju vas sitemap</li>
+      <li>Google Search Console submit je direktniji kanal ka Google-u</li>
+      <li>Koristite OBA metoda za maksimalnu pokrivenost</li>
+    </ul>
+    <div class="callout callout-warn"><strong>Paznja:</strong> <code>Disallow</code> u robots.txt NE sprecava indeksiranje &mdash; samo sprecava crawling. Za blokiranje indeksiranja koristite <code>noindex</code> meta tag. Detaljnije u nasem <a href="./blog-seo-meta.html">Meta Tagovi vodicu</a>.</div>
+
+    <h2 id="sm6">6. Submitovanje u Google Search Console</h2>
+    <p>Korak-po-korak proces za submitovanje sitemap-a:</p>
+    <ol>
+      <li>Otvorite <a href="https://search.google.com/search-console" target="_blank">Google Search Console</a></li>
+      <li>Izaberite vas sajt (property)</li>
+      <li>U levom meniju kliknite <strong>"Sitemaps"</strong></li>
+      <li>U polje "Add a new sitemap" unesite: <code>sitemap.xml</code></li>
+      <li>Kliknite <strong>"Submit"</strong></li>
+      <li>Sacekajte &mdash; Google ce procesirati sitemap u roku od nekoliko minuta do sati</li>
+    </ol>
+    <p>Nakon submitovanja, Search Console prikazuje:</p>
+    <ul>
+      <li><strong>Status</strong> &mdash; Success, Has errors, Couldn't fetch</li>
+      <li><strong>Discovered URLs</strong> &mdash; koliko URL-ova je Google nasao</li>
+      <li><strong>Indexed URLs</strong> &mdash; koliko je zaista indeksirao (cesto manje od discovered)</li>
+      <li><strong>Last read</strong> &mdash; kada je Google poslednji put procitao sitemap</li>
+    </ul>
+    <div class="callout"><strong>Pro tip:</strong> Koristite <code>ping</code> URL za automatsko obavestavanje Google-a o promenama: <code>https://www.google.com/ping?sitemap=https://vasajt.rs/sitemap.xml</code></div>
+
+    <h2 id="sm7">7. Automatsko generisanje</h2>
+    <h3>WordPress</h3>
+    <p>WordPress 5.5+ ima ugradjeni sitemap na <code>/wp-sitemap.xml</code>. Za napredne opcije:</p>
+    <ul>
+      <li><strong>Yoast SEO</strong> &mdash; automatski generise i azurira sitemap sa svim post tipovima, kategorijama i tagovima</li>
+      <li><strong>Rank Math</strong> &mdash; slicna funkcionalnost + kontrola koje stranice ukljuciti</li>
+      <li><strong>Google XML Sitemaps</strong> &mdash; lagan plugin samo za sitemap, bez ostalog SEO-a</li>
+    </ul>
+
+    <h3>Next.js / React</h3>
+    <pre><code>// next-sitemap.config.js
+module.exports = {
+  siteUrl: 'https://vasajt.rs',
+  generateRobotsTxt: true,
+  changefreq: 'weekly',
+  priority: 0.7,
+  exclude: ['/admin/*', '/api/*'],
+  robotsTxtOptions: {
+    policies: [
+      { userAgent: '*', allow: '/' },
+      { userAgent: '*', disallow: '/admin/' }
+    ]
+  }
+}
+// npm install next-sitemap
+// Dodajte "postbuild": "next-sitemap" u package.json scripts</code></pre>
+
+    <h3>Python (programski)</h3>
+    <pre><code>import xml.etree.ElementTree as ET
+from datetime import date
+
+urls = [
+    {"loc": "https://vasajt.rs/", "priority": "1.0", "freq": "weekly"},
+    {"loc": "https://vasajt.rs/blog", "priority": "0.8", "freq": "weekly"},
+    {"loc": "https://vasajt.rs/kontakt", "priority": "0.3", "freq": "yearly"},
+]
+
+urlset = ET.Element("urlset")
+urlset.set("xmlns", "http://www.sitemaps.org/schemas/sitemap/0.9")
+
+for u in urls:
+    url_el = ET.SubElement(urlset, "url")
+    ET.SubElement(url_el, "loc").text = u["loc"]
+    ET.SubElement(url_el, "lastmod").text = str(date.today())
+    ET.SubElement(url_el, "changefreq").text = u["freq"]
+    ET.SubElement(url_el, "priority").text = u["priority"]
+
+tree = ET.ElementTree(urlset)
+ET.indent(tree, space="  ")
+tree.write("sitemap.xml", encoding="UTF-8", xml_declaration=True)</code></pre>
+
+    <h3>Staticki sajtovi (rucno ili sa alatom)</h3>
+    <ul>
+      <li><strong>XML-Sitemaps.com</strong> &mdash; online generator, crawla vas sajt i pravi sitemap (do 500 URL-ova besplatno)</li>
+      <li><strong>Screaming Frog</strong> &mdash; desktop crawler sa opcijom za export sitemap-a</li>
+      <li><strong>Rucno</strong> &mdash; za male sajtove (do 20-30 stranica) rucno pisanje je sasvim ok</li>
+    </ul>
+
+    <h2 id="sm8">8. Dinamicki vs staticki sitemap</h2>
+    <table>
+      <tr><th>Karakteristika</th><th>Staticki</th><th>Dinamicki</th></tr>
+      <tr><td>Generisanje</td><td>Rucno ili pri build-u</td><td>Na zahtev (server generise)</td></tr>
+      <tr><td>Azuriranje</td><td>Rucno ili pri deploy-u</td><td>Automatski &mdash; uvek svez</td></tr>
+      <tr><td>Performanse</td><td>Brz (staticni fajl)</td><td>Sporiji (generisanje na letu)</td></tr>
+      <tr><td>Primer</td><td>Jekyll, Hugo, Vercel static</td><td>WordPress, Django, Express</td></tr>
+      <tr><td>Preporuka</td><td>Sajtovi sa retkim promenama</td><td>Sajtovi sa cestim novim sadrzajem</td></tr>
+    </table>
+    <div class="callout"><strong>Nas pristup:</strong> Web Security Scanner koristi staticki sitemap jer je deploy na Vercel-u. Azuriramo rucno kad dodamo nove blog stranice. Za dinamicki sajt sa bazom podataka, dinamicki sitemap je bolji izbor.</div>
+
+    <h2 id="sm9">9. Limiti i pravila</h2>
+    <ul>
+      <li><strong>50,000 URL-ova</strong> &mdash; maksimum po jednom sitemap fajlu</li>
+      <li><strong>50MB</strong> &mdash; maksimalna velicina fajla (nekompresovano)</li>
+      <li><strong>Gzip kompresija</strong> &mdash; mozete kompresovati sitemap u .gz format za ustedu bandwitha (<code>sitemap.xml.gz</code>)</li>
+      <li><strong>UTF-8 enkodovanje</strong> &mdash; obavezno za specijalne karaktere</li>
+      <li><strong>Entity encoding</strong> &mdash; URL-ovi moraju imati escape za <code>&amp;</code> (<code>&amp;amp;</code>), <code>'</code> (<code>&amp;apos;</code>), <code>"</code> (<code>&amp;quot;</code>)</li>
+      <li><strong>Apsolutne URL adrese</strong> &mdash; <code>https://vasajt.rs/stranica</code>, nikad relativne putanje</li>
+      <li><strong>Isti domen</strong> &mdash; sitemap sme da sadrzi samo URL-ove sa istog domena (ili poddomena sa verifikacijom)</li>
+    </ul>
+
+    <h2 id="sm10">10. Najcesce greske</h2>
+    <ul>
+      <li><strong>Zastareli URL-ovi</strong> &mdash; 404 stranice u sitemap-u trose crawl budget i signaliziraju los kvalitet</li>
+      <li><strong>noindex + sitemap</strong> &mdash; kontradiktorno: "indeksiraj ovu stranicu" + "ne indeksiraj ovu stranicu"</li>
+      <li><strong>Redirect URL-ovi</strong> &mdash; ubacite samo finalnu destinaciju, ne pocetni URL</li>
+      <li><strong>Nedostaje lastmod</strong> &mdash; bez njega Google ne zna sta je azurirano i crawla sve ponovo</li>
+      <li><strong>Lazan lastmod</strong> &mdash; menjanje datuma bez stvarne promene sadrzaja. Google detektuje ovo i ignorise lastmod.</li>
+      <li><strong>Relativne URL adrese</strong> &mdash; <code>/stranica</code> umesto <code>https://vasajt.rs/stranica</code>. Nevazeci sitemap.</li>
+      <li><strong>Ne submitovati u Search Console</strong> &mdash; samo robots.txt referenca nije dovoljna za brzo indeksiranje</li>
+      <li><strong>Prevelik sitemap</strong> &mdash; prelazi 50K ili 50MB &mdash; koristite Sitemap Index</li>
+    </ul>
+
+    <h2 id="sm11">11. Reference i resursi</h2>
+    <ul>
+      <li><a href="https://developers.google.com/search/docs/crawling-indexing/sitemaps/overview" target="_blank">Google Search Central &mdash; Sitemaps Overview</a></li>
+      <li><a href="https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap" target="_blank">Google &mdash; Build and Submit a Sitemap</a></li>
+      <li><a href="https://www.sitemaps.org/protocol.html" target="_blank">Sitemaps.org &mdash; XML Sitemap Protocol</a></li>
+      <li><a href="https://developers.google.com/search/docs/crawling-indexing/robots/intro" target="_blank">Google &mdash; Robots.txt Introduction</a></li>
+      <li><a href="https://www.xml-sitemaps.com/" target="_blank">XML-Sitemaps.com &mdash; Online Generator</a></li>
+      <li><a href="https://github.com/iamvishnusankar/next-sitemap" target="_blank">next-sitemap &mdash; Next.js Sitemap Generator</a></li>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Glossary/Robots.txt" target="_blank">MDN &mdash; Robots.txt</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Proverite sitemap vaseg sajta &rarr;</a>
+  </div>
+
+  <!-- ==================== ENGLISH ==================== -->
+  <div class="en">
+    <h1>Sitemap.xml &mdash; Why You Need It and How to Create One</h1>
+    <p class="subtitle">Complete guide to XML sitemaps: format, limits, robots.txt, Search Console and auto-generation</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">50%</div><div class="stat-label">Faster indexing with sitemap</div></div>
+      <div class="stat-card"><div class="stat-num">50K</div><div class="stat-label">Max URLs per file</div></div>
+      <div class="stat-card"><div class="stat-num">50MB</div><div class="stat-label">Max file size</div></div>
+      <div class="stat-card"><div class="stat-num">2005</div><div class="stat-label">Sitemaps protocol created</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#sm1e">What is a sitemap</a></li>
+        <li><a href="#sm2e">XML Sitemap format</a></li>
+        <li><a href="#sm3e">Sitemap Index for large sites</a></li>
+        <li><a href="#sm4e">Which pages to include</a></li>
+        <li><a href="#sm5e">Sitemap and robots.txt</a></li>
+        <li><a href="#sm6e">Submitting to Search Console</a></li>
+        <li><a href="#sm7e">Auto-generation</a></li>
+        <li><a href="#sm8e">Dynamic vs static sitemap</a></li>
+        <li><a href="#sm9e">Limits and rules</a></li>
+        <li><a href="#sm10e">Common mistakes</a></li>
+        <li><a href="#sm11e">References</a></li>
+      </ol>
+    </div>
+
+    <h2 id="sm1e">1. What is a sitemap and what it does</h2>
+    <p>Sitemap.xml is a file listing all public URLs on your site. It's a "map" you give to Google to find, index, and understand your site structure faster.</p>
+    <p>Think of Googlebot as a visitor exploring your site by following links. Without a sitemap, the crawler must discover all pages on its own &mdash; potentially missing deeply nested or orphaned pages.</p>
+    <div class="callout"><strong>Google says:</strong> "A sitemap doesn't guarantee Google will index all URLs, but it's strongly recommended, especially for new sites, large sites, and media-rich sites."</div>
+
+    <h2 id="sm2e">2. XML Sitemap format</h2>
+    <pre><code>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"&gt;
+  &lt;url&gt;
+    &lt;loc&gt;https://yoursite.com/&lt;/loc&gt;
+    &lt;lastmod&gt;2026-04-09&lt;/lastmod&gt;
+    &lt;changefreq&gt;weekly&lt;/changefreq&gt;
+    &lt;priority&gt;1.0&lt;/priority&gt;
+  &lt;/url&gt;
+&lt;/urlset&gt;</code></pre>
+    <table>
+      <tr><th>Element</th><th>Required?</th><th>Description</th></tr>
+      <tr><td><code>&lt;loc&gt;</code></td><td>YES</td><td>Full URL with https:// and domain</td></tr>
+      <tr><td><code>&lt;lastmod&gt;</code></td><td>Recommended</td><td>Last modified date (YYYY-MM-DD)</td></tr>
+      <tr><td><code>&lt;changefreq&gt;</code></td><td>Optional</td><td>How often the page changes</td></tr>
+      <tr><td><code>&lt;priority&gt;</code></td><td>Optional</td><td>Relative priority 0.0-1.0 (internal only)</td></tr>
+    </table>
+    <div class="callout callout-warn"><strong>Note:</strong> Google confirmed it <strong>ignores</strong> <code>changefreq</code> and <code>priority</code>. Only <code>loc</code> and <code>lastmod</code> are useful. Other search engines (Bing, Yandex) may still use them.</div>
+
+    <h2 id="sm3e">3. Sitemap Index for large sites</h2>
+    <p>When your site exceeds 50,000 URLs or 50MB, use a Sitemap Index &mdash; a master file referencing multiple smaller sitemaps. No limit on the number of files in the index.</p>
+
+    <h2 id="sm4e">4. Which pages to include</h2>
+    <p><strong>Include:</strong> All public, indexable pages with status 200 and self-referencing canonical.</p>
+    <p><strong>Exclude:</strong> noindex pages, redirects (301/302), 404 pages, duplicates, parameterized URLs, admin/login pages.</p>
+    <div class="callout callout-danger"><strong>Mistake #1:</strong> Sitemap with 404 and noindex pages wastes Google's crawl budget and signals poor site quality.</div>
+
+    <h2 id="sm5e">5. Sitemap and robots.txt</h2>
+    <pre><code># robots.txt
+User-agent: *
+Allow: /
+Disallow: /admin/
+Sitemap: https://yoursite.com/sitemap.xml</code></pre>
+    <p>Use BOTH the robots.txt Sitemap directive AND Search Console submission for maximum coverage.</p>
+
+    <h2 id="sm6e">6. Submitting to Google Search Console</h2>
+    <ol>
+      <li>Open <a href="https://search.google.com/search-console" target="_blank">Google Search Console</a></li>
+      <li>Select your property</li>
+      <li>Click "Sitemaps" in the left menu</li>
+      <li>Enter <code>sitemap.xml</code> and click "Submit"</li>
+    </ol>
+    <p>After submission, Search Console shows: Status, Discovered URLs, Indexed URLs, Last read date.</p>
+
+    <h2 id="sm7e">7. Auto-generation</h2>
+    <p><strong>WordPress:</strong> Built-in since 5.5 at <code>/wp-sitemap.xml</code>. Use Yoast SEO or Rank Math for advanced control.</p>
+    <p><strong>Next.js:</strong> Use <code>next-sitemap</code> package with postbuild script.</p>
+    <p><strong>Python:</strong> Generate programmatically with xml.etree.ElementTree.</p>
+    <p><strong>Static sites:</strong> Use XML-Sitemaps.com online generator or Screaming Frog.</p>
+
+    <h2 id="sm8e">8. Dynamic vs static sitemap</h2>
+    <table>
+      <tr><th>Feature</th><th>Static</th><th>Dynamic</th></tr>
+      <tr><td>Generation</td><td>Manual or at build</td><td>On request (server generates)</td></tr>
+      <tr><td>Updates</td><td>Manual or at deploy</td><td>Automatic &mdash; always fresh</td></tr>
+      <tr><td>Performance</td><td>Fast (static file)</td><td>Slower (on-the-fly generation)</td></tr>
+      <tr><td>Best for</td><td>Rarely changing sites</td><td>Frequent new content</td></tr>
+    </table>
+
+    <h2 id="sm9e">9. Limits and rules</h2>
+    <ul>
+      <li><strong>50,000 URLs</strong> max per sitemap file</li>
+      <li><strong>50MB</strong> max file size (uncompressed)</li>
+      <li>Gzip compression supported (<code>sitemap.xml.gz</code>)</li>
+      <li>UTF-8 encoding required</li>
+      <li>Absolute URLs only (no relative paths)</li>
+      <li>Same domain only</li>
+    </ul>
+
+    <h2 id="sm10e">10. Common mistakes</h2>
+    <ul>
+      <li><strong>Stale URLs</strong> &mdash; 404 pages in sitemap waste crawl budget</li>
+      <li><strong>noindex + sitemap</strong> &mdash; contradictory signals</li>
+      <li><strong>Redirect URLs</strong> &mdash; include only final destination</li>
+      <li><strong>Missing lastmod</strong> &mdash; Google doesn't know what changed</li>
+      <li><strong>Fake lastmod</strong> &mdash; changing dates without real changes &mdash; Google detects this</li>
+      <li><strong>Relative URLs</strong> &mdash; invalid sitemap</li>
+      <li><strong>Not submitting in Search Console</strong> &mdash; robots.txt alone isn't enough</li>
+    </ul>
+
+    <h2 id="sm11e">11. References and resources</h2>
+    <ul>
+      <li><a href="https://developers.google.com/search/docs/crawling-indexing/sitemaps/overview" target="_blank">Google &mdash; Sitemaps Overview</a></li>
+      <li><a href="https://www.sitemaps.org/protocol.html" target="_blank">Sitemaps.org &mdash; Protocol Specification</a></li>
+      <li><a href="https://developers.google.com/search/docs/crawling-indexing/robots/intro" target="_blank">Google &mdash; Robots.txt</a></li>
+      <li><a href="https://www.xml-sitemaps.com/" target="_blank">XML-Sitemaps.com &mdash; Online Generator</a></li>
+      <li><a href="https://github.com/iamvishnusankar/next-sitemap" target="_blank">next-sitemap &mdash; Next.js Generator</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Check your site's sitemap &rarr;</a>
+  </div>
+
+  <div class="nav-links">
+    <a href="./blog-seo.html"><span class="sr">SEO vodic</span><span class="en">SEO Guide</span></a>
+    <a href="./blog-seo-meta.html"><span class="sr">Meta Tagovi</span><span class="en">Meta Tags</span></a>
+    <a href="./blog-seo-schema.html"><span class="sr">Schema.org</span><span class="en">Schema.org</span></a>
+    <a href="./blog-seo-opengraph.html"><span class="sr">Open Graph</span><span class="en">Open Graph</span></a>
+    <a href="./blog-seo-headings.html"><span class="sr">Heading struktura</span><span class="en">Heading Structure</span></a>
+    <a href="./blog-seo-mobile.html"><span class="sr">Mobile SEO</span><span class="en">Mobile SEO</span></a>
+    <a href="./blog-seo-local.html"><span class="sr">Lokalni SEO</span><span class="en">Local SEO</span></a>
+  </div>
+
+  </main>
+</div>
+<script src="./blog-common.js" defer></script>
+</body>
+</html>

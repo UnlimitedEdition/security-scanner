@@ -1,37 +1,206 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Glavna -->
   <url>
     <loc>https://security-scanner-ruddy.vercel.app/</loc>
     <lastmod>2026-04-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
+
+  <!-- Hub stranice -->
   <url>
-    <loc>https://security-scanner-ruddy.vercel.app/blog-security.html</loc>
+    <loc>https://security-scanner-ruddy.vercel.app/blog-security</loc>
     <lastmod>2026-04-09</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://security-scanner-ruddy.vercel.app/blog-seo.html</loc>
+    <loc>https://security-scanner-ruddy.vercel.app/blog-seo</loc>
     <lastmod>2026-04-09</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://security-scanner-ruddy.vercel.app/blog-performance.html</loc>
+    <loc>https://security-scanner-ruddy.vercel.app/blog-performance</loc>
     <lastmod>2026-04-09</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://security-scanner-ruddy.vercel.app/blog-gdpr.html</loc>
+    <loc>https://security-scanner-ruddy.vercel.app/blog-gdpr</loc>
     <lastmod>2026-04-09</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
+
+  <!-- Security clanci (8) -->
   <url>
-    <loc>https://security-scanner-ruddy.vercel.app/privacy.html</loc>
+    <loc>https://security-scanner-ruddy.vercel.app/blog-security-ssl</loc>
+    <lastmod>2026-04-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://security-scanner-ruddy.vercel.app/blog-security-headers</loc>
+    <lastmod>2026-04-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://security-scanner-ruddy.vercel.app/blog-security-xss</loc>
+    <lastmod>2026-04-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://security-scanner-ruddy.vercel.app/blog-security-sql</loc>
+    <lastmod>2026-04-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://security-scanner-ruddy.vercel.app/blog-security-csrf</loc>
+    <lastmod>2026-04-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://security-scanner-ruddy.vercel.app/blog-security-dns</loc>
+    <lastmod>2026-04-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://security-scanner-ruddy.vercel.app/blog-security-ports</loc>
+    <lastmod>2026-04-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://security-scanner-ruddy.vercel.app/blog-security-api</loc>
+    <lastmod>2026-04-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- SEO clanci (7) -->
+  <url>
+    <loc>https://security-scanner-ruddy.vercel.app/blog-seo-meta</loc>
+    <lastmod>2026-04-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://security-scanner-ruddy.vercel.app/blog-seo-schema</loc>
+    <lastmod>2026-04-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://security-scanner-ruddy.vercel.app/blog-seo-sitemap</loc>
+    <lastmod>2026-04-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://security-scanner-ruddy.vercel.app/blog-seo-local</loc>
+    <lastmod>2026-04-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://security-scanner-ruddy.vercel.app/blog-seo-opengraph</loc>
+    <lastmod>2026-04-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://security-scanner-ruddy.vercel.app/blog-seo-headings</loc>
+    <lastmod>2026-04-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://security-scanner-ruddy.vercel.app/blog-seo-mobile</loc>
+    <lastmod>2026-04-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Performance clanci (6) -->
+  <url>
+    <loc>https://security-scanner-ruddy.vercel.app/blog-perf-cwv</loc>
+    <lastmod>2026-04-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://security-scanner-ruddy.vercel.app/blog-perf-images</loc>
+    <lastmod>2026-04-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://security-scanner-ruddy.vercel.app/blog-perf-cache</loc>
+    <lastmod>2026-04-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://security-scanner-ruddy.vercel.app/blog-perf-compression</loc>
+    <lastmod>2026-04-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://security-scanner-ruddy.vercel.app/blog-perf-cdn</loc>
+    <lastmod>2026-04-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://security-scanner-ruddy.vercel.app/blog-perf-lazy</loc>
+    <lastmod>2026-04-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- GDPR clanci (5) -->
+  <url>
+    <loc>https://security-scanner-ruddy.vercel.app/blog-gdpr-cookies</loc>
+    <lastmod>2026-04-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://security-scanner-ruddy.vercel.app/blog-gdpr-policy</loc>
+    <lastmod>2026-04-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://security-scanner-ruddy.vercel.app/blog-gdpr-trackers</loc>
+    <lastmod>2026-04-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://security-scanner-ruddy.vercel.app/blog-gdpr-rights</loc>
+    <lastmod>2026-04-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://security-scanner-ruddy.vercel.app/blog-gdpr-fines</loc>
+    <lastmod>2026-04-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Privatnost -->
+  <url>
+    <loc>https://security-scanner-ruddy.vercel.app/privacy</loc>
     <lastmod>2026-04-09</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>

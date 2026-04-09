@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Open Graph i Twitter Cards — Optimizacija deljenja | Web Security Scanner</title>
+  <meta name="description" content="Kompletni vodic za Open Graph i Twitter Cards: obavezni tagovi, optimalne dimenzije slika (1200x630), LinkedIn, alati za testiranje i primeri implementacije.">
+  <meta name="keywords" content="Open Graph, Twitter Cards, og:title, og:image, og:description, social media, deljenje, Facebook, LinkedIn, meta tagovi">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <link rel="canonical" href="https://security-scanner-ruddy.vercel.app/blog-seo-opengraph.html">
+  <link rel="alternate" hreflang="sr" href="https://security-scanner-ruddy.vercel.app/blog-seo-opengraph.html">
+  <link rel="alternate" hreflang="en" href="https://security-scanner-ruddy.vercel.app/blog-seo-opengraph.html">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Open Graph i Twitter Cards — Optimizacija deljenja na drustvenim mrezama">
+  <meta property="og:description" content="Kako kontrolisati izgled vaseg linka na Facebook-u, Twitter-u i LinkedIn-u. Tagovi, slike i alati.">
+  <meta property="og:url" content="https://security-scanner-ruddy.vercel.app/blog-seo-opengraph.html">
+  <meta property="og:site_name" content="Web Security Scanner">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Open Graph i Twitter Cards — Optimizacija deljenja na drustvenim mrezama">
+  <meta name="twitter:description" content="Kako kontrolisati izgled vaseg linka na Facebook-u, Twitter-u i LinkedIn-u. Tagovi, slike i alati.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Open Graph i Twitter Cards — Optimizacija deljenja",
+    "author": {"@type": "Person", "name": "Toske", "url": "https://toske-programer.web.app"},
+    "publisher": {"@type": "Organization", "name": "Web Security Scanner"},
+    "datePublished": "2026-04-09",
+    "dateModified": "2026-04-09",
+    "description": "Kompletni vodic za Open Graph i Twitter Cards: tagovi, dimenzije slika, platforme i alati za testiranje.",
+    "mainEntityOfPage": {"@type": "WebPage", "@id": "https://security-scanner-ruddy.vercel.app/blog-seo-opengraph.html"}
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Sta je Open Graph?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Open Graph je protokol koji je Facebook kreirao 2010. godine. Omogucava vam da kontrolisete kako vas link izgleda kad ga neko podeli na drustvenim mrezama — naslov, opis, slika i URL. Bez OG tagova, platforma bira nasumican tekst i sliku sa stranice."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Koja je optimalna velicina slike za Open Graph?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Preporucena dimenzija je 1200x630 piksela (odnos 1.91:1). Ovo radi optimalno na svim platformama — Facebook, LinkedIn, Twitter, WhatsApp, Telegram, Slack. Minimalna velicina je 600x315px. Format: JPG ili PNG, do 8MB."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Da li Open Graph tagovi uticu na SEO?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ne direktno na Google rangiranje. Ali indirektno DA — postovi sa kvalitetnom slikom i naslovom dobijaju 2.3x vise engagement-a, vise deljenja, vise klikova ka sajtu, i potencijalno vise backlink-ova. Google takodje koristi OG tagove kao fallback za svoje rich snippets."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Koja je razlika izmedju Open Graph i Twitter Cards?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Open Graph je Facebook-ov protokol koji koriste i LinkedIn, WhatsApp, Telegram, Slack. Twitter Cards je Twitter-ov sopstveni format. Twitter TAKODJE cita OG tagove kao fallback — ako nemate twitter: tagove, koristice og: tagove. Preporuka: stavite oba za maksimalnu kontrolu."
+        }
+      }
+    ]
+  }
+  </script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+</head>
+<body>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr"><div class="timeline-title">Sadrzaj</div><ol id="timeline-sr"></ol></div>
+    <div class="en"><div class="timeline-title">Contents</div><ol id="timeline-en"></ol></div>
+  </aside>
+  <main class="blog-content">
+
+  <!-- ==================== SRPSKI ==================== -->
+  <div class="sr">
+    <h1>Open Graph i Twitter Cards &mdash; Optimizacija deljenja</h1>
+    <p class="subtitle">Kako kontrolisati izgled vaseg linka na Facebook-u, Twitter-u, LinkedIn-u i svim platformama</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">2.3x</div><div class="stat-label">Vise engagement-a sa slikom (BuzzSumo)</div></div>
+      <div class="stat-card"><div class="stat-num">1200x630</div><div class="stat-label">Optimalna OG slika (px)</div></div>
+      <div class="stat-card"><div class="stat-num">2010</div><div class="stat-label">Facebook kreirao Open Graph</div></div>
+      <div class="stat-card"><div class="stat-num">87%</div><div class="stat-label">Top sajtova koristi OG tagove</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Sadrzaj</h3>
+      <ol>
+        <li><a href="#og1">Sta je Open Graph protokol</a></li>
+        <li><a href="#og2">Obavezni OG tagovi</a></li>
+        <li><a href="#og3">Opcioni OG tagovi</a></li>
+        <li><a href="#og4">Optimalne dimenzije slika</a></li>
+        <li><a href="#og5">Twitter Cards</a></li>
+        <li><a href="#og6">LinkedIn i ostale platforme</a></li>
+        <li><a href="#og7">Kompletna implementacija</a></li>
+        <li><a href="#og8">Dobri vs losi primeri</a></li>
+        <li><a href="#og9">Alati za testiranje</a></li>
+        <li><a href="#og10">Najcesce greske</a></li>
+        <li><a href="#og11">Reference i resursi</a></li>
+      </ol>
+    </div>
+
+    <h2 id="og1">1. Sta je Open Graph protokol</h2>
+    <p>Open Graph (OG) je protokol koji je <strong>Facebook kreirao 2010. godine</strong> da omoguci web stranicama da kontrolisu kako se njihov sadrzaj prikazuje kad ga neko podeli na drustvenim mrezama.</p>
+    <p>Bez OG tagova, kad neko podeli vas link na Facebook-u, platforma sama bira nasumican naslov, opis i sliku sa stranice &mdash; sto je cesto pogresno, ruzno ili nepotpuno. Sa OG tagovima, vi tacno odredjujete sta se prikazuje.</p>
+    <p>Danas OG tagove koriste: <strong>Facebook, LinkedIn, WhatsApp, Telegram, Slack, Discord, Pinterest, iMessage</strong> i mnoge druge platforme. Twitter ima sopstveni format (Twitter Cards) ali takodje cita OG tagove kao fallback.</p>
+    <div class="callout"><strong>Cinjenica:</strong> Prema BuzzSumo studiji, postovi sa kvalitetnom slikom dobijaju 2.3x vise engagement-a od onih bez slike. OG tagovi su najlaksi nacin da kontrolisete tu sliku.</div>
+
+    <h2 id="og2">2. Obavezni OG tagovi</h2>
+    <p>Cetiri taga koja SVAKA stranica mora imati:</p>
+    <pre><code>&lt;!-- OBAVEZNI Open Graph tagovi --&gt;
+&lt;meta property="og:title" content="Naslov za drustvene mreze"&gt;
+&lt;meta property="og:description" content="Opis do 200 karaktera koji privlaci klikove"&gt;
+&lt;meta property="og:image" content="https://vasajt.rs/slika-1200x630.jpg"&gt;
+&lt;meta property="og:url" content="https://vasajt.rs/stranica"&gt;
+&lt;meta property="og:type" content="article"&gt;</code></pre>
+
+    <table>
+      <tr><th>Tag</th><th>Opis</th><th>Saveti</th></tr>
+      <tr><td><code>og:title</code></td><td>Naslov u prikazu deljenja</td><td>Do 60 karaktera. Moze se razlikovati od HTML title taga &mdash; prilagodite za social.</td></tr>
+      <tr><td><code>og:description</code></td><td>Opis ispod naslova</td><td>Do 200 karaktera. Privlacniji od meta description &mdash; dodajte emociju, CTA.</td></tr>
+      <tr><td><code>og:image</code></td><td>Slika u prikazu</td><td>1200x630px, apsolutni URL sa https://. JPG ili PNG, do 8MB.</td></tr>
+      <tr><td><code>og:url</code></td><td>Kanonski URL stranice</td><td>Apsolutni URL. Treba da se poklopi sa canonical tagom.</td></tr>
+      <tr><td><code>og:type</code></td><td>Tip sadrzaja</td><td>website (za pocetnu), article (za clanke), product (za proizvode).</td></tr>
+    </table>
+
+    <h2 id="og3">3. Opcioni OG tagovi</h2>
+    <pre><code>&lt;!-- Opcioni ali preporuceni --&gt;
+&lt;meta property="og:site_name" content="Web Security Scanner"&gt;
+&lt;meta property="og:locale" content="sr_RS"&gt;
+&lt;meta property="og:locale:alternate" content="en_US"&gt;
+
+&lt;!-- Za video sadrzaj --&gt;
+&lt;meta property="og:video" content="https://vasajt.rs/video.mp4"&gt;
+&lt;meta property="og:video:type" content="video/mp4"&gt;
+&lt;meta property="og:video:width" content="1280"&gt;
+&lt;meta property="og:video:height" content="720"&gt;
+
+&lt;!-- Za Article tip --&gt;
+&lt;meta property="article:published_time" content="2026-04-09T10:00:00Z"&gt;
+&lt;meta property="article:modified_time" content="2026-04-09T15:30:00Z"&gt;
+&lt;meta property="article:author" content="https://vasajt.rs/autor"&gt;
+&lt;meta property="article:section" content="SEO"&gt;
+&lt;meta property="article:tag" content="Open Graph"&gt;
+
+&lt;!-- Dimenzije slike (pomaze platformama pre ucitavanja) --&gt;
+&lt;meta property="og:image:width" content="1200"&gt;
+&lt;meta property="og:image:height" content="630"&gt;
+&lt;meta property="og:image:alt" content="Opis slike za pristupacnost"&gt;</code></pre>
+
+    <h2 id="og4">4. Optimalne dimenzije slika</h2>
+    <p>Razlicite platforme prikazuju slike u razlicitim formatima. Univerzalna dimenzija koja radi svuda:</p>
+    <table>
+      <tr><th>Platforma</th><th>Preporucena velicina</th><th>Min. velicina</th><th>Odnos</th></tr>
+      <tr><td>Facebook</td><td>1200 x 630 px</td><td>600 x 315 px</td><td>1.91:1</td></tr>
+      <tr><td>Twitter (large)</td><td>1200 x 628 px</td><td>300 x 157 px</td><td>2:1</td></tr>
+      <tr><td>LinkedIn</td><td>1200 x 627 px</td><td>200 x 200 px</td><td>1.91:1</td></tr>
+      <tr><td>WhatsApp</td><td>1200 x 630 px</td><td>300 x 200 px</td><td>1.91:1</td></tr>
+      <tr><td>Telegram</td><td>1200 x 630 px</td><td>-</td><td>1.91:1</td></tr>
+      <tr><td>Discord</td><td>1200 x 630 px</td><td>-</td><td>1.91:1</td></tr>
+      <tr><td>Pinterest</td><td>1000 x 1500 px</td><td>600 x 900 px</td><td>2:3 (vertikalna!)</td></tr>
+    </table>
+    <div class="callout callout-warn"><strong>Univerzalna preporuka: 1200 x 630 px</strong> &mdash; radi na svim platformama osim Pinterest-a. Format JPG ili PNG. Velicina do 8MB (idealno ispod 300KB za brze ucitavanje). Tekst na slici: drzite u centralnih 60% jer platforme secaju ivice razlicito.</div>
+
+    <h3>Saveti za OG slike</h3>
+    <ul>
+      <li><strong>Jedna slika po stranici</strong> &mdash; ne koristite istu OG sliku za ceo sajt</li>
+      <li><strong>Tekst na slici</strong> &mdash; naslov ili kljucna poruka, ali NE previse (Facebook ogranicava tekst na slikama za reklame)</li>
+      <li><strong>Brend</strong> &mdash; logo u uglu za prepoznatljivost</li>
+      <li><strong>Kontrast</strong> &mdash; tamna pozadina + svetao tekst (ili obrnuto) za citljivost na svim platformama</li>
+      <li><strong>Ne koristite transparentne PNG</strong> &mdash; neke platforme dodaju belu pozadinu, sto izgleda ruzno</li>
+    </ul>
+
+    <h2 id="og5">5. Twitter Cards</h2>
+    <p>Twitter ima sopstveni format za bogate prikaze linkova. <strong>Ako nemate twitter: tagove, Twitter koristi og: tagove kao fallback.</strong> Preporuka: stavite oba za maksimalnu kontrolu.</p>
+
+    <h3>Tipovi Twitter Cards</h3>
+    <table>
+      <tr><th>Tip</th><th>Opis</th><th>Kada koristiti</th></tr>
+      <tr><td><code>summary</code></td><td>Mala slika levo + naslov/opis desno</td><td>Blog clanci, stranice bez velike slike</td></tr>
+      <tr><td><code>summary_large_image</code></td><td>Velika slika gore + naslov/opis dole</td><td>Clanci sa cover slikom, landing stranice</td></tr>
+      <tr><td><code>player</code></td><td>Video/audio plejer u tvitu</td><td>Video sadrzaj, podcast epizode</td></tr>
+      <tr><td><code>app</code></td><td>Prikaz mobilne aplikacije</td><td>App Store/Google Play linkovi</td></tr>
+    </table>
+
+    <h3>Twitter Card tagovi</h3>
+    <pre><code>&lt;!-- Osnovni Twitter Card tagovi --&gt;
+&lt;meta name="twitter:card" content="summary_large_image"&gt;
+&lt;meta name="twitter:title" content="Naslov za Twitter"&gt;
+&lt;meta name="twitter:description" content="Opis za Twitter do 200 karaktera"&gt;
+&lt;meta name="twitter:image" content="https://vasajt.rs/slika-1200x628.jpg"&gt;
+
+&lt;!-- Opciono: Twitter nalog sajta i autora --&gt;
+&lt;meta name="twitter:site" content="@vasbrand"&gt;
+&lt;meta name="twitter:creator" content="@autor"&gt;
+
+&lt;!-- Opciono: alt tekst za sliku (pristupacnost) --&gt;
+&lt;meta name="twitter:image:alt" content="Opis slike za screen readere"&gt;</code></pre>
+    <div class="callout"><strong>Napomena:</strong> Twitter je preimenovan u X (2023), ali tagovi i dalje koriste <code>twitter:</code> prefix i Twitter Card Validator i dalje radi na cards-dev.twitter.com (sada x.com).</div>
+
+    <h2 id="og6">6. LinkedIn i ostale platforme</h2>
+
+    <h3>LinkedIn</h3>
+    <p>LinkedIn koristi Open Graph tagove za prikaz deljenih linkova. Specifcnosti:</p>
+    <ul>
+      <li>Slika: 1200x627px za optimalan prikaz</li>
+      <li>Naslov: do 150 karaktera (duzi se sece)</li>
+      <li>Opis: do 160 karaktera u prikazu</li>
+      <li>LinkedIn kesira slike agresivno &mdash; koristite Post Inspector za refresh</li>
+    </ul>
+
+    <h3>WhatsApp / Telegram / Slack</h3>
+    <p>Sve tri platforme citaju OG tagove. WhatsApp prikazuje malu sliku sa naslovom i opisom. Telegram prikazuje instant preview sa velikom slikom. Slack prikazuje unfurl sa kompletnim OG podacima.</p>
+
+    <h3>Discord</h3>
+    <p>Discord cita OG tagove i prikazuje embed sa slikom, naslovom, opisom i bojom (koristite <code>&lt;meta name="theme-color" content="#6c63ff"&gt;</code> za boju embed-a).</p>
+
+    <h2 id="og7">7. Kompletna implementacija</h2>
+    <p>Evo kompletnog seta meta tagova za blog clanak koji pokriva SVE platforme:</p>
+    <pre><code>&lt;head&gt;
+  &lt;!-- Osnovni HTML meta --&gt;
+  &lt;title&gt;Open Graph vodic — Optimizacija deljenja | Vas Brend&lt;/title&gt;
+  &lt;meta name="description" content="Kako kontrolisati izgled linka na drustvenim mrezama..."&gt;
+
+  &lt;!-- Open Graph (Facebook, LinkedIn, WhatsApp, Telegram, Slack) --&gt;
+  &lt;meta property="og:type" content="article"&gt;
+  &lt;meta property="og:title" content="Open Graph vodic — Kontrolisite kako izgleda vas link"&gt;
+  &lt;meta property="og:description" content="Naucite OG tagove, dimenzije slika i alate za testiranje."&gt;
+  &lt;meta property="og:image" content="https://vasajt.rs/og-image-opengraph.jpg"&gt;
+  &lt;meta property="og:image:width" content="1200"&gt;
+  &lt;meta property="og:image:height" content="630"&gt;
+  &lt;meta property="og:image:alt" content="Open Graph vodic cover slika"&gt;
+  &lt;meta property="og:url" content="https://vasajt.rs/blog/opengraph"&gt;
+  &lt;meta property="og:site_name" content="Vas Brend"&gt;
+  &lt;meta property="og:locale" content="sr_RS"&gt;
+  &lt;meta property="article:published_time" content="2026-04-09T10:00:00Z"&gt;
+  &lt;meta property="article:author" content="https://vasajt.rs/autor"&gt;
+
+  &lt;!-- Twitter Cards --&gt;
+  &lt;meta name="twitter:card" content="summary_large_image"&gt;
+  &lt;meta name="twitter:title" content="Open Graph vodic — Kontrolisite kako izgleda vas link"&gt;
+  &lt;meta name="twitter:description" content="OG tagovi, dimenzije slika i alati za testiranje."&gt;
+  &lt;meta name="twitter:image" content="https://vasajt.rs/og-image-opengraph.jpg"&gt;
+  &lt;meta name="twitter:site" content="@vasbrand"&gt;
+
+  &lt;!-- Discord boja --&gt;
+  &lt;meta name="theme-color" content="#6c63ff"&gt;
+&lt;/head&gt;</code></pre>
+
+    <h2 id="og8">8. Dobri vs losi primeri</h2>
+    <table>
+      <tr><th>Aspekt</th><th>Los primer &#10008;</th><th>Dobar primer &#10004;</th></tr>
+      <tr><td>og:title</td><td>"Pocetna stranica"</td><td>"SEO vodic 2026 — 12 provera za vas sajt"</td></tr>
+      <tr><td>og:description</td><td>"Dobrodosli na nas sajt"</td><td>"Besplatni SEO audit sa 12 automatskih provera. Rezultat za 30 sekundi."</td></tr>
+      <tr><td>og:image</td><td>Logo 100x100px</td><td>Custom cover slika 1200x630px sa naslovom</td></tr>
+      <tr><td>og:image</td><td>Ista slika za ceo sajt</td><td>Jedinstvena slika za svaku stranicu</td></tr>
+      <tr><td>og:url</td><td>Relativna putanja "/blog"</td><td>Apsolutni URL "https://vasajt.rs/blog"</td></tr>
+      <tr><td>og:type</td><td>Nedostaje</td><td>"article" za clanke, "website" za pocetnu</td></tr>
+    </table>
+
+    <h2 id="og9">9. Alati za testiranje</h2>
+    <ul>
+      <li><strong><a href="https://developers.facebook.com/tools/debug/" target="_blank">Facebook Sharing Debugger</a></strong> &mdash; prikazuje kako ce vas link izgledati na Facebook-u. Takodje cisti Facebook-ov kes &mdash; koristite posle azuriranja OG tagova.</li>
+      <li><strong><a href="https://cards-dev.x.com/validator" target="_blank">Twitter Card Validator</a></strong> &mdash; pregled Twitter Card prikaza. Proverite da li je card tip ispravan.</li>
+      <li><strong><a href="https://www.linkedin.com/post-inspector/" target="_blank">LinkedIn Post Inspector</a></strong> &mdash; testiranje i refresh LinkedIn prikaza. LinkedIn agresivno kesira &mdash; koristite ovo za azuriranje.</li>
+      <li><strong><a href="./index.html">Web Security Scanner</a></strong> &mdash; proverava prisustvo OG i Twitter Card tagova na vasem sajtu.</li>
+      <li><strong>metatags.io</strong> &mdash; real-time preview za Facebook, Twitter, LinkedIn, Google, Slack odjednom.</li>
+      <li><strong>OpenGraph.xyz</strong> &mdash; brzi preview sa opcijom za generisanje tagova.</li>
+    </ul>
+    <div class="callout callout-warn"><strong>Kes problem:</strong> Sve platforme kesiraju OG podatke. Posle azuriranja tagova, morate rucno ocistiti kes za svaku platformu: Facebook Debugger &rarr; "Scrape Again", LinkedIn Post Inspector &rarr; "Inspect", Twitter &rarr; validatorom. Kes moze trajati satima do dana.</div>
+
+    <h2 id="og10">10. Najcesce greske</h2>
+    <ul>
+      <li><strong>Nedostaje og:image</strong> &mdash; #1 greska. Bez slike, deljeni link je mali i neprimetan. Engagement pada 2.3x.</li>
+      <li><strong>Premala slika</strong> &mdash; ispod 600x315px na Facebook-u se prikazuje kao mala sličica umesto velikog prikaza.</li>
+      <li><strong>Relativni URL za sliku</strong> &mdash; <code>/slika.jpg</code> umesto <code>https://vasajt.rs/slika.jpg</code>. Platforme ne mogu resolovati relativne putanje.</li>
+      <li><strong>Ista OG slika za ceo sajt</strong> &mdash; svaka stranica treba jedinstvenu sliku za prepoznatljivost.</li>
+      <li><strong>Tekst na ivicama slike</strong> &mdash; platforme secaju ivice razlicito. Drzite bitan tekst u centralnih 60%.</li>
+      <li><strong>Nedostaje og:url</strong> &mdash; bez njega platforme koriste URL iz address bara koji moze imati tracking parametre.</li>
+      <li><strong>Ne testiraju pre objave</strong> &mdash; uvek proverite u Sharing Debugger pre nego sto podelite link.</li>
+      <li><strong>Zaborave ocistiti kes</strong> &mdash; stare slike i naslovi ostaju danima posle azuriranja ako ne ocistite kes.</li>
+    </ul>
+
+    <h2 id="og11">11. Reference i resursi</h2>
+    <ul>
+      <li><a href="https://ogp.me/" target="_blank">Open Graph Protocol &mdash; Zvanicna specifikacija</a></li>
+      <li><a href="https://developer.x.com/en/docs/twitter-for-websites/cards/overview/abouts-cards" target="_blank">Twitter/X &mdash; Cards Documentation</a></li>
+      <li><a href="https://developers.facebook.com/docs/sharing/webmasters/" target="_blank">Facebook &mdash; Sharing Best Practices</a></li>
+      <li><a href="https://www.linkedin.com/help/linkedin/answer/a521928" target="_blank">LinkedIn &mdash; Making Your Website Shareable</a></li>
+      <li><a href="https://developers.facebook.com/tools/debug/" target="_blank">Facebook Sharing Debugger</a></li>
+      <li><a href="https://cards-dev.x.com/validator" target="_blank">Twitter Card Validator</a></li>
+      <li><a href="https://www.linkedin.com/post-inspector/" target="_blank">LinkedIn Post Inspector</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Proverite OG tagove vaseg sajta &rarr;</a>
+  </div>
+
+  <!-- ==================== ENGLISH ==================== -->
+  <div class="en">
+    <h1>Open Graph &amp; Twitter Cards &mdash; Sharing Optimization</h1>
+    <p class="subtitle">How to control how your link looks on Facebook, Twitter, LinkedIn and all platforms</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">2.3x</div><div class="stat-label">More engagement with images (BuzzSumo)</div></div>
+      <div class="stat-card"><div class="stat-num">1200x630</div><div class="stat-label">Optimal OG image (px)</div></div>
+      <div class="stat-card"><div class="stat-num">2010</div><div class="stat-label">Facebook created Open Graph</div></div>
+      <div class="stat-card"><div class="stat-num">87%</div><div class="stat-label">Top sites use OG tags</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#og1e">What is Open Graph</a></li>
+        <li><a href="#og2e">Required OG tags</a></li>
+        <li><a href="#og3e">Optional OG tags</a></li>
+        <li><a href="#og4e">Optimal image dimensions</a></li>
+        <li><a href="#og5e">Twitter Cards</a></li>
+        <li><a href="#og6e">LinkedIn and other platforms</a></li>
+        <li><a href="#og7e">Complete implementation</a></li>
+        <li><a href="#og8e">Good vs bad examples</a></li>
+        <li><a href="#og9e">Testing tools</a></li>
+        <li><a href="#og10e">Common mistakes</a></li>
+        <li><a href="#og11e">References</a></li>
+      </ol>
+    </div>
+
+    <h2 id="og1e">1. What is Open Graph protocol</h2>
+    <p>Open Graph (OG) is a protocol <strong>created by Facebook in 2010</strong> to let web pages control how their content appears when shared on social media. Without OG tags, platforms pick random text and images from your page.</p>
+    <p>Today OG tags are used by: <strong>Facebook, LinkedIn, WhatsApp, Telegram, Slack, Discord, Pinterest, iMessage</strong> and many more.</p>
+    <div class="callout"><strong>Fact:</strong> Posts with quality images get 2.3x more engagement than those without (BuzzSumo). OG tags are the easiest way to control that image.</div>
+
+    <h2 id="og2e">2. Required OG tags</h2>
+    <pre><code>&lt;meta property="og:title" content="Your social media title"&gt;
+&lt;meta property="og:description" content="Description up to 200 chars"&gt;
+&lt;meta property="og:image" content="https://yoursite.com/image-1200x630.jpg"&gt;
+&lt;meta property="og:url" content="https://yoursite.com/page"&gt;
+&lt;meta property="og:type" content="article"&gt;</code></pre>
+    <table>
+      <tr><th>Tag</th><th>Description</th><th>Tips</th></tr>
+      <tr><td><code>og:title</code></td><td>Share preview title</td><td>Up to 60 chars. Can differ from HTML title.</td></tr>
+      <tr><td><code>og:description</code></td><td>Description below title</td><td>Up to 200 chars. More engaging than meta desc.</td></tr>
+      <tr><td><code>og:image</code></td><td>Preview image</td><td>1200x630px, absolute URL, JPG/PNG, max 8MB.</td></tr>
+      <tr><td><code>og:url</code></td><td>Canonical page URL</td><td>Should match canonical tag.</td></tr>
+      <tr><td><code>og:type</code></td><td>Content type</td><td>website, article, or product.</td></tr>
+    </table>
+
+    <h2 id="og3e">3. Optional OG tags</h2>
+    <p>Recommended: <code>og:site_name</code>, <code>og:locale</code>, <code>og:image:width/height/alt</code>, <code>article:published_time</code>, <code>article:author</code>. For video: <code>og:video</code> with type, width, height.</p>
+
+    <h2 id="og4e">4. Optimal image dimensions</h2>
+    <table>
+      <tr><th>Platform</th><th>Recommended</th><th>Min size</th><th>Ratio</th></tr>
+      <tr><td>Facebook</td><td>1200 x 630</td><td>600 x 315</td><td>1.91:1</td></tr>
+      <tr><td>Twitter (large)</td><td>1200 x 628</td><td>300 x 157</td><td>2:1</td></tr>
+      <tr><td>LinkedIn</td><td>1200 x 627</td><td>200 x 200</td><td>1.91:1</td></tr>
+      <tr><td>WhatsApp/Telegram</td><td>1200 x 630</td><td>300 x 200</td><td>1.91:1</td></tr>
+      <tr><td>Pinterest</td><td>1000 x 1500</td><td>600 x 900</td><td>2:3 (vertical!)</td></tr>
+    </table>
+    <div class="callout callout-warn"><strong>Universal recommendation: 1200 x 630 px</strong> &mdash; works on all platforms except Pinterest. Keep important text in the center 60% as platforms crop edges differently.</div>
+
+    <h2 id="og5e">5. Twitter Cards</h2>
+    <p>Twitter has its own format but <strong>falls back to OG tags</strong> if twitter: tags are missing. Recommendation: include both.</p>
+    <table>
+      <tr><th>Card type</th><th>Description</th><th>Use for</th></tr>
+      <tr><td><code>summary</code></td><td>Small image left + title/desc right</td><td>Articles without large cover</td></tr>
+      <tr><td><code>summary_large_image</code></td><td>Large image top + title/desc bottom</td><td>Articles with cover, landing pages</td></tr>
+      <tr><td><code>player</code></td><td>Video/audio player in tweet</td><td>Video content, podcasts</td></tr>
+    </table>
+    <pre><code>&lt;meta name="twitter:card" content="summary_large_image"&gt;
+&lt;meta name="twitter:title" content="Your Twitter title"&gt;
+&lt;meta name="twitter:description" content="Twitter description"&gt;
+&lt;meta name="twitter:image" content="https://yoursite.com/image.jpg"&gt;
+&lt;meta name="twitter:site" content="@yourbrand"&gt;</code></pre>
+
+    <h2 id="og6e">6. LinkedIn and other platforms</h2>
+    <p><strong>LinkedIn:</strong> Uses OG tags. Caches aggressively &mdash; use Post Inspector to refresh. <strong>WhatsApp/Telegram/Slack:</strong> All read OG tags. <strong>Discord:</strong> Reads OG tags + <code>theme-color</code> meta for embed color.</p>
+
+    <h2 id="og7e">7. Complete implementation</h2>
+    <p>Full set covering ALL platforms: HTML title + description, OG tags (5 required + locale + image dimensions + article times), Twitter Cards (5 tags), Discord theme-color.</p>
+
+    <h2 id="og8e">8. Good vs bad examples</h2>
+    <table>
+      <tr><th>Aspect</th><th>Bad &#10008;</th><th>Good &#10004;</th></tr>
+      <tr><td>og:title</td><td>"Home page"</td><td>"SEO Guide 2026 — 12 Free Checks"</td></tr>
+      <tr><td>og:image</td><td>100x100 logo</td><td>Custom 1200x630 cover with title</td></tr>
+      <tr><td>og:url</td><td>Relative "/blog"</td><td>Absolute "https://yoursite.com/blog"</td></tr>
+    </table>
+
+    <h2 id="og9e">9. Testing tools</h2>
+    <ul>
+      <li><strong><a href="https://developers.facebook.com/tools/debug/" target="_blank">Facebook Sharing Debugger</a></strong> &mdash; preview + cache clearing</li>
+      <li><strong><a href="https://cards-dev.x.com/validator" target="_blank">Twitter Card Validator</a></strong> &mdash; card preview</li>
+      <li><strong><a href="https://www.linkedin.com/post-inspector/" target="_blank">LinkedIn Post Inspector</a></strong> &mdash; preview + cache refresh</li>
+      <li><strong><a href="./index.html">Web Security Scanner</a></strong> &mdash; checks OG and Twitter Card tags</li>
+      <li><strong>metatags.io</strong> &mdash; real-time preview for all platforms at once</li>
+    </ul>
+    <div class="callout callout-warn"><strong>Cache issue:</strong> All platforms cache OG data. After updating tags, manually clear cache: Facebook Debugger &rarr; "Scrape Again", LinkedIn Post Inspector &rarr; "Inspect".</div>
+
+    <h2 id="og10e">10. Common mistakes</h2>
+    <ul>
+      <li><strong>Missing og:image</strong> &mdash; #1 mistake. Without image, shared link is tiny and unnoticeable.</li>
+      <li><strong>Image too small</strong> &mdash; below 600x315 on Facebook shows as thumbnail</li>
+      <li><strong>Relative image URL</strong> &mdash; platforms can't resolve relative paths</li>
+      <li><strong>Same OG image for entire site</strong> &mdash; each page needs a unique image</li>
+      <li><strong>Text on image edges</strong> &mdash; platforms crop differently, keep text in center 60%</li>
+      <li><strong>Not testing before publishing</strong> &mdash; always check in Sharing Debugger first</li>
+      <li><strong>Forgetting to clear cache</strong> &mdash; old data persists for hours/days</li>
+    </ul>
+
+    <h2 id="og11e">11. References and resources</h2>
+    <ul>
+      <li><a href="https://ogp.me/" target="_blank">Open Graph Protocol &mdash; Official Specification</a></li>
+      <li><a href="https://developer.x.com/en/docs/twitter-for-websites/cards/overview/abouts-cards" target="_blank">Twitter/X &mdash; Cards Documentation</a></li>
+      <li><a href="https://developers.facebook.com/docs/sharing/webmasters/" target="_blank">Facebook &mdash; Sharing Best Practices</a></li>
+      <li><a href="https://developers.facebook.com/tools/debug/" target="_blank">Facebook Sharing Debugger</a></li>
+      <li><a href="https://cards-dev.x.com/validator" target="_blank">Twitter Card Validator</a></li>
+      <li><a href="https://www.linkedin.com/post-inspector/" target="_blank">LinkedIn Post Inspector</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Check your OG tags &rarr;</a>
+  </div>
+
+  <div class="nav-links">
+    <a href="./blog-seo.html"><span class="sr">SEO vodic</span><span class="en">SEO Guide</span></a>
+    <a href="./blog-seo-meta.html"><span class="sr">Meta Tagovi</span><span class="en">Meta Tags</span></a>
+    <a href="./blog-seo-schema.html"><span class="sr">Schema.org</span><span class="en">Schema.org</span></a>
+    <a href="./blog-seo-sitemap.html"><span class="sr">Sitemap.xml</span><span class="en">Sitemap.xml</span></a>
+    <a href="./blog-seo-headings.html"><span class="sr">Heading struktura</span><span class="en">Heading Structure</span></a>
+    <a href="./blog-seo-mobile.html"><span class="sr">Mobile SEO</span><span class="en">Mobile SEO</span></a>
+    <a href="./blog-seo-local.html"><span class="sr">Lokalni SEO</span><span class="en">Local SEO</span></a>
+  </div>
+
+  </main>
+</div>
+<script src="./blog-common.js" defer></script>
+</body>
+</html>

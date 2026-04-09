@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Bezbednost — Vodic za zastitu | Web Security Scanner</title>
+  <meta name="description" content="Kompletni vodic za API bezbednost: OWASP API Security Top 10, JWT i OAuth 2.0 zastita, GraphQL rizici, rate limiting i realni primeri API breach-eva.">
+  <meta name="keywords" content="API security, REST, GraphQL, OAuth, JWT, rate limiting, OWASP API Top 10, API bezbednost">
+  <meta property="og:title" content="API Bezbednost — Vodic za zastitu | Web Security Scanner">
+  <meta property="og:description" content="Vodic za API bezbednost: OWASP API Top 10, JWT/OAuth zastita, GraphQL rizici i realni primeri breach-eva.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://web-security-scanner.vercel.app/blog-security-api.html">
+  <meta property="og:site_name" content="Web Security Scanner">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="API Bezbednost — Vodic za zastitu | Web Security Scanner">
+  <meta name="twitter:description" content="Vodic za API bezbednost: OWASP API Top 10, JWT/OAuth zastita, GraphQL rizici i realni primeri breach-eva.">
+  <link rel="canonical" href="https://web-security-scanner.vercel.app/blog-security-api.html">
+  <link rel="alternate" hreflang="sr" href="https://web-security-scanner.vercel.app/blog-security-api.html">
+  <link rel="alternate" hreflang="en" href="https://web-security-scanner.vercel.app/blog-security-api.html">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "API Bezbednost — Vodic za zastitu",
+    "description": "Kompletni vodic za API bezbednost: OWASP API Security Top 10, JWT i OAuth 2.0 zastita, GraphQL rizici, rate limiting i realni primeri.",
+    "author": { "@type": "Person", "name": "Toske" },
+    "publisher": { "@type": "Organization", "name": "Web Security Scanner" },
+    "datePublished": "2026-04-08",
+    "dateModified": "2026-04-08",
+    "mainEntityOfPage": "https://web-security-scanner.vercel.app/blog-security-api.html",
+    "keywords": ["API security", "OWASP API Top 10", "JWT", "OAuth 2.0", "GraphQL", "rate limiting"]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Sta je OWASP API Security Top 10?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "OWASP API Security Top 10 je lista 10 najkriticnijih bezbednosnih rizika za API-je. Poslednja verzija (2023) ukljucuje: Broken Object Level Authorization, Broken Authentication, Broken Object Property Level Authorization, Unrestricted Resource Consumption, i druge."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Da li je JWT bezbedan za API autentifikaciju?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "JWT moze biti bezbedan ako se pravilno implementira: uvek validirajte potpis, proveravajte exp claim, koristite jake algoritme (RS256/ES256), i nikada ne prihvatajte 'none' algoritam. Cuvajte tajnu na serveru i koristite kratko vreme isteka."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Zasto je GraphQL introspection opasan u produkciji?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "GraphQL introspection otkriva kompletnu semu API-ja ukljucujuci sve tipove, polja, relacije i mutacije. Napadac moze koristiti ove informacije za mapiranje API-ja i pronalazenje ranjivosti. Uvek iskljucite introspection u produkciji."
+        }
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr"><div class="timeline-title">Sadrzaj</div><ol id="timeline-sr"></ol></div>
+    <div class="en"><div class="timeline-title">Contents</div><ol id="timeline-en"></ol></div>
+  </aside>
+  <main class="blog-content">
+
+  <!-- SERBIAN -->
+  <div class="sr">
+    <h1>API Bezbednost — Vodic za zastitu</h1>
+    <p class="subtitle">Objavljeno: 8. april 2026. &middot; Vreme citanja: 16 min</p>
+
+    <div class="toc">
+      <h3>Sadrzaj</h3>
+      <ol>
+        <li><a href="#sr-intro" style="color:#c0c4db;">Zasto je API bezbednost kriticna</a></li>
+        <li><a href="#sr-owasp" style="color:#c0c4db;">OWASP API Security Top 10 (2023)</a></li>
+        <li><a href="#sr-auth" style="color:#c0c4db;">Autentifikacija: API keys vs OAuth vs JWT</a></li>
+        <li><a href="#sr-jwt" style="color:#c0c4db;">JWT bezbednost</a></li>
+        <li><a href="#sr-graphql" style="color:#c0c4db;">GraphQL specificni rizici</a></li>
+        <li><a href="#sr-rate" style="color:#c0c4db;">Rate limiting</a></li>
+        <li><a href="#sr-swagger" style="color:#c0c4db;">Swagger/OpenAPI u produkciji</a></li>
+        <li><a href="#sr-primeri" style="color:#c0c4db;">Realni primeri API breach-eva</a></li>
+        <li><a href="#sr-faq" style="color:#c0c4db;">Cesto postavljana pitanja</a></li>
+        <li><a href="#sr-ref" style="color:#c0c4db;">Reference</a></li>
+      </ol>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-num">94%</div>
+        <div class="stat-label">Aplikacija ima API ranjivost (Salt Security)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">681%</div>
+        <div class="stat-label">Porast API napada 2021-2022 (Salt)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">50M</div>
+        <div class="stat-label">Facebook tokena kompromitovano 2018.</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">$6.1M</div>
+        <div class="stat-label">Prosecna cena API breach-a (IBM)</div>
+      </div>
+    </div>
+
+    <h2 id="sr-intro">1. Zasto je API bezbednost kriticna</h2>
+    <p>API-ji (Application Programming Interfaces) su postali kicma modernih aplikacija. Mobilne aplikacije, single-page web aplikacije, IoT uredjaji, i mikroservisi — svi komuniciraju putem API-ja. To znaci da su API-ji postali primarna meta napadaca.</p>
+    <p>Za razliku od tradicionalnih web aplikacija gde je logika na serveru, API-ji izlazu poslovnu logiku direktno. Ako API endpoint dozvolava korisniku da pristupi tudjim podacima samo promenom ID-ja u URL-u, to je kriticna ranjivost.</p>
+
+    <div class="callout callout-danger">
+      <strong>Kljucna cinjenica:</strong> Prema Salt Security izvestaju za 2023, 94% organizacija je dozivelo API bezbednosni incident u poslednjih 12 meseci. API napadi su porasli za 681% u periodu 2021-2022.
+    </div>
+
+    <h2 id="sr-owasp">2. OWASP API Security Top 10 (2023)</h2>
+    <p>OWASP (Open Web Application Security Project) je 2023. godine objavio azuriranu listu 10 najkriticnijih API bezbednosnih rizika:</p>
+
+    <h3>API1:2023 — Broken Object Level Authorization (BOLA)</h3>
+    <p>Najcesci API rizik. Korisnik moze pristupiti objektima drugih korisnika menjajuci ID u zahtevu. Primer: <code>GET /api/users/123/orders</code> — sta se desava ako promenite 123 na 456?</p>
+    <pre><code># Ranjiv endpoint — nema provere vlasnistva
+GET /api/invoices/1001  # Korisnik A vidi svoju fakturu
+GET /api/invoices/1002  # Korisnik A vidi fakturu korisnika B!
+
+# Ispravan pristup — uvek proveravajte vlasnistvo
+app.get('/api/invoices/:id', auth, async (req, res) =&gt; {
+  const invoice = await Invoice.findById(req.params.id);
+  if (invoice.userId !== req.user.id) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  res.json(invoice);
+});</code></pre>
+
+    <h3>API2:2023 — Broken Authentication</h3>
+    <p>Slabi mehanizmi autentifikacije: nedostatak rate limiting-a na login, slabi tokeni, nezasticeni API kljucevi u kodu, ili nedostatak token expiration-a.</p>
+
+    <h3>API3:2023 — Broken Object Property Level Authorization</h3>
+    <p>Korisnik moze da cita ili modifikuje svojstva objekta koja ne bi trebalo. Primer: korisnik salje PUT zahtev i menja polje <code>"role": "admin"</code> u svom profilu (mass assignment).</p>
+
+    <h3>API4:2023 — Unrestricted Resource Consumption</h3>
+    <p>API nema ogranicenja na resurse: bez rate limiting-a, bez limita na velicinu payloada, bez ogranicenja na kompleksnost upita. Ovo vodi ka DoS napadima.</p>
+
+    <h3>API5:2023 — Broken Function Level Authorization</h3>
+    <p>Obican korisnik moze pristupiti admin endpoint-ima. Primer: <code>POST /api/admin/users/delete</code> je dostupan i obicnim korisnicima.</p>
+
+    <h3>API6:2023 — Unrestricted Access to Sensitive Business Flows</h3>
+    <p>Automatizovano zloupotrebljavanje poslovnih tokova: masovna kupovina limitiranih proizvoda, automatsko kreiranje naloga, scraping podataka.</p>
+
+    <h3>API7:2023 — Server Side Request Forgery (SSRF)</h3>
+    <p>API prihvata URL od korisnika i vrsi zahtev ka tom URL-u bez validacije. Napadac moze pristupiti internim servisima (metadata endpoint, interne baze).</p>
+
+    <h3>API8:2023 — Security Misconfiguration</h3>
+    <p>Nebezbedna podrazumevana konfiguracija: otvoren CORS, verbose error poruke, nepotrebni HTTP metodi, stare TLS verzije.</p>
+
+    <h3>API9:2023 — Improper Inventory Management</h3>
+    <p>Stare verzije API-ja ostaju aktivne i nezasticene. Shadow API-ji koje tim ne zna da postoje. Nedokumentovani endpoint-i.</p>
+
+    <h3>API10:2023 — Unsafe Consumption of APIs</h3>
+    <p>Aplikacija veruje odgovorima od third-party API-ja bez validacije. Ako provajder bude kompromitovan, vas API takodje postaje ranjiv.</p>
+
+    <h2 id="sr-auth">3. Autentifikacija: API Keys vs OAuth 2.0 vs JWT</h2>
+
+    <table>
+      <tr><th>Metoda</th><th>Prednosti</th><th>Mane</th><th>Kada koristiti</th></tr>
+      <tr><td>API Keys</td><td>Jednostavno, brzo za implementaciju</td><td>Nema user context, tesko za rotaciju, cesto leakuju</td><td>Server-to-server, javni API-ji sa ogranicenjem</td></tr>
+      <tr><td>OAuth 2.0</td><td>Standardizovano, delegirana autorizacija, scopes</td><td>Kompleksno za implementaciju, mnogi flow-ovi</td><td>Third-party pristup, korisnicka autorizacija</td></tr>
+      <tr><td>JWT</td><td>Stateless, sadrzi claims, efikasno</td><td>Ne moze se revocirati bez blackliste, payload vidljiv</td><td>Mikroservisi, SPA autentifikacija</td></tr>
+    </table>
+
+    <h2 id="sr-jwt">4. JWT bezbednost</h2>
+    <p>JWT (JSON Web Token, definisan u <strong>RFC 7519</strong>) se sastoji od tri dela: Header, Payload, i Signature, razdvojenih tackama.</p>
+
+    <pre><code># JWT struktura
+eyJhbGciOiJSUzI1NiJ9.     # Header: {"alg":"RS256"}
+eyJ1c2VyIjoiam9obiJ9.     # Payload: {"user":"john"}
+SflKxwRJSMeKKF2QT4fw...   # Signature
+
+# OPASNO: "none" algoritam napad
+# Napadac menja header na {"alg":"none"} i uklanja potpis
+eyJhbGciOiJub25lIn0.eyJ1c2VyIjoiYWRtaW4ifQ.
+# Neki serveri prihvataju ovo kao validan token!</code></pre>
+
+    <h3>JWT bezbednosne preporuke</h3>
+    <ul>
+      <li><strong>Uvek validirajte algoritam</strong> — eksplicitno navedite dozvoljene algoritme, nikada ne prihvatajte <code>"alg": "none"</code></li>
+      <li><strong>Koristite asimetricne algoritme</strong> — RS256 ili ES256 umesto HS256 kada vise servisa verifikuje tokene</li>
+      <li><strong>Kratko vreme isteka</strong> — pristupni tokeni: 15-30 minuta, refresh tokeni: 7-30 dana</li>
+      <li><strong>Proveravajte <code>exp</code>, <code>iss</code>, <code>aud</code> claims</strong> — ne samo potpis</li>
+      <li><strong>Cuvajte tajnu kljuca</strong> — nikada u kodu, koristite environment varijable ili vault</li>
+    </ul>
+
+    <pre><code>// Node.js — bezbedna JWT verifikacija
+const jwt = require('jsonwebtoken');
+
+function verifyToken(token) {
+  try {
+    // Eksplicitno navedite dozvoljeni algoritam
+    const decoded = jwt.verify(token, publicKey, {
+      algorithms: ['RS256'],  // Samo RS256!
+      issuer: 'https://auth.mojsajt.rs',
+      audience: 'https://api.mojsajt.rs',
+      clockTolerance: 30  // 30 sekundi tolerancije
+    });
+    return decoded;
+  } catch (err) {
+    throw new Error('Invalid token: ' + err.message);
+  }
+}</code></pre>
+
+    <h2 id="sr-graphql">5. GraphQL specificni rizici</h2>
+
+    <h3>Introspection u produkciji</h3>
+    <p>GraphQL introspection omogucava klijentu da upita kompletnu semu API-ja. U razvoju je korisno, ali u produkciji otkriva sve tipove, polja, relacije i mutacije napadacu.</p>
+    <pre><code># Introspection upit koji otkriva celu semu
+{
+  __schema {
+    types {
+      name
+      fields {
+        name
+        type { name }
+      }
+    }
+  }
+}
+
+# Iskljucite introspection u produkciji (Apollo Server)
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  introspection: process.env.NODE_ENV !== 'production',
+});</code></pre>
+
+    <h3>Depth limiting</h3>
+    <p>Bez ogranicenja dubine, napadac moze poslati duboko ugnjezden upit koji preopterecuje server:</p>
+    <pre><code># Maliciozni upit sa preteranom dubinom
+{
+  user(id: 1) {
+    friends {
+      friends {
+        friends {
+          friends {
+            friends { name }  # N nivoa dubine = eksponencijalna slozenost
+          }
+        }
+      }
+    }
+  }
+}
+
+# Zastita: koristite graphql-depth-limit
+const depthLimit = require('graphql-depth-limit');
+const server = new ApolloServer({
+  validationRules: [depthLimit(5)]
+});</code></pre>
+
+    <h3>Batching napadi</h3>
+    <p>GraphQL dozvoljava slanje vise upita u jednom zahtevu. Napadac moze poslati stotine login pokusaja u jednom HTTP zahtevu, zaobilazeci rate limiting koji se oslanja na broj HTTP zahteva.</p>
+
+    <h2 id="sr-rate">6. Rate limiting implementacija</h2>
+    <pre><code>// Express.js rate limiting sa express-rate-limit
+const rateLimit = require('express-rate-limit');
+
+// Globalni limiter
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,  // 15 minuta
+  max: 100,                   // 100 zahteva po windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, try again later' }
+});
+
+// Strozi limiter za login
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,  // Samo 5 pokusaja logina na 15 min
+  skipSuccessfulRequests: true
+});
+
+app.use('/api/', apiLimiter);
+app.use('/api/auth/login', loginLimiter);
+
+// Nginx rate limiting konfiguracija
+// limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;
+// location /api/ {
+//     limit_req zone=api burst=20 nodelay;
+// }</code></pre>
+
+    <h2 id="sr-swagger">7. Swagger/OpenAPI u produkciji</h2>
+    <p>Swagger UI i OpenAPI specifikacija su odlicni za razvoj, ali u produkciji mogu otkriti kompletnu strukturu API-ja napadacu:</p>
+
+    <div class="callout callout-warn">
+      <strong>Opasnost:</strong> Javno dostupan <code>/swagger</code>, <code>/api-docs</code>, ili <code>/openapi.json</code> endpoint daje napadacu mapu svih endpoint-ova, parametara, i modela podataka. Uvek ga iskljucite ili zastitite autentifikacijom u produkciji.
+    </div>
+
+    <pre><code>// Express.js — uslovni Swagger pristup
+if (process.env.NODE_ENV !== 'production') {
+  const swaggerUi = require('swagger-ui-express');
+  const swaggerDoc = require('./swagger.json');
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
+}
+
+// Ili zastitite autentifikacijom
+app.use('/api-docs', basicAuth({
+  users: { 'admin': process.env.SWAGGER_PASSWORD },
+  challenge: true
+}), swaggerUi.serve, swaggerUi.setup(swaggerDoc));</code></pre>
+
+    <h2 id="sr-primeri">8. Realni primeri API breach-eva</h2>
+
+    <h3>Facebook API breach (septembar 2018)</h3>
+    <p>Napadaci su eksploatisali ranjivost u Facebook-ovom "View As" feature-u koji je koristio API za generisanje pristupnih tokena. Ranjivost je omogucila kradju pristupnih tokena za <strong>50 miliona korisnickih naloga</strong>. Facebook je bio prisiljen da resetuje tokene za 90 miliona korisnika.</p>
+    <p class="ref">Izvor: Facebook Security Update, septembar 2018; FTC Settlement, 2019</p>
+
+    <h3>Peloton API (maj 2021)</h3>
+    <p>Istrazivac bezbednosti Jan Masters je otkrio da je Peloton API dozvoljavao neautentifikovanim korisnicima da pristupe privatnim korisnickim podacima — ukljucujuci starost, pol, grad, tezinu, i istoriju treninga. API nije proveravao autorizaciju na endpoint-ima za korisnicke profile.</p>
+    <p class="ref">Izvor: TechCrunch, "Peloton's leaky API let anyone grab riders' private account data", maj 2021</p>
+
+    <h3>T-Mobile API breach (avgust 2021)</h3>
+    <p>Napadac je otkrio nezasticen API endpoint koji je izlagao podatke 40+ miliona korisnika ukljucujuci imena, datume rodjenja, SSN brojeve i vozacke dozvole. Napadac John Binns je tvrdio da je "njihova bezbednost uzasna".</p>
+    <p class="ref">Izvor: T-Mobile Data Breach Notice, avgust 2021</p>
+
+    <div class="callout">
+      <strong>Zajednicki imenilac:</strong> U sva tri slucaja, problem je bio BOLA (Broken Object Level Authorization) — API nije proveravao da li korisnik ima pravo da pristupa trazenim podacima.
+    </div>
+
+    <h2 id="sr-faq">9. Cesto postavljana pitanja</h2>
+
+    <div class="callout">
+      <strong>P: Da li je API key dovoljan za bezbednost?</strong><br>
+      O: API key sam po sebi je samo identifikator, ne autentifikacija. Ne sadrzi informacije o korisniku, tesko se rotira, i cesto leakuje u javne Git repozitorijume. Za korisnicku autentifikaciju koristite OAuth 2.0 ili JWT.
+    </div>
+
+    <div class="callout">
+      <strong>P: Gde da cuvam JWT token na klijentu?</strong><br>
+      O: HttpOnly Secure cookie je najbezbednija opcija jer nije dostupan JavaScript-u (zastita od XSS). LocalStorage je ranjiv na XSS napade. Nikada ne cuvajte tokene u URL parametrima.
+    </div>
+
+    <div class="callout">
+      <strong>P: Kako da zastitim API od scraping-a?</strong><br>
+      O: Kombinujte rate limiting, CAPTCHA za sumnjive aktivnosti, fingerprinting korisnika, i honeypot endpoint-e. Nijedna mera sama nije dovoljna.
+    </div>
+
+    <h2 id="sr-ref">10. Reference</h2>
+    <ul>
+      <li class="ref"><a href="https://owasp.org/API-Security/editions/2023/en/0x11-t10/" target="_blank" rel="noopener">OWASP API Security Top 10 (2023)</a></li>
+      <li class="ref"><a href="https://tools.ietf.org/html/rfc6749" target="_blank" rel="noopener">RFC 6749 — OAuth 2.0 Authorization Framework</a></li>
+      <li class="ref"><a href="https://tools.ietf.org/html/rfc7519" target="_blank" rel="noopener">RFC 7519 — JSON Web Token (JWT)</a></li>
+      <li class="ref"><a href="https://salt.security/api-security-trends" target="_blank" rel="noopener">Salt Security: State of API Security Report 2023</a></li>
+      <li class="ref"><a href="https://portswigger.net/web-security/jwt" target="_blank" rel="noopener">PortSwigger: JWT Attacks</a></li>
+      <li class="ref"><a href="https://www.ibm.com/reports/data-breach" target="_blank" rel="noopener">IBM Cost of a Data Breach Report 2023</a></li>
+    </ul>
+
+    <a href="./index.html" class="cta">Skenirajte svoj sajt besplatno &rarr;</a>
+  </div>
+
+  <!-- ENGLISH -->
+  <div class="en">
+    <h1>API Security — Protection Guide</h1>
+    <p class="subtitle">Published: April 8, 2026 &middot; Reading time: 16 min</p>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#en-intro" style="color:#c0c4db;">Why API security is critical</a></li>
+        <li><a href="#en-owasp" style="color:#c0c4db;">OWASP API Security Top 10 (2023)</a></li>
+        <li><a href="#en-auth" style="color:#c0c4db;">Authentication: API Keys vs OAuth vs JWT</a></li>
+        <li><a href="#en-jwt" style="color:#c0c4db;">JWT security</a></li>
+        <li><a href="#en-graphql" style="color:#c0c4db;">GraphQL specific risks</a></li>
+        <li><a href="#en-rate" style="color:#c0c4db;">Rate limiting</a></li>
+        <li><a href="#en-swagger" style="color:#c0c4db;">Swagger/OpenAPI in production</a></li>
+        <li><a href="#en-examples" style="color:#c0c4db;">Real-world API breach examples</a></li>
+        <li><a href="#en-faq" style="color:#c0c4db;">Frequently asked questions</a></li>
+        <li><a href="#en-ref" style="color:#c0c4db;">References</a></li>
+      </ol>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-num">94%</div>
+        <div class="stat-label">Apps have API vulnerability (Salt Security)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">681%</div>
+        <div class="stat-label">API attack growth 2021-2022 (Salt)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">50M</div>
+        <div class="stat-label">Facebook tokens compromised 2018</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">$6.1M</div>
+        <div class="stat-label">Average API breach cost (IBM)</div>
+      </div>
+    </div>
+
+    <h2 id="en-intro">1. Why API security is critical</h2>
+    <p>APIs (Application Programming Interfaces) have become the backbone of modern applications. Mobile apps, single-page web applications, IoT devices, and microservices all communicate via APIs. This means APIs have become a primary target for attackers.</p>
+    <p>Unlike traditional web applications where logic lives on the server, APIs expose business logic directly. If an API endpoint allows a user to access another user's data simply by changing the ID in the URL, that is a critical vulnerability.</p>
+
+    <div class="callout callout-danger">
+      <strong>Key fact:</strong> According to Salt Security's 2023 report, 94% of organizations experienced an API security incident in the past 12 months. API attacks grew by 681% between 2021-2022.
+    </div>
+
+    <h2 id="en-owasp">2. OWASP API Security Top 10 (2023)</h2>
+    <p>OWASP (Open Web Application Security Project) published the updated list of 10 most critical API security risks in 2023:</p>
+
+    <h3>API1:2023 — Broken Object Level Authorization (BOLA)</h3>
+    <p>The most common API risk. A user can access other users' objects by changing the ID in the request. Example: <code>GET /api/users/123/orders</code> — what happens if you change 123 to 456?</p>
+    <pre><code># Vulnerable endpoint — no ownership check
+GET /api/invoices/1001  # User A sees their invoice
+GET /api/invoices/1002  # User A sees User B's invoice!
+
+# Correct approach — always check ownership
+app.get('/api/invoices/:id', auth, async (req, res) =&gt; {
+  const invoice = await Invoice.findById(req.params.id);
+  if (invoice.userId !== req.user.id) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  res.json(invoice);
+});</code></pre>
+
+    <h3>API2:2023 — Broken Authentication</h3>
+    <p>Weak authentication mechanisms: lack of rate limiting on login, weak tokens, unprotected API keys in code, or missing token expiration.</p>
+
+    <h3>API3:2023 — Broken Object Property Level Authorization</h3>
+    <p>A user can read or modify object properties they shouldn't. Example: a user sends a PUT request and changes the <code>"role": "admin"</code> field in their profile (mass assignment).</p>
+
+    <h3>API4:2023 — Unrestricted Resource Consumption</h3>
+    <p>API has no resource limits: no rate limiting, no payload size limits, no query complexity restrictions. This leads to DoS attacks.</p>
+
+    <h3>API5:2023 — Broken Function Level Authorization</h3>
+    <p>Regular users can access admin endpoints. Example: <code>POST /api/admin/users/delete</code> is accessible to regular users.</p>
+
+    <h3>API6:2023 — Unrestricted Access to Sensitive Business Flows</h3>
+    <p>Automated abuse of business flows: mass purchasing of limited products, automated account creation, data scraping.</p>
+
+    <h3>API7:2023 — Server Side Request Forgery (SSRF)</h3>
+    <p>API accepts a URL from the user and makes a request to that URL without validation. Attacker can access internal services (metadata endpoint, internal databases).</p>
+
+    <h3>API8:2023 — Security Misconfiguration</h3>
+    <p>Insecure default configuration: open CORS, verbose error messages, unnecessary HTTP methods, old TLS versions.</p>
+
+    <h3>API9:2023 — Improper Inventory Management</h3>
+    <p>Old API versions remain active and unprotected. Shadow APIs that the team doesn't know exist. Undocumented endpoints.</p>
+
+    <h3>API10:2023 — Unsafe Consumption of APIs</h3>
+    <p>Application trusts responses from third-party APIs without validation. If the provider is compromised, your API also becomes vulnerable.</p>
+
+    <h2 id="en-auth">3. Authentication: API Keys vs OAuth 2.0 vs JWT</h2>
+
+    <table>
+      <tr><th>Method</th><th>Pros</th><th>Cons</th><th>When to use</th></tr>
+      <tr><td>API Keys</td><td>Simple, quick to implement</td><td>No user context, hard to rotate, often leak</td><td>Server-to-server, public APIs with limits</td></tr>
+      <tr><td>OAuth 2.0</td><td>Standardized, delegated authorization, scopes</td><td>Complex to implement, many flows</td><td>Third-party access, user authorization</td></tr>
+      <tr><td>JWT</td><td>Stateless, contains claims, efficient</td><td>Cannot revoke without blacklist, payload visible</td><td>Microservices, SPA authentication</td></tr>
+    </table>
+
+    <h2 id="en-jwt">4. JWT security</h2>
+    <p>JWT (JSON Web Token, defined in <strong>RFC 7519</strong>) consists of three parts: Header, Payload, and Signature, separated by dots.</p>
+
+    <pre><code># JWT structure
+eyJhbGciOiJSUzI1NiJ9.     # Header: {"alg":"RS256"}
+eyJ1c2VyIjoiam9obiJ9.     # Payload: {"user":"john"}
+SflKxwRJSMeKKF2QT4fw...   # Signature
+
+# DANGEROUS: "none" algorithm attack
+# Attacker changes header to {"alg":"none"} and removes signature
+eyJhbGciOiJub25lIn0.eyJ1c2VyIjoiYWRtaW4ifQ.
+# Some servers accept this as a valid token!</code></pre>
+
+    <h3>JWT security recommendations</h3>
+    <ul>
+      <li><strong>Always validate the algorithm</strong> — explicitly specify allowed algorithms, never accept <code>"alg": "none"</code></li>
+      <li><strong>Use asymmetric algorithms</strong> — RS256 or ES256 instead of HS256 when multiple services verify tokens</li>
+      <li><strong>Short expiration time</strong> — access tokens: 15-30 minutes, refresh tokens: 7-30 days</li>
+      <li><strong>Check <code>exp</code>, <code>iss</code>, <code>aud</code> claims</strong> — not just the signature</li>
+      <li><strong>Protect the secret key</strong> — never in code, use environment variables or vault</li>
+    </ul>
+
+    <pre><code>// Node.js — secure JWT verification
+const jwt = require('jsonwebtoken');
+
+function verifyToken(token) {
+  try {
+    // Explicitly specify the allowed algorithm
+    const decoded = jwt.verify(token, publicKey, {
+      algorithms: ['RS256'],  // Only RS256!
+      issuer: 'https://auth.mysite.com',
+      audience: 'https://api.mysite.com',
+      clockTolerance: 30  // 30 seconds tolerance
+    });
+    return decoded;
+  } catch (err) {
+    throw new Error('Invalid token: ' + err.message);
+  }
+}</code></pre>
+
+    <h2 id="en-graphql">5. GraphQL specific risks</h2>
+
+    <h3>Introspection in production</h3>
+    <p>GraphQL introspection allows a client to query the complete API schema. Useful in development, but in production it reveals all types, fields, relationships, and mutations to an attacker.</p>
+    <pre><code># Introspection query that reveals the entire schema
+{
+  __schema {
+    types {
+      name
+      fields {
+        name
+        type { name }
+      }
+    }
+  }
+}
+
+# Disable introspection in production (Apollo Server)
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  introspection: process.env.NODE_ENV !== 'production',
+});</code></pre>
+
+    <h3>Depth limiting</h3>
+    <p>Without depth limits, an attacker can send a deeply nested query that overwhelms the server:</p>
+    <pre><code># Malicious query with excessive depth
+{
+  user(id: 1) {
+    friends {
+      friends {
+        friends {
+          friends {
+            friends { name }  # N levels deep = exponential complexity
+          }
+        }
+      }
+    }
+  }
+}
+
+# Protection: use graphql-depth-limit
+const depthLimit = require('graphql-depth-limit');
+const server = new ApolloServer({
+  validationRules: [depthLimit(5)]
+});</code></pre>
+
+    <h3>Batching attacks</h3>
+    <p>GraphQL allows sending multiple queries in a single request. An attacker can send hundreds of login attempts in one HTTP request, bypassing rate limiting that relies on HTTP request count.</p>
+
+    <h2 id="en-rate">6. Rate limiting implementation</h2>
+    <pre><code>// Express.js rate limiting with express-rate-limit
+const rateLimit = require('express-rate-limit');
+
+// Global limiter
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,  // 15 minutes
+  max: 100,                   // 100 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, try again later' }
+});
+
+// Stricter limiter for login
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,  // Only 5 login attempts per 15 min
+  skipSuccessfulRequests: true
+});
+
+app.use('/api/', apiLimiter);
+app.use('/api/auth/login', loginLimiter);
+
+// Nginx rate limiting configuration
+// limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;
+// location /api/ {
+//     limit_req zone=api burst=20 nodelay;
+// }</code></pre>
+
+    <h2 id="en-swagger">7. Swagger/OpenAPI in production</h2>
+    <p>Swagger UI and OpenAPI specification are great for development, but in production they can reveal the complete API structure to an attacker:</p>
+
+    <div class="callout callout-warn">
+      <strong>Danger:</strong> A publicly accessible <code>/swagger</code>, <code>/api-docs</code>, or <code>/openapi.json</code> endpoint gives an attacker a map of all endpoints, parameters, and data models. Always disable or protect it with authentication in production.
+    </div>
+
+    <pre><code>// Express.js — conditional Swagger access
+if (process.env.NODE_ENV !== 'production') {
+  const swaggerUi = require('swagger-ui-express');
+  const swaggerDoc = require('./swagger.json');
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
+}
+
+// Or protect with authentication
+app.use('/api-docs', basicAuth({
+  users: { 'admin': process.env.SWAGGER_PASSWORD },
+  challenge: true
+}), swaggerUi.serve, swaggerUi.setup(swaggerDoc));</code></pre>
+
+    <h2 id="en-examples">8. Real-world API breach examples</h2>
+
+    <h3>Facebook API breach (September 2018)</h3>
+    <p>Attackers exploited a vulnerability in Facebook's "View As" feature which used an API to generate access tokens. The vulnerability enabled theft of access tokens for <strong>50 million user accounts</strong>. Facebook was forced to reset tokens for 90 million users.</p>
+    <p class="ref">Source: Facebook Security Update, September 2018; FTC Settlement, 2019</p>
+
+    <h3>Peloton API (May 2021)</h3>
+    <p>Security researcher Jan Masters discovered that Peloton's API allowed unauthenticated users to access private user data — including age, gender, city, weight, and workout history. The API did not check authorization on user profile endpoints.</p>
+    <p class="ref">Source: TechCrunch, "Peloton's leaky API let anyone grab riders' private account data", May 2021</p>
+
+    <h3>T-Mobile API breach (August 2021)</h3>
+    <p>An attacker discovered an unprotected API endpoint exposing data of 40+ million customers including names, dates of birth, SSN numbers, and driver's licenses. Attacker John Binns claimed "their security is awful."</p>
+    <p class="ref">Source: T-Mobile Data Breach Notice, August 2021</p>
+
+    <div class="callout">
+      <strong>Common thread:</strong> In all three cases, the problem was BOLA (Broken Object Level Authorization) — the API did not verify whether the user had the right to access the requested data.
+    </div>
+
+    <h2 id="en-faq">9. Frequently asked questions</h2>
+
+    <div class="callout">
+      <strong>Q: Is an API key sufficient for security?</strong><br>
+      A: An API key by itself is just an identifier, not authentication. It contains no user information, is hard to rotate, and often leaks into public Git repositories. For user authentication, use OAuth 2.0 or JWT.
+    </div>
+
+    <div class="callout">
+      <strong>Q: Where should I store JWT tokens on the client?</strong><br>
+      A: An HttpOnly Secure cookie is the safest option because it is not accessible to JavaScript (XSS protection). LocalStorage is vulnerable to XSS attacks. Never store tokens in URL parameters.
+    </div>
+
+    <div class="callout">
+      <strong>Q: How do I protect my API from scraping?</strong><br>
+      A: Combine rate limiting, CAPTCHA for suspicious activity, user fingerprinting, and honeypot endpoints. No single measure is sufficient on its own.
+    </div>
+
+    <h2 id="en-ref">10. References</h2>
+    <ul>
+      <li class="ref"><a href="https://owasp.org/API-Security/editions/2023/en/0x11-t10/" target="_blank" rel="noopener">OWASP API Security Top 10 (2023)</a></li>
+      <li class="ref"><a href="https://tools.ietf.org/html/rfc6749" target="_blank" rel="noopener">RFC 6749 — OAuth 2.0 Authorization Framework</a></li>
+      <li class="ref"><a href="https://tools.ietf.org/html/rfc7519" target="_blank" rel="noopener">RFC 7519 — JSON Web Token (JWT)</a></li>
+      <li class="ref"><a href="https://salt.security/api-security-trends" target="_blank" rel="noopener">Salt Security: State of API Security Report 2023</a></li>
+      <li class="ref"><a href="https://portswigger.net/web-security/jwt" target="_blank" rel="noopener">PortSwigger: JWT Attacks</a></li>
+      <li class="ref"><a href="https://www.ibm.com/reports/data-breach" target="_blank" rel="noopener">IBM Cost of a Data Breach Report 2023</a></li>
+    </ul>
+
+    <a href="./index.html" class="cta">Scan your site for free &rarr;</a>
+  </div>
+
+  <div class="nav-links">
+    <a href="./blog-security-ssl.html"><span class="sr">SSL/TLS vodic</span><span class="en">SSL/TLS Guide</span></a>
+    <a href="./blog-security-headers.html"><span class="sr">HTTP Security Headers</span><span class="en">HTTP Security Headers</span></a>
+    <a href="./blog-security-xss.html"><span class="sr">XSS napadi</span><span class="en">XSS Attacks</span></a>
+    <a href="./blog-security-sql.html"><span class="sr">SQL Injection</span><span class="en">SQL Injection</span></a>
+    <a href="./blog-security-csrf.html"><span class="sr">CSRF napadi</span><span class="en">CSRF Attacks</span></a>
+    <a href="./blog-security-dns.html"><span class="sr">DNS bezbednost</span><span class="en">DNS Security</span></a>
+    <a href="./blog-security-ports.html"><span class="sr">Port skeniranje</span><span class="en">Port Scanning</span></a>
+  </div>
+
+  </main>
+</div>
+<script src="./blog-common.js" defer></script>
+</body>
+</html>

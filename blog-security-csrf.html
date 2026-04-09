@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSRF Napadi — Cross-Site Request Forgery | Web Security Scanner</title>
+  <meta name="description" content="Detaljno objasnjenje CSRF napada: kako funkcionisu, realni primeri (Gmail, Netflix), i kako se zastititi pomocu tokena, SameSite kolacica i framework zastite.">
+  <meta name="keywords" content="CSRF, Cross-Site Request Forgery, CSRF token, SameSite cookie, web bezbednost, OWASP">
+  <meta property="og:title" content="CSRF Napadi — Cross-Site Request Forgery | Web Security Scanner">
+  <meta property="og:description" content="Kompletni vodic za CSRF napade: kako rade, realni primeri i metode zastite ukljucujuci tokene i SameSite kolacice.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://web-security-scanner.vercel.app/blog-security-csrf.html">
+  <meta property="og:site_name" content="Web Security Scanner">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="CSRF Napadi — Cross-Site Request Forgery | Web Security Scanner">
+  <meta name="twitter:description" content="Kompletni vodic za CSRF napade: kako rade, realni primeri i metode zastite.">
+  <link rel="canonical" href="https://web-security-scanner.vercel.app/blog-security-csrf.html">
+  <link rel="alternate" hreflang="sr" href="https://web-security-scanner.vercel.app/blog-security-csrf.html">
+  <link rel="alternate" hreflang="en" href="https://web-security-scanner.vercel.app/blog-security-csrf.html">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "CSRF Napadi — Cross-Site Request Forgery",
+    "description": "Kompletni vodic za CSRF napade: kako rade, realni primeri i metode zastite ukljucujuci tokene i SameSite kolacice.",
+    "author": { "@type": "Person", "name": "Toske" },
+    "publisher": { "@type": "Organization", "name": "Web Security Scanner" },
+    "datePublished": "2026-04-08",
+    "dateModified": "2026-04-08",
+    "mainEntityOfPage": "https://web-security-scanner.vercel.app/blog-security-csrf.html",
+    "keywords": ["CSRF", "Cross-Site Request Forgery", "CSRF token", "SameSite cookie", "web security"]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Sta je CSRF napad?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "CSRF (Cross-Site Request Forgery) je napad gde maliciozni sajt salje zahtev ka drugom sajtu u ime ulogovanog korisnika, koristeci njegove kolacice za autentifikaciju bez njegovog znanja."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Koja je razlika izmedju CSRF i XSS napada?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "XSS ubacuje maliciozni kod u sajt koji se izvrsava u browseru zrtve, dok CSRF zloupotrebljava poverenje koje sajt ima u browser korisnika slanjem neovlascenih zahteva."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Kako SameSite kolacici stite od CSRF-a?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "SameSite atribut sprecava browser da salje kolacice uz cross-origin zahteve. Vrednost 'Strict' blokira sve cross-site kolacice, dok 'Lax' dozvoljava samo top-level GET navigaciju."
+        }
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr"><div class="timeline-title">Sadrzaj</div><ol id="timeline-sr"></ol></div>
+    <div class="en"><div class="timeline-title">Contents</div><ol id="timeline-en"></ol></div>
+  </aside>
+  <main class="blog-content">
+
+  <!-- SERBIAN -->
+  <div class="sr">
+    <h1>CSRF Napadi — Cross-Site Request Forgery</h1>
+    <p class="subtitle">Objavljeno: 8. april 2026. &middot; Vreme citanja: 12 min</p>
+
+    <div class="toc">
+      <h3>Sadrzaj</h3>
+      <ol>
+        <li><a href="#sr-sta-je" style="color:#c0c4db;">Sta je CSRF?</a></li>
+        <li><a href="#sr-kako-radi" style="color:#c0c4db;">Kako CSRF napad funkcionise</a></li>
+        <li><a href="#sr-razlika" style="color:#c0c4db;">CSRF vs XSS — kljucne razlike</a></li>
+        <li><a href="#sr-primeri" style="color:#c0c4db;">Realni primeri CSRF napada</a></li>
+        <li><a href="#sr-zastita" style="color:#c0c4db;">Metode zastite</a></li>
+        <li><a href="#sr-framework" style="color:#c0c4db;">Implementacija u framework-ovima</a></li>
+        <li><a href="#sr-faq" style="color:#c0c4db;">Cesto postavljana pitanja</a></li>
+        <li><a href="#sr-reference" style="color:#c0c4db;">Reference</a></li>
+      </ol>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-num">36%</div>
+        <div class="stat-label">Web aplikacija ranjivo na CSRF (OWASP)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">CWE-352</div>
+        <div class="stat-label">MITRE klasifikacija</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">#8</div>
+        <div class="stat-label">OWASP Top 10 (2013)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">$3.4M</div>
+        <div class="stat-label">Prosecna cena data breach-a (IBM 2023)</div>
+      </div>
+    </div>
+
+    <h2 id="sr-sta-je">1. Sta je CSRF?</h2>
+    <p>CSRF (Cross-Site Request Forgery), poznat i kao "session riding" ili "one-click attack", je vrsta napada na web aplikacije gde napadac navodi korisnikov browser da izvrsi nezeljenu akciju na sajtu na kome je korisnik trenutno autentifikovan.</p>
+    <p>Kljucna stvar kod CSRF-a je da napadac <strong>ne mora da zna korisnikovu lozinku</strong>. Browser automatski salje kolacice (cookies) sa svakim zahtevom ka domenu, pa ako je korisnik ulogovan na bankovni sajt i poseti malicioznu stranicu, ta stranica moze poslati zahtev ka banci koristeci korisnikove aktivne kolacice.</p>
+
+    <div class="callout callout-danger">
+      <strong>Upozorenje:</strong> CSRF napad ne krade podatke — on forsira akciju u ime korisnika. To moze ukljucivati transfer novca, promenu email adrese, ili brisanje naloga.
+    </div>
+
+    <h2 id="sr-kako-radi">2. Kako CSRF napad funkcionise</h2>
+    <p>Zamislite sledeci scenario korak po korak:</p>
+    <ol>
+      <li>Korisnik se uloguje na <code>banka.rs</code> i dobija sesijski kolacic</li>
+      <li>Bez da se odjavi, korisnik posecuje <code>maliciozni-sajt.com</code></li>
+      <li>Maliciozni sajt sadrzi skriveni HTML koji automatski salje zahtev ka banci</li>
+      <li>Browser prilaze bankovne kolacice uz taj zahtev jer idu ka <code>banka.rs</code> domenu</li>
+      <li>Banka prima zahtev sa validnim kolacicima i izvrsava akciju</li>
+    </ol>
+
+    <h3>Primer malicioznog koda</h3>
+    <p>Napadac moze ubaciti skrivenu formu na svoj sajt:</p>
+    <pre><code>&lt;!-- Skrivena forma koja se automatski salje --&gt;
+&lt;form action="https://banka.rs/transfer" method="POST" id="csrf-form"&gt;
+  &lt;input type="hidden" name="primalac" value="napadac-racun"&gt;
+  &lt;input type="hidden" name="iznos" value="50000"&gt;
+  &lt;input type="hidden" name="valuta" value="RSD"&gt;
+&lt;/form&gt;
+&lt;script&gt;document.getElementById('csrf-form').submit();&lt;/script&gt;</code></pre>
+
+    <p>Ili cak putem GET zahteva sa img tagom:</p>
+    <pre><code>&lt;!-- Nevidljiva slika koja salje GET zahtev --&gt;
+&lt;img src="https://banka.rs/transfer?primalac=napadac&amp;iznos=50000"
+     width="0" height="0" style="display:none"&gt;</code></pre>
+
+    <div class="callout">
+      <strong>Napomena:</strong> Zato je izuzetno vazno da GET zahtevi nikada ne menjaju stanje servera (state-changing operations). Ovo je osnovno pravilo HTTP specifikacije (RFC 7231).
+    </div>
+
+    <h2 id="sr-razlika">3. CSRF vs XSS — kljucne razlike</h2>
+    <table>
+      <tr><th>Karakteristika</th><th>CSRF</th><th>XSS</th></tr>
+      <tr><td>Tip napada</td><td>Zloupotrebljava poverenje sajta u browser</td><td>Ubacuje kod u sajt koji se izvrsava u browseru</td></tr>
+      <tr><td>Potrebna autentifikacija</td><td>Da — korisnik mora biti ulogovan</td><td>Ne — radi na svim posetiocima</td></tr>
+      <tr><td>Krade podatke?</td><td>Ne — forsira akciju</td><td>Da — moze citati DOM, kolacice, tokene</td></tr>
+      <tr><td>Izvrsavanje skripte</td><td>Ne zahteva JavaScript na ciljnom sajtu</td><td>Izvrsava JavaScript u kontekstu sajta</td></tr>
+      <tr><td>Zastita</td><td>CSRF tokeni, SameSite kolacici</td><td>CSP header, output encoding, sanitizacija</td></tr>
+    </table>
+
+    <h2 id="sr-primeri">4. Realni primeri CSRF napada</h2>
+
+    <h3>Gmail CSRF ranjivost (2007)</h3>
+    <p>Istrazivac bezbednosti je 2007. godine otkrio CSRF ranjivost u Gmail-u koja je dozvoljavala napadacu da dodaje email filtere na nalog zrtve. Napadac je mogao da kreira filter koji automatski prosledjuje sve dolazne email-ove na njegovu adresu. Korisnik ne bi ni znao da su mu email-ovi kompromitovani.</p>
+    <p class="ref">Izvor: "Gmail CSRF Security Vulnerability", Petko D. Petkov, 2007</p>
+
+    <h3>Netflix CSRF napad (2006)</h3>
+    <p>Netflix je 2006. godine imao CSRF ranjivost koja je dozvoljavala napadacu da promeni podatke na korisnickom nalogu — ukljucujuci adresu za dostavu DVD-ova, email i lozinku. Napadac je takodje mogao da dodaje filmove u korisnikov red za gledanje.</p>
+    <p class="ref">Izvor: Netflix Security Advisory, 2006</p>
+
+    <h3>ING Direct CSRF (2008)</h3>
+    <p>ING Direct banka je imala CSRF ranjivost koja je dozvoljavala napadacu da inicira transfer novca sa racuna zrtve. Napadac je trebalo samo da zna broj racuna, dok bi browser zrtve automatski prilogio autentifikacione kolacice.</p>
+
+    <div class="callout callout-warn">
+      <strong>Lekcija:</strong> Cak i najvece kompanije (Google, Netflix, banke) su bile ranjive na CSRF. Nijedan sajt nije previše veliki ili previše siguran da bi ignorisao ovu pretnju.
+    </div>
+
+    <h2 id="sr-zastita">5. Metode zastite od CSRF-a</h2>
+
+    <h3>5.1 CSRF tokeni (Synchronizer Token Pattern)</h3>
+    <p>Najsiri koriscena zastita. Server generise jedinstven, nepredvidljiv token za svaku sesiju (ili svaki zahtev) i ubacuje ga u svaku formu. Kada forma stigne nazad, server proverava da li token odgovara.</p>
+    <pre><code>&lt;!-- Server generise token i ubacuje u formu --&gt;
+&lt;form action="/transfer" method="POST"&gt;
+  &lt;input type="hidden" name="csrf_token"
+         value="a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6"&gt;
+  &lt;input type="text" name="primalac"&gt;
+  &lt;input type="number" name="iznos"&gt;
+  &lt;button type="submit"&gt;Posalji&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+    <p>Napadac ne moze da procita token sa drugog domena zahvaljujuci Same-Origin Policy u browser-u.</p>
+
+    <h3>5.2 SameSite kolacici</h3>
+    <p>Moderan i efikasan pristup. SameSite atribut na kolacicima kontrolise da li browser salje kolacice uz cross-site zahteve:</p>
+    <pre><code>Set-Cookie: session=abc123; SameSite=Strict; Secure; HttpOnly
+Set-Cookie: session=abc123; SameSite=Lax; Secure; HttpOnly</code></pre>
+    <table>
+      <tr><th>Vrednost</th><th>Ponasanje</th><th>Preporuka</th></tr>
+      <tr><td><code>Strict</code></td><td>Kolacic se nikad ne salje uz cross-site zahteve</td><td>Bankarske aplikacije</td></tr>
+      <tr><td><code>Lax</code></td><td>Salje se samo uz top-level GET navigaciju</td><td>Vecina sajtova (default u Chrome-u od 2020)</td></tr>
+      <tr><td><code>None</code></td><td>Uvek se salje (staro ponasanje, zahteva Secure)</td><td>Samo za cross-site use-case</td></tr>
+    </table>
+
+    <h3>5.3 Double Submit Cookie</h3>
+    <p>Server postavlja CSRF token i kao kolacic i kao skriveno polje u formi. Kada zahtev stigne, server proverava da li se vrednosti poklapaju. Napadac moze poslati kolacic (browser ga automatski prilaze), ali ne moze procitati njegovu vrednost da je stavi u formu.</p>
+
+    <h3>5.4 Origin i Referer header provera</h3>
+    <p>Server moze proveriti <code>Origin</code> ili <code>Referer</code> header da utvrdi odakle zahtev dolazi:</p>
+    <pre><code>// Node.js middleware za proveru Origin headera
+function csrfOriginCheck(req, res, next) {
+  const origin = req.headers['origin'];
+  const referer = req.headers['referer'];
+  const allowedOrigins = ['https://moj-sajt.rs'];
+
+  if (req.method !== 'GET') {
+    if (origin && !allowedOrigins.includes(origin)) {
+      return res.status(403).json({ error: 'CSRF detected' });
+    }
+    if (!origin && referer) {
+      const refOrigin = new URL(referer).origin;
+      if (!allowedOrigins.includes(refOrigin)) {
+        return res.status(403).json({ error: 'CSRF detected' });
+      }
+    }
+  }
+  next();
+}</code></pre>
+
+    <h2 id="sr-framework">6. Implementacija u framework-ovima</h2>
+
+    <h3>Django (Python)</h3>
+    <p>Django ima ugradjenu CSRF zastitu koja je podrazumevano ukljucena:</p>
+    <pre><code># settings.py — CSRF middleware je podrazumevano aktivan
+MIDDLEWARE = [
+    'django.middleware.csrf.CsrfViewMiddleware',
+    # ...
+]
+
+# U template-u koristite {% csrf_token %} tag
+# &lt;form method="POST"&gt;
+#   {% csrf_token %}
+#   ...
+# &lt;/form&gt;
+
+# Za AJAX zahteve, procitajte token iz kolacica
+# i posaljite ga kao X-CSRFToken header</code></pre>
+
+    <h3>Express.js (Node.js)</h3>
+    <pre><code>const csrf = require('csurf');
+const cookieParser = require('cookie-parser');
+
+const app = express();
+app.use(cookieParser());
+
+// Konfigurisanje CSRF zastite
+const csrfProtection = csrf({ cookie: true });
+
+app.get('/forma', csrfProtection, (req, res) =&gt; {
+  res.render('forma', { csrfToken: req.csrfToken() });
+});
+
+app.post('/proces', csrfProtection, (req, res) =&gt; {
+  // Zahtev je validan, CSRF token je proveren
+  res.send('Uspesno!');
+});</code></pre>
+
+    <h3>Spring Boot (Java)</h3>
+    <pre><code>// Spring Security ukljucuje CSRF zastitu po defaultu
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http
+            .csrf()
+                .csrfTokenRepository(
+                    CookieCsrfTokenRepository.withHttpOnlyFalse()
+                )
+            .and()
+            .authorizeRequests()
+                .anyRequest().authenticated();
+    }
+}
+// U Thymeleaf template-u:
+// &lt;input type="hidden" th:name="${_csrf.parameterName}"
+//        th:value="${_csrf.token}"/&gt;</code></pre>
+
+    <h2 id="sr-faq">7. Cesto postavljana pitanja</h2>
+
+    <div class="callout">
+      <strong>P: Da li SameSite=Lax potpuno stiti od CSRF-a?</strong><br>
+      O: U velikoj meri da, ali ne pokriva sve slucajeve. POST zahtevi iz forme na drugom domenu ce biti blokirani, ali postoje edge slucajevi sa GET zahtevima koji menjaju stanje. Preporuka je kombinovati SameSite sa CSRF tokenima.
+    </div>
+
+    <div class="callout">
+      <strong>P: Da li CORS stiti od CSRF-a?</strong><br>
+      O: Ne direktno. CORS kontrolise da li JavaScript na drugom domenu moze citati odgovor, ali ne sprecava slanje zahteva. Browser ce i dalje poslati zahtev (sa kolacicima) — samo nece dozvoliti skripti da procita odgovor.
+    </div>
+
+    <div class="callout">
+      <strong>P: Da li su API-ji ranjivi na CSRF?</strong><br>
+      O: Ako API koristi cookie-based autentifikaciju, da. Ako koristi Authorization header sa Bearer tokenom, CSRF nije moguc jer browser ne salje automatski Authorization header.
+    </div>
+
+    <h2 id="sr-reference">8. Reference</h2>
+    <ul>
+      <li class="ref"><a href="https://owasp.org/www-community/attacks/csrf" target="_blank" rel="noopener">OWASP: Cross-Site Request Forgery (CSRF)</a></li>
+      <li class="ref"><a href="https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html" target="_blank" rel="noopener">OWASP CSRF Prevention Cheat Sheet</a></li>
+      <li class="ref"><a href="https://cwe.mitre.org/data/definitions/352.html" target="_blank" rel="noopener">CWE-352: Cross-Site Request Forgery (CSRF)</a></li>
+      <li class="ref"><a href="https://tools.ietf.org/html/rfc7231" target="_blank" rel="noopener">RFC 7231 — HTTP/1.1 Semantics and Content</a></li>
+      <li class="ref"><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite" target="_blank" rel="noopener">MDN: SameSite cookies</a></li>
+      <li class="ref"><a href="https://www.ibm.com/reports/data-breach" target="_blank" rel="noopener">IBM Cost of a Data Breach Report 2023</a></li>
+    </ul>
+
+    <a href="./index.html" class="cta">Skenirajte svoj sajt besplatno &rarr;</a>
+  </div>
+
+  <!-- ENGLISH -->
+  <div class="en">
+    <h1>CSRF Attacks — Cross-Site Request Forgery</h1>
+    <p class="subtitle">Published: April 8, 2026 &middot; Reading time: 12 min</p>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#en-what-is" style="color:#c0c4db;">What is CSRF?</a></li>
+        <li><a href="#en-how-works" style="color:#c0c4db;">How CSRF attacks work</a></li>
+        <li><a href="#en-diff" style="color:#c0c4db;">CSRF vs XSS — key differences</a></li>
+        <li><a href="#en-examples" style="color:#c0c4db;">Real-world CSRF examples</a></li>
+        <li><a href="#en-protection" style="color:#c0c4db;">Protection methods</a></li>
+        <li><a href="#en-frameworks" style="color:#c0c4db;">Framework implementations</a></li>
+        <li><a href="#en-faq" style="color:#c0c4db;">Frequently asked questions</a></li>
+        <li><a href="#en-references" style="color:#c0c4db;">References</a></li>
+      </ol>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-num">36%</div>
+        <div class="stat-label">Web apps vulnerable to CSRF (OWASP)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">CWE-352</div>
+        <div class="stat-label">MITRE classification</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">#8</div>
+        <div class="stat-label">OWASP Top 10 (2013)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">$3.4M</div>
+        <div class="stat-label">Average data breach cost (IBM 2023)</div>
+      </div>
+    </div>
+
+    <h2 id="en-what-is">1. What is CSRF?</h2>
+    <p>CSRF (Cross-Site Request Forgery), also known as "session riding" or "one-click attack," is a type of web application attack where an attacker tricks a user's browser into executing an unwanted action on a site where the user is currently authenticated.</p>
+    <p>The key aspect of CSRF is that the attacker <strong>doesn't need to know the user's password</strong>. The browser automatically sends cookies with every request to a domain, so if a user is logged into their banking site and visits a malicious page, that page can send a request to the bank using the user's active session cookies.</p>
+
+    <div class="callout callout-danger">
+      <strong>Warning:</strong> CSRF doesn't steal data — it forces an action on behalf of the user. This can include money transfers, email address changes, or account deletion.
+    </div>
+
+    <h2 id="en-how-works">2. How CSRF attacks work</h2>
+    <p>Consider the following step-by-step scenario:</p>
+    <ol>
+      <li>User logs into <code>bank.com</code> and receives a session cookie</li>
+      <li>Without logging out, the user visits <code>malicious-site.com</code></li>
+      <li>The malicious site contains hidden HTML that automatically sends a request to the bank</li>
+      <li>The browser attaches the banking cookies to that request since they're going to <code>bank.com</code></li>
+      <li>The bank receives the request with valid cookies and executes the action</li>
+    </ol>
+
+    <h3>Malicious code example</h3>
+    <p>An attacker can embed a hidden form on their site:</p>
+    <pre><code>&lt;!-- Hidden form that auto-submits --&gt;
+&lt;form action="https://bank.com/transfer" method="POST" id="csrf-form"&gt;
+  &lt;input type="hidden" name="recipient" value="attacker-account"&gt;
+  &lt;input type="hidden" name="amount" value="5000"&gt;
+  &lt;input type="hidden" name="currency" value="USD"&gt;
+&lt;/form&gt;
+&lt;script&gt;document.getElementById('csrf-form').submit();&lt;/script&gt;</code></pre>
+
+    <p>Or even via a GET request using an img tag:</p>
+    <pre><code>&lt;!-- Invisible image that sends a GET request --&gt;
+&lt;img src="https://bank.com/transfer?recipient=attacker&amp;amount=5000"
+     width="0" height="0" style="display:none"&gt;</code></pre>
+
+    <div class="callout">
+      <strong>Note:</strong> This is why GET requests must never perform state-changing operations. This is a fundamental HTTP specification rule (RFC 7231).
+    </div>
+
+    <h2 id="en-diff">3. CSRF vs XSS — key differences</h2>
+    <table>
+      <tr><th>Characteristic</th><th>CSRF</th><th>XSS</th></tr>
+      <tr><td>Attack type</td><td>Exploits site's trust in the browser</td><td>Injects code into the site that runs in the browser</td></tr>
+      <tr><td>Auth required</td><td>Yes — user must be logged in</td><td>No — works on all visitors</td></tr>
+      <tr><td>Steals data?</td><td>No — forces an action</td><td>Yes — can read DOM, cookies, tokens</td></tr>
+      <tr><td>Script execution</td><td>Doesn't need JS on target site</td><td>Executes JS in the site's context</td></tr>
+      <tr><td>Protection</td><td>CSRF tokens, SameSite cookies</td><td>CSP header, output encoding, sanitization</td></tr>
+    </table>
+
+    <h2 id="en-examples">4. Real-world CSRF examples</h2>
+
+    <h3>Gmail CSRF vulnerability (2007)</h3>
+    <p>In 2007, a security researcher discovered a CSRF vulnerability in Gmail that allowed an attacker to add email filters to a victim's account. The attacker could create a filter that automatically forwarded all incoming emails to their address. The user would have no idea their emails were compromised.</p>
+    <p class="ref">Source: "Gmail CSRF Security Vulnerability", Petko D. Petkov, 2007</p>
+
+    <h3>Netflix CSRF attack (2006)</h3>
+    <p>Netflix had a CSRF vulnerability in 2006 that allowed an attacker to modify account details — including DVD delivery address, email, and password. The attacker could also add movies to the user's queue.</p>
+    <p class="ref">Source: Netflix Security Advisory, 2006</p>
+
+    <h3>ING Direct CSRF (2008)</h3>
+    <p>ING Direct bank had a CSRF vulnerability that allowed attackers to initiate money transfers from victim accounts. The attacker only needed to know the account number, while the victim's browser would automatically attach authentication cookies.</p>
+
+    <div class="callout callout-warn">
+      <strong>Lesson:</strong> Even the largest companies (Google, Netflix, banks) have been vulnerable to CSRF. No site is too big or too secure to ignore this threat.
+    </div>
+
+    <h2 id="en-protection">5. Protection methods</h2>
+
+    <h3>5.1 CSRF tokens (Synchronizer Token Pattern)</h3>
+    <p>The most widely used protection. The server generates a unique, unpredictable token for each session (or each request) and embeds it in every form. When the form is submitted, the server verifies the token matches.</p>
+    <pre><code>&lt;!-- Server generates token and embeds in form --&gt;
+&lt;form action="/transfer" method="POST"&gt;
+  &lt;input type="hidden" name="csrf_token"
+         value="a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6"&gt;
+  &lt;input type="text" name="recipient"&gt;
+  &lt;input type="number" name="amount"&gt;
+  &lt;button type="submit"&gt;Send&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+    <p>The attacker cannot read the token from another domain thanks to the browser's Same-Origin Policy.</p>
+
+    <h3>5.2 SameSite cookies</h3>
+    <p>A modern and effective approach. The SameSite attribute on cookies controls whether the browser sends cookies with cross-site requests:</p>
+    <pre><code>Set-Cookie: session=abc123; SameSite=Strict; Secure; HttpOnly
+Set-Cookie: session=abc123; SameSite=Lax; Secure; HttpOnly</code></pre>
+    <table>
+      <tr><th>Value</th><th>Behavior</th><th>Recommendation</th></tr>
+      <tr><td><code>Strict</code></td><td>Cookie is never sent with cross-site requests</td><td>Banking applications</td></tr>
+      <tr><td><code>Lax</code></td><td>Sent only with top-level GET navigation</td><td>Most sites (Chrome default since 2020)</td></tr>
+      <tr><td><code>None</code></td><td>Always sent (old behavior, requires Secure)</td><td>Only for cross-site use cases</td></tr>
+    </table>
+
+    <h3>5.3 Double Submit Cookie</h3>
+    <p>The server sets the CSRF token both as a cookie and as a hidden form field. When the request arrives, the server checks that the values match. An attacker can send the cookie (browser attaches it automatically), but cannot read its value to put in the form field.</p>
+
+    <h3>5.4 Origin and Referer header validation</h3>
+    <p>The server can check the <code>Origin</code> or <code>Referer</code> header to determine where the request came from:</p>
+    <pre><code>// Node.js middleware for Origin header validation
+function csrfOriginCheck(req, res, next) {
+  const origin = req.headers['origin'];
+  const referer = req.headers['referer'];
+  const allowedOrigins = ['https://my-site.com'];
+
+  if (req.method !== 'GET') {
+    if (origin && !allowedOrigins.includes(origin)) {
+      return res.status(403).json({ error: 'CSRF detected' });
+    }
+    if (!origin && referer) {
+      const refOrigin = new URL(referer).origin;
+      if (!allowedOrigins.includes(refOrigin)) {
+        return res.status(403).json({ error: 'CSRF detected' });
+      }
+    }
+  }
+  next();
+}</code></pre>
+
+    <h2 id="en-frameworks">6. Framework implementations</h2>
+
+    <h3>Django (Python)</h3>
+    <p>Django has built-in CSRF protection that is enabled by default:</p>
+    <pre><code># settings.py — CSRF middleware is active by default
+MIDDLEWARE = [
+    'django.middleware.csrf.CsrfViewMiddleware',
+    # ...
+]
+
+# In templates use {% csrf_token %} tag
+# &lt;form method="POST"&gt;
+#   {% csrf_token %}
+#   ...
+# &lt;/form&gt;
+
+# For AJAX requests, read the token from the cookie
+# and send it as the X-CSRFToken header</code></pre>
+
+    <h3>Express.js (Node.js)</h3>
+    <pre><code>const csrf = require('csurf');
+const cookieParser = require('cookie-parser');
+
+const app = express();
+app.use(cookieParser());
+
+// Configure CSRF protection
+const csrfProtection = csrf({ cookie: true });
+
+app.get('/form', csrfProtection, (req, res) =&gt; {
+  res.render('form', { csrfToken: req.csrfToken() });
+});
+
+app.post('/process', csrfProtection, (req, res) =&gt; {
+  // Request is valid, CSRF token has been verified
+  res.send('Success!');
+});</code></pre>
+
+    <h3>Spring Boot (Java)</h3>
+    <pre><code>// Spring Security includes CSRF protection by default
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http
+            .csrf()
+                .csrfTokenRepository(
+                    CookieCsrfTokenRepository.withHttpOnlyFalse()
+                )
+            .and()
+            .authorizeRequests()
+                .anyRequest().authenticated();
+    }
+}
+// In Thymeleaf template:
+// &lt;input type="hidden" th:name="${_csrf.parameterName}"
+//        th:value="${_csrf.token}"/&gt;</code></pre>
+
+    <h2 id="en-faq">7. Frequently asked questions</h2>
+
+    <div class="callout">
+      <strong>Q: Does SameSite=Lax fully protect against CSRF?</strong><br>
+      A: Largely yes, but it doesn't cover all cases. POST requests from forms on other domains will be blocked, but there are edge cases with state-changing GET requests. The recommendation is to combine SameSite with CSRF tokens.
+    </div>
+
+    <div class="callout">
+      <strong>Q: Does CORS protect against CSRF?</strong><br>
+      A: Not directly. CORS controls whether JavaScript on another domain can read the response, but it doesn't prevent the request from being sent. The browser will still send the request (with cookies) — it just won't let the script read the response.
+    </div>
+
+    <div class="callout">
+      <strong>Q: Are APIs vulnerable to CSRF?</strong><br>
+      A: If the API uses cookie-based authentication, yes. If it uses an Authorization header with a Bearer token, CSRF is not possible because the browser doesn't automatically send the Authorization header.
+    </div>
+
+    <h2 id="en-references">8. References</h2>
+    <ul>
+      <li class="ref"><a href="https://owasp.org/www-community/attacks/csrf" target="_blank" rel="noopener">OWASP: Cross-Site Request Forgery (CSRF)</a></li>
+      <li class="ref"><a href="https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html" target="_blank" rel="noopener">OWASP CSRF Prevention Cheat Sheet</a></li>
+      <li class="ref"><a href="https://cwe.mitre.org/data/definitions/352.html" target="_blank" rel="noopener">CWE-352: Cross-Site Request Forgery (CSRF)</a></li>
+      <li class="ref"><a href="https://tools.ietf.org/html/rfc7231" target="_blank" rel="noopener">RFC 7231 — HTTP/1.1 Semantics and Content</a></li>
+      <li class="ref"><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite" target="_blank" rel="noopener">MDN: SameSite cookies</a></li>
+      <li class="ref"><a href="https://www.ibm.com/reports/data-breach" target="_blank" rel="noopener">IBM Cost of a Data Breach Report 2023</a></li>
+    </ul>
+
+    <a href="./index.html" class="cta">Scan your site for free &rarr;</a>
+  </div>
+
+  <div class="nav-links">
+    <a href="./blog-security-ssl.html"><span class="sr">SSL/TLS vodic</span><span class="en">SSL/TLS Guide</span></a>
+    <a href="./blog-security-headers.html"><span class="sr">HTTP Security Headers</span><span class="en">HTTP Security Headers</span></a>
+    <a href="./blog-security-xss.html"><span class="sr">XSS napadi</span><span class="en">XSS Attacks</span></a>
+    <a href="./blog-security-sql.html"><span class="sr">SQL Injection</span><span class="en">SQL Injection</span></a>
+    <a href="./blog-security-dns.html"><span class="sr">DNS bezbednost</span><span class="en">DNS Security</span></a>
+    <a href="./blog-security-ports.html"><span class="sr">Port skeniranje</span><span class="en">Port Scanning</span></a>
+    <a href="./blog-security-api.html"><span class="sr">API bezbednost</span><span class="en">API Security</span></a>
+  </div>
+
+  </main>
+</div>
+<script src="./blog-common.js" defer></script>
+</body>
+</html>

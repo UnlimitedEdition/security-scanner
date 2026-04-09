@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Otvoreni portovi — Rizici i zastita | Web Security Scanner</title>
+  <meta name="description" content="Saznajte koji otvoreni portovi predstavljaju bezbednosni rizik: MySQL 3306, Redis 6379, MongoDB 27017. Nmap skeniranje, firewall pravila i zastita servera.">
+  <meta name="keywords" content="otvoreni portovi, firewall, nmap, MySQL, Redis, MongoDB, Elasticsearch, skeniranje portova, web bezbednost">
+  <meta property="og:title" content="Otvoreni portovi — Rizici i zastita | Web Security Scanner">
+  <meta property="og:description" content="Vodic za bezbednost otvorenih portova: najrizicniji portovi, realni incidenti i metode zastite ukljucujuci firewall i VPN.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://web-security-scanner.vercel.app/blog-security-ports.html">
+  <meta property="og:site_name" content="Web Security Scanner">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Otvoreni portovi — Rizici i zastita | Web Security Scanner">
+  <meta name="twitter:description" content="Vodic za bezbednost otvorenih portova: najrizicniji portovi, realni incidenti i metode zastite.">
+  <link rel="canonical" href="https://web-security-scanner.vercel.app/blog-security-ports.html">
+  <link rel="alternate" hreflang="sr" href="https://web-security-scanner.vercel.app/blog-security-ports.html">
+  <link rel="alternate" hreflang="en" href="https://web-security-scanner.vercel.app/blog-security-ports.html">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Otvoreni portovi — Rizici i zastita",
+    "description": "Vodic za bezbednost otvorenih portova: najrizicniji portovi, realni incidenti i metode zastite ukljucujuci firewall i VPN.",
+    "author": { "@type": "Person", "name": "Toske" },
+    "publisher": { "@type": "Organization", "name": "Web Security Scanner" },
+    "datePublished": "2026-04-08",
+    "dateModified": "2026-04-08",
+    "mainEntityOfPage": "https://web-security-scanner.vercel.app/blog-security-ports.html",
+    "keywords": ["otvoreni portovi", "firewall", "nmap", "MySQL", "Redis", "MongoDB"]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Koji portovi su najrizicniji za javno izlaganje?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Najrizicniji su portovi baza podataka: MySQL (3306), PostgreSQL (5432), MongoDB (27017), Redis (6379), Elasticsearch (9200). Takodje su opasni legacy protokoli: FTP (21), Telnet (23) i SMB (445)."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Kako mogu da skeniram otvorene portove na svom serveru?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Koristite Nmap alat: 'nmap -sV -p- vas-server.com' za kompletno skeniranje svih portova sa detekcijom servisa. Takodje mozete koristiti Shodan.io za proveru sta je javno vidljivo sa interneta."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Da li je dovoljno samo promeniti podrazumevani port?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ne. Promena porta (security through obscurity) ne pruza pravu zastitu. Nmap moze skenirati svih 65,535 portova. Prava zastita je firewall + VPN + autentifikacija + bind na localhost."
+        }
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr"><div class="timeline-title">Sadrzaj</div><ol id="timeline-sr"></ol></div>
+    <div class="en"><div class="timeline-title">Contents</div><ol id="timeline-en"></ol></div>
+  </aside>
+  <main class="blog-content">
+
+  <!-- SERBIAN -->
+  <div class="sr">
+    <h1>Otvoreni portovi — Rizici i zastita</h1>
+    <p class="subtitle">Objavljeno: 8. april 2026. &middot; Vreme citanja: 14 min</p>
+
+    <div class="toc">
+      <h3>Sadrzaj</h3>
+      <ol>
+        <li><a href="#sr-osnove" style="color:#c0c4db;">Sta su portovi i kako rade</a></li>
+        <li><a href="#sr-opasni" style="color:#c0c4db;">Najrizicniji otvoreni portovi</a></li>
+        <li><a href="#sr-incidenti" style="color:#c0c4db;">Realni bezbednosni incidenti</a></li>
+        <li><a href="#sr-nmap" style="color:#c0c4db;">Nmap — skeniranje portova</a></li>
+        <li><a href="#sr-zastita" style="color:#c0c4db;">Metode zastite</a></li>
+        <li><a href="#sr-cloud" style="color:#c0c4db;">Cloud security groups</a></li>
+        <li><a href="#sr-faq" style="color:#c0c4db;">Cesto postavljana pitanja</a></li>
+        <li><a href="#sr-ref" style="color:#c0c4db;">Reference</a></li>
+      </ol>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-num">65,535</div>
+        <div class="stat-label">Ukupno TCP portova</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">28,000</div>
+        <div class="stat-label">MongoDB servera hakovano 2017. (Shodan)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">4.7M</div>
+        <div class="stat-label">Redis instanci vidljivih na Shodan-u</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">15 sec</div>
+        <div class="stat-label">Vreme da bot pronadje nov port (SANS)</div>
+      </div>
+    </div>
+
+    <h2 id="sr-osnove">1. Sta su portovi i kako rade</h2>
+    <p>Mrezni portovi su virtuelne tacke za komunikaciju na racunaru. Kada vasa aplikacija slusa na odredjenom portu, ona prima podatke od klijenata koji se povezuju na taj port. TCP/IP protokol koristi 16-bitne brojeve portova, sto daje raspon od 0 do 65,535.</p>
+
+    <h3>Kategorije portova</h3>
+    <table>
+      <tr><th>Raspon</th><th>Naziv</th><th>Opis</th></tr>
+      <tr><td>0-1023</td><td>Well-known ports</td><td>Rezervisani za standardne servise (HTTP 80, HTTPS 443, SSH 22)</td></tr>
+      <tr><td>1024-49151</td><td>Registered ports</td><td>Registrovani za specificne aplikacije (MySQL 3306, PostgreSQL 5432)</td></tr>
+      <tr><td>49152-65535</td><td>Dynamic/Private</td><td>Koriste se za privremene klijentske konekcije</td></tr>
+    </table>
+
+    <h3>TCP vs UDP</h3>
+    <p><strong>TCP (Transmission Control Protocol)</strong> uspostavlja pouzdanu konekciju putem "three-way handshake" (SYN, SYN-ACK, ACK). Koristi se za HTTP, SSH, baze podataka. <strong>UDP (User Datagram Protocol)</strong> je bez konekcije, brzi ali nepouzdaniji. Koristi se za DNS (port 53), streaming, gaming.</p>
+
+    <h2 id="sr-opasni">2. Najrizicniji otvoreni portovi</h2>
+
+    <h3>Port 3306 — MySQL</h3>
+    <p>MySQL baza podataka podrazumevano slusa na portu 3306. Ako je javno dostupan, napadac moze pokusati brute-force napad na kredencijale ili eksploatisati poznate ranjivosti. Mnoge MySQL instalacije imaju slab <code>root</code> password ili ga uopste nemaju.</p>
+    <div class="callout callout-danger">
+      <strong>Rizik:</strong> Javno izlozen MySQL port moze dovesti do potpunog preuzimanja baze podataka, krade korisnickih podataka, i ransomware napada.
+    </div>
+
+    <h3>Port 5432 — PostgreSQL</h3>
+    <p>PostgreSQL koristi port 5432. Iako ima bolju podrazumevanu bezbednosnu konfiguraciju od MySQL-a (zahteva autentifikaciju), izlaganje na javnoj mrezi i dalje predstavlja rizik. Napadaci koriste <code>pg_read_file()</code> i <code>COPY ... FROM PROGRAM</code> za izvrsavanje komandi na OS nivou.</p>
+
+    <h3>Port 27017 — MongoDB</h3>
+    <p>MongoDB je bio notorno nesiguran u starijim verzijama — podrazumevano nije zahtevao autentifikaciju i slusao je na svim interfejsima. Ovo je dovelo do masovnih ransomware napada 2017. godine.</p>
+
+    <h3>Port 6379 — Redis</h3>
+    <p>Redis podrazumevano nema lozinku i slusa na svim interfejsima. Napadac sa pristupom moze koristiti <code>CONFIG SET</code> da upise SSH kljuceve na server i dobije potpun pristup:</p>
+    <pre><code># Napadac moze izvrsiti sledece ako je Redis otvoren:
+redis-cli -h zrtva.com
+CONFIG SET dir /root/.ssh/
+CONFIG SET dbfilename "authorized_keys"
+SET payload "\n\nssh-rsa AAAA... napadac@evil\n\n"
+SAVE
+# Sada napadac ima SSH pristup serveru</code></pre>
+
+    <h3>Port 9200 — Elasticsearch</h3>
+    <p>Elasticsearch nema podrazumevanu autentifikaciju u besplatnoj verziji. Javno izlozen Elasticsearch cesto sadrzi osetljive podatke (logove, korisnicke podatke, financijske zapise). Shodan redovno pronalazi hiljade nezasticenih Elasticsearch instanci.</p>
+
+    <h3>Port 21 — FTP</h3>
+    <p>FTP (File Transfer Protocol) salje kredencijale u <strong>plain text-u</strong> bez ikakve enkripcije. Svako na istoj mrezi moze presresti korisnicko ime i lozinku.</p>
+
+    <h3>Port 23 — Telnet</h3>
+    <p>Telnet je potpuno neenkriptovan protokol za udaljeni pristup. Koriscen je pre SSH-a i nema nikakvog opravdanja za koriscenje danas.</p>
+
+    <div class="callout callout-warn">
+      <strong>Preporuka:</strong> Zamenite FTP sa SFTP (port 22) ili SCP. Zamenite Telnet sa SSH (port 22). Nikada ne koristite neenkriptovane protokole u produkciji.
+    </div>
+
+    <h2 id="sr-incidenti">3. Realni bezbednosni incidenti</h2>
+
+    <h3>MongoDB Ransomware (januar 2017)</h3>
+    <p>U januaru 2017, vise napadackih grupa je sistematski skeniralo internet trazeci MongoDB instance bez autentifikacije. Nasli su ih desetine hiljada. Napadaci su brisali baze podataka i ostavljali poruku sa zahtevom za otkupninu (obicno 0.2 BTC).</p>
+    <p>Prema Shodan-u, <strong>preko 28,000 MongoDB servera</strong> je bilo kompromitovano u prvih nekoliko nedelja. Jedan napadac pod imenom "Harak1r1" je sam kompromitovao preko 2,000 baza.</p>
+    <p class="ref">Izvor: Bleeping Computer, "MongoDB Apocalypse", januar 2017</p>
+
+    <h3>Redis neovlasceni pristup</h3>
+    <p>Istrazivaci su 2015. godine demonstrirali kako napadac moze zloupotrebiti javno dostupan Redis da upise SSH kljuc na server i dobije potpun root pristup — bez poznavanja ikakve lozinke. Tehnika koristi <code>CONFIG SET</code> komandu za promenu direktorijuma za cuvanje podataka.</p>
+    <p>Prema Shodan statistikama, milioni Redis instanci i dalje slusaju na javnim IP adresama, mnoge bez ikakve autentifikacije.</p>
+    <p class="ref">Izvor: Antirez blog, "A few things about Redis security", 2015</p>
+
+    <h3>Elasticsearch data breach-evi</h3>
+    <p>U decembru 2019. godine, istrazivac Bob Diachenko je pronasao nezasticen Elasticsearch klaster koji je izlagao 1.2 milijarde zapisa sa licnim podacima (ime, email, telefon, LinkedIn profili). Podaci su bili objedinjeni iz vise izvora (data enrichment servisi).</p>
+    <p class="ref">Izvor: DataViper/Vinny Troia, "1.2 Billion Records Found Exposed Online", 2019</p>
+
+    <h2 id="sr-nmap">4. Nmap — skeniranje portova</h2>
+    <p>Nmap (Network Mapper) je najpopularniji open-source alat za skeniranje mreze i otkrivanje portova. Koriste ga i bezbednosni strucnjaci i sistem administratori.</p>
+
+    <h3>Osnovne Nmap komande</h3>
+    <pre><code># Skeniranje najcescih 1000 portova
+nmap vas-server.com
+
+# Skeniranje SVIH portova (0-65535)
+nmap -p- vas-server.com
+
+# Skeniranje sa detekcijom servisa i verzija
+nmap -sV vas-server.com
+
+# Skeniranje specificnih portova
+nmap -p 22,80,443,3306,5432,6379,27017,9200 vas-server.com
+
+# Agresivno skeniranje (OS detekcija, skripte, traceroute)
+nmap -A vas-server.com
+
+# UDP skeniranje (sporije ali vazno)
+nmap -sU -p 53,161,123 vas-server.com
+
+# Skeniranje sa NSE skriptama za ranjivosti
+nmap --script vuln vas-server.com</code></pre>
+
+    <h3>Tumacenje rezultata</h3>
+    <pre><code>PORT      STATE    SERVICE    VERSION
+22/tcp    open     ssh        OpenSSH 8.9
+80/tcp    open     http       nginx 1.18
+443/tcp   open     ssl/http   nginx 1.18
+3306/tcp  filtered mysql      &lt;-- firewall blokira, dobro!
+6379/tcp  open     redis      Redis 7.0.5  &lt;-- OPASNO!
+9200/tcp  closed   wap-wsp    &lt;-- port zatvoren, OK</code></pre>
+
+    <table>
+      <tr><th>Stanje</th><th>Znacenje</th><th>Akcija</th></tr>
+      <tr><td><code>open</code></td><td>Port aktivno slusa</td><td>Proveriti da li treba biti javno dostupan</td></tr>
+      <tr><td><code>closed</code></td><td>Port dostupan ali nista ne slusa</td><td>Generalno OK</td></tr>
+      <tr><td><code>filtered</code></td><td>Firewall blokira pristup</td><td>Dobra konfiguracija za interne servise</td></tr>
+    </table>
+
+    <h2 id="sr-zastita">5. Metode zastite</h2>
+
+    <h3>5.1 Firewall pravila (iptables / ufw)</h3>
+    <pre><code># UFW (Ubuntu Uncomplicated Firewall) — preporuceno za pocetnike
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow 22/tcp      # SSH
+sudo ufw allow 80/tcp      # HTTP
+sudo ufw allow 443/tcp     # HTTPS
+sudo ufw enable
+
+# Dozvolite pristup MySQL-u samo sa specificne IP adrese
+sudo ufw allow from 10.0.1.5 to any port 3306
+
+# iptables — naprednija konfiguracija
+iptables -A INPUT -p tcp --dport 6379 -s 10.0.1.0/24 -j ACCEPT
+iptables -A INPUT -p tcp --dport 6379 -j DROP</code></pre>
+
+    <h3>5.2 Bind na localhost</h3>
+    <p>Konfigurisite servise da slusaju samo na <code>127.0.0.1</code> umesto na <code>0.0.0.0</code>:</p>
+    <pre><code># MySQL (my.cnf)
+[mysqld]
+bind-address = 127.0.0.1
+
+# Redis (redis.conf)
+bind 127.0.0.1 -::1
+
+# MongoDB (mongod.conf)
+net:
+  bindIp: 127.0.0.1
+
+# Elasticsearch (elasticsearch.yml)
+network.host: 127.0.0.1</code></pre>
+
+    <h3>5.3 SSH tunelovanje</h3>
+    <p>Za pristup internim servisima sa udaljene lokacije, koristite SSH tunel umesto javnog izlaganja porta:</p>
+    <pre><code># Kreiranje SSH tunela do udaljenog MySQL-a
+ssh -L 3306:localhost:3306 user@server.com
+
+# Sada mozete pristupiti udaljenom MySQL-u lokalno
+mysql -h 127.0.0.1 -P 3306 -u korisnik -p</code></pre>
+
+    <h3>5.4 VPN za interne servise</h3>
+    <p>WireGuard ili OpenVPN za pristup internim servisima. Svi servisi baze podataka i admin paneli treba da budu dostupni samo preko VPN-a.</p>
+
+    <h2 id="sr-cloud">6. Cloud security groups</h2>
+
+    <h3>AWS Security Groups</h3>
+    <pre><code># AWS CLI — kreiranje security grupe sa minimalnim pristupom
+aws ec2 create-security-group \
+  --group-name web-server-sg \
+  --description "Web server security group"
+
+# Dozvolite samo HTTP i HTTPS
+aws ec2 authorize-security-group-ingress \
+  --group-name web-server-sg \
+  --protocol tcp --port 80 --cidr 0.0.0.0/0
+
+aws ec2 authorize-security-group-ingress \
+  --group-name web-server-sg \
+  --protocol tcp --port 443 --cidr 0.0.0.0/0
+
+# SSH samo sa vase IP adrese
+aws ec2 authorize-security-group-ingress \
+  --group-name web-server-sg \
+  --protocol tcp --port 22 --cidr 203.0.113.50/32</code></pre>
+
+    <h3>Google Cloud Firewall</h3>
+    <pre><code># GCP — dozvolite samo web saobracaj
+gcloud compute firewall-rules create allow-web \
+  --allow tcp:80,tcp:443 \
+  --source-ranges 0.0.0.0/0 \
+  --target-tags web-server
+
+# Blokirajte sve baze podataka sa interneta
+gcloud compute firewall-rules create deny-db \
+  --action deny \
+  --rules tcp:3306,tcp:5432,tcp:27017,tcp:6379,tcp:9200 \
+  --source-ranges 0.0.0.0/0 \
+  --priority 100</code></pre>
+
+    <div class="callout">
+      <strong>Zlatno pravilo:</strong> Princip najmanjeg pristupa (Principle of Least Privilege). Otvorite samo portove koji apsolutno moraju biti javno dostupni. Sve ostalo treba da bude za firewall-om ili dostupno samo putem VPN-a.
+    </div>
+
+    <h2 id="sr-faq">7. Cesto postavljana pitanja</h2>
+
+    <div class="callout">
+      <strong>P: Da li je dovoljno promeniti podrazumevani port (npr. MySQL sa 3306 na 33060)?</strong><br>
+      O: Ne. "Security through obscurity" nije prava zastita. Nmap moze skenirati svih 65,535 portova, a Shodan automatski detektuje servise bez obzira na port. Koristite firewall i autentifikaciju.
+    </div>
+
+    <div class="callout">
+      <strong>P: Kako da proverim da li moji portovi javno vidljivi?</strong><br>
+      O: Koristite Shodan.io za proveru sa internet perspektive, ili pokrenite <code>nmap -sV -p- vas-server.com</code> sa druge masine. Takodje, nas <a href="./index.html">Web Security Scanner</a> proverava najcescih rizicnih portova.
+    </div>
+
+    <div class="callout">
+      <strong>P: Da li je port 22 (SSH) bezbedan da bude otvoren?</strong><br>
+      O: SSH je dizajniran da bude javno dostupan, ali preduzmite mere: koristite kljuceve umesto lozinki, zabranite root login, koristite fail2ban za brute-force zastitu, i razmotrite port knocking.
+    </div>
+
+    <h2 id="sr-ref">8. Reference</h2>
+    <ul>
+      <li class="ref"><a href="https://www.sans.org/top25-software-errors/" target="_blank" rel="noopener">SANS Top 25 Most Dangerous Software Errors</a></li>
+      <li class="ref"><a href="https://www.shodan.io" target="_blank" rel="noopener">Shodan — Search Engine for Internet-Connected Devices</a></li>
+      <li class="ref"><a href="https://nmap.org/book/man.html" target="_blank" rel="noopener">Nmap Reference Guide (nmap.org)</a></li>
+      <li class="ref"><a href="https://www.bleepingcomputer.com/news/security/mongodb-apocalypse-is-here-as-ransom-attacks-hit-10-000-servers/" target="_blank" rel="noopener">Bleeping Computer: MongoDB Apocalypse (2017)</a></li>
+      <li class="ref"><a href="https://antirez.com/news/96" target="_blank" rel="noopener">Antirez: A few things about Redis security</a></li>
+      <li class="ref"><a href="https://www.dataviper.io/blog/2019/pdl-data-exposure-billion-people/" target="_blank" rel="noopener">DataViper: 1.2 Billion Records Found Exposed Online (2019)</a></li>
+    </ul>
+
+    <a href="./index.html" class="cta">Skenirajte svoj sajt besplatno &rarr;</a>
+  </div>
+
+  <!-- ENGLISH -->
+  <div class="en">
+    <h1>Open Ports — Risks and Protection</h1>
+    <p class="subtitle">Published: April 8, 2026 &middot; Reading time: 14 min</p>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#en-basics" style="color:#c0c4db;">What are ports and how they work</a></li>
+        <li><a href="#en-dangerous" style="color:#c0c4db;">Most dangerous open ports</a></li>
+        <li><a href="#en-incidents" style="color:#c0c4db;">Real-world security incidents</a></li>
+        <li><a href="#en-nmap" style="color:#c0c4db;">Nmap — port scanning</a></li>
+        <li><a href="#en-protection" style="color:#c0c4db;">Protection methods</a></li>
+        <li><a href="#en-cloud" style="color:#c0c4db;">Cloud security groups</a></li>
+        <li><a href="#en-faq" style="color:#c0c4db;">Frequently asked questions</a></li>
+        <li><a href="#en-ref" style="color:#c0c4db;">References</a></li>
+      </ol>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-num">65,535</div>
+        <div class="stat-label">Total TCP ports</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">28,000</div>
+        <div class="stat-label">MongoDB servers hacked in 2017 (Shodan)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">4.7M</div>
+        <div class="stat-label">Redis instances visible on Shodan</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">15 sec</div>
+        <div class="stat-label">Time for bot to find new port (SANS)</div>
+      </div>
+    </div>
+
+    <h2 id="en-basics">1. What are ports and how they work</h2>
+    <p>Network ports are virtual communication endpoints on a computer. When your application listens on a specific port, it receives data from clients connecting to that port. TCP/IP protocol uses 16-bit port numbers, giving a range from 0 to 65,535.</p>
+
+    <h3>Port categories</h3>
+    <table>
+      <tr><th>Range</th><th>Name</th><th>Description</th></tr>
+      <tr><td>0-1023</td><td>Well-known ports</td><td>Reserved for standard services (HTTP 80, HTTPS 443, SSH 22)</td></tr>
+      <tr><td>1024-49151</td><td>Registered ports</td><td>Registered for specific applications (MySQL 3306, PostgreSQL 5432)</td></tr>
+      <tr><td>49152-65535</td><td>Dynamic/Private</td><td>Used for temporary client connections</td></tr>
+    </table>
+
+    <h3>TCP vs UDP</h3>
+    <p><strong>TCP (Transmission Control Protocol)</strong> establishes a reliable connection via a "three-way handshake" (SYN, SYN-ACK, ACK). Used for HTTP, SSH, databases. <strong>UDP (User Datagram Protocol)</strong> is connectionless, faster but less reliable. Used for DNS (port 53), streaming, gaming.</p>
+
+    <h2 id="en-dangerous">2. Most dangerous open ports</h2>
+
+    <h3>Port 3306 — MySQL</h3>
+    <p>MySQL database listens on port 3306 by default. If publicly accessible, attackers can attempt brute-force attacks on credentials or exploit known vulnerabilities. Many MySQL installations have a weak <code>root</code> password or none at all.</p>
+    <div class="callout callout-danger">
+      <strong>Risk:</strong> A publicly exposed MySQL port can lead to complete database takeover, user data theft, and ransomware attacks.
+    </div>
+
+    <h3>Port 5432 — PostgreSQL</h3>
+    <p>PostgreSQL uses port 5432. While it has better default security configuration than MySQL (requires authentication), exposing it to the public internet still poses risks. Attackers use <code>pg_read_file()</code> and <code>COPY ... FROM PROGRAM</code> to execute OS-level commands.</p>
+
+    <h3>Port 27017 — MongoDB</h3>
+    <p>MongoDB was notoriously insecure in older versions — it required no authentication by default and listened on all interfaces. This led to massive ransomware attacks in 2017.</p>
+
+    <h3>Port 6379 — Redis</h3>
+    <p>Redis has no password by default and listens on all interfaces. An attacker with access can use <code>CONFIG SET</code> to write SSH keys to the server and gain full access:</p>
+    <pre><code># Attacker can execute the following if Redis is open:
+redis-cli -h victim.com
+CONFIG SET dir /root/.ssh/
+CONFIG SET dbfilename "authorized_keys"
+SET payload "\n\nssh-rsa AAAA... attacker@evil\n\n"
+SAVE
+# Now the attacker has SSH access to the server</code></pre>
+
+    <h3>Port 9200 — Elasticsearch</h3>
+    <p>Elasticsearch has no default authentication in the free version. A publicly exposed Elasticsearch instance often contains sensitive data (logs, user data, financial records). Shodan regularly finds thousands of unprotected Elasticsearch instances.</p>
+
+    <h3>Port 21 — FTP</h3>
+    <p>FTP (File Transfer Protocol) sends credentials in <strong>plain text</strong> without any encryption. Anyone on the same network can intercept the username and password.</p>
+
+    <h3>Port 23 — Telnet</h3>
+    <p>Telnet is a completely unencrypted remote access protocol. It was used before SSH and there is no justification for using it today.</p>
+
+    <div class="callout callout-warn">
+      <strong>Recommendation:</strong> Replace FTP with SFTP (port 22) or SCP. Replace Telnet with SSH (port 22). Never use unencrypted protocols in production.
+    </div>
+
+    <h2 id="en-incidents">3. Real-world security incidents</h2>
+
+    <h3>MongoDB Ransomware (January 2017)</h3>
+    <p>In January 2017, multiple attacker groups systematically scanned the internet for MongoDB instances without authentication. They found tens of thousands. Attackers deleted databases and left ransom notes (typically 0.2 BTC).</p>
+    <p>According to Shodan, <strong>over 28,000 MongoDB servers</strong> were compromised in the first few weeks. One attacker going by "Harak1r1" alone compromised over 2,000 databases.</p>
+    <p class="ref">Source: Bleeping Computer, "MongoDB Apocalypse", January 2017</p>
+
+    <h3>Redis unauthorized access</h3>
+    <p>In 2015, researchers demonstrated how an attacker could abuse a publicly accessible Redis instance to write an SSH key to the server and gain full root access — without knowing any password. The technique uses the <code>CONFIG SET</code> command to change the data save directory.</p>
+    <p>According to Shodan statistics, millions of Redis instances still listen on public IP addresses, many without any authentication.</p>
+    <p class="ref">Source: Antirez blog, "A few things about Redis security", 2015</p>
+
+    <h3>Elasticsearch data breaches</h3>
+    <p>In December 2019, researcher Bob Diachenko found an unprotected Elasticsearch cluster exposing 1.2 billion records with personal data (names, emails, phone numbers, LinkedIn profiles). The data had been aggregated from multiple sources (data enrichment services).</p>
+    <p class="ref">Source: DataViper/Vinny Troia, "1.2 Billion Records Found Exposed Online", 2019</p>
+
+    <h2 id="en-nmap">4. Nmap — port scanning</h2>
+    <p>Nmap (Network Mapper) is the most popular open-source tool for network scanning and port discovery. It is used by both security professionals and system administrators.</p>
+
+    <h3>Basic Nmap commands</h3>
+    <pre><code># Scan the most common 1000 ports
+nmap your-server.com
+
+# Scan ALL ports (0-65535)
+nmap -p- your-server.com
+
+# Scan with service and version detection
+nmap -sV your-server.com
+
+# Scan specific ports
+nmap -p 22,80,443,3306,5432,6379,27017,9200 your-server.com
+
+# Aggressive scan (OS detection, scripts, traceroute)
+nmap -A your-server.com
+
+# UDP scan (slower but important)
+nmap -sU -p 53,161,123 your-server.com
+
+# Scan with NSE vulnerability scripts
+nmap --script vuln your-server.com</code></pre>
+
+    <h3>Reading results</h3>
+    <pre><code>PORT      STATE    SERVICE    VERSION
+22/tcp    open     ssh        OpenSSH 8.9
+80/tcp    open     http       nginx 1.18
+443/tcp   open     ssl/http   nginx 1.18
+3306/tcp  filtered mysql      &lt;-- firewall blocking, good!
+6379/tcp  open     redis      Redis 7.0.5  &lt;-- DANGEROUS!
+9200/tcp  closed   wap-wsp    &lt;-- port closed, OK</code></pre>
+
+    <table>
+      <tr><th>State</th><th>Meaning</th><th>Action</th></tr>
+      <tr><td><code>open</code></td><td>Port is actively listening</td><td>Check if it needs to be public</td></tr>
+      <tr><td><code>closed</code></td><td>Port reachable but nothing listening</td><td>Generally OK</td></tr>
+      <tr><td><code>filtered</code></td><td>Firewall blocking access</td><td>Good config for internal services</td></tr>
+    </table>
+
+    <h2 id="en-protection">5. Protection methods</h2>
+
+    <h3>5.1 Firewall rules (iptables / ufw)</h3>
+    <pre><code># UFW (Ubuntu Uncomplicated Firewall) — recommended for beginners
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow 22/tcp      # SSH
+sudo ufw allow 80/tcp      # HTTP
+sudo ufw allow 443/tcp     # HTTPS
+sudo ufw enable
+
+# Allow MySQL access only from a specific IP
+sudo ufw allow from 10.0.1.5 to any port 3306
+
+# iptables — advanced configuration
+iptables -A INPUT -p tcp --dport 6379 -s 10.0.1.0/24 -j ACCEPT
+iptables -A INPUT -p tcp --dport 6379 -j DROP</code></pre>
+
+    <h3>5.2 Bind to localhost</h3>
+    <p>Configure services to listen only on <code>127.0.0.1</code> instead of <code>0.0.0.0</code>:</p>
+    <pre><code># MySQL (my.cnf)
+[mysqld]
+bind-address = 127.0.0.1
+
+# Redis (redis.conf)
+bind 127.0.0.1 -::1
+
+# MongoDB (mongod.conf)
+net:
+  bindIp: 127.0.0.1
+
+# Elasticsearch (elasticsearch.yml)
+network.host: 127.0.0.1</code></pre>
+
+    <h3>5.3 SSH tunneling</h3>
+    <p>To access internal services from a remote location, use an SSH tunnel instead of publicly exposing the port:</p>
+    <pre><code># Create SSH tunnel to remote MySQL
+ssh -L 3306:localhost:3306 user@server.com
+
+# Now you can access remote MySQL locally
+mysql -h 127.0.0.1 -P 3306 -u user -p</code></pre>
+
+    <h3>5.4 VPN for internal services</h3>
+    <p>Use WireGuard or OpenVPN for internal service access. All database services and admin panels should only be accessible via VPN.</p>
+
+    <h2 id="en-cloud">6. Cloud security groups</h2>
+
+    <h3>AWS Security Groups</h3>
+    <pre><code># AWS CLI — create security group with minimal access
+aws ec2 create-security-group \
+  --group-name web-server-sg \
+  --description "Web server security group"
+
+# Allow only HTTP and HTTPS
+aws ec2 authorize-security-group-ingress \
+  --group-name web-server-sg \
+  --protocol tcp --port 80 --cidr 0.0.0.0/0
+
+aws ec2 authorize-security-group-ingress \
+  --group-name web-server-sg \
+  --protocol tcp --port 443 --cidr 0.0.0.0/0
+
+# SSH only from your IP address
+aws ec2 authorize-security-group-ingress \
+  --group-name web-server-sg \
+  --protocol tcp --port 22 --cidr 203.0.113.50/32</code></pre>
+
+    <h3>Google Cloud Firewall</h3>
+    <pre><code># GCP — allow only web traffic
+gcloud compute firewall-rules create allow-web \
+  --allow tcp:80,tcp:443 \
+  --source-ranges 0.0.0.0/0 \
+  --target-tags web-server
+
+# Block all databases from the internet
+gcloud compute firewall-rules create deny-db \
+  --action deny \
+  --rules tcp:3306,tcp:5432,tcp:27017,tcp:6379,tcp:9200 \
+  --source-ranges 0.0.0.0/0 \
+  --priority 100</code></pre>
+
+    <div class="callout">
+      <strong>Golden rule:</strong> Principle of Least Privilege. Only open ports that absolutely must be publicly accessible. Everything else should be behind a firewall or accessible only via VPN.
+    </div>
+
+    <h2 id="en-faq">7. Frequently asked questions</h2>
+
+    <div class="callout">
+      <strong>Q: Is it enough to just change the default port (e.g., MySQL from 3306 to 33060)?</strong><br>
+      A: No. "Security through obscurity" is not real protection. Nmap can scan all 65,535 ports, and Shodan automatically detects services regardless of port. Use a firewall and authentication.
+    </div>
+
+    <div class="callout">
+      <strong>Q: How can I check if my ports are publicly visible?</strong><br>
+      A: Use Shodan.io to check from an internet perspective, or run <code>nmap -sV -p- your-server.com</code> from another machine. Also, our <a href="./index.html">Web Security Scanner</a> checks for the most common risky ports.
+    </div>
+
+    <div class="callout">
+      <strong>Q: Is port 22 (SSH) safe to leave open?</strong><br>
+      A: SSH is designed to be publicly accessible, but take precautions: use keys instead of passwords, disable root login, use fail2ban for brute-force protection, and consider port knocking.
+    </div>
+
+    <h2 id="en-ref">8. References</h2>
+    <ul>
+      <li class="ref"><a href="https://www.sans.org/top25-software-errors/" target="_blank" rel="noopener">SANS Top 25 Most Dangerous Software Errors</a></li>
+      <li class="ref"><a href="https://www.shodan.io" target="_blank" rel="noopener">Shodan — Search Engine for Internet-Connected Devices</a></li>
+      <li class="ref"><a href="https://nmap.org/book/man.html" target="_blank" rel="noopener">Nmap Reference Guide (nmap.org)</a></li>
+      <li class="ref"><a href="https://www.bleepingcomputer.com/news/security/mongodb-apocalypse-is-here-as-ransom-attacks-hit-10-000-servers/" target="_blank" rel="noopener">Bleeping Computer: MongoDB Apocalypse (2017)</a></li>
+      <li class="ref"><a href="https://antirez.com/news/96" target="_blank" rel="noopener">Antirez: A few things about Redis security</a></li>
+      <li class="ref"><a href="https://www.dataviper.io/blog/2019/pdl-data-exposure-billion-people/" target="_blank" rel="noopener">DataViper: 1.2 Billion Records Found Exposed Online (2019)</a></li>
+    </ul>
+
+    <a href="./index.html" class="cta">Scan your site for free &rarr;</a>
+  </div>
+
+  <div class="nav-links">
+    <a href="./blog-security-ssl.html"><span class="sr">SSL/TLS vodic</span><span class="en">SSL/TLS Guide</span></a>
+    <a href="./blog-security-headers.html"><span class="sr">HTTP Security Headers</span><span class="en">HTTP Security Headers</span></a>
+    <a href="./blog-security-xss.html"><span class="sr">XSS napadi</span><span class="en">XSS Attacks</span></a>
+    <a href="./blog-security-sql.html"><span class="sr">SQL Injection</span><span class="en">SQL Injection</span></a>
+    <a href="./blog-security-csrf.html"><span class="sr">CSRF napadi</span><span class="en">CSRF Attacks</span></a>
+    <a href="./blog-security-dns.html"><span class="sr">DNS bezbednost</span><span class="en">DNS Security</span></a>
+    <a href="./blog-security-api.html"><span class="sr">API bezbednost</span><span class="en">API Security</span></a>
+  </div>
+
+  </main>
+</div>
+<script src="./blog-common.js" defer></script>
+</body>
+</html>

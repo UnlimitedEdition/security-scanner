@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Strukturirani podaci (Schema.org) — JSON-LD vodic | Web Security Scanner</title>
+  <meta name="description" content="Kompletni vodic za Schema.org strukturirane podatke: JSON-LD primeri za Article, FAQPage, HowTo, Product, LocalBusiness, Organization. Rich snippets u Google-u.">
+  <meta name="keywords" content="Schema.org, structured data, JSON-LD, rich snippets, Google, Article, FAQPage, HowTo, Product, LocalBusiness">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <link rel="canonical" href="https://security-scanner-ruddy.vercel.app/blog-seo-schema.html">
+  <link rel="alternate" hreflang="sr" href="https://security-scanner-ruddy.vercel.app/blog-seo-schema.html">
+  <link rel="alternate" hreflang="en" href="https://security-scanner-ruddy.vercel.app/blog-seo-schema.html">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Schema.org Strukturirani podaci — JSON-LD vodic sa primerima">
+  <meta property="og:description" content="7 najvaznijih Schema tipova sa kompletnim JSON-LD primerima. Rich snippets, alati i testiranje.">
+  <meta property="og:url" content="https://security-scanner-ruddy.vercel.app/blog-seo-schema.html">
+  <meta property="og:site_name" content="Web Security Scanner">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Schema.org Strukturirani podaci — JSON-LD vodic sa primerima">
+  <meta name="twitter:description" content="7 najvaznijih Schema tipova sa kompletnim JSON-LD primerima. Rich snippets, alati i testiranje.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Strukturirani podaci (Schema.org) — JSON-LD vodic",
+    "author": {"@type": "Person", "name": "Toske", "url": "https://toske-programer.web.app"},
+    "publisher": {"@type": "Organization", "name": "Web Security Scanner"},
+    "datePublished": "2026-04-09",
+    "dateModified": "2026-04-09",
+    "description": "Kompletni vodic za Schema.org: JSON-LD primeri za Article, FAQPage, HowTo, Product, LocalBusiness. Rich snippets u Google-u.",
+    "mainEntityOfPage": {"@type": "WebPage", "@id": "https://security-scanner-ruddy.vercel.app/blog-seo-schema.html"}
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Da li Schema.org pomaze rangiranju na Google-u?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Schema.org nije direktan faktor rangiranja, ali indirektno pomaze kroz rich snippets koji povecavaju CTR za 20-30%. Veci CTR signalizira Google-u da je rezultat relevantan, sto moze poboljsati poziciju. Google je potvrdio da koristi strukturirane podatke za bolje razumevanje sadrzaja."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Koji format koristiti za strukturirane podatke?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Google preporucuje JSON-LD format. JSON-LD se dodaje kao <script> tag u <head> ili <body> sekciji i ne mesa se sa HTML kodom stranice. Microdata i RDFa su stariji formati koji zahtevaju modifikaciju HTML-a i tezi su za odrzavanje."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Kako testirati strukturirane podatke?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Koristite Google Rich Results Test (search.google.com/test/rich-results) za proveru da li vasi podaci kvalifikuju za rich snippets. Schema Markup Validator (validator.schema.org) proverava ispravnost sintakse. Google Search Console prikazuje greske u Enhancements sekciji."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Koliko Schema tipova mogu imati na jednoj stranici?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Mozete imati vise Schema tipova na jednoj stranici — na primer Article + FAQPage + BreadcrumbList. Svaki se dodaje kao poseban JSON-LD <script> blok. Google ce prikazati rich snippet za svaki tip koji kvalifikuje."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Da li je Schema.org obavezan za SEO?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Nije obavezan, ali je snazno preporucen. Sajtovi sa structured data imaju 30% veci CTR u proseku. Za e-commerce, recepte, FAQ sekcije i lokalne biznise, Schema je prakticno neophodan za konkurentnost u SERP-u."
+        }
+      }
+    ]
+  }
+  </script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+</head>
+<body>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr"><div class="timeline-title">Sadrzaj</div><ol id="timeline-sr"></ol></div>
+    <div class="en"><div class="timeline-title">Contents</div><ol id="timeline-en"></ol></div>
+  </aside>
+  <main class="blog-content">
+
+  <!-- ==================== SRPSKI ==================== -->
+  <div class="sr">
+    <h1>Strukturirani podaci (Schema.org) &mdash; JSON-LD vodic</h1>
+    <p class="subtitle">Kako pomoci Google-u da razume vas sajt i prikaze rich snippets u rezultatima pretrage</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">30%</div><div class="stat-label">Veci CTR sa rich snippets (Search Engine Land)</div></div>
+      <div class="stat-card"><div class="stat-num">800+</div><div class="stat-label">Schema.org tipova</div></div>
+      <div class="stat-card"><div class="stat-num">JSON-LD</div><div class="stat-label">Google-ov preporuceni format</div></div>
+      <div class="stat-card"><div class="stat-num">33%</div><div class="stat-label">Sajtova koristi structured data (Web Almanac)</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Sadrzaj</h3>
+      <ol>
+        <li><a href="#s1">Sta su strukturirani podaci</a></li>
+        <li><a href="#s2">Formati: JSON-LD vs Microdata vs RDFa</a></li>
+        <li><a href="#s3">Article / BlogPosting</a></li>
+        <li><a href="#s4">FAQPage</a></li>
+        <li><a href="#s5">HowTo</a></li>
+        <li><a href="#s6">Product (e-commerce)</a></li>
+        <li><a href="#s7">LocalBusiness</a></li>
+        <li><a href="#s8">Organization + BreadcrumbList</a></li>
+        <li><a href="#s9">Rich Results — sta su i kako izgledaju</a></li>
+        <li><a href="#s10">Alati za testiranje i generisanje</a></li>
+        <li><a href="#s11">Najcesce greske</a></li>
+        <li><a href="#s12">Reference i resursi</a></li>
+      </ol>
+    </div>
+
+    <h2 id="s1">1. Sta su strukturirani podaci i zasto ih Google koristi</h2>
+    <p>Strukturirani podaci su standardizovani format za oznacavanje informacija na web stranici. Dok ljudi mogu citati tekst i razumeti kontekst, pretrazivaci to ne mogu pouzdano. Schema.org markup eksplicitno govori Google-u: "ovo je clanak", "ovo je cena proizvoda", "ovo je adresa firme".</p>
+    <p>Google koristi strukturirane podatke za:</p>
+    <ul>
+      <li><strong>Rich Snippets</strong> &mdash; prosireni rezultati sa zvezdicama, cenama, slikama, FAQ akordionima</li>
+      <li><strong>Knowledge Graph</strong> &mdash; informacioni paneli na desnoj strani Google rezultata</li>
+      <li><strong>Google Discover</strong> &mdash; preporuke sadrzaja na mobilnom</li>
+      <li><strong>Voice Search</strong> &mdash; Google Assistant koristi structured data za odgovore</li>
+      <li><strong>Bolje razumevanje</strong> &mdash; entiteti, relacije, kontekst stranice</li>
+    </ul>
+    <div class="callout"><strong>Cinjenica:</strong> Schema.org je kreiran 2011. zajednickim naporom Google-a, Microsoft-a (Bing), Yahoo-a i Yandex-a. Danas ima preko 800 tipova i 1,400+ properties.</div>
+
+    <h2 id="s2">2. Formati: JSON-LD vs Microdata vs RDFa</h2>
+    <p>Postoje tri formata za dodavanje strukturiranih podataka:</p>
+    <table>
+      <tr><th>Format</th><th>Pristup</th><th>Google preporuka</th><th>Tezina</th></tr>
+      <tr><td><strong>JSON-LD</strong></td><td>Poseban &lt;script&gt; blok</td><td>Preporucen &#10004;</td><td>Lako</td></tr>
+      <tr><td>Microdata</td><td>HTML atributi (itemscope, itemprop)</td><td>Podrzano</td><td>Srednje</td></tr>
+      <tr><td>RDFa</td><td>HTML atributi (typeof, property)</td><td>Podrzano</td><td>Tesko</td></tr>
+    </table>
+    <p><strong>Zasto JSON-LD?</strong></p>
+    <ul>
+      <li>Ne modifikuje HTML &mdash; dodaje se kao zaseban <code>&lt;script&gt;</code> tag</li>
+      <li>Lakse za odrzavanje &mdash; markup je odvojen od prikaza</li>
+      <li>Google ga eksplicitno preporucuje u dokumentaciji</li>
+      <li>Moze se dinamicki generisati sa JavaScript-om</li>
+      <li>Manje sanse za gresku nego Microdata sa isprepletenim atributima</li>
+    </ul>
+    <pre><code>&lt;!-- JSON-LD — cist, odvojen od HTML-a --&gt;
+&lt;script type="application/ld+json"&gt;
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Naslov clanka"
+}
+&lt;/script&gt;
+
+&lt;!-- Microdata — umesto u HTML atributima --&gt;
+&lt;div itemscope itemtype="https://schema.org/Article"&gt;
+  &lt;h1 itemprop="headline"&gt;Naslov clanka&lt;/h1&gt;
+&lt;/div&gt;</code></pre>
+
+    <h2 id="s3">3. Article / BlogPosting</h2>
+    <p>Najcesci tip za blog clanke i vesti. Omogucava Google-u da prikaze datum objave, autora i sliku u rezultatima.</p>
+    <pre><code>&lt;script type="application/ld+json"&gt;
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Meta Tagovi — Title i Description optimizacija",
+  "author": {
+    "@type": "Person",
+    "name": "Toske",
+    "url": "https://toske-programer.web.app"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Web Security Scanner",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://vasajt.rs/logo.png"
+    }
+  },
+  "datePublished": "2026-04-09",
+  "dateModified": "2026-04-09",
+  "image": "https://vasajt.rs/cover.jpg",
+  "description": "Kompletni vodic za HTML meta tagove...",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://vasajt.rs/blog-seo-meta"
+  }
+}
+&lt;/script&gt;</code></pre>
+    <div class="callout callout-warn"><strong>BlogPosting vs Article:</strong> <code>BlogPosting</code> je podtip od <code>Article</code>. Za blog koristite BlogPosting, za vesti NewsArticle. Google ih tretira slicno &mdash; Article je najsigurniji izbor.</div>
+
+    <h2 id="s4">4. FAQPage</h2>
+    <p>FAQ schema prikazuje pitanja i odgovore direktno u Google rezultatima kao prosirivi akordion. Ovo <strong>dramaticno povecava vidljivost</strong> &mdash; vas rezultat moze zauzeti 3-4x vise prostora u SERP-u.</p>
+    <pre><code>&lt;script type="application/ld+json"&gt;
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Sta je Schema.org?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Schema.org je standardizovani recnik za oznacavanje
+                strukturiranih podataka na web stranicama."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Da li Schema utice na SEO?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Indirektno — rich snippets povecavaju CTR za 20-30%,
+                sto signalizira relevantnost Google-u."
+      }
+    }
+  ]
+}
+&lt;/script&gt;</code></pre>
+    <div class="callout"><strong>Vazno (2023 promena):</strong> Google je u avgustu 2023. smanjio prikazivanje FAQ rich results-a. Sada ih prikazuje samo za autoritativne izvore (vladine i zdravstvene sajtove). Ipak, Schema i dalje pomaze Google-u da razume sadrzaj i moze se prikazati u drugim kontekstima.</div>
+
+    <h2 id="s5">5. HowTo</h2>
+    <p>Za vodice i tutoriale korak-po-korak. Google moze prikazati korake direktno u rezultatima sa slikama.</p>
+    <pre><code>&lt;script type="application/ld+json"&gt;
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "Kako instalirati SSL sertifikat sa Let's Encrypt",
+  "description": "Vodic za besplatan SSL sertifikat u 3 koraka.",
+  "totalTime": "PT10M",
+  "estimatedCost": {
+    "@type": "MonetaryAmount",
+    "currency": "EUR",
+    "value": "0"
+  },
+  "step": [
+    {
+      "@type": "HowToStep",
+      "name": "Instalirajte Certbot",
+      "text": "Pokrenite: sudo apt install certbot python3-certbot-nginx",
+      "url": "https://vasajt.rs/ssl-vodic#korak1"
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Pokrenite Certbot",
+      "text": "Pokrenite: sudo certbot --nginx -d vasadomena.com",
+      "url": "https://vasajt.rs/ssl-vodic#korak2"
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Potvrdite auto-renewal",
+      "text": "Testirajte: sudo certbot renew --dry-run",
+      "url": "https://vasajt.rs/ssl-vodic#korak3"
+    }
+  ]
+}
+&lt;/script&gt;</code></pre>
+
+    <h2 id="s6">6. Product (e-commerce)</h2>
+    <p>Kriticno za online prodavnice. Prikazuje cenu, dostupnost, ocene i slike direktno u Google rezultatima. Sajtovi sa Product schema imaju <strong>do 35% veci CTR</strong> za komercijalne upite.</p>
+    <pre><code>&lt;script type="application/ld+json"&gt;
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": "Wireless Bluetooth Slusalice",
+  "image": "https://vasajt.rs/slusalice.jpg",
+  "description": "Bezdratne slusalice sa ANC tehnologijom, 30h baterija.",
+  "brand": {
+    "@type": "Brand",
+    "name": "TechBrand"
+  },
+  "sku": "BT-500",
+  "offers": {
+    "@type": "Offer",
+    "url": "https://vasajt.rs/slusalice",
+    "priceCurrency": "RSD",
+    "price": "8990",
+    "availability": "https://schema.org/InStock",
+    "seller": {
+      "@type": "Organization",
+      "name": "Vas Shop"
+    }
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.6",
+    "reviewCount": "127"
+  }
+}
+&lt;/script&gt;</code></pre>
+    <div class="callout callout-warn"><strong>Google Merchant Center:</strong> Za prikaz u Google Shopping tabu, Product schema nije dovoljan &mdash; morate se registrovati u Google Merchant Center i podesiti product feed.</div>
+
+    <h2 id="s7">7. LocalBusiness</h2>
+    <p>Obavezan za lokalne biznise. Prikazuje adresu, radno vreme, telefon i recenzije u Google Maps i lokalnim rezultatima. Detaljnije u nasem <a href="./blog-seo-local.html">Lokalni SEO vodicu</a>.</p>
+    <pre><code>&lt;script type="application/ld+json"&gt;
+{
+  "@context": "https://schema.org",
+  "@type": "Restaurant",
+  "name": "Kafana Kod Brace",
+  "image": "https://kafana.rs/foto.jpg",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Knez Mihailova 15",
+    "addressLocality": "Beograd",
+    "postalCode": "11000",
+    "addressCountry": "RS"
+  },
+  "telephone": "+381-11-123-4567",
+  "url": "https://kafana.rs",
+  "priceRange": "$$",
+  "servesCuisine": "Srpska kuhinja",
+  "openingHoursSpecification": [
+    {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"],
+      "opens": "10:00",
+      "closes": "23:00"
+    },
+    {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": ["Saturday","Sunday"],
+      "opens": "11:00",
+      "closes": "01:00"
+    }
+  ],
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.7",
+    "reviewCount": "312"
+  },
+  "geo": {
+    "@type": "GeoCoordinates",
+    "latitude": 44.8176,
+    "longitude": 20.4569
+  }
+}
+&lt;/script&gt;</code></pre>
+
+    <h2 id="s8">8. Organization + BreadcrumbList</h2>
+
+    <h3>Organization</h3>
+    <p>Definise vasu organizaciju za Knowledge Graph panel na desnoj strani Google-a.</p>
+    <pre><code>&lt;script type="application/ld+json"&gt;
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Web Security Scanner",
+  "url": "https://security-scanner-ruddy.vercel.app",
+  "logo": "https://security-scanner-ruddy.vercel.app/logo.png",
+  "sameAs": [
+    "https://github.com/vasuser",
+    "https://twitter.com/vasuser"
+  ],
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "email": "info@vasajt.rs",
+    "contactType": "customer service"
+  }
+}
+&lt;/script&gt;</code></pre>
+
+    <h3>BreadcrumbList</h3>
+    <p>Prikazuje putanju navigacije u Google rezultatima umesto golog URL-a. Poboljsava izgled i korisnicko iskustvo.</p>
+    <pre><code>&lt;script type="application/ld+json"&gt;
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Pocetna",
+      "item": "https://vasajt.rs/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "SEO Vodic",
+      "item": "https://vasajt.rs/blog-seo"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Schema.org"
+    }
+  ]
+}
+&lt;/script&gt;</code></pre>
+
+    <h2 id="s9">9. Rich Results &mdash; sta su i kako izgledaju</h2>
+    <p>Rich Results su prosireni rezultati u Google pretrazi koji sadrze vise informacija od standardnog plavog linka. Tipovi:</p>
+    <table>
+      <tr><th>Rich Result tip</th><th>Schema koji ga aktivira</th><th>Sta prikazuje</th></tr>
+      <tr><td>FAQ Accordion</td><td>FAQPage</td><td>Prosiriva pitanja/odgovori ispod rezultata</td></tr>
+      <tr><td>How-To Steps</td><td>HowTo</td><td>Koraci sa slikama u rezultatima</td></tr>
+      <tr><td>Product Box</td><td>Product + Offer</td><td>Cena, dostupnost, ocene sa zvezdicama</td></tr>
+      <tr><td>Review Stars</td><td>AggregateRating</td><td>Zvezdice (1-5) ispod naslova</td></tr>
+      <tr><td>Breadcrumbs</td><td>BreadcrumbList</td><td>Putanja navigacije umesto URL-a</td></tr>
+      <tr><td>Sitelinks Search</td><td>WebSite + SearchAction</td><td>Search box direktno u Google-u</td></tr>
+      <tr><td>Recipe Card</td><td>Recipe</td><td>Slika, vreme, kalorije, ocene</td></tr>
+      <tr><td>Event</td><td>Event</td><td>Datum, lokacija, cena karata</td></tr>
+    </table>
+    <div class="callout callout-danger"><strong>Upozorenje:</strong> Lazni ili manipulativni structured data (lazne recenzije, pogresne cene) mogu dovesti do <strong>manual action</strong> kazne u Google Search Console i uklanjanja iz rezultata.</div>
+
+    <h2 id="s10">10. Alati za testiranje i generisanje</h2>
+    <h3>Testiranje</h3>
+    <ul>
+      <li><strong><a href="https://search.google.com/test/rich-results" target="_blank">Google Rich Results Test</a></strong> &mdash; proverava da li vasi podaci kvalifikuju za rich snippets. Prikazuje kako ce izgledati u Google-u.</li>
+      <li><strong><a href="https://validator.schema.org/" target="_blank">Schema Markup Validator</a></strong> &mdash; detaljnija provera sintakse i upozorenja za sve Schema.org tipove.</li>
+      <li><strong>Google Search Console</strong> &mdash; Enhancements sekcija prikazuje greske u structured data na celom sajtu.</li>
+      <li><strong><a href="./index.html">Web Security Scanner</a></strong> &mdash; detektuje prisustvo structured data na vasem sajtu.</li>
+    </ul>
+    <h3>Generisanje</h3>
+    <ul>
+      <li><strong><a href="https://technicalseo.com/tools/schema-markup-generator/" target="_blank">TechnicalSEO Schema Generator</a></strong> &mdash; vizuelni generator za sve popularne Schema tipove.</li>
+      <li><strong>Merkle Schema Markup Generator</strong> &mdash; slican alat sa podrsikom za vise tipova.</li>
+      <li><strong>Rank Math / Yoast SEO</strong> &mdash; WordPress plugini koji automatski generisu Article, FAQPage, HowTo i druge Schema tipove.</li>
+      <li><strong>Rucno pisanje</strong> &mdash; za napredne korisnike, koristite Schema.org dokumentaciju i JSON-LD Playground za eksperimentisanje.</li>
+    </ul>
+
+    <h2 id="s11">11. Najcesce greske</h2>
+    <ul>
+      <li><strong>Markup koji ne odgovara sadrzaju</strong> &mdash; Product schema na stranici koja nije prodajni listing. Google ovo strogo sankcionise.</li>
+      <li><strong>Nepotpuni podaci</strong> &mdash; Product bez cene, Article bez autora. Google ignorise nepotpune podatke.</li>
+      <li><strong>Lazne recenzije</strong> &mdash; aggregateRating bez stvarnih recenzija. Moze dovesti do manual action.</li>
+      <li><strong>Microdata greske</strong> &mdash; isprepleteni atributi u slozeenom HTML-u. Zato koristite JSON-LD.</li>
+      <li><strong>Outdated markup</strong> &mdash; koriscenje zastarelih tipova ili properties. Proverite Schema.org release notes.</li>
+      <li><strong>Sakriveni sadrzaj</strong> &mdash; structured data za sadrzaj koji korisnici ne mogu videti na stranici. Google ovo tretira kao prevaru.</li>
+      <li><strong>Vise istih tipova nepotrebno</strong> &mdash; dva Article schema na istoj stranici zbunjuju Google.</li>
+    </ul>
+    <div class="callout"><strong>Zlatno pravilo:</strong> Strukturirani podaci MORAJU odgovarati vidljivom sadrzaju na stranici. Ako pisite FAQ schema, pitanja i odgovori moraju biti vidljivi korisnicima na stranici.</div>
+
+    <h2 id="s12">12. Reference i resursi</h2>
+    <ul>
+      <li><a href="https://schema.org/" target="_blank">Schema.org &mdash; Kompletna dokumentacija</a></li>
+      <li><a href="https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data" target="_blank">Google &mdash; Uvod u Structured Data</a></li>
+      <li><a href="https://developers.google.com/search/docs/appearance/structured-data/article" target="_blank">Google &mdash; Article Schema</a></li>
+      <li><a href="https://developers.google.com/search/docs/appearance/structured-data/faqpage" target="_blank">Google &mdash; FAQPage Schema</a></li>
+      <li><a href="https://developers.google.com/search/docs/appearance/structured-data/product" target="_blank">Google &mdash; Product Schema</a></li>
+      <li><a href="https://developers.google.com/search/docs/appearance/structured-data/local-business" target="_blank">Google &mdash; LocalBusiness Schema</a></li>
+      <li><a href="https://search.google.com/test/rich-results" target="_blank">Google Rich Results Test</a></li>
+      <li><a href="https://validator.schema.org/" target="_blank">Schema Markup Validator</a></li>
+      <li><a href="https://www.searchenginejournal.com/structured-data-seo/" target="_blank">Search Engine Journal &mdash; Structured Data Guide</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Proverite structured data vaseg sajta &rarr;</a>
+  </div>
+
+  <!-- ==================== ENGLISH ==================== -->
+  <div class="en">
+    <h1>Structured Data (Schema.org) &mdash; JSON-LD Guide</h1>
+    <p class="subtitle">How to help Google understand your site and display rich snippets in search results</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">30%</div><div class="stat-label">Higher CTR with rich snippets</div></div>
+      <div class="stat-card"><div class="stat-num">800+</div><div class="stat-label">Schema.org types</div></div>
+      <div class="stat-card"><div class="stat-num">JSON-LD</div><div class="stat-label">Google's recommended format</div></div>
+      <div class="stat-card"><div class="stat-num">33%</div><div class="stat-label">Sites use structured data</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#s1e">What are structured data</a></li>
+        <li><a href="#s2e">Formats: JSON-LD vs Microdata vs RDFa</a></li>
+        <li><a href="#s3e">Article / BlogPosting</a></li>
+        <li><a href="#s4e">FAQPage</a></li>
+        <li><a href="#s5e">HowTo</a></li>
+        <li><a href="#s6e">Product (e-commerce)</a></li>
+        <li><a href="#s7e">LocalBusiness</a></li>
+        <li><a href="#s8e">Organization + BreadcrumbList</a></li>
+        <li><a href="#s9e">Rich Results types</a></li>
+        <li><a href="#s10e">Testing and generation tools</a></li>
+        <li><a href="#s11e">Common mistakes</a></li>
+        <li><a href="#s12e">References</a></li>
+      </ol>
+    </div>
+
+    <h2 id="s1e">1. What are structured data and why Google uses them</h2>
+    <p>Structured data is a standardized format for marking up information on web pages. While humans read text and understand context, search engines need explicit markup: "this is an article", "this is a product price", "this is a business address".</p>
+    <p>Google uses structured data for: Rich Snippets, Knowledge Graph, Google Discover, Voice Search, and better content understanding.</p>
+    <div class="callout"><strong>Fact:</strong> Schema.org was created in 2011 jointly by Google, Microsoft (Bing), Yahoo, and Yandex. Today it has 800+ types and 1,400+ properties.</div>
+
+    <h2 id="s2e">2. Formats: JSON-LD vs Microdata vs RDFa</h2>
+    <table>
+      <tr><th>Format</th><th>Approach</th><th>Google recommendation</th></tr>
+      <tr><td><strong>JSON-LD</strong></td><td>Separate &lt;script&gt; block</td><td>Recommended &#10004;</td></tr>
+      <tr><td>Microdata</td><td>HTML attributes</td><td>Supported</td></tr>
+      <tr><td>RDFa</td><td>HTML attributes</td><td>Supported</td></tr>
+    </table>
+    <p><strong>Why JSON-LD?</strong> Doesn't modify HTML, easier to maintain, Google explicitly recommends it, can be dynamically generated with JavaScript.</p>
+
+    <h2 id="s3e">3. Article / BlogPosting</h2>
+    <p>Most common type for blog posts and news. Enables Google to display publish date, author, and image in results.</p>
+    <pre><code>{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Your Article Title",
+  "author": {"@type": "Person", "name": "Author Name"},
+  "datePublished": "2026-04-09",
+  "image": "https://yoursite.com/cover.jpg"
+}</code></pre>
+
+    <h2 id="s4e">4. FAQPage</h2>
+    <p>Displays questions and answers directly in Google results as expandable accordions. <strong>Dramatically increases visibility</strong> &mdash; your result can take up 3-4x more SERP space.</p>
+    <div class="callout"><strong>2023 change:</strong> Google reduced FAQ rich results display in August 2023. Now shown mainly for authoritative sources. Schema still helps Google understand content.</div>
+
+    <h2 id="s5e">5. HowTo</h2>
+    <p>For step-by-step guides and tutorials. Google can display steps directly in results with images. Include name, text, and URL for each step.</p>
+
+    <h2 id="s6e">6. Product (e-commerce)</h2>
+    <p>Critical for online stores. Displays price, availability, ratings, and images in Google results. Sites with Product schema get <strong>up to 35% higher CTR</strong> for commercial queries.</p>
+    <div class="callout callout-warn"><strong>Google Merchant Center:</strong> For Google Shopping tab, Product schema alone isn't enough &mdash; you need to register in Google Merchant Center with a product feed.</div>
+
+    <h2 id="s7e">7. LocalBusiness</h2>
+    <p>Essential for local businesses. Displays address, hours, phone, and reviews in Google Maps and local results. More in our <a href="./blog-seo-local.html">Local SEO guide</a>.</p>
+
+    <h2 id="s8e">8. Organization + BreadcrumbList</h2>
+    <p><strong>Organization:</strong> Defines your organization for the Knowledge Graph panel. Include name, URL, logo, social profiles.</p>
+    <p><strong>BreadcrumbList:</strong> Shows navigation path in Google results instead of raw URL. Improves appearance and user experience.</p>
+
+    <h2 id="s9e">9. Rich Results types</h2>
+    <table>
+      <tr><th>Rich Result</th><th>Schema type</th><th>Displays</th></tr>
+      <tr><td>FAQ Accordion</td><td>FAQPage</td><td>Expandable Q&amp;A below result</td></tr>
+      <tr><td>How-To Steps</td><td>HowTo</td><td>Steps with images</td></tr>
+      <tr><td>Product Box</td><td>Product + Offer</td><td>Price, availability, stars</td></tr>
+      <tr><td>Review Stars</td><td>AggregateRating</td><td>Star rating (1-5)</td></tr>
+      <tr><td>Breadcrumbs</td><td>BreadcrumbList</td><td>Navigation path</td></tr>
+      <tr><td>Recipe Card</td><td>Recipe</td><td>Image, time, calories</td></tr>
+    </table>
+    <div class="callout callout-danger"><strong>Warning:</strong> Fake or manipulative structured data (fake reviews, wrong prices) can result in a <strong>manual action</strong> penalty in Google Search Console.</div>
+
+    <h2 id="s10e">10. Testing and generation tools</h2>
+    <ul>
+      <li><strong><a href="https://search.google.com/test/rich-results" target="_blank">Google Rich Results Test</a></strong> &mdash; check if your data qualifies for rich snippets</li>
+      <li><strong><a href="https://validator.schema.org/" target="_blank">Schema Markup Validator</a></strong> &mdash; detailed syntax checking</li>
+      <li><strong>Google Search Console</strong> &mdash; Enhancements section shows structured data errors</li>
+      <li><strong><a href="https://technicalseo.com/tools/schema-markup-generator/" target="_blank">Schema Generator</a></strong> &mdash; visual generator for popular types</li>
+      <li><strong>Rank Math / Yoast SEO</strong> &mdash; WordPress plugins with auto Schema generation</li>
+    </ul>
+
+    <h2 id="s11e">11. Common mistakes</h2>
+    <ul>
+      <li><strong>Markup doesn't match content</strong> &mdash; Product schema on non-product page</li>
+      <li><strong>Incomplete data</strong> &mdash; Product without price, Article without author</li>
+      <li><strong>Fake reviews</strong> &mdash; aggregateRating without real reviews</li>
+      <li><strong>Hidden content</strong> &mdash; structured data for content users can't see</li>
+      <li><strong>Outdated markup</strong> &mdash; deprecated types or properties</li>
+    </ul>
+    <div class="callout"><strong>Golden rule:</strong> Structured data MUST match visible page content. If you add FAQ schema, the questions and answers must be visible to users on the page.</div>
+
+    <h2 id="s12e">12. References and resources</h2>
+    <ul>
+      <li><a href="https://schema.org/" target="_blank">Schema.org &mdash; Full documentation</a></li>
+      <li><a href="https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data" target="_blank">Google &mdash; Structured Data Intro</a></li>
+      <li><a href="https://developers.google.com/search/docs/appearance/structured-data/article" target="_blank">Google &mdash; Article Schema</a></li>
+      <li><a href="https://developers.google.com/search/docs/appearance/structured-data/faqpage" target="_blank">Google &mdash; FAQPage Schema</a></li>
+      <li><a href="https://developers.google.com/search/docs/appearance/structured-data/product" target="_blank">Google &mdash; Product Schema</a></li>
+      <li><a href="https://search.google.com/test/rich-results" target="_blank">Google Rich Results Test</a></li>
+      <li><a href="https://validator.schema.org/" target="_blank">Schema Markup Validator</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Check your site's structured data &rarr;</a>
+  </div>
+
+  <div class="nav-links">
+    <a href="./blog-seo.html"><span class="sr">SEO vodic</span><span class="en">SEO Guide</span></a>
+    <a href="./blog-seo-meta.html"><span class="sr">Meta Tagovi</span><span class="en">Meta Tags</span></a>
+    <a href="./blog-seo-sitemap.html"><span class="sr">Sitemap.xml</span><span class="en">Sitemap.xml</span></a>
+    <a href="./blog-seo-opengraph.html"><span class="sr">Open Graph</span><span class="en">Open Graph</span></a>
+    <a href="./blog-seo-headings.html"><span class="sr">Heading struktura</span><span class="en">Heading Structure</span></a>
+    <a href="./blog-seo-mobile.html"><span class="sr">Mobile SEO</span><span class="en">Mobile SEO</span></a>
+    <a href="./blog-seo-local.html"><span class="sr">Lokalni SEO</span><span class="en">Local SEO</span></a>
+  </div>
+
+  </main>
+</div>
+<script src="./blog-common.js" defer></script>
+</body>
+</html>

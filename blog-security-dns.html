@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DNS Bezbednost — SPF, DMARC, DNSSEC vodic | Web Security Scanner</title>
+  <meta name="description" content="Kompletan vodic za DNS bezbednost: SPF, DMARC, DNSSEC konfiguracija, DNS napadi (cache poisoning, spoofing) i zastita email-a od spoofing-a.">
+  <meta name="keywords" content="DNS, SPF, DMARC, DNSSEC, email spoofing, DNS poisoning, DNS hijacking, web bezbednost">
+  <meta property="og:title" content="DNS Bezbednost — SPF, DMARC, DNSSEC vodic | Web Security Scanner">
+  <meta property="og:description" content="Vodic za DNS bezbednost: SPF, DMARC i DNSSEC konfiguracija, DNS napadi i zastita od email spoofing-a.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://web-security-scanner.vercel.app/blog-security-dns.html">
+  <meta property="og:site_name" content="Web Security Scanner">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="DNS Bezbednost — SPF, DMARC, DNSSEC vodic | Web Security Scanner">
+  <meta name="twitter:description" content="Vodic za DNS bezbednost: SPF, DMARC i DNSSEC konfiguracija, DNS napadi i zastita od email spoofing-a.">
+  <link rel="canonical" href="https://web-security-scanner.vercel.app/blog-security-dns.html">
+  <link rel="alternate" hreflang="sr" href="https://web-security-scanner.vercel.app/blog-security-dns.html">
+  <link rel="alternate" hreflang="en" href="https://web-security-scanner.vercel.app/blog-security-dns.html">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "DNS Bezbednost — SPF, DMARC, DNSSEC vodic",
+    "description": "Kompletan vodic za DNS bezbednost: SPF, DMARC, DNSSEC konfiguracija, DNS napadi i zastita email-a od spoofing-a.",
+    "author": { "@type": "Person", "name": "Toske" },
+    "publisher": { "@type": "Organization", "name": "Web Security Scanner" },
+    "datePublished": "2026-04-08",
+    "dateModified": "2026-04-08",
+    "mainEntityOfPage": "https://web-security-scanner.vercel.app/blog-security-dns.html",
+    "keywords": ["DNS", "SPF", "DMARC", "DNSSEC", "email spoofing", "DNS poisoning"]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Sta je SPF record i zasto mi je potreban?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "SPF (Sender Policy Framework) je DNS TXT zapis koji definise koji mail serveri su ovlasceni da salju email u ime vaseg domena. Bez SPF-a, napadaci mogu slati email-ove koji izgledaju kao da dolaze sa vase adrese."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Koja je razlika izmedju DMARC p=none i p=reject?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "p=none samo prati i izvestava o neuskladjenim email-ovima bez ikakve akcije. p=reject nalaze primajucem serveru da odbije email-ove koji ne prolaze DMARC proveru, pruzajuci punu zastitu od spoofinga."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Koliki procenat domena koristi DNSSEC?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Prema APNIC istrazivanjima, samo oko 5% globalnih domena ima potpuno implementiran DNSSEC, sto ostavlja ogromnu vecinu domena ranjivom na DNS spoofing i cache poisoning napade."
+        }
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr"><div class="timeline-title">Sadrzaj</div><ol id="timeline-sr"></ol></div>
+    <div class="en"><div class="timeline-title">Contents</div><ol id="timeline-en"></ol></div>
+  </aside>
+  <main class="blog-content">
+
+  <!-- SERBIAN -->
+  <div class="sr">
+    <h1>DNS Bezbednost — SPF, DMARC, DNSSEC vodic</h1>
+    <p class="subtitle">Objavljeno: 8. april 2026. &middot; Vreme citanja: 15 min</p>
+
+    <div class="toc">
+      <h3>Sadrzaj</h3>
+      <ol>
+        <li><a href="#sr-dns-osnove" style="color:#c0c4db;">Kako DNS radi</a></li>
+        <li><a href="#sr-napadi" style="color:#c0c4db;">DNS napadi</a></li>
+        <li><a href="#sr-kaminsky" style="color:#c0c4db;">Kaminsky napad (2008)</a></li>
+        <li><a href="#sr-spf" style="color:#c0c4db;">SPF — Sender Policy Framework</a></li>
+        <li><a href="#sr-dmarc" style="color:#c0c4db;">DMARC konfiguracija</a></li>
+        <li><a href="#sr-dnssec" style="color:#c0c4db;">DNSSEC — DNS Security Extensions</a></li>
+        <li><a href="#sr-faq" style="color:#c0c4db;">Cesto postavljana pitanja</a></li>
+        <li><a href="#sr-ref" style="color:#c0c4db;">Reference</a></li>
+      </ol>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-num">~5%</div>
+        <div class="stat-label">Domena sa DNSSEC-om (APNIC)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">91%</div>
+        <div class="stat-label">Sajber napada pocinje email-om (Verizon DBIR)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">3.4B</div>
+        <div class="stat-label">Phishing email-ova dnevno (Radicati)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">80%</div>
+        <div class="stat-label">Domena bez DMARC-a (Agari)</div>
+      </div>
+    </div>
+
+    <h2 id="sr-dns-osnove">1. Kako DNS radi</h2>
+    <p>DNS (Domain Name System) je sistem koji prevodi ljudski citljive domene (npr. <code>google.com</code>) u IP adrese (npr. <code>142.250.185.78</code>) koje racunari koriste za komunikaciju. Cesto se naziva "telefonski imenik interneta".</p>
+
+    <h3>DNS hijerarhija</h3>
+    <p>DNS koristi hijerarhijsku strukturu sa cetiri nivoa:</p>
+    <ol>
+      <li><strong>DNS Resolver (Recursive)</strong> — vas ISP ili javni resolver (8.8.8.8, 1.1.1.1) koji prima vase upite i trazi odgovore</li>
+      <li><strong>Root serveri</strong> — 13 root server klastera (a.root-servers.net do m.root-servers.net) koji usmeravaju ka TLD serverima</li>
+      <li><strong>TLD serveri</strong> — serveri za top-level domene (.com, .rs, .org) koji znaju gde su autoritativni serveri za svaki domen</li>
+      <li><strong>Autoritativni DNS serveri</strong> — krajnji serveri koji cuvaju stvarne DNS zapise za domen (A, AAAA, MX, TXT, CNAME itd.)</li>
+    </ol>
+
+    <h3>DNS upit korak po korak</h3>
+    <pre><code>Korisnik ukucava: www.primer.rs
+  |
+  v
+1. Browser proverava lokalni kes
+2. OS proverava hosts fajl i lokalni DNS kes
+3. Salje upit ka DNS resolver-u (npr. 8.8.8.8)
+4. Resolver pita root server: "Gde je .rs?"
+5. Root odgovara: "Pitaj ns1.rnids.rs"
+6. Resolver pita TLD server: "Gde je primer.rs?"
+7. TLD odgovara: "Pitaj ns1.primer.rs"
+8. Resolver pita autoritativni server: "Koja je IP za www.primer.rs?"
+9. Autoritativni odgovara: "93.87.x.x"
+10. Resolver kesira odgovor i vraca ga browseru</code></pre>
+
+    <h2 id="sr-napadi">2. DNS napadi</h2>
+
+    <h3>DNS Cache Poisoning</h3>
+    <p>Napadac ubacuje lazne DNS zapise u kes resolver-a, tako da svi korisnici tog resolver-a budu preusmereni na maliciozni server. Na primer, napadac moze preusmeriti <code>banka.rs</code> na svoj server sa laznom kopijom bankovnog sajta.</p>
+
+    <div class="callout callout-danger">
+      <strong>Opasnost:</strong> Kod cache poisoning-a, korisnik u browser-u vidi ispravan domen (banka.rs), ali je zapravo na napadacevom serveru. Bez HTTPS-a sa validnim sertifikatom, korisnik nema nacin da primeti prevaru.
+    </div>
+
+    <h3>DNS Spoofing</h3>
+    <p>Slicno cache poisoning-u, ali napadac presrece DNS upit direktno (npr. na istoj mrezi putem ARP spoofing-a) i vraca lazni odgovor pre nego sto legitimni server stigne da odgovori.</p>
+
+    <h3>DNS Hijacking</h3>
+    <p>Napadac preuzima kontrolu nad DNS zapisima domena — ili kompromitovanjem DNS provajdera, ili kradejom pristupa registraru domena. Ovo je najopasniji tip jer napadac ima punu kontrolu.</p>
+    <p>Poznati primer: 2019. godine, kampanja "Sea Turtle" je kompromitovala DNS registrare u Bliskom istoku i Severnoj Africi, preusmeravajuci email i web saobracaj vladnih organizacija.</p>
+    <p class="ref">Izvor: Cisco Talos Intelligence, "Sea Turtle" DNS Hijacking Campaign, 2019</p>
+
+    <h2 id="sr-kaminsky">3. Kaminsky napad (2008)</h2>
+    <p>U julu 2008. godine, istrazivac bezbednosti Dan Kaminsky je javno objavio fundamentalnu ranjivost u DNS protokolu. Ova ranjivost je omogucavala napadacu da otruje kes bilo kog DNS resolver-a u roku od samo 10 sekundi.</p>
+    <p>Problem je bio u tome sto je DNS koristio predvidljive Transaction ID-jeve (samo 16 bita, tj. 65,536 mogucnosti). Kaminsky je pokazao da napadac moze poslati hiljade laznih odgovora sa razlicitim Transaction ID-jevima i statisticki pogoditi ispravan ID pre nego sto legitimni odgovor stigne.</p>
+
+    <div class="callout callout-warn">
+      <strong>Uticaj:</strong> Ova ranjivost je zahtevala hitno koordinisano azuriranje DNS softvera sirom sveta. Patch je dodao randomizaciju izvornog porta (source port randomization), povecavajuci entropiju sa 16 na ~32 bita.
+    </div>
+    <p class="ref">Izvor: "An Illustrated Guide to the Kaminsky DNS Vulnerability", unixwiz.net, 2008</p>
+
+    <h2 id="sr-spf">4. SPF — Sender Policy Framework</h2>
+    <p>SPF (definisan u <strong>RFC 7208</strong>) je DNS TXT zapis koji specificira koji mail serveri su ovlasceni da salju email u ime vaseg domena. Kada primalac dobije email sa vaseg domena, proverava SPF zapis i odbija email ako nije dosao sa ovlascenog servera.</p>
+
+    <h3>Kako konfigurisati SPF</h3>
+    <pre><code># Osnovni SPF zapis — dozvolite samo vasim MX serverima
+v=spf1 mx -all
+
+# SPF sa specificnim IP adresama
+v=spf1 ip4:93.87.12.34 ip4:93.87.12.35 -all
+
+# SPF sa ukljucenim provajderima (Google Workspace + Mailchimp)
+v=spf1 include:_spf.google.com include:servers.mcsv.net -all
+
+# Objasnjenje mehanizama:
+# v=spf1     — verzija SPF-a
+# ip4:       — dozvoli IP adresu
+# include:   — ukljuci SPF drugog domena
+# mx         — dozvoli MX serverima domena
+# a          — dozvoli A zapisu domena
+# -all       — ODBIJ sve ostalo (hard fail)
+# ~all       — oznaci sve ostalo kao sumnjivo (soft fail)</code></pre>
+
+    <div class="callout">
+      <strong>Preporuka:</strong> Uvek koristite <code>-all</code> (hard fail) umesto <code>~all</code> (soft fail). Soft fail samo oznacava email kao sumnjiv, ali ga ne odbija, sto smanjuje efikasnost zastite.
+    </div>
+
+    <h3>SPF ogranicenja</h3>
+    <ul>
+      <li>Maksimalno 10 DNS lookup-ova po SPF zapisu (include, a, mx se racunaju)</li>
+      <li>SPF ne stiti "From" header koji korisnik vidi — stiti samo envelope sender</li>
+      <li>SPF puca kod prosledjivanja email-a (forwarding) jer se IP menja</li>
+    </ul>
+
+    <h2 id="sr-dmarc">5. DMARC — Domain-based Message Authentication</h2>
+    <p>DMARC (definisan u <strong>RFC 7489</strong>) je nadogradnja na SPF i DKIM. On kaze primajucem serveru sta da radi ako email ne prodje SPF/DKIM proveru, i omogucava primanje izvestaja o neuskladjenim email-ovima.</p>
+
+    <h3>DMARC politike</h3>
+    <table>
+      <tr><th>Politika</th><th>Akcija</th><th>Kada koristiti</th></tr>
+      <tr><td><code>p=none</code></td><td>Samo prati i izvestava</td><td>Pocetna faza — ucite ko salje email u vase ime</td></tr>
+      <tr><td><code>p=quarantine</code></td><td>Stavi u spam folder</td><td>Prelazna faza — testiranje pre pune zastite</td></tr>
+      <tr><td><code>p=reject</code></td><td>Odbij email potpuno</td><td>Puna zastita — nakon sto ste sigurni da su SPF/DKIM ispravni</td></tr>
+    </table>
+
+    <h3>Primer DMARC zapisa</h3>
+    <pre><code># DNS TXT zapis za _dmarc.vasdomen.rs
+v=DMARC1; p=reject; rua=mailto:dmarc-reports@vasdomen.rs;
+  ruf=mailto:dmarc-forensic@vasdomen.rs; adkim=s; aspf=s; pct=100
+
+# Objasnjenje:
+# v=DMARC1  — verzija
+# p=reject  — odbij neuskladjene email-ove
+# rua=      — adresa za agregirane izvestaje (dnevne)
+# ruf=      — adresa za forenzicke izvestaje (per-email)
+# adkim=s   — striktno DKIM poravnanje
+# aspf=s    — striktno SPF poravnanje
+# pct=100   — primeni na 100% email-ova</code></pre>
+
+    <div class="callout callout-warn">
+      <strong>Vazno:</strong> Nemojte odmah postaviti <code>p=reject</code>. Pocnite sa <code>p=none</code> i pratite izvestaje 2-4 nedelje da biste identifikovali legitimne servise koji salju email u vase ime (marketing platforme, CRM, itd.).
+    </div>
+
+    <h2 id="sr-dnssec">6. DNSSEC — DNS Security Extensions</h2>
+    <p>DNSSEC (definisan u <strong>RFC 4033, 4034, 4035</strong>) dodaje kriptografski potpis DNS odgovorima. Ovo omogucava resolver-u da verifikuje da odgovor zaista dolazi od autoritativnog servera i da nije modifikovan u prenosu.</p>
+
+    <h3>Kako DNSSEC radi</h3>
+    <ol>
+      <li><strong>DNSKEY zapis</strong> — autoritativni server objavljuje svoj javni kljuc</li>
+      <li><strong>RRSIG zapis</strong> — svaki DNS zapis je potpisan privatnim kljucem</li>
+      <li><strong>DS zapis</strong> — hash javnog kljuca se registruje kod roditeljske zone (chain of trust)</li>
+      <li>Resolver proverava potpis koristeci javni kljuc iz DNSKEY zapisa</li>
+    </ol>
+
+    <pre><code># Provera DNSSEC statusa domena
+$ dig +dnssec primer.rs
+;; flags: qr rd ra ad;   # "ad" flag = Authentic Data (DNSSEC validan)
+
+# Prikaz DNSKEY zapisa
+$ dig DNSKEY primer.rs +short
+256 3 8 AwEAAd...   # ZSK (Zone Signing Key)
+257 3 8 AwEAAc...   # KSK (Key Signing Key)
+
+# Prikaz RRSIG potpisa
+$ dig A primer.rs +dnssec
+primer.rs. 300 IN A 93.87.12.34
+primer.rs. 300 IN RRSIG A 8 2 300 20260501 20260401 12345 primer.rs. abc123...</code></pre>
+
+    <h3>Zasto je DNSSEC vazan?</h3>
+    <p>Bez DNSSEC-a, ne postoji nacin da se verifikuje autenticnost DNS odgovora. Napadac koji uspesno izvrsi cache poisoning moze preusmeriti korisnika na maliciozni sajt, a korisnik (i resolver) nece imati nacin da to primete.</p>
+
+    <div class="callout">
+      <strong>Statistika:</strong> Prema APNIC merenjima, samo oko 5% globalnih domena ima potpuno implementiran DNSSEC. U Evropi je procenat veci zahvaljujuci registrima poput .nl (Holandija) sa preko 50% DNSSEC pokrivenosti, dok .se (Svedska) ima oko 35%.
+    </div>
+
+    <h2 id="sr-faq">7. Cesto postavljana pitanja</h2>
+
+    <div class="callout">
+      <strong>P: Da li mi treba i SPF i DMARC?</strong><br>
+      O: Da. SPF sam po sebi ne stiti "From" header koji korisnik vidi. DMARC povezuje SPF (i DKIM) sa vidljivim "From" headerom i definise politiku za neuskladjene email-ove.
+    </div>
+
+    <div class="callout">
+      <strong>P: Sta ako imam vise servisa koji salju email (Google, Mailchimp, Salesforce)?</strong><br>
+      O: Dodajte <code>include:</code> za svaki servis u SPF zapis. Pazite na limit od 10 DNS lookup-ova. Za veci broj servisa, koristite SPF flattening alate.
+    </div>
+
+    <div class="callout">
+      <strong>P: Da li DNSSEC stiti od DDoS-a?</strong><br>
+      O: Ne. DNSSEC stiti integritet i autenticnost DNS odgovora, ali ne stiti od uskracivanja usluge. Za DNS DDoS zastitu koristite Anycast DNS mreze (Cloudflare, AWS Route 53, itd.).
+    </div>
+
+    <h2 id="sr-ref">8. Reference</h2>
+    <ul>
+      <li class="ref"><a href="https://tools.ietf.org/html/rfc7208" target="_blank" rel="noopener">RFC 7208 — Sender Policy Framework (SPF)</a></li>
+      <li class="ref"><a href="https://tools.ietf.org/html/rfc7489" target="_blank" rel="noopener">RFC 7489 — DMARC: Domain-based Message Authentication</a></li>
+      <li class="ref"><a href="https://tools.ietf.org/html/rfc4033" target="_blank" rel="noopener">RFC 4033-4035 — DNS Security Extensions (DNSSEC)</a></li>
+      <li class="ref"><a href="https://stats.labs.apnic.net/dnssec" target="_blank" rel="noopener">APNIC DNSSEC Deployment Statistics</a></li>
+      <li class="ref"><a href="https://www.verizon.com/business/resources/reports/dbir/" target="_blank" rel="noopener">Verizon Data Breach Investigations Report (DBIR)</a></li>
+      <li class="ref"><a href="https://blog.talosintelligence.com/2019/04/seaturtle.html" target="_blank" rel="noopener">Cisco Talos: Sea Turtle DNS Hijacking Campaign</a></li>
+    </ul>
+
+    <a href="./index.html" class="cta">Skenirajte svoj sajt besplatno &rarr;</a>
+  </div>
+
+  <!-- ENGLISH -->
+  <div class="en">
+    <h1>DNS Security — SPF, DMARC, DNSSEC Guide</h1>
+    <p class="subtitle">Published: April 8, 2026 &middot; Reading time: 15 min</p>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#en-dns-basics" style="color:#c0c4db;">How DNS works</a></li>
+        <li><a href="#en-attacks" style="color:#c0c4db;">DNS attacks</a></li>
+        <li><a href="#en-kaminsky" style="color:#c0c4db;">Kaminsky attack (2008)</a></li>
+        <li><a href="#en-spf" style="color:#c0c4db;">SPF — Sender Policy Framework</a></li>
+        <li><a href="#en-dmarc" style="color:#c0c4db;">DMARC configuration</a></li>
+        <li><a href="#en-dnssec" style="color:#c0c4db;">DNSSEC — DNS Security Extensions</a></li>
+        <li><a href="#en-faq" style="color:#c0c4db;">Frequently asked questions</a></li>
+        <li><a href="#en-ref" style="color:#c0c4db;">References</a></li>
+      </ol>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-num">~5%</div>
+        <div class="stat-label">Domains with DNSSEC (APNIC)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">91%</div>
+        <div class="stat-label">Cyberattacks start with email (Verizon DBIR)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">3.4B</div>
+        <div class="stat-label">Phishing emails per day (Radicati)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">80%</div>
+        <div class="stat-label">Domains without DMARC (Agari)</div>
+      </div>
+    </div>
+
+    <h2 id="en-dns-basics">1. How DNS works</h2>
+    <p>DNS (Domain Name System) is the system that translates human-readable domain names (e.g., <code>google.com</code>) into IP addresses (e.g., <code>142.250.185.78</code>) that computers use to communicate. It is often called the "phone book of the internet."</p>
+
+    <h3>DNS hierarchy</h3>
+    <p>DNS uses a hierarchical structure with four levels:</p>
+    <ol>
+      <li><strong>DNS Resolver (Recursive)</strong> — your ISP or a public resolver (8.8.8.8, 1.1.1.1) that receives your queries and finds answers</li>
+      <li><strong>Root servers</strong> — 13 root server clusters (a.root-servers.net through m.root-servers.net) that direct to TLD servers</li>
+      <li><strong>TLD servers</strong> — servers for top-level domains (.com, .org, .net) that know where authoritative servers for each domain are</li>
+      <li><strong>Authoritative DNS servers</strong> — the final servers that store actual DNS records for the domain (A, AAAA, MX, TXT, CNAME, etc.)</li>
+    </ol>
+
+    <h3>DNS query step by step</h3>
+    <pre><code>User types: www.example.com
+  |
+  v
+1. Browser checks local cache
+2. OS checks hosts file and local DNS cache
+3. Sends query to DNS resolver (e.g., 8.8.8.8)
+4. Resolver asks root server: "Where is .com?"
+5. Root responds: "Ask a.gtld-servers.net"
+6. Resolver asks TLD server: "Where is example.com?"
+7. Resolver asks authoritative server: "What's the IP for www.example.com?"
+8. Authoritative responds: "93.184.216.34"
+9. Resolver caches the response and returns it to the browser</code></pre>
+
+    <h2 id="en-attacks">2. DNS attacks</h2>
+
+    <h3>DNS Cache Poisoning</h3>
+    <p>An attacker injects fake DNS records into a resolver's cache, causing all users of that resolver to be redirected to a malicious server. For example, an attacker could redirect <code>bank.com</code> to their own server hosting a fake copy of the banking site.</p>
+
+    <div class="callout callout-danger">
+      <strong>Danger:</strong> With cache poisoning, the user sees the correct domain (bank.com) in their browser, but is actually on the attacker's server. Without HTTPS with a valid certificate, the user has no way to detect the deception.
+    </div>
+
+    <h3>DNS Spoofing</h3>
+    <p>Similar to cache poisoning, but the attacker intercepts DNS queries directly (e.g., on the same network via ARP spoofing) and returns a fake response before the legitimate server can respond.</p>
+
+    <h3>DNS Hijacking</h3>
+    <p>The attacker takes control of a domain's DNS records — either by compromising the DNS provider or by stealing access to the domain registrar. This is the most dangerous type because the attacker has full control.</p>
+    <p>Notable example: In 2019, the "Sea Turtle" campaign compromised DNS registrars in the Middle East and North Africa, redirecting email and web traffic of government organizations.</p>
+    <p class="ref">Source: Cisco Talos Intelligence, "Sea Turtle" DNS Hijacking Campaign, 2019</p>
+
+    <h2 id="en-kaminsky">3. Kaminsky attack (2008)</h2>
+    <p>In July 2008, security researcher Dan Kaminsky publicly disclosed a fundamental vulnerability in the DNS protocol. This vulnerability allowed an attacker to poison the cache of any DNS resolver within just 10 seconds.</p>
+    <p>The problem was that DNS used predictable Transaction IDs (only 16 bits, i.e., 65,536 possibilities). Kaminsky demonstrated that an attacker could send thousands of fake responses with different Transaction IDs and statistically guess the correct ID before the legitimate response arrived.</p>
+
+    <div class="callout callout-warn">
+      <strong>Impact:</strong> This vulnerability required urgent coordinated patching of DNS software worldwide. The patch added source port randomization, increasing entropy from 16 to ~32 bits.
+    </div>
+    <p class="ref">Source: "An Illustrated Guide to the Kaminsky DNS Vulnerability", unixwiz.net, 2008</p>
+
+    <h2 id="en-spf">4. SPF — Sender Policy Framework</h2>
+    <p>SPF (defined in <strong>RFC 7208</strong>) is a DNS TXT record that specifies which mail servers are authorized to send email on behalf of your domain. When a recipient gets an email from your domain, they check the SPF record and reject the email if it didn't come from an authorized server.</p>
+
+    <h3>How to configure SPF</h3>
+    <pre><code># Basic SPF record — allow only your MX servers
+v=spf1 mx -all
+
+# SPF with specific IP addresses
+v=spf1 ip4:93.87.12.34 ip4:93.87.12.35 -all
+
+# SPF with included providers (Google Workspace + Mailchimp)
+v=spf1 include:_spf.google.com include:servers.mcsv.net -all
+
+# Mechanism explanation:
+# v=spf1     — SPF version
+# ip4:       — allow IP address
+# include:   — include another domain's SPF
+# mx         — allow domain's MX servers
+# a          — allow domain's A record
+# -all       — REJECT everything else (hard fail)
+# ~all       — mark everything else as suspicious (soft fail)</code></pre>
+
+    <div class="callout">
+      <strong>Recommendation:</strong> Always use <code>-all</code> (hard fail) instead of <code>~all</code> (soft fail). Soft fail only marks the email as suspicious but does not reject it, reducing protection effectiveness.
+    </div>
+
+    <h3>SPF limitations</h3>
+    <ul>
+      <li>Maximum of 10 DNS lookups per SPF record (include, a, mx each count)</li>
+      <li>SPF does not protect the "From" header visible to the user — it only protects the envelope sender</li>
+      <li>SPF breaks with email forwarding because the IP changes</li>
+    </ul>
+
+    <h2 id="en-dmarc">5. DMARC — Domain-based Message Authentication</h2>
+    <p>DMARC (defined in <strong>RFC 7489</strong>) builds on SPF and DKIM. It tells the receiving server what to do if an email fails SPF/DKIM checks, and enables receiving reports about non-aligned emails.</p>
+
+    <h3>DMARC policies</h3>
+    <table>
+      <tr><th>Policy</th><th>Action</th><th>When to use</th></tr>
+      <tr><td><code>p=none</code></td><td>Monitor and report only</td><td>Initial phase — learn who sends email on your behalf</td></tr>
+      <tr><td><code>p=quarantine</code></td><td>Place in spam folder</td><td>Transition phase — testing before full protection</td></tr>
+      <tr><td><code>p=reject</code></td><td>Reject the email entirely</td><td>Full protection — after confirming SPF/DKIM are correct</td></tr>
+    </table>
+
+    <h3>DMARC record example</h3>
+    <pre><code># DNS TXT record for _dmarc.yourdomain.com
+v=DMARC1; p=reject; rua=mailto:dmarc-reports@yourdomain.com;
+  ruf=mailto:dmarc-forensic@yourdomain.com; adkim=s; aspf=s; pct=100
+
+# Explanation:
+# v=DMARC1  — version
+# p=reject  — reject non-aligned emails
+# rua=      — address for aggregate reports (daily)
+# ruf=      — address for forensic reports (per-email)
+# adkim=s   — strict DKIM alignment
+# aspf=s    — strict SPF alignment
+# pct=100   — apply to 100% of emails</code></pre>
+
+    <div class="callout callout-warn">
+      <strong>Important:</strong> Do not set <code>p=reject</code> immediately. Start with <code>p=none</code> and monitor reports for 2-4 weeks to identify legitimate services sending email on your behalf (marketing platforms, CRM, etc.).
+    </div>
+
+    <h2 id="en-dnssec">6. DNSSEC — DNS Security Extensions</h2>
+    <p>DNSSEC (defined in <strong>RFC 4033, 4034, 4035</strong>) adds cryptographic signatures to DNS responses. This allows a resolver to verify that a response genuinely came from the authoritative server and has not been modified in transit.</p>
+
+    <h3>How DNSSEC works</h3>
+    <ol>
+      <li><strong>DNSKEY record</strong> — the authoritative server publishes its public key</li>
+      <li><strong>RRSIG record</strong> — each DNS record is signed with the private key</li>
+      <li><strong>DS record</strong> — a hash of the public key is registered at the parent zone (chain of trust)</li>
+      <li>The resolver verifies the signature using the public key from the DNSKEY record</li>
+    </ol>
+
+    <pre><code># Check DNSSEC status of a domain
+$ dig +dnssec example.com
+;; flags: qr rd ra ad;   # "ad" flag = Authentic Data (DNSSEC valid)
+
+# Display DNSKEY records
+$ dig DNSKEY example.com +short
+256 3 8 AwEAAd...   # ZSK (Zone Signing Key)
+257 3 8 AwEAAc...   # KSK (Key Signing Key)
+
+# Display RRSIG signatures
+$ dig A example.com +dnssec
+example.com. 300 IN A 93.184.216.34
+example.com. 300 IN RRSIG A 8 2 300 20260501 20260401 12345 example.com. abc123...</code></pre>
+
+    <h3>Why is DNSSEC important?</h3>
+    <p>Without DNSSEC, there is no way to verify the authenticity of DNS responses. An attacker who successfully performs cache poisoning can redirect users to a malicious site, and neither the user nor the resolver can detect it.</p>
+
+    <div class="callout">
+      <strong>Statistics:</strong> According to APNIC measurements, only about 5% of global domains have fully implemented DNSSEC. In Europe, the percentage is higher thanks to registries like .nl (Netherlands) with over 50% DNSSEC coverage, while .se (Sweden) has about 35%.
+    </div>
+
+    <h2 id="en-faq">7. Frequently asked questions</h2>
+
+    <div class="callout">
+      <strong>Q: Do I need both SPF and DMARC?</strong><br>
+      A: Yes. SPF alone does not protect the "From" header that the user sees. DMARC links SPF (and DKIM) to the visible "From" header and defines a policy for non-aligned emails.
+    </div>
+
+    <div class="callout">
+      <strong>Q: What if I have multiple services sending email (Google, Mailchimp, Salesforce)?</strong><br>
+      A: Add an <code>include:</code> for each service in your SPF record. Be mindful of the 10 DNS lookup limit. For more services, use SPF flattening tools.
+    </div>
+
+    <div class="callout">
+      <strong>Q: Does DNSSEC protect against DDoS?</strong><br>
+      A: No. DNSSEC protects the integrity and authenticity of DNS responses but does not protect against denial of service. For DNS DDoS protection, use Anycast DNS networks (Cloudflare, AWS Route 53, etc.).
+    </div>
+
+    <h2 id="en-ref">8. References</h2>
+    <ul>
+      <li class="ref"><a href="https://tools.ietf.org/html/rfc7208" target="_blank" rel="noopener">RFC 7208 — Sender Policy Framework (SPF)</a></li>
+      <li class="ref"><a href="https://tools.ietf.org/html/rfc7489" target="_blank" rel="noopener">RFC 7489 — DMARC: Domain-based Message Authentication</a></li>
+      <li class="ref"><a href="https://tools.ietf.org/html/rfc4033" target="_blank" rel="noopener">RFC 4033-4035 — DNS Security Extensions (DNSSEC)</a></li>
+      <li class="ref"><a href="https://stats.labs.apnic.net/dnssec" target="_blank" rel="noopener">APNIC DNSSEC Deployment Statistics</a></li>
+      <li class="ref"><a href="https://www.verizon.com/business/resources/reports/dbir/" target="_blank" rel="noopener">Verizon Data Breach Investigations Report (DBIR)</a></li>
+      <li class="ref"><a href="https://blog.talosintelligence.com/2019/04/seaturtle.html" target="_blank" rel="noopener">Cisco Talos: Sea Turtle DNS Hijacking Campaign</a></li>
+    </ul>
+
+    <a href="./index.html" class="cta">Scan your site for free &rarr;</a>
+  </div>
+
+  <div class="nav-links">
+    <a href="./blog-security-ssl.html"><span class="sr">SSL/TLS vodic</span><span class="en">SSL/TLS Guide</span></a>
+    <a href="./blog-security-headers.html"><span class="sr">HTTP Security Headers</span><span class="en">HTTP Security Headers</span></a>
+    <a href="./blog-security-xss.html"><span class="sr">XSS napadi</span><span class="en">XSS Attacks</span></a>
+    <a href="./blog-security-sql.html"><span class="sr">SQL Injection</span><span class="en">SQL Injection</span></a>
+    <a href="./blog-security-csrf.html"><span class="sr">CSRF napadi</span><span class="en">CSRF Attacks</span></a>
+    <a href="./blog-security-ports.html"><span class="sr">Port skeniranje</span><span class="en">Port Scanning</span></a>
+    <a href="./blog-security-api.html"><span class="sr">API bezbednost</span><span class="en">API Security</span></a>
+  </div>
+
+  </main>
+</div>
+<script src="./blog-common.js" defer></script>
+</body>
+</html>

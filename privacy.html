@@ -6,63 +6,25 @@
   <title>Politika privatnosti / Privacy Policy — Web Security Scanner</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Inter', sans-serif;
-      background: #0a0c15; color: #e8eaf6;
-      min-height: 100vh; line-height: 1.7;
-    }
-    .container { max-width: 720px; margin: 0 auto; padding: 3rem 1.5rem 4rem; }
-    a { color: #a78bfa; }
-    h1 { font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; }
-    .subtitle { color: #7b83a6; margin-bottom: 2.5rem; font-size: 0.9rem; }
-    h2 { font-size: 1.15rem; font-weight: 700; margin: 2rem 0 0.8rem; color: #a78bfa; }
-    p, li { color: #c0c4db; font-size: 0.92rem; margin-bottom: 0.6rem; }
-    ul { padding-left: 1.5rem; margin-bottom: 1rem; }
-    .top-bar {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 2rem;
-    }
-    .back { color: #7b83a6; text-decoration: none; font-size: 0.85rem; }
-    .back:hover { color: #a78bfa; }
-    .lang-toggle { display: flex; gap: 0.3rem; }
-    .lang-btn {
-      background: #1a1e38; border: 1px solid #252a4a; color: #7b83a6;
-      border-radius: 6px; padding: 4px 10px; font-size: 0.78rem;
-      cursor: pointer; font-family: inherit; transition: all 0.2s;
-    }
-    .lang-btn.active { background: #6c63ff; border-color: #6c63ff; color: #fff; }
-    .sr { display: block; }
-    .en { display: none; }
-    body.lang-en .sr { display: none; }
-    body.lang-en .en { display: block; }
-    .footer {
-      border-top: 1px solid #252a4a;
-      margin-top: 3rem; padding-top: 1.5rem;
-      text-align: center; color: #7b83a6; font-size: 0.8rem;
-    }
-  </style>
+  <link rel="stylesheet" href="./blog-common.css">
 </head>
 <body>
-<div class="container">
-  <div class="top-bar">
-    <a href="/" class="back">&larr; <span class="sr">Nazad na skener</span><span class="en">Back to scanner</span></a>
-    <div class="lang-toggle">
-      <button class="lang-btn active" onclick="setLang('sr')">SR</button>
-      <button class="lang-btn" onclick="setLang('en')">EN</button>
-    </div>
-  </div>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr"><div class="timeline-title">Sadrzaj</div><ol id="timeline-sr"></ol></div>
+    <div class="en"><div class="timeline-title">Contents</div><ol id="timeline-en"></ol></div>
+  </aside>
+  <main class="blog-content">
 
   <!-- SERBIAN -->
   <div class="sr">
     <h1>Politika privatnosti</h1>
     <p class="subtitle">Poslednje azuriranje: 9. april 2026.</p>
 
-    <h2>1. Ko smo mi</h2>
+    <h2 id="pp1">1. Ko smo mi</h2>
     <p>Web Security Scanner je besplatan online alat za pasivnu analizu bezbednosti veb sajtova. Operater sajta je <a href="https://toske-programer.web.app" target="_blank" rel="noopener">Toske-Programer</a>.</p>
 
-    <h2>2. Koje podatke prikupljamo</h2>
+    <h2 id="pp2">2. Koje podatke prikupljamo</h2>
     <p>Nas servis prikuplja minimalne podatke:</p>
     <ul>
       <li><strong>URL koji skenirate</strong> — koristi se iskljucivo za izvrsavanje analize i brise se iz memorije nakon zavrsetka</li>
@@ -71,18 +33,18 @@
     </ul>
     <p>Ne prikupljamo imena, email adrese, lozinke niti bilo kakve licne podatke korisnika.</p>
 
-    <h2>3. Kako koristimo podatke</h2>
+    <h2 id="pp3">3. Kako koristimo podatke</h2>
     <ul>
       <li>Izvrsavanje bezbednosne analize URL-a koji ste uneli</li>
       <li>Zastita od zloupotrebe servisa (rate limiting)</li>
       <li>Prikazivanje reklama putem Google AdSense</li>
     </ul>
 
-    <h2>4. Kolacici i oglasavanje</h2>
+    <h2 id="pp4">4. Kolacici i oglasavanje</h2>
     <p>Koristimo Google AdSense za prikazivanje oglasa. Google i njegovi partneri mogu koristiti kolacice za personalizaciju oglasa na osnovu poseta ovom i drugim sajtovima. Vise informacija na <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener">Google Ads politika</a>.</p>
     <p>Mozete upravljati podesavanjima personalizacije oglasa na <a href="https://adssettings.google.com" target="_blank" rel="noopener">Google Ads podesavanja</a>.</p>
 
-    <h2>5. Trece strane</h2>
+    <h2 id="pp5">5. Trece strane</h2>
     <p>Koristimo sledece servise trecih strana:</p>
     <ul>
       <li><strong>Google AdSense</strong> — prikazivanje oglasa</li>
@@ -91,10 +53,10 @@
       <li><strong>Hugging Face Spaces</strong> — hosting backend API-ja</li>
     </ul>
 
-    <h2>6. Bezbednost podataka</h2>
+    <h2 id="pp6">6. Bezbednost podataka</h2>
     <p>Svi podaci se prenose putem HTTPS enkripcije. Ne cuvamo rezultate skeniranja trajno — brisu se iz memorije servera nakon kratkog perioda.</p>
 
-    <h2>7. Vasa prava (GDPR)</h2>
+    <h2 id="pp7">7. Vasa prava (GDPR)</h2>
     <p>Ako se nalazite u Evropskom ekonomskom prostoru, imate pravo da:</p>
     <ul>
       <li>Zatrazite informacije o podacima koje imamo o vama</li>
@@ -103,13 +65,13 @@
       <li>Uputite zalbu nadleznom organu za zastitu podataka</li>
     </ul>
 
-    <h2>8. Deca</h2>
+    <h2 id="pp8">8. Deca</h2>
     <p>Ovaj servis nije namenjen osobama mladjim od 16 godina. Ne prikupljamo svesno podatke od maloletnika.</p>
 
-    <h2>9. Promene politike</h2>
+    <h2 id="pp9">9. Promene politike</h2>
     <p>Zadrzavamo pravo da azuriramo ovu politiku privatnosti. Promene stupaju na snagu odmah po objavljivanju na ovoj stranici.</p>
 
-    <h2>10. Kontakt</h2>
+    <h2 id="pp10">10. Kontakt</h2>
     <p>Za sva pitanja u vezi sa privatnoscu, kontaktirajte nas putem sajta <a href="https://toske-programer.web.app" target="_blank" rel="noopener">toske-programer.web.app</a>.</p>
   </div>
 
@@ -118,10 +80,10 @@
     <h1>Privacy Policy</h1>
     <p class="subtitle">Last updated: April 9, 2026.</p>
 
-    <h2>1. Who we are</h2>
+    <h2 id="pp1e">1. Who we are</h2>
     <p>Web Security Scanner is a free online tool for passive security analysis of websites. The site operator is <a href="https://toske-programer.web.app" target="_blank" rel="noopener">Toske-Programer</a>.</p>
 
-    <h2>2. What data we collect</h2>
+    <h2 id="pp2e">2. What data we collect</h2>
     <p>Our service collects minimal data:</p>
     <ul>
       <li><strong>URL you scan</strong> — used exclusively for performing the analysis and deleted from memory after completion</li>
@@ -130,18 +92,18 @@
     </ul>
     <p>We do not collect names, email addresses, passwords, or any personal user data.</p>
 
-    <h2>3. How we use data</h2>
+    <h2 id="pp3e">3. How we use data</h2>
     <ul>
       <li>Performing security analysis of the URL you entered</li>
       <li>Protection against service abuse (rate limiting)</li>
       <li>Displaying ads via Google AdSense</li>
     </ul>
 
-    <h2>4. Cookies and advertising</h2>
+    <h2 id="pp4e">4. Cookies and advertising</h2>
     <p>We use Google AdSense to display ads. Google and its partners may use cookies to personalize ads based on visits to this and other websites. More information at <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener">Google Ads Policy</a>.</p>
     <p>You can manage ad personalization settings at <a href="https://adssettings.google.com" target="_blank" rel="noopener">Google Ads Settings</a>.</p>
 
-    <h2>5. Third parties</h2>
+    <h2 id="pp5e">5. Third parties</h2>
     <p>We use the following third-party services:</p>
     <ul>
       <li><strong>Google AdSense</strong> — ad display</li>
@@ -150,10 +112,10 @@
       <li><strong>Hugging Face Spaces</strong> — backend API hosting</li>
     </ul>
 
-    <h2>6. Data security</h2>
+    <h2 id="pp6e">6. Data security</h2>
     <p>All data is transmitted via HTTPS encryption. We do not store scan results permanently — they are deleted from server memory after a short period.</p>
 
-    <h2>7. Your rights (GDPR)</h2>
+    <h2 id="pp7e">7. Your rights (GDPR)</h2>
     <p>If you are located in the European Economic Area, you have the right to:</p>
     <ul>
       <li>Request information about data we hold about you</li>
@@ -162,28 +124,18 @@
       <li>File a complaint with the relevant data protection authority</li>
     </ul>
 
-    <h2>8. Children</h2>
+    <h2 id="pp8e">8. Children</h2>
     <p>This service is not intended for persons under the age of 16. We do not knowingly collect data from minors.</p>
 
-    <h2>9. Policy changes</h2>
+    <h2 id="pp9e">9. Policy changes</h2>
     <p>We reserve the right to update this privacy policy. Changes take effect immediately upon publication on this page.</p>
 
-    <h2>10. Contact</h2>
+    <h2 id="pp10e">10. Contact</h2>
     <p>For any privacy-related questions, contact us via <a href="https://toske-programer.web.app" target="_blank" rel="noopener">toske-programer.web.app</a>.</p>
   </div>
 
-  <div class="footer">
-    <p>Web Security Scanner &copy; 2026 &mdash; <a href="https://toske-programer.web.app" target="_blank" rel="noopener">&lt;Toske/&gt;</a></p>
-  </div>
+  </main>
 </div>
-
-<script>
-function setLang(lang) {
-  document.body.className = lang === "en" ? "lang-en" : "";
-  document.querySelectorAll(".lang-btn").forEach(function(b) {
-    b.classList.toggle("active", b.textContent === lang.toUpperCase());
-  });
-}
-</script>
+<script src="./blog-common.js" defer></script>
 </body>
 </html>

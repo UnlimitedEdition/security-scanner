@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SSL/TLS Sertifikati — Kompletni vodic | Web Security Scanner</title>
+  <meta name="description" content="Kompletni vodic za SSL/TLS sertifikate: kako funkcionise HTTPS enkripcija, tipovi sertifikata (DV, OV, EV), Let's Encrypt besplatni sertifikati, konfiguracija i ceste greske.">
+  <meta name="keywords" content="SSL, TLS, HTTPS, sertifikat, Let's Encrypt, enkripcija, TLS 1.3, SSL konfiguracija, web bezbednost">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <link rel="canonical" href="https://security-scanner-ruddy.vercel.app/blog-security-ssl.html">
+  <link rel="alternate" hreflang="sr" href="https://security-scanner-ruddy.vercel.app/blog-security-ssl.html">
+  <link rel="alternate" hreflang="en" href="https://security-scanner-ruddy.vercel.app/blog-security-ssl.html">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="SSL/TLS Sertifikati — Kompletni vodic za HTTPS enkripciju">
+  <meta property="og:description" content="Sve sto treba da znate o SSL/TLS sertifikatima: tipovi, konfiguracija, Let's Encrypt, HSTS i ceste greske.">
+  <meta property="og:url" content="https://security-scanner-ruddy.vercel.app/blog-security-ssl.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="SSL/TLS Sertifikati — Kompletni vodic za HTTPS enkripciju">
+  <meta name="twitter:description" content="Sve sto treba da znate o SSL/TLS sertifikatima: tipovi, konfiguracija, Let's Encrypt, HSTS i ceste greske.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "SSL/TLS Sertifikati — Kompletni vodic za HTTPS enkripciju",
+    "author": {"@type": "Person", "name": "Toske", "url": "https://toske-programer.web.app"},
+    "publisher": {"@type": "Organization", "name": "Web Security Scanner"},
+    "datePublished": "2026-04-09",
+    "dateModified": "2026-04-09",
+    "description": "Kompletni vodic za SSL/TLS sertifikate: handshake, istorija, tipovi sertifikata, Let's Encrypt, HSTS i konfiguracija.",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://security-scanner-ruddy.vercel.app/blog-security-ssl.html"
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Sta je SSL/TLS sertifikat?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "SSL/TLS sertifikat je digitalni dokument koji potvrdjuje identitet web sajta i omogucava enkriptovanu komunikaciju izmedju korisnikovog browser-a i servera. SSL (Secure Sockets Layer) je stariji protokol koji je zamenjen sa TLS (Transport Layer Security), ali se termin SSL i dalje koristi kolokvijalno."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Da li su SSL sertifikati besplatni?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Da, Let's Encrypt pruza besplatne DV (Domain Validation) SSL/TLS sertifikate. Od 2015. godine, Let's Encrypt je izdao preko 300 miliona sertifikata. Komercijalni sertifikati (OV i EV) se placaju i kostaju od $50 do $500+ godisnje."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Koliko traje SSL sertifikat?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Od septembra 2020. godine, maksimalni rok vazenja javno pouzdanih SSL/TLS sertifikata je 398 dana (oko 13 meseci). Let's Encrypt sertifikati vaze 90 dana i automatski se obnavljaju. Apple je prvi uveo ovo ogranicenje, a zatim su ga prihvatili i drugi browser vendori."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Sta se desava ako mi istekne SSL sertifikat?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Kada SSL sertifikat istekne, browseri prikazuju upozorenje da veza nije bezbedna (ERR_CERT_DATE_INVALID). Posetioci ne mogu pristupiti sajtu bez rucnog obilazenja upozorenja. Ovo negativno utice na SEO, korisnicko poverenje i moze dovesti do gubitka prometa od 30-80%."
+        }
+      }
+    ]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "Kako dobiti besplatan SSL sertifikat sa Let's Encrypt",
+    "step": [
+      {
+        "@type": "HowToStep",
+        "name": "Instalirajte Certbot",
+        "text": "Instalirajte Certbot klijent na vasem serveru koristeci: sudo apt install certbot python3-certbot-nginx"
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Pokrenite Certbot",
+        "text": "Pokrenite komandu: sudo certbot --nginx -d vasadomena.com -d www.vasadomena.com"
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Potvrdite automatsko obnavljanje",
+        "text": "Testirajte auto-renewal sa: sudo certbot renew --dry-run"
+      }
+    ]
+  }
+  </script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+</head>
+<body>
+<!-- Header + Footer injected by blog-common.js -->
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr">
+      <div class="timeline-title">Sadrzaj</div>
+      <ol id="timeline-sr"></ol>
+    </div>
+    <div class="en">
+      <div class="timeline-title">Contents</div>
+      <ol id="timeline-en"></ol>
+    </div>
+  </aside>
+  <main class="blog-content">
+
+  <!-- ==================== SR CONTENT ==================== -->
+  <div class="sr">
+    <h1>SSL/TLS Sertifikati — Kompletni vodic</h1>
+    <p class="subtitle">Sve sto treba da znate o HTTPS enkripciji, tipovima sertifikata i pravilnoj konfiguraciji</p>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-num">95%</div>
+        <div class="stat-label">HTTPS saobracaja u Chrome-u</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">82%</div>
+        <div class="stat-label">Sajtova koristi HTTPS</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">300M+</div>
+        <div class="stat-label">Let's Encrypt sertifikata</div>
+      </div>
+    </div>
+
+    <div class="toc">
+      <h3>Sadrzaj</h3>
+      <ol>
+        <li><a href="#ssl-sta">Sta je SSL/TLS i kako radi</a></li>
+        <li><a href="#ssl-handshake">TLS Handshake — korak po korak</a></li>
+        <li><a href="#ssl-istorija">Istorija: od SSL 1.0 do TLS 1.3</a></li>
+        <li><a href="#ssl-zasto">Zasto je HTTPS obavezan</a></li>
+        <li><a href="#ssl-tipovi">Tipovi sertifikata: DV, OV, EV</a></li>
+        <li><a href="#ssl-letsencrypt">Let's Encrypt: besplatan sertifikat</a></li>
+        <li><a href="#ssl-greske">Ceste greske i kako ih resiti</a></li>
+        <li><a href="#ssl-hsts">HSTS header i preload lista</a></li>
+        <li><a href="#ssl-config">Konfiguracija: Nginx i Apache</a></li>
+        <li><a href="#ssl-reference">Reference i resursi</a></li>
+      </ol>
+    </div>
+
+    <h2 id="ssl-sta">1. Sta je SSL/TLS i kako radi</h2>
+    <p>SSL (Secure Sockets Layer) i njegov naslednik TLS (Transport Layer Security) su kriptografski protokoli koji obezbjedjuju sigurnu komunikaciju preko interneta. Kada posetite sajt koji pocinje sa <code>https://</code>, vas browser i server koriste TLS da enkriptuju sve podatke koji se razmenjuju.</p>
+    <p>TLS obezbjedjuje tri kljucne stvari:</p>
+    <ul>
+      <li><strong>Enkripcija</strong> — Podaci se sifruju tako da trece strane ne mogu da ih procitaju tokom prenosa. Koriste se simetricni algoritmi poput AES-256-GCM.</li>
+      <li><strong>Autentifikacija</strong> — Sertifikat dokazuje da komunicirate sa pravim serverom, a ne sa napadacem (man-in-the-middle zastita).</li>
+      <li><strong>Integritet</strong> — MAC (Message Authentication Code) garantuje da podaci nisu izmenjeni tokom prenosa.</li>
+    </ul>
+    <p class="ref">Referenca: <a href="https://datatracker.ietf.org/doc/html/rfc8446" target="_blank">RFC 8446 — The Transport Layer Security (TLS) Protocol Version 1.3</a></p>
+
+    <h2 id="ssl-handshake">2. TLS Handshake — korak po korak</h2>
+    <p>Pre nego sto se podaci enkriptuju, browser i server moraju da se "dogovore" kroz proces poznat kao TLS handshake. U TLS 1.3, ovaj proces je optimizovan na samo 1 round-trip (1-RTT), dok je TLS 1.2 zahtevao 2 round-trip-a.</p>
+
+    <h3>TLS 1.3 Handshake (1-RTT)</h3>
+    <ol>
+      <li><strong>ClientHello</strong> — Browser salje listu podrzanih cipher suite-ova, kljuc za razmenu (Key Share), i podrzane verzije TLS-a.</li>
+      <li><strong>ServerHello</strong> — Server bira cipher suite, salje svoj Key Share, sertifikat, i Finished poruku — sve u jednom odgovoru.</li>
+      <li><strong>Klijent verifikuje</strong> — Browser proverava sertifikat, generise sesijski kljuc i salje Finished poruku.</li>
+      <li><strong>Enkriptovana komunikacija</strong> — Svi dalji podaci se sifruju pomocu dogovorenog sesijskog kljuca (AES-256-GCM ili ChaCha20-Poly1305).</li>
+    </ol>
+
+    <div class="callout">
+      <strong>TLS 1.3 poboljsanja:</strong> Uklonjena podrska za zastarele algoritme (RSA key exchange, CBC mode, RC4, SHA-1, MD5, DES, 3DES). Dodat 0-RTT resumption za ponovne konekcije.
+    </div>
+
+    <h3>TLS 1.2 vs TLS 1.3 — Poredjenje</h3>
+    <table>
+      <tr><th>Karakteristika</th><th>TLS 1.2</th><th>TLS 1.3</th></tr>
+      <tr><td>Handshake round-trips</td><td>2-RTT</td><td>1-RTT (0-RTT za resumpciju)</td></tr>
+      <tr><td>Cipher suites</td><td>37+</td><td>5 (samo bezbedni)</td></tr>
+      <tr><td>Forward Secrecy</td><td>Opciono</td><td>Obavezno</td></tr>
+      <tr><td>RSA key exchange</td><td>Da</td><td>Uklonjen</td></tr>
+      <tr><td>RFC</td><td>RFC 5246 (2008)</td><td>RFC 8446 (2018)</td></tr>
+    </table>
+
+    <h2 id="ssl-istorija">3. Istorija: od SSL 1.0 do TLS 1.3</h2>
+    <p>Protokol je prosao kroz znacajnu evoluciju od nastanka u Netscape-u do modernog TLS 1.3:</p>
+    <table>
+      <tr><th>Verzija</th><th>Godina</th><th>Status</th><th>Napomena</th></tr>
+      <tr><td>SSL 1.0</td><td>1994</td><td>Nikada objavljen</td><td>Imao ozbiljne bezbednosne propuste</td></tr>
+      <tr><td>SSL 2.0</td><td>1995</td><td>Deprecated 2011 (RFC 6176)</td><td>Podlozan DROWN napadu</td></tr>
+      <tr><td>SSL 3.0</td><td>1996</td><td>Deprecated 2015 (RFC 7568)</td><td>Podlozan POODLE napadu (CVE-2014-3566)</td></tr>
+      <tr><td>TLS 1.0</td><td>1999</td><td>Deprecated 2020 (RFC 8996)</td><td>Podlozan BEAST napadu</td></tr>
+      <tr><td>TLS 1.1</td><td>2006</td><td>Deprecated 2020 (RFC 8996)</td><td>Nema podrsku za AEAD cipher-e</td></tr>
+      <tr><td>TLS 1.2</td><td>2008</td><td>Aktivan</td><td>Najsire koriscen, RFC 5246</td></tr>
+      <tr><td>TLS 1.3</td><td>2018</td><td>Aktivan (preporucen)</td><td>Brzi, bezbedniji, RFC 8446</td></tr>
+    </table>
+
+    <div class="callout callout-warn">
+      <strong>Vazno:</strong> Od marta 2020, svi moderni browseri (Chrome 84+, Firefox 78+, Safari 14+, Edge 84+) su uklonili podrsku za TLS 1.0 i TLS 1.1. Ako vas server koristi ove verzije, korisnici ce videti gresku.
+    </div>
+
+    <h2 id="ssl-zasto">4. Zasto je HTTPS obavezan</h2>
+    <p>HTTPS vise nije opcija — to je standard za svaki sajt, bez obzira da li je blog, web prodavnica ili korporativni portal.</p>
+
+    <h3>Google rangiranje (SEO)</h3>
+    <p>Google je 2014. godine objavio da je HTTPS <a href="https://developers.google.com/search/blog/2014/08/https-as-ranking-signal" target="_blank">signal za rangiranje</a>. Od 2018. godine, Chrome oznacava sve HTTP sajtove kao "Not Secure". Prema Google Transparency Report-u, 95% ucitanih stranica u Chrome-u koristi HTTPS (podaci iz 2024).</p>
+
+    <h3>Upozorenja u browser-u</h3>
+    <p>Moderni browseri aktivno upozoravaju korisnike kada pristupaju HTTP sajtovima:</p>
+    <ul>
+      <li><strong>Chrome</strong> — Prikazuje "Not Secure" pored URL-a, a za forme sa lozinkama prikazuje upozorenje preko celog ekrana.</li>
+      <li><strong>Firefox</strong> — Prikazuje precrtani katanac i upozorenje za login forme.</li>
+      <li><strong>Safari</strong> — Prikazuje "Not Secure" tekst u address bar-u.</li>
+    </ul>
+
+    <h3>GDPR i pravna obaveza</h3>
+    <p>Clan 32 GDPR-a zahteva "odgovarajuce tehnicke mere" za zastitu licnih podataka. Enkripcija u tranzitu (HTTPS) se eksplicitno pominje kao primer. Sajtovi bez HTTPS-a koji obradjuju licne podatke rizikuju kazne do 20 miliona EUR ili 4% globalnog prihoda.</p>
+
+    <h3>HTTP/2 i performanse</h3>
+    <p>HTTP/2 protokol, koji donosi znacajne performanse (multipleksiranje, kompresija headera, server push), u praksi zahteva HTTPS — nijedan browser ne podrzava HTTP/2 preko obicnog HTTP-a.</p>
+
+    <h2 id="ssl-tipovi">5. Tipovi sertifikata: DV, OV, EV</h2>
+    <p>SSL/TLS sertifikati se dele u tri kategorije prema nivou validacije:</p>
+    <table>
+      <tr><th>Tip</th><th>Validacija</th><th>Vreme izdavanja</th><th>Cena</th><th>Primena</th></tr>
+      <tr><td>DV (Domain Validation)</td><td>Vlasnistvo nad domenom</td><td>Minuti</td><td>Besplatno — $50/god</td><td>Blogovi, mali sajtovi</td></tr>
+      <tr><td>OV (Organization Validation)</td><td>Vlasnistvo + identitet organizacije</td><td>1-3 dana</td><td>$50 — $200/god</td><td>Poslovni sajtovi</td></tr>
+      <tr><td>EV (Extended Validation)</td><td>Detaljni pravna provera</td><td>1-2 nedelje</td><td>$150 — $500+/god</td><td>Banke, e-commerce</td></tr>
+    </table>
+
+    <h3>DV sertifikati</h3>
+    <p>Najjednostavniji tip — CA (Certificate Authority) samo proverava da kontrolisete domen. Provera se vrsi putem DNS TXT zapisa, HTTP fajla ili email-a. Let's Encrypt izdaje iskljucivo DV sertifikate.</p>
+
+    <h3>OV sertifikati</h3>
+    <p>Pored domenskog vlasnistva, CA proverava i identitet organizacije (ime, adresa, registracija). Ovo zahteva dostavljanje pravne dokumentacije. Korisnici mogu videti informacije o organizaciji klikom na katanac u browser-u.</p>
+
+    <h3>EV sertifikati</h3>
+    <p>Najstroza validacija — CA proverava pravni status, fizicku adresu i operativni status organizacije. Ranije su browseri prikazivali zelenu traku sa imenom firme, ali Chrome (od verzije 77, sep 2019) i Firefox (od verzije 70) su uklonili tu vizuelnu razliku.</p>
+
+    <div class="callout">
+      <strong>Wildcard sertifikati:</strong> Pokrivaju jedan domen i sve poddomene (*.primer.com). Dostupni su za DV i OV tipove. Let's Encrypt podrzava wildcard sertifikate od marta 2018 (verzija ACMEv2).
+    </div>
+
+    <h2 id="ssl-letsencrypt">6. Let's Encrypt: kako dobiti besplatan sertifikat</h2>
+    <p>Let's Encrypt je besplatna, automatizovana i otvorena Certificate Authority koju pokece Internet Security Research Group (ISRG). Lansirana u aprilu 2016, do danas je izdala preko 300 miliona aktivnih sertifikata pokrivajuci vise od 360 miliona domena.</p>
+
+    <h3>Korak 1: Instalirajte Certbot</h3>
+    <pre><code># Ubuntu/Debian
+sudo apt update
+sudo apt install certbot python3-certbot-nginx
+
+# CentOS/RHEL
+sudo dnf install certbot python3-certbot-nginx</code></pre>
+
+    <h3>Korak 2: Dobijte sertifikat</h3>
+    <pre><code># Za Nginx
+sudo certbot --nginx -d vasadomena.com -d www.vasadomena.com
+
+# Za Apache
+sudo certbot --apache -d vasadomena.com -d www.vasadomena.com
+
+# Samo sertifikat (bez automatske konfiguracije)
+sudo certbot certonly --standalone -d vasadomena.com</code></pre>
+
+    <h3>Korak 3: Automatsko obnavljanje</h3>
+    <p>Let's Encrypt sertifikati vaze 90 dana. Certbot automatski postavlja cron job za obnavljanje:</p>
+    <pre><code># Testirajte automatsko obnavljanje
+sudo certbot renew --dry-run
+
+# Cron job (automatski dodat)
+0 0,12 * * * root certbot renew --quiet</code></pre>
+
+    <div class="callout">
+      <strong>Alternativni ACME klijenti:</strong> Pored Certbot-a, mozete koristiti acme.sh, Caddy (ugradjeni ACME), Traefik, ili win-acme za Windows servere.
+    </div>
+
+    <h2 id="ssl-greske">7. Ceste greske i kako ih resiti</h2>
+
+    <h3>Mixed Content</h3>
+    <p>Nastaje kada HTTPS stranica ucitava resurse (slike, skripte, stilove) preko HTTP-a. Browser blokira "active mixed content" (skripte, iframe-ove) i prikazuje upozorenje za "passive mixed content" (slike).</p>
+    <pre><code>&lt;!-- LOSE: mixed content --&gt;
+&lt;img src="http://primer.com/slika.jpg"&gt;
+&lt;script src="http://primer.com/skripta.js"&gt;&lt;/script&gt;
+
+&lt;!-- DOBRO: koristite HTTPS ili relativne URL-ove --&gt;
+&lt;img src="https://primer.com/slika.jpg"&gt;
+&lt;script src="//primer.com/skripta.js"&gt;&lt;/script&gt;</code></pre>
+
+    <h3>Istekao sertifikat (ERR_CERT_DATE_INVALID)</h3>
+    <p>Sertifikati imaju rok trajanja. Kada isteknu, browser prikazuje full-screen upozorenje. Resenje: automatizujte obnavljanje sa Certbot-om ili koristite monitoring servise (UptimeRobot, SSL Labs) koji upozoravaju pre isteka.</p>
+
+    <h3>Self-signed sertifikat (ERR_CERT_AUTHORITY_INVALID)</h3>
+    <p>Self-signed sertifikati nisu potpisani od strane pouzdane CA. Browser im ne veruje i prikazuje upozorenje. Koristite ih samo za development okruzenje, nikada za produkciju.</p>
+
+    <h3>Nepodudaranje imena (ERR_CERT_COMMON_NAME_INVALID)</h3>
+    <p>Nastaje kada se domen u URL-u ne poklapa sa domenom u sertifikatu. Na primer, sertifikat za <code>www.primer.com</code> nece raditi za <code>primer.com</code> bez SAN (Subject Alternative Name) polja.</p>
+
+    <h3>Nepotpun lanac sertifikata</h3>
+    <p>Server mora slati i intermediate sertifikate, ne samo leaf sertifikat. Koristite <a href="https://www.ssllabs.com/ssltest/" target="_blank">SSL Labs Server Test</a> da proverite lanac.</p>
+
+    <h2 id="ssl-hsts">8. HSTS header i preload lista</h2>
+    <p>HTTP Strict Transport Security (HSTS) je mehanizam koji nareduje browser-u da uvek koristi HTTPS za dati domen. Definisan je u <a href="https://datatracker.ietf.org/doc/html/rfc6797" target="_blank">RFC 6797</a>.</p>
+
+    <h3>Kako HSTS radi</h3>
+    <p>Server salje <code>Strict-Transport-Security</code> header sa HTTPS odgovorom. Browser belezi ovo i za buduce zahteve automatski konvertuje HTTP u HTTPS, bez ikakve redirekcije.</p>
+    <pre><code># Preporucena konfiguracija
+Strict-Transport-Security: max-age=63072000; includeSubDomains; preload</code></pre>
+    <ul>
+      <li><code>max-age=63072000</code> — HSTS vazi 2 godine (u sekundama)</li>
+      <li><code>includeSubDomains</code> — Primenjuje se i na sve poddomene</li>
+      <li><code>preload</code> — Dozvoljavate ukljucivanje na HSTS preload listu</li>
+    </ul>
+
+    <h3>HSTS Preload lista</h3>
+    <p>HSTS preload lista je ugradjena u Chrome, Firefox, Safari, Edge i druge browsere. Sajtovi na listi su HTTPS-only od prvog pristupa, bez mogucnosti da korisnik obide zastitu. Prijavite se na <a href="https://hstspreload.org" target="_blank">hstspreload.org</a>.</p>
+
+    <div class="callout callout-warn">
+      <strong>Paznja:</strong> Dodavanje na preload listu je trajno. Uklanjanje moze trajati mesecima. Budite sigurni da je HTTPS ispravno konfigurisan za sve poddomene pre prijavljivanja.
+    </div>
+
+    <h2 id="ssl-config">9. Konfiguracija: Nginx i Apache</h2>
+
+    <h3>Nginx — preporucena SSL konfiguracija</h3>
+    <pre><code>server {
+    listen 443 ssl http2;
+    server_name vasadomena.com www.vasadomena.com;
+
+    ssl_certificate /etc/letsencrypt/live/vasadomena.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/vasadomena.com/privkey.pem;
+
+    # TLS verzije — samo 1.2 i 1.3
+    ssl_protocols TLSv1.2 TLSv1.3;
+
+    # Cipher suite-ovi (Mozilla Intermediate)
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384;
+    ssl_prefer_server_ciphers off;
+
+    # HSTS
+    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+
+    # OCSP Stapling
+    ssl_stapling on;
+    ssl_stapling_verify on;
+    ssl_trusted_certificate /etc/letsencrypt/live/vasadomena.com/chain.pem;
+    resolver 1.1.1.1 8.8.8.8 valid=300s;
+
+    # DH parametri
+    ssl_dhparam /etc/nginx/dhparam.pem;
+
+    # Session cache
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 1d;
+    ssl_session_tickets off;
+}
+
+# HTTP to HTTPS redirect
+server {
+    listen 80;
+    server_name vasadomena.com www.vasadomena.com;
+    return 301 https://$server_name$request_uri;
+}</code></pre>
+
+    <h3>Apache — preporucena SSL konfiguracija</h3>
+    <pre><code>&lt;VirtualHost *:443&gt;
+    ServerName vasadomena.com
+    ServerAlias www.vasadomena.com
+
+    SSLEngine on
+    SSLCertificateFile /etc/letsencrypt/live/vasadomena.com/fullchain.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/vasadomena.com/privkey.pem
+
+    # TLS verzije
+    SSLProtocol all -SSLv3 -TLSv1 -TLSv1.1
+
+    # Cipher suite-ovi (Mozilla Intermediate)
+    SSLCipherSuite ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384
+    SSLHonorCipherOrder off
+
+    # HSTS
+    Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+
+    # OCSP Stapling
+    SSLUseStapling on
+    SSLStaplingCache shmcb:/var/run/ocsp(128000)
+&lt;/VirtualHost&gt;
+
+# HTTP to HTTPS redirect
+&lt;VirtualHost *:80&gt;
+    ServerName vasadomena.com
+    Redirect permanent / https://vasadomena.com/
+&lt;/VirtualHost&gt;</code></pre>
+    <p class="ref">Referenca: <a href="https://ssl-config.mozilla.org/" target="_blank">Mozilla SSL Configuration Generator</a> — generise optimalnu konfiguraciju za vas server.</p>
+
+    <h2 id="ssl-reference">10. Reference i resursi</h2>
+    <ul>
+      <li><a href="https://datatracker.ietf.org/doc/html/rfc8446" target="_blank">RFC 8446 — TLS 1.3</a> — Zvanicna specifikacija TLS 1.3 protokola</li>
+      <li><a href="https://datatracker.ietf.org/doc/html/rfc6797" target="_blank">RFC 6797 — HSTS</a> — HTTP Strict Transport Security specifikacija</li>
+      <li><a href="https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html" target="_blank">OWASP TLS Cheat Sheet</a> — Preporuke za TLS konfiguraciju</li>
+      <li><a href="https://ssl-config.mozilla.org/" target="_blank">Mozilla SSL Config Generator</a> — Generator za server konfiguraciju</li>
+      <li><a href="https://www.ssllabs.com/ssltest/" target="_blank">Qualys SSL Labs</a> — Besplatan test vase SSL konfiguracije</li>
+      <li><a href="https://transparencyreport.google.com/https/overview" target="_blank">Google Transparency Report — HTTPS</a> — Statistike HTTPS usvajanja</li>
+      <li><a href="https://letsencrypt.org/stats/" target="_blank">Let's Encrypt statistike</a> — Broj aktivnih sertifikata</li>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Web/Security/Transport_Layer_Security" target="_blank">MDN — Transport Layer Security</a></li>
+    </ul>
+
+    <a href="./index.html" class="cta">Skenirajte vas sajt besplatno</a>
+  </div>
+
+  <!-- ==================== EN CONTENT ==================== -->
+  <div class="en">
+    <h1>SSL/TLS Certificates — Complete Guide</h1>
+    <p class="subtitle">Everything you need to know about HTTPS encryption, certificate types, and proper configuration</p>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-num">95%</div>
+        <div class="stat-label">HTTPS traffic in Chrome</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">82%</div>
+        <div class="stat-label">Websites using HTTPS</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">300M+</div>
+        <div class="stat-label">Let's Encrypt certificates</div>
+      </div>
+    </div>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#ssl-sta">What is SSL/TLS and how it works</a></li>
+        <li><a href="#ssl-handshake">TLS Handshake — step by step</a></li>
+        <li><a href="#ssl-istorija">History: from SSL 1.0 to TLS 1.3</a></li>
+        <li><a href="#ssl-zasto">Why HTTPS is mandatory</a></li>
+        <li><a href="#ssl-tipovi">Certificate types: DV, OV, EV</a></li>
+        <li><a href="#ssl-letsencrypt">Let's Encrypt: free certificates</a></li>
+        <li><a href="#ssl-greske">Common mistakes and how to fix them</a></li>
+        <li><a href="#ssl-hsts">HSTS header and preload list</a></li>
+        <li><a href="#ssl-config">Configuration: Nginx and Apache</a></li>
+        <li><a href="#ssl-reference">References and resources</a></li>
+      </ol>
+    </div>
+
+    <h2 id="ssl-e1">1. What is SSL/TLS and how it works</h2>
+    <p>SSL (Secure Sockets Layer) and its successor TLS (Transport Layer Security) are cryptographic protocols that ensure secure communication over the internet. When you visit a site starting with <code>https://</code>, your browser and the server use TLS to encrypt all exchanged data.</p>
+    <p>TLS provides three key guarantees:</p>
+    <ul>
+      <li><strong>Encryption</strong> — Data is encrypted so third parties cannot read it during transit. Symmetric algorithms like AES-256-GCM are used.</li>
+      <li><strong>Authentication</strong> — The certificate proves you are communicating with the real server, not an attacker (man-in-the-middle protection).</li>
+      <li><strong>Integrity</strong> — MAC (Message Authentication Code) guarantees that data has not been altered during transit.</li>
+    </ul>
+    <p class="ref">Reference: <a href="https://datatracker.ietf.org/doc/html/rfc8446" target="_blank">RFC 8446 — The Transport Layer Security (TLS) Protocol Version 1.3</a></p>
+
+    <h2 id="ssl-e2">2. TLS Handshake — step by step</h2>
+    <p>Before data is encrypted, the browser and server must "negotiate" through a process known as the TLS handshake. In TLS 1.3, this process is optimized to just 1 round-trip (1-RTT), while TLS 1.2 required 2 round-trips.</p>
+
+    <h3>TLS 1.3 Handshake (1-RTT)</h3>
+    <ol>
+      <li><strong>ClientHello</strong> — The browser sends a list of supported cipher suites, key share, and supported TLS versions.</li>
+      <li><strong>ServerHello</strong> — The server selects a cipher suite, sends its Key Share, certificate, and Finished message — all in one response.</li>
+      <li><strong>Client verifies</strong> — The browser verifies the certificate, generates a session key, and sends a Finished message.</li>
+      <li><strong>Encrypted communication</strong> — All further data is encrypted using the agreed session key (AES-256-GCM or ChaCha20-Poly1305).</li>
+    </ol>
+
+    <div class="callout">
+      <strong>TLS 1.3 improvements:</strong> Removed support for deprecated algorithms (RSA key exchange, CBC mode, RC4, SHA-1, MD5, DES, 3DES). Added 0-RTT resumption for reconnections.
+    </div>
+
+    <h3>TLS 1.2 vs TLS 1.3 — Comparison</h3>
+    <table>
+      <tr><th>Feature</th><th>TLS 1.2</th><th>TLS 1.3</th></tr>
+      <tr><td>Handshake round-trips</td><td>2-RTT</td><td>1-RTT (0-RTT for resumption)</td></tr>
+      <tr><td>Cipher suites</td><td>37+</td><td>5 (only secure ones)</td></tr>
+      <tr><td>Forward Secrecy</td><td>Optional</td><td>Mandatory</td></tr>
+      <tr><td>RSA key exchange</td><td>Yes</td><td>Removed</td></tr>
+      <tr><td>RFC</td><td>RFC 5246 (2008)</td><td>RFC 8446 (2018)</td></tr>
+    </table>
+
+    <h2 id="ssl-e3">3. History: from SSL 1.0 to TLS 1.3</h2>
+    <p>The protocol has gone through significant evolution from its origins at Netscape to modern TLS 1.3:</p>
+    <table>
+      <tr><th>Version</th><th>Year</th><th>Status</th><th>Note</th></tr>
+      <tr><td>SSL 1.0</td><td>1994</td><td>Never released</td><td>Had serious security flaws</td></tr>
+      <tr><td>SSL 2.0</td><td>1995</td><td>Deprecated 2011 (RFC 6176)</td><td>Vulnerable to DROWN attack</td></tr>
+      <tr><td>SSL 3.0</td><td>1996</td><td>Deprecated 2015 (RFC 7568)</td><td>Vulnerable to POODLE (CVE-2014-3566)</td></tr>
+      <tr><td>TLS 1.0</td><td>1999</td><td>Deprecated 2020 (RFC 8996)</td><td>Vulnerable to BEAST attack</td></tr>
+      <tr><td>TLS 1.1</td><td>2006</td><td>Deprecated 2020 (RFC 8996)</td><td>No AEAD cipher support</td></tr>
+      <tr><td>TLS 1.2</td><td>2008</td><td>Active</td><td>Most widely used, RFC 5246</td></tr>
+      <tr><td>TLS 1.3</td><td>2018</td><td>Active (recommended)</td><td>Faster, more secure, RFC 8446</td></tr>
+    </table>
+
+    <div class="callout callout-warn">
+      <strong>Important:</strong> Since March 2020, all modern browsers (Chrome 84+, Firefox 78+, Safari 14+, Edge 84+) have dropped support for TLS 1.0 and TLS 1.1. If your server uses these versions, users will see an error.
+    </div>
+
+    <h2 id="ssl-e4">4. Why HTTPS is mandatory</h2>
+    <p>HTTPS is no longer optional — it is the standard for every website, whether it is a blog, web store, or corporate portal.</p>
+
+    <h3>Google ranking (SEO)</h3>
+    <p>Google announced in 2014 that HTTPS is a <a href="https://developers.google.com/search/blog/2014/08/https-as-ranking-signal" target="_blank">ranking signal</a>. Since 2018, Chrome marks all HTTP sites as "Not Secure". According to Google Transparency Report, 95% of pages loaded in Chrome use HTTPS (2024 data).</p>
+
+    <h3>Browser warnings</h3>
+    <p>Modern browsers actively warn users when accessing HTTP sites:</p>
+    <ul>
+      <li><strong>Chrome</strong> — Displays "Not Secure" next to the URL, and for forms with passwords shows a full-screen warning.</li>
+      <li><strong>Firefox</strong> — Displays a crossed-out padlock and warning for login forms.</li>
+      <li><strong>Safari</strong> — Displays "Not Secure" text in the address bar.</li>
+    </ul>
+
+    <h3>GDPR and legal obligation</h3>
+    <p>Article 32 of GDPR requires "appropriate technical measures" to protect personal data. Encryption in transit (HTTPS) is explicitly mentioned as an example. Sites without HTTPS that process personal data risk fines up to 20 million EUR or 4% of global revenue.</p>
+
+    <h3>HTTP/2 and performance</h3>
+    <p>HTTP/2, which brings significant performance improvements (multiplexing, header compression, server push), in practice requires HTTPS — no browser supports HTTP/2 over plain HTTP.</p>
+
+    <h2 id="ssl-e5">5. Certificate types: DV, OV, EV</h2>
+    <p>SSL/TLS certificates are divided into three categories based on the level of validation:</p>
+    <table>
+      <tr><th>Type</th><th>Validation</th><th>Issuance time</th><th>Cost</th><th>Use case</th></tr>
+      <tr><td>DV (Domain Validation)</td><td>Domain ownership</td><td>Minutes</td><td>Free — $50/yr</td><td>Blogs, small sites</td></tr>
+      <tr><td>OV (Organization Validation)</td><td>Ownership + organization identity</td><td>1-3 days</td><td>$50 — $200/yr</td><td>Business sites</td></tr>
+      <tr><td>EV (Extended Validation)</td><td>Detailed legal verification</td><td>1-2 weeks</td><td>$150 — $500+/yr</td><td>Banks, e-commerce</td></tr>
+    </table>
+
+    <h3>DV certificates</h3>
+    <p>The simplest type — the CA only verifies you control the domain. Verification is done via DNS TXT record, HTTP file, or email. Let's Encrypt issues exclusively DV certificates.</p>
+
+    <h3>OV certificates</h3>
+    <p>In addition to domain ownership, the CA also verifies the organization's identity (name, address, registration). This requires submitting legal documentation. Users can view organization information by clicking the padlock in the browser.</p>
+
+    <h3>EV certificates</h3>
+    <p>The strictest validation — the CA verifies the legal status, physical address, and operational status of the organization. Browsers used to display a green bar with the company name, but Chrome (from version 77, Sep 2019) and Firefox (from version 70) removed this visual distinction.</p>
+
+    <div class="callout">
+      <strong>Wildcard certificates:</strong> Cover one domain and all subdomains (*.example.com). Available for DV and OV types. Let's Encrypt supports wildcard certificates since March 2018 (ACMEv2).
+    </div>
+
+    <h2 id="ssl-e6">6. Let's Encrypt: how to get a free certificate</h2>
+    <p>Let's Encrypt is a free, automated, and open Certificate Authority run by the Internet Security Research Group (ISRG). Launched in April 2016, it has issued over 300 million active certificates covering more than 360 million domains.</p>
+
+    <h3>Step 1: Install Certbot</h3>
+    <pre><code># Ubuntu/Debian
+sudo apt update
+sudo apt install certbot python3-certbot-nginx
+
+# CentOS/RHEL
+sudo dnf install certbot python3-certbot-nginx</code></pre>
+
+    <h3>Step 2: Obtain a certificate</h3>
+    <pre><code># For Nginx
+sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
+
+# For Apache
+sudo certbot --apache -d yourdomain.com -d www.yourdomain.com
+
+# Certificate only (no automatic configuration)
+sudo certbot certonly --standalone -d yourdomain.com</code></pre>
+
+    <h3>Step 3: Automatic renewal</h3>
+    <p>Let's Encrypt certificates are valid for 90 days. Certbot automatically sets up a cron job for renewal:</p>
+    <pre><code># Test automatic renewal
+sudo certbot renew --dry-run
+
+# Cron job (automatically added)
+0 0,12 * * * root certbot renew --quiet</code></pre>
+
+    <div class="callout">
+      <strong>Alternative ACME clients:</strong> In addition to Certbot, you can use acme.sh, Caddy (built-in ACME), Traefik, or win-acme for Windows servers.
+    </div>
+
+    <h2 id="ssl-e7">7. Common mistakes and how to fix them</h2>
+
+    <h3>Mixed Content</h3>
+    <p>Occurs when an HTTPS page loads resources (images, scripts, styles) over HTTP. The browser blocks "active mixed content" (scripts, iframes) and shows a warning for "passive mixed content" (images).</p>
+    <pre><code>&lt;!-- BAD: mixed content --&gt;
+&lt;img src="http://example.com/image.jpg"&gt;
+&lt;script src="http://example.com/script.js"&gt;&lt;/script&gt;
+
+&lt;!-- GOOD: use HTTPS or protocol-relative URLs --&gt;
+&lt;img src="https://example.com/image.jpg"&gt;
+&lt;script src="//example.com/script.js"&gt;&lt;/script&gt;</code></pre>
+
+    <h3>Expired certificate (ERR_CERT_DATE_INVALID)</h3>
+    <p>Certificates have an expiration date. When they expire, the browser displays a full-screen warning. Solution: automate renewal with Certbot or use monitoring services (UptimeRobot, SSL Labs) that alert before expiration.</p>
+
+    <h3>Self-signed certificate (ERR_CERT_AUTHORITY_INVALID)</h3>
+    <p>Self-signed certificates are not signed by a trusted CA. Browsers do not trust them and display a warning. Use them only for development environments, never for production.</p>
+
+    <h3>Name mismatch (ERR_CERT_COMMON_NAME_INVALID)</h3>
+    <p>Occurs when the domain in the URL does not match the domain in the certificate. For example, a certificate for <code>www.example.com</code> will not work for <code>example.com</code> without a SAN (Subject Alternative Name) field.</p>
+
+    <h3>Incomplete certificate chain</h3>
+    <p>The server must send intermediate certificates, not just the leaf certificate. Use <a href="https://www.ssllabs.com/ssltest/" target="_blank">SSL Labs Server Test</a> to verify your chain.</p>
+
+    <h2 id="ssl-e8">8. HSTS header and preload list</h2>
+    <p>HTTP Strict Transport Security (HSTS) is a mechanism that instructs the browser to always use HTTPS for a given domain. It is defined in <a href="https://datatracker.ietf.org/doc/html/rfc6797" target="_blank">RFC 6797</a>.</p>
+
+    <h3>How HSTS works</h3>
+    <p>The server sends the <code>Strict-Transport-Security</code> header with the HTTPS response. The browser records this and for future requests automatically converts HTTP to HTTPS, without any redirect.</p>
+    <pre><code># Recommended configuration
+Strict-Transport-Security: max-age=63072000; includeSubDomains; preload</code></pre>
+    <ul>
+      <li><code>max-age=63072000</code> — HSTS is valid for 2 years (in seconds)</li>
+      <li><code>includeSubDomains</code> — Applies to all subdomains as well</li>
+      <li><code>preload</code> — You allow inclusion in the HSTS preload list</li>
+    </ul>
+
+    <h3>HSTS Preload list</h3>
+    <p>The HSTS preload list is built into Chrome, Firefox, Safari, Edge, and other browsers. Sites on the list are HTTPS-only from the first visit, without the possibility for users to bypass the protection. Apply at <a href="https://hstspreload.org" target="_blank">hstspreload.org</a>.</p>
+
+    <div class="callout callout-warn">
+      <strong>Caution:</strong> Adding to the preload list is permanent. Removal can take months. Make sure HTTPS is properly configured for all subdomains before applying.
+    </div>
+
+    <h2 id="ssl-e9">9. Configuration: Nginx and Apache</h2>
+
+    <h3>Nginx — recommended SSL configuration</h3>
+    <pre><code>server {
+    listen 443 ssl http2;
+    server_name yourdomain.com www.yourdomain.com;
+
+    ssl_certificate /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
+
+    # TLS versions — only 1.2 and 1.3
+    ssl_protocols TLSv1.2 TLSv1.3;
+
+    # Cipher suites (Mozilla Intermediate)
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384;
+    ssl_prefer_server_ciphers off;
+
+    # HSTS
+    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+
+    # OCSP Stapling
+    ssl_stapling on;
+    ssl_stapling_verify on;
+    ssl_trusted_certificate /etc/letsencrypt/live/yourdomain.com/chain.pem;
+    resolver 1.1.1.1 8.8.8.8 valid=300s;
+
+    # DH parameters
+    ssl_dhparam /etc/nginx/dhparam.pem;
+
+    # Session cache
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 1d;
+    ssl_session_tickets off;
+}
+
+# HTTP to HTTPS redirect
+server {
+    listen 80;
+    server_name yourdomain.com www.yourdomain.com;
+    return 301 https://$server_name$request_uri;
+}</code></pre>
+
+    <h3>Apache — recommended SSL configuration</h3>
+    <pre><code>&lt;VirtualHost *:443&gt;
+    ServerName yourdomain.com
+    ServerAlias www.yourdomain.com
+
+    SSLEngine on
+    SSLCertificateFile /etc/letsencrypt/live/yourdomain.com/fullchain.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/yourdomain.com/privkey.pem
+
+    # TLS versions
+    SSLProtocol all -SSLv3 -TLSv1 -TLSv1.1
+
+    # Cipher suites (Mozilla Intermediate)
+    SSLCipherSuite ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384
+    SSLHonorCipherOrder off
+
+    # HSTS
+    Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+
+    # OCSP Stapling
+    SSLUseStapling on
+    SSLStaplingCache shmcb:/var/run/ocsp(128000)
+&lt;/VirtualHost&gt;
+
+# HTTP to HTTPS redirect
+&lt;VirtualHost *:80&gt;
+    ServerName yourdomain.com
+    Redirect permanent / https://yourdomain.com/
+&lt;/VirtualHost&gt;</code></pre>
+    <p class="ref">Reference: <a href="https://ssl-config.mozilla.org/" target="_blank">Mozilla SSL Configuration Generator</a> — generates optimal configuration for your server.</p>
+
+    <h2 id="ssl-e10">10. References and resources</h2>
+    <ul>
+      <li><a href="https://datatracker.ietf.org/doc/html/rfc8446" target="_blank">RFC 8446 — TLS 1.3</a> — Official TLS 1.3 protocol specification</li>
+      <li><a href="https://datatracker.ietf.org/doc/html/rfc6797" target="_blank">RFC 6797 — HSTS</a> — HTTP Strict Transport Security specification</li>
+      <li><a href="https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html" target="_blank">OWASP TLS Cheat Sheet</a> — TLS configuration recommendations</li>
+      <li><a href="https://ssl-config.mozilla.org/" target="_blank">Mozilla SSL Config Generator</a> — Server configuration generator</li>
+      <li><a href="https://www.ssllabs.com/ssltest/" target="_blank">Qualys SSL Labs</a> — Free SSL configuration test</li>
+      <li><a href="https://transparencyreport.google.com/https/overview" target="_blank">Google Transparency Report — HTTPS</a> — HTTPS adoption statistics</li>
+      <li><a href="https://letsencrypt.org/stats/" target="_blank">Let's Encrypt statistics</a> — Number of active certificates</li>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Web/Security/Transport_Layer_Security" target="_blank">MDN — Transport Layer Security</a></li>
+    </ul>
+
+    <a href="./index.html" class="cta">Scan your site for free</a>
+  </div>
+
+  <div class="nav-links">
+    <a href="./blog-security.html"><span class="sr">Bezbednost sajta</span><span class="en">Site Security</span></a>
+    <a href="./blog-security-headers.html"><span class="sr">HTTP Security Headers</span><span class="en">HTTP Security Headers</span></a>
+    <a href="./blog-security-xss.html"><span class="sr">XSS napadi</span><span class="en">XSS Attacks</span></a>
+    <a href="./blog-security-sql.html"><span class="sr">SQL Injection</span><span class="en">SQL Injection</span></a>
+    <a href="./blog-security-csrf.html"><span class="sr">CSRF napadi</span><span class="en">CSRF Attacks</span></a>
+    <a href="./blog-security-dns.html"><span class="sr">DNS bezbednost</span><span class="en">DNS Security</span></a>
+    <a href="./blog-security-ports.html"><span class="sr">Port skeniranje</span><span class="en">Port Scanning</span></a>
+    <a href="./blog-security-api.html"><span class="sr">API bezbednost</span><span class="en">API Security</span></a>
+  </div>
+
+  </main>
+</div>
+<!-- Footer injected by blog-common.js -->
+<script src="./blog-common.js" defer></script>
+</body>
+</html>

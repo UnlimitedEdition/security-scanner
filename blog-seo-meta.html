@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meta Tagovi — Title i Description optimizacija | Web Security Scanner</title>
+  <meta name="description" content="Kompletni vodic za HTML meta tagove: title tag formula, meta description za CTR, robots, viewport, charset, Open Graph. Primeri, greske i alati za optimizaciju.">
+  <meta name="keywords" content="meta tagovi, title tag, meta description, SEO, Google rezultati, robots, viewport, canonical, Open Graph, SERP">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <link rel="canonical" href="https://security-scanner-ruddy.vercel.app/blog-seo-meta.html">
+  <link rel="alternate" hreflang="sr" href="https://security-scanner-ruddy.vercel.app/blog-seo-meta.html">
+  <link rel="alternate" hreflang="en" href="https://security-scanner-ruddy.vercel.app/blog-seo-meta.html">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Meta Tagovi — Title i Description optimizacija za SEO">
+  <meta property="og:description" content="Kako napisati savrseni title tag i meta description koji donose klikove. Formula, primeri, greske i alati.">
+  <meta property="og:url" content="https://security-scanner-ruddy.vercel.app/blog-seo-meta.html">
+  <meta property="og:site_name" content="Web Security Scanner">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Meta Tagovi — Title i Description optimizacija za SEO">
+  <meta name="twitter:description" content="Kako napisati savrseni title tag i meta description koji donose klikove. Formula, primeri, greske i alati.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Meta Tagovi — Title i Description optimizacija",
+    "author": {"@type": "Person", "name": "Toske", "url": "https://toske-programer.web.app"},
+    "publisher": {"@type": "Organization", "name": "Web Security Scanner"},
+    "datePublished": "2026-04-09",
+    "dateModified": "2026-04-09",
+    "description": "Kompletni vodic za HTML meta tagove: title tag, meta description, robots, viewport, charset, canonical. Primeri i alati.",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://security-scanner-ruddy.vercel.app/blog-seo-meta.html"
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Koliko dugacak treba biti title tag?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Optimalna duzina title taga je 50-60 karaktera. Google prikazuje do 600 piksela sirine (oko 60 karaktera). Ako je title duzi, Google ce ga skratiti sa '...' sto smanjuje CTR. Kljucnu rec stavite na pocetak."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Da li Google menja meta description?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Da, Google prepisuje meta description u oko 63% slucajeva (Ahrefs studija). Google bira tekst sa stranice koji bolje odgovara korisnickom upitu. Ipak, dobar description i dalje vredi jer Google ga koristi kao osnovu i za socijalno deljenje."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Da li meta keywords tag i dalje radi?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ne. Google je 2009. javno potvrdio da potpuno ignorise meta keywords tag. Bing ga takodje ignorise. Jedino ga Yandex delimicno koristi. Ne trositi vreme na njega — fokusirajte se na title, description i sadrzaj."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Sta je canonical tag i zasto je bitan?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Canonical tag (rel=canonical) govori Google-u koja je preferirana verzija stranice kad postoji vise URL-ova sa istim sadrzajem. Sprecava penale za duplirani sadrzaj i konsoliduje link juice na jednu URL adresu."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Da li viewport meta tag utice na SEO?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Da, indirektno. Bez viewport taga sajt nije mobile-friendly, a Google koristi mobile-first indeksiranje od 2019. Sajtovi koji nisu responsivni gube rang na mobilnim pretragama koje cine 60%+ svih pretraga."
+        }
+      }
+    ]
+  }
+  </script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+</head>
+<body>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr"><div class="timeline-title">Sadrzaj</div><ol id="timeline-sr"></ol></div>
+    <div class="en"><div class="timeline-title">Contents</div><ol id="timeline-en"></ol></div>
+  </aside>
+  <main class="blog-content">
+
+  <!-- ==================== SRPSKI ==================== -->
+  <div class="sr">
+    <h1>Meta Tagovi &mdash; Title i Description optimizacija</h1>
+    <p class="subtitle">Kompletni vodic za HTML meta tagove koji direktno uticu na rang i klikove u Google rezultatima</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">#1</div><div class="stat-label">Title tag je najvazniji on-page SEO faktor</div></div>
+      <div class="stat-card"><div class="stat-num">63%</div><div class="stat-label">Description-a Google prepise (Ahrefs)</div></div>
+      <div class="stat-card"><div class="stat-num">36%</div><div class="stat-label">Vise klikova sa optimizovanim title-om</div></div>
+      <div class="stat-card"><div class="stat-num">5.1%</div><div class="stat-label">Prosecni CTR na poziciji #1 (Backlinko)</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Sadrzaj</h3>
+      <ol>
+        <li><a href="#m1">Sta su meta tagovi</a></li>
+        <li><a href="#m2">Title tag — najvazniji SEO element</a></li>
+        <li><a href="#m3">Meta description — prodajni tekst u Google-u</a></li>
+        <li><a href="#m4">Meta robots — kontrola indeksiranja</a></li>
+        <li><a href="#m5">Viewport — mobile-friendly obaveza</a></li>
+        <li><a href="#m6">Canonical URL — sprecavanje duplikata</a></li>
+        <li><a href="#m7">Ostali bitni meta tagovi</a></li>
+        <li><a href="#m8">Tabela svih meta tagova</a></li>
+        <li><a href="#m9">Najcesce greske</a></li>
+        <li><a href="#m10">Alati za optimizaciju</a></li>
+        <li><a href="#m11">Reference i resursi</a></li>
+      </ol>
+    </div>
+
+    <h2 id="m1">1. Sta su meta tagovi i zasto su bitni za SEO</h2>
+    <p>Meta tagovi su HTML elementi u <code>&lt;head&gt;</code> sekciji stranice koji pruzaju informacije pretrazivacima i browser-ima o sadrzaju stranice. Korisnici ih ne vide direktno na stranici, ali Google ih koristi za rangiranje, indeksiranje i prikazivanje u rezultatima pretrage (SERP).</p>
+    <p>Od svih on-page SEO faktora, title tag je najvazniji po uticaju na rangiranje (Backlinko studija sa 11.8 miliona Google rezultata). Meta description ne utice direktno na rang, ali dramaticno utice na CTR (Click-Through Rate) &mdash; koliko ljudi klikne na vas rezultat umesto na konkurentski.</p>
+    <pre><code>&lt;head&gt;
+  &lt;meta charset="UTF-8"&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+  &lt;title&gt;Vas Title Tag — Brend&lt;/title&gt;
+  &lt;meta name="description" content="Vas meta description do 160 karaktera..."&gt;
+  &lt;meta name="robots" content="index, follow"&gt;
+  &lt;link rel="canonical" href="https://vasajt.rs/stranica"&gt;
+&lt;/head&gt;</code></pre>
+    <div class="callout"><strong>Bitno:</strong> Meta tagovi su prvi kontakt vaseg sajta sa Google-om. Pogresan ili nedostajuci title tag znaci da Google sam bira naslov &mdash; i cesto bira lose.</div>
+
+    <h2 id="m2">2. Title tag &mdash; najvazniji SEO element</h2>
+    <p>Title tag (<code>&lt;title&gt;</code>) se prikazuje kao plavi klikabilni naslov u Google rezultatima, u browser tab-u i kad delite link na drustvenim mrezama. To je prvi i najvazniji element koji Google koristi da razume o cemu se radi vasa stranica.</p>
+
+    <h3>Optimalna duzina</h3>
+    <p>Google prikazuje do <strong>600 piksela sirine</strong> (oko 50-60 karaktera). Ako je title duzi, bice skracen sa "..." sto smanjuje CTR i profesionalnost. Proverite sirinu u pikselima, ne samo broj karaktera &mdash; slovo "W" zauzima vise prostora od "i".</p>
+
+    <h3>Formula za savrseni title</h3>
+    <pre><code>&lt;!-- Formula: Kljucna rec + Modifikator + Brend --&gt;
+
+&lt;!-- DOBRO --&gt;
+&lt;title&gt;SSL Sertifikati — Kompletni vodic 2026 | Web Security Scanner&lt;/title&gt;
+&lt;title&gt;Meta Tagovi za SEO — Title i Description vodic | Vas Brend&lt;/title&gt;
+&lt;title&gt;Besplatni SEO audit — 12 provera za vas sajt | SecurityScanner&lt;/title&gt;
+
+&lt;!-- LOSE --&gt;
+&lt;title&gt;Pocetna stranica&lt;/title&gt;                    &lt;!-- nema kljucnu rec --&gt;
+&lt;title&gt;Web Security Scanner | SecurityScanner&lt;/title&gt; &lt;!-- ponavljanje --&gt;
+&lt;title&gt;SSL, TLS, HTTPS, Sertifikat, Enkripcija, Bezbednost, Let's Encrypt, Vodic&lt;/title&gt; &lt;!-- keyword stuffing --&gt;</code></pre>
+
+    <h3>Primeri dobrih i losih titlova</h3>
+    <table>
+      <tr><th>Title</th><th>Ocena</th><th>Zasto</th></tr>
+      <tr><td>Web dizajn Beograd — Profesionalne stranice od 299&euro;</td><td style="color:#22c55e">Odlican</td><td>Lokalna kljucna rec + cena + geografija</td></tr>
+      <tr><td>10 SEO gresaka koje unistavaju vas rang (i kako ih popraviti)</td><td style="color:#22c55e">Odlican</td><td>Broj + emocija + resenje</td></tr>
+      <tr><td>GDPR Vodic 2026 — Kako izbeci kazne do &euro;20M | Vas Brend</td><td style="color:#22c55e">Odlican</td><td>Godina + strah + konkretan iznos</td></tr>
+      <tr><td>Pocetna</td><td style="color:#ef4444">Uzasan</td><td>Nema kljucnu rec, nema vrednost</td></tr>
+      <tr><td>O nama | Kompanija d.o.o.</td><td style="color:#f97316">Los</td><td>Nijedna kljucna rec koju bi neko pretrazivao</td></tr>
+      <tr><td>SSL, HTTPS, TLS, sertifikat, enkripcija, bezbednost</td><td style="color:#ef4444">Uzasan</td><td>Keyword stuffing &mdash; Google kaznjava</td></tr>
+    </table>
+
+    <h3>Google prepisivanje titlova</h3>
+    <p>Od avgusta 2021, Google aktivno menja title tagove u rezultatima pretrage. Prema Zyppy studiji, Google prepisuje title u <strong>33% slucajeva</strong>. Najcesci razlozi:</p>
+    <ul>
+      <li><strong>Title je predugacak</strong> &mdash; Google ga skracuje ili potpuno menja</li>
+      <li><strong>Title ne opisuje sadrzaj</strong> &mdash; Google bira H1 ili drugi tekst sa stranice</li>
+      <li><strong>Keyword stuffing</strong> &mdash; Google uklanja ponavljanje i bira cistiji naslov</li>
+      <li><strong>Title je identican na vise stranica</strong> &mdash; Google dodaje kontekst da razlikuje rezultate</li>
+      <li><strong>Title ne odgovara upitu</strong> &mdash; Google bira tekst relevantniji za konkretnu pretragu</li>
+    </ul>
+    <div class="callout callout-warn"><strong>Savez:</strong> Cak i kad Google prepise title, dobar originalni title povecava sansu da Google zadrzi vasu verziju. Drzite se 50-60 karaktera sa kljucnom reci na pocetku.</div>
+
+    <h2 id="m3">3. Meta description &mdash; prodajni tekst u Google-u</h2>
+    <p>Meta description je kratak opis stranice koji se prikazuje ispod title-a u Google rezultatima. <strong>Ne utice direktno na rangiranje</strong>, ali dramaticno utice na CTR &mdash; dobar description moze podici klikove za 5-10%.</p>
+
+    <h3>Optimalna duzina</h3>
+    <p>Google prikazuje do <strong>920 piksela</strong> (oko 150-160 karaktera) na desktopu i manje na mobilnom. Drzite se 120-155 karaktera za sigurnost. Google bolduje reci iz korisnickog upita u description-u, sto privlaci paznju.</p>
+
+    <h3>Kako napisati description koji donosi klikove</h3>
+    <ul>
+      <li><strong>Pocnite sa vrednoscu</strong> &mdash; sta korisnik dobija? "Naucite...", "Otkrijte...", "Besplatni vodic za..."</li>
+      <li><strong>Ukljucite kljucnu rec</strong> &mdash; bolduje se u rezultatima kad se poklopi sa upitom</li>
+      <li><strong>Dodajte CTA</strong> &mdash; "Proverite odmah", "Saznajte vise", "Besplatno"</li>
+      <li><strong>Koristite brojeve</strong> &mdash; "12 provera", "za 5 minuta", "od 2026."</li>
+      <li><strong>Budite specificni</strong> &mdash; "za WordPress sajtove" bolje od "za sajtove"</li>
+    </ul>
+    <pre><code>&lt;!-- DOBRO: konkretan, sa CTA, broj i kljucna rec --&gt;
+&lt;meta name="description" content="Besplatni SEO audit sa 12 automatskih provera. Proverite title, description, headings, slike i strukturirane podatke vaseg sajta za 30 sekundi."&gt;
+
+&lt;!-- LOSE: genericno, bez vrednosti --&gt;
+&lt;meta name="description" content="Dobrodosli na nas sajt. Mi se bavimo SEO optimizacijom i web dizajnom. Kontaktirajte nas za vise informacija."&gt;</code></pre>
+
+    <h3>Kada Google prepisuje description</h3>
+    <p>Prema Ahrefs studiji iz 2023, Google prepisuje meta description u <strong>63% slucajeva</strong>. Google bira tekst sa stranice koji bolje odgovara upitu. Ipak, pisanje dobrog description-a i dalje vredi jer:</p>
+    <ul>
+      <li>Google ga koristi kao <strong>osnovu</strong> za generisanje snippet-a</li>
+      <li>Socijalne mreze (Facebook, LinkedIn) koriste ga za prikaz kad delite link</li>
+      <li>Za stranice sa malo teksta, Google nema bolju alternativu</li>
+    </ul>
+
+    <h2 id="m4">4. Meta robots &mdash; kontrola indeksiranja</h2>
+    <p>Meta robots tag govori pretrazivacima sta smeju da rade sa stranicom. Ovo je kriticno za kontrolu koje stranice se pojavljuju u Google rezultatima.</p>
+    <pre><code>&lt;!-- Dozvoli indeksiranje i pracenje linkova (default) --&gt;
+&lt;meta name="robots" content="index, follow"&gt;
+
+&lt;!-- Zabrani indeksiranje ali prati linkove --&gt;
+&lt;meta name="robots" content="noindex, follow"&gt;
+
+&lt;!-- Zabrani sve --&gt;
+&lt;meta name="robots" content="noindex, nofollow"&gt;
+
+&lt;!-- Napredne direktive --&gt;
+&lt;meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large"&gt;</code></pre>
+
+    <h3>Direktive</h3>
+    <table>
+      <tr><th>Direktiva</th><th>Znacenje</th><th>Kada koristiti</th></tr>
+      <tr><td><code>index</code></td><td>Dozvoli prikazivanje u rezultatima</td><td>Sve javne stranice</td></tr>
+      <tr><td><code>noindex</code></td><td>Zabrani prikazivanje u rezultatima</td><td>Admin, thankyou, duplikati, staging</td></tr>
+      <tr><td><code>follow</code></td><td>Prati linkove na stranici</td><td>Skoro uvek</td></tr>
+      <tr><td><code>nofollow</code></td><td>Ne prati linkove</td><td>Retko &mdash; stranice sa nepouzdanim linkovima</td></tr>
+      <tr><td><code>max-snippet:-1</code></td><td>Dozvoli snippet bilo koje duzine</td><td>Sve stranice (vise prostora u SERP-u)</td></tr>
+      <tr><td><code>max-image-preview:large</code></td><td>Dozvoli veliku sliku u rezultatima</td><td>Sve stranice sa slikama</td></tr>
+      <tr><td><code>noarchive</code></td><td>Ne prikazuj kesiranu verziju</td><td>Dinamicki sadrzaj, cene</td></tr>
+    </table>
+    <div class="callout callout-danger"><strong>Upozorenje:</strong> Greska sa <code>noindex</code> moze ukloniti sajt iz Google-a za nekoliko dana. Uvek proverite robots tag nakon deploy-a. Cest problem: staging sajt sa noindex koji se kopira na produkciju.</div>
+
+    <h2 id="m5">5. Viewport &mdash; mobile-friendly obaveza</h2>
+    <p>Viewport meta tag kontrolise kako se stranica prikazuje na mobilnim uredjajima. Bez njega, mobilni browser prikazuje desktop verziju smanjenu na mali ekran &mdash; tekst je necitljiv i korisnici odlaze.</p>
+    <pre><code>&lt;!-- OBAVEZNO za svaku stranicu --&gt;
+&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+
+&lt;!-- NIKAD ne koristite (blokira zoom za accessibility) --&gt;
+&lt;meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"&gt;</code></pre>
+    <p>Od 2019. Google koristi <strong>mobile-first indeksiranje</strong> &mdash; mobilna verzija vase stranice je primarna za rangiranje. Bez viewport taga, Google smatra da sajt nije mobile-friendly i koriguje rang na mobilnim pretragama, koje cine <strong>60%+ svih pretraga</strong>.</p>
+
+    <h2 id="m6">6. Canonical URL &mdash; sprecavanje duplikata</h2>
+    <p>Canonical tag govori Google-u koja je "originalna" verzija stranice kad isti sadrzaj postoji na vise URL-ova. Ovo je cest problem koji moze ozbiljno narusiti SEO.</p>
+    <pre><code>&lt;!-- Na stranici https://vasajt.rs/proizvod?color=red --&gt;
+&lt;link rel="canonical" href="https://vasajt.rs/proizvod"&gt;
+
+&lt;!-- Cesti duplikati koje canonical resava: --&gt;
+&lt;!-- https://vasajt.rs/stranica --&gt;
+&lt;!-- https://vasajt.rs/stranica/ --&gt;
+&lt;!-- https://vasajt.rs/stranica?utm_source=facebook --&gt;
+&lt;!-- https://www.vasajt.rs/stranica --&gt;
+&lt;!-- http://vasajt.rs/stranica --&gt;</code></pre>
+    <h3>Kada koristiti canonical</h3>
+    <ul>
+      <li><strong>URL parametri</strong> &mdash; filteri, sortiranje, tracking parametri (UTM)</li>
+      <li><strong>www vs non-www</strong> &mdash; obe verzije prikazuju isti sadrzaj</li>
+      <li><strong>HTTP vs HTTPS</strong> &mdash; obe verzije dostupne</li>
+      <li><strong>Trailing slash</strong> &mdash; /stranica vs /stranica/</li>
+      <li><strong>Sindicirani sadrzaj</strong> &mdash; isti clanak na vise sajtova</li>
+      <li><strong>Paginirane stranice</strong> &mdash; /blog?page=2 &rarr; canonical na /blog</li>
+    </ul>
+    <div class="callout"><strong>Pravilo:</strong> Svaka stranica treba imati canonical tag koji pokazuje na samu sebe (self-referencing canonical). Ovo je SEO best practice koja pomaze Google-u cak i kad nemate duplikate.</div>
+
+    <h2 id="m7">7. Ostali bitni meta tagovi</h2>
+
+    <h3>Meta charset</h3>
+    <pre><code>&lt;meta charset="UTF-8"&gt;</code></pre>
+    <p>Definise enkodovanje karaktera. UTF-8 podrzava sve jezike i specijalne karaktere (ćčžšđ). Uvek ga stavite kao <strong>prvi element</strong> u <code>&lt;head&gt;</code> &mdash; browser mora znati enkodovanje pre parsiranja ostatka.</p>
+
+    <h3>Meta keywords (ZASTARLO)</h3>
+    <pre><code>&lt;!-- NE KORISTITI — Google IGNORISE od 2009. --&gt;
+&lt;meta name="keywords" content="SEO, meta tagovi, optimizacija"&gt;</code></pre>
+    <p>Google je 2009. javno potvrdio da potpuno ignorise meta keywords tag. Matt Cutts (bivsi sef Google Webspam tima) objavio je video u kom eksplicitno kaze: "Google does not use the keywords meta tag in web ranking." Ne trositi vreme na njega.</p>
+
+    <h3>Hreflang &mdash; za visejezicke sajtove</h3>
+    <pre><code>&lt;!-- Srpska verzija --&gt;
+&lt;link rel="alternate" hreflang="sr" href="https://vasajt.rs/stranica"&gt;
+&lt;!-- Engleska verzija --&gt;
+&lt;link rel="alternate" hreflang="en" href="https://vasajt.rs/en/stranica"&gt;
+&lt;!-- Default verzija --&gt;
+&lt;link rel="alternate" hreflang="x-default" href="https://vasajt.rs/stranica"&gt;</code></pre>
+    <p>Hreflang govori Google-u koja jezicka verzija stranice da prikaze korisnicima u razlicitim zemljama. Bez njega, Google moze prikazati srpsku verziju engleskim korisnicima ili obrnuto.</p>
+
+    <h3>Open Graph i Twitter Cards</h3>
+    <pre><code>&lt;meta property="og:title" content="Naslov za Facebook/LinkedIn"&gt;
+&lt;meta property="og:description" content="Opis za deljenje na drustvenim mrezama"&gt;
+&lt;meta property="og:image" content="https://vasajt.rs/slika-1200x630.jpg"&gt;
+&lt;meta property="og:url" content="https://vasajt.rs/stranica"&gt;
+&lt;meta name="twitter:card" content="summary_large_image"&gt;</code></pre>
+    <p>Kontrolisu kako vas link izgleda kad ga neko podeli na Facebook-u, LinkedIn-u ili Twitter-u. Bez OG tagova, platforme biraju nasumican tekst i sliku sa stranice. Detaljnije u nasem <a href="./blog-seo-opengraph.html">Open Graph vodicu</a>.</p>
+
+    <h2 id="m8">8. Kompletna tabela meta tagova</h2>
+    <table>
+      <tr><th>Tag</th><th>Primer</th><th>SEO uticaj</th><th>Obavezan?</th></tr>
+      <tr><td><code>&lt;title&gt;</code></td><td>Title tekst — Brend</td><td>Vrlo visok</td><td>DA</td></tr>
+      <tr><td><code>meta description</code></td><td>Opis do 160 karaktera</td><td>Visok (CTR)</td><td>DA</td></tr>
+      <tr><td><code>meta robots</code></td><td>index, follow</td><td>Kritican</td><td>Opciono (default=index,follow)</td></tr>
+      <tr><td><code>meta viewport</code></td><td>width=device-width, initial-scale=1.0</td><td>Visok (mobile)</td><td>DA</td></tr>
+      <tr><td><code>meta charset</code></td><td>UTF-8</td><td>Nizak</td><td>DA</td></tr>
+      <tr><td><code>link canonical</code></td><td>https://vasajt.rs/stranica</td><td>Visok</td><td>DA</td></tr>
+      <tr><td><code>link hreflang</code></td><td>sr, en</td><td>Visok (multi-lang)</td><td>Ako imate vise jezika</td></tr>
+      <tr><td><code>og:title</code></td><td>Naslov za drustvene</td><td>Srednji (CTR)</td><td>Preporuceno</td></tr>
+      <tr><td><code>og:description</code></td><td>Opis za drustvene</td><td>Srednji (CTR)</td><td>Preporuceno</td></tr>
+      <tr><td><code>og:image</code></td><td>1200x630 slika</td><td>Srednji (CTR)</td><td>Preporuceno</td></tr>
+      <tr><td><code>twitter:card</code></td><td>summary_large_image</td><td>Nizak</td><td>Preporuceno</td></tr>
+      <tr><td><code>meta keywords</code></td><td>—</td><td>Nula</td><td>NE (ignorisano)</td></tr>
+    </table>
+
+    <h2 id="m9">9. Najcesce greske sa meta tagovima</h2>
+    <ul>
+      <li><strong>Isti title na svim stranicama</strong> &mdash; svaka stranica mora imati jedinstven title. Duplirani titlovi zbunjuju Google i smanjuju rang svim stranicama.</li>
+      <li><strong>Nedostaje title ili description</strong> &mdash; Google tada bira nasumican tekst sa stranice, sto je gotovo uvek lose.</li>
+      <li><strong>Keyword stuffing u title-u</strong> &mdash; "SEO, SEO vodic, SEO optimizacija, SEO saveti" &mdash; Google ovo kaznjava.</li>
+      <li><strong>Predugacak title</strong> &mdash; skracuje se sa "..." i gubi kljucnu informaciju. Ciljajte 50-60 karaktera.</li>
+      <li><strong>Description bez CTA</strong> &mdash; description je reklama, ne enciklopedijski unos. Dodajte poziv na akciju.</li>
+      <li><strong>noindex na produkciji</strong> &mdash; kopiranje staging konfiguracije na produkciju. Proverite robots tag POSLE svakog deploy-a.</li>
+      <li><strong>Nedostaje viewport tag</strong> &mdash; sajt nije mobile-friendly, Google snizava rang.</li>
+      <li><strong>Nedostaje canonical</strong> &mdash; isti sadrzaj na vise URL-ova deli "link juice" umesto da ga konsoliduje.</li>
+      <li><strong>user-scalable=no u viewport-u</strong> &mdash; blokira zoom, accessibility problem, Google moze penalizovati.</li>
+      <li><strong>Trosenje vremena na meta keywords</strong> &mdash; nema efekta od 2009. godine.</li>
+    </ul>
+    <div class="callout callout-warn"><strong>Pro tip:</strong> Koristite Google Search Console &rarr; "Page Indexing" izvestaj da proverite da li Google pravilno cita vase meta tagove. Search Console takodje upozorava na duplirane title-ove i description-e.</div>
+
+    <h2 id="m10">10. Alati za optimizaciju meta tagova</h2>
+    <ul>
+      <li><strong><a href="./index.html">Web Security Scanner</a></strong> &mdash; proverava prisustvo i ispravnost title, description, viewport, canonical, OG tagova, heading strukture i structured data.</li>
+      <li><strong>Google Search Console</strong> &mdash; prikazuje kako Google vidi vase stranice, upozorava na probleme sa indeksiranjem i duplikatima.</li>
+      <li><strong>SERP Simulator</strong> &mdash; pregled kako ce vas title i description izgledati u Google rezultatima pre nego sto objavite.</li>
+      <li><strong>Yoast SEO</strong> &mdash; WordPress plugin koji vodi kroz optimizaciju title-a i description-a za svaku stranicu.</li>
+      <li><strong>Rank Math</strong> &mdash; alternativa Yoast-u sa naprednim funkcijama za Schema.org i redirection.</li>
+      <li><strong>Ahrefs Webmaster Tools</strong> &mdash; besplatan alat koji skenira sajt i pronalazi probleme sa meta tagovima.</li>
+      <li><strong>Screaming Frog</strong> &mdash; desktop crawler koji izvlaci sve meta tagove sa sajta i prikazuje duplikate, nedostajuce i predugacke.</li>
+    </ul>
+
+    <h2 id="m11">11. Reference i resursi</h2>
+    <ul>
+      <li><a href="https://developers.google.com/search/docs/appearance/title-link" target="_blank">Google Search Central &mdash; Title links</a></li>
+      <li><a href="https://developers.google.com/search/docs/appearance/snippet" target="_blank">Google Search Central &mdash; Snippets</a></li>
+      <li><a href="https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag" target="_blank">Google &mdash; Robots meta tag</a></li>
+      <li><a href="https://developers.google.com/search/docs/specialty/international/localized-versions" target="_blank">Google &mdash; Hreflang</a></li>
+      <li><a href="https://moz.com/learn/seo/title-tag" target="_blank">Moz &mdash; Title Tag Best Practices</a></li>
+      <li><a href="https://ahrefs.com/blog/meta-description/" target="_blank">Ahrefs &mdash; Meta Description Study</a></li>
+      <li><a href="https://backlinko.com/google-ctr-stats" target="_blank">Backlinko &mdash; Google CTR Statistics</a></li>
+      <li><a href="https://zyppy.com/seo/title-tags/google-title-rewrite-study/" target="_blank">Zyppy &mdash; Google Title Rewrite Study</a></li>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta" target="_blank">MDN &mdash; Meta element</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Proverite meta tagove vaseg sajta &rarr;</a>
+  </div>
+
+  <!-- ==================== ENGLISH ==================== -->
+  <div class="en">
+    <h1>Meta Tags &mdash; Title and Description Optimization</h1>
+    <p class="subtitle">Complete guide to HTML meta tags that directly impact your Google rankings and click-through rates</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">#1</div><div class="stat-label">Title tag is the top on-page SEO factor</div></div>
+      <div class="stat-card"><div class="stat-num">63%</div><div class="stat-label">Descriptions rewritten by Google (Ahrefs)</div></div>
+      <div class="stat-card"><div class="stat-num">36%</div><div class="stat-label">More clicks with optimized titles</div></div>
+      <div class="stat-card"><div class="stat-num">5.1%</div><div class="stat-label">Avg CTR at position #1 (Backlinko)</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#m1e">What are meta tags</a></li>
+        <li><a href="#m2e">Title tag — the most important SEO element</a></li>
+        <li><a href="#m3e">Meta description — your Google ad copy</a></li>
+        <li><a href="#m4e">Meta robots — indexing control</a></li>
+        <li><a href="#m5e">Viewport — mobile-friendly requirement</a></li>
+        <li><a href="#m6e">Canonical URL — preventing duplicates</a></li>
+        <li><a href="#m7e">Other important meta tags</a></li>
+        <li><a href="#m8e">Complete meta tags table</a></li>
+        <li><a href="#m9e">Common mistakes</a></li>
+        <li><a href="#m10e">Optimization tools</a></li>
+        <li><a href="#m11e">References</a></li>
+      </ol>
+    </div>
+
+    <h2 id="m1e">1. What are meta tags and why they matter for SEO</h2>
+    <p>Meta tags are HTML elements in the <code>&lt;head&gt;</code> section that provide information to search engines and browsers about page content. Users don't see them directly, but Google uses them for ranking, indexing, and displaying results in SERP.</p>
+    <p>Of all on-page SEO factors, the title tag has the highest impact on rankings (Backlinko study of 11.8 million Google results). Meta description doesn't directly affect ranking but dramatically impacts CTR (Click-Through Rate).</p>
+    <div class="callout"><strong>Important:</strong> Meta tags are your site's first contact with Google. A wrong or missing title tag means Google chooses the title for you &mdash; and it often chooses poorly.</div>
+
+    <h2 id="m2e">2. Title tag &mdash; the most important SEO element</h2>
+    <p>The title tag (<code>&lt;title&gt;</code>) appears as the blue clickable headline in Google results, in the browser tab, and when sharing links on social media.</p>
+
+    <h3>Optimal length</h3>
+    <p>Google displays up to <strong>600 pixels wide</strong> (about 50-60 characters). Longer titles get truncated with "..." which reduces CTR and professionalism.</p>
+
+    <h3>Formula for the perfect title</h3>
+    <pre><code>&lt;!-- Formula: Keyword + Modifier + Brand --&gt;
+&lt;title&gt;SSL Certificates — Complete Guide 2026 | Web Security Scanner&lt;/title&gt;
+&lt;title&gt;Meta Tags for SEO — Title &amp; Description Guide | Your Brand&lt;/title&gt;</code></pre>
+
+    <h3>Good vs bad titles</h3>
+    <table>
+      <tr><th>Title</th><th>Rating</th><th>Why</th></tr>
+      <tr><td>10 SEO Mistakes Killing Your Rankings (and How to Fix Them)</td><td style="color:#22c55e">Great</td><td>Number + emotion + solution</td></tr>
+      <tr><td>GDPR Guide 2026 — How to Avoid Fines Up to &euro;20M</td><td style="color:#22c55e">Great</td><td>Year + fear + specific amount</td></tr>
+      <tr><td>Home</td><td style="color:#ef4444">Terrible</td><td>No keyword, no value</td></tr>
+      <tr><td>SSL, HTTPS, TLS, certificate, encryption, security</td><td style="color:#ef4444">Terrible</td><td>Keyword stuffing</td></tr>
+    </table>
+
+    <h3>Google title rewriting</h3>
+    <p>Since August 2021, Google actively changes title tags. According to the Zyppy study, Google rewrites titles <strong>33% of the time</strong>. Main reasons: too long, doesn't match content, keyword stuffing, identical across pages.</p>
+    <div class="callout callout-warn"><strong>Tip:</strong> Even when Google rewrites titles, a good original title increases the chance Google keeps your version. Stay within 50-60 characters with the keyword at the beginning.</div>
+
+    <h2 id="m3e">3. Meta description &mdash; your Google ad copy</h2>
+    <p>Meta description appears below the title in Google results. <strong>Doesn't directly affect ranking</strong>, but dramatically impacts CTR &mdash; a good description can increase clicks by 5-10%.</p>
+
+    <h3>Optimal length</h3>
+    <p>Google shows up to <strong>920 pixels</strong> (~150-160 characters) on desktop. Keep it 120-155 characters. Google bolds words matching the user's query.</p>
+
+    <h3>Writing descriptions that get clicks</h3>
+    <ul>
+      <li><strong>Lead with value</strong> &mdash; what does the user get?</li>
+      <li><strong>Include keyword</strong> &mdash; gets bolded in results</li>
+      <li><strong>Add CTA</strong> &mdash; "Check now", "Learn more", "Free"</li>
+      <li><strong>Use numbers</strong> &mdash; "12 checks", "in 5 minutes"</li>
+      <li><strong>Be specific</strong> &mdash; "for WordPress sites" beats "for websites"</li>
+    </ul>
+
+    <p>According to Ahrefs (2023), Google rewrites descriptions <strong>63% of the time</strong>. But writing good descriptions still matters: Google uses it as a base, and social platforms use it for link previews.</p>
+
+    <h2 id="m4e">4. Meta robots &mdash; indexing control</h2>
+    <p>The robots meta tag tells search engines what they can do with a page.</p>
+    <table>
+      <tr><th>Directive</th><th>Meaning</th><th>When to use</th></tr>
+      <tr><td><code>index</code></td><td>Allow in search results</td><td>All public pages</td></tr>
+      <tr><td><code>noindex</code></td><td>Block from search results</td><td>Admin, thank-you, staging</td></tr>
+      <tr><td><code>follow</code></td><td>Follow links on page</td><td>Almost always</td></tr>
+      <tr><td><code>nofollow</code></td><td>Don't follow links</td><td>Rarely &mdash; untrusted links</td></tr>
+      <tr><td><code>max-snippet:-1</code></td><td>Allow any snippet length</td><td>All pages</td></tr>
+      <tr><td><code>noarchive</code></td><td>Don't show cached version</td><td>Dynamic content, prices</td></tr>
+    </table>
+    <div class="callout callout-danger"><strong>Warning:</strong> A <code>noindex</code> mistake can remove your site from Google within days. Always check the robots tag after deployment.</div>
+
+    <h2 id="m5e">5. Viewport &mdash; mobile-friendly requirement</h2>
+    <p>The viewport meta tag controls how a page displays on mobile devices. Without it, mobile browsers show a zoomed-out desktop version. Since 2019, Google uses <strong>mobile-first indexing</strong> &mdash; mobile version is primary for ranking.</p>
+    <pre><code>&lt;!-- REQUIRED for every page --&gt;
+&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+
+&lt;!-- NEVER use (blocks zoom, accessibility violation) --&gt;
+&lt;meta name="viewport" content="..., user-scalable=no"&gt;</code></pre>
+
+    <h2 id="m6e">6. Canonical URL &mdash; preventing duplicates</h2>
+    <p>The canonical tag tells Google which version of a page is the "original" when the same content exists at multiple URLs. Prevents duplicate content penalties and consolidates link equity.</p>
+    <pre><code>&lt;link rel="canonical" href="https://yoursite.com/page"&gt;</code></pre>
+    <p>Use for: URL parameters, www vs non-www, HTTP vs HTTPS, trailing slashes, paginated content, syndicated content.</p>
+    <div class="callout"><strong>Rule:</strong> Every page should have a self-referencing canonical tag. This is an SEO best practice even without duplicates.</div>
+
+    <h2 id="m7e">7. Other important meta tags</h2>
+    <h3>Meta charset</h3>
+    <p><code>&lt;meta charset="UTF-8"&gt;</code> &mdash; always first in <code>&lt;head&gt;</code>. Supports all languages and special characters.</p>
+    <h3>Meta keywords (OBSOLETE)</h3>
+    <p>Google confirmed in 2009 they completely ignore this tag. Don't waste time on it.</p>
+    <h3>Hreflang</h3>
+    <p>Tells Google which language version to show users in different countries. Essential for multilingual sites.</p>
+    <h3>Open Graph &amp; Twitter Cards</h3>
+    <p>Control how your link appears when shared on social media. Details in our <a href="./blog-seo-opengraph.html">Open Graph guide</a>.</p>
+
+    <h2 id="m8e">8. Complete meta tags table</h2>
+    <table>
+      <tr><th>Tag</th><th>SEO impact</th><th>Required?</th></tr>
+      <tr><td><code>&lt;title&gt;</code></td><td>Very high</td><td>YES</td></tr>
+      <tr><td><code>meta description</code></td><td>High (CTR)</td><td>YES</td></tr>
+      <tr><td><code>meta robots</code></td><td>Critical</td><td>Optional (default=index,follow)</td></tr>
+      <tr><td><code>meta viewport</code></td><td>High (mobile)</td><td>YES</td></tr>
+      <tr><td><code>meta charset</code></td><td>Low</td><td>YES</td></tr>
+      <tr><td><code>link canonical</code></td><td>High</td><td>YES</td></tr>
+      <tr><td><code>link hreflang</code></td><td>High (multi-lang)</td><td>If multilingual</td></tr>
+      <tr><td><code>og:title/description/image</code></td><td>Medium (CTR)</td><td>Recommended</td></tr>
+      <tr><td><code>meta keywords</code></td><td>Zero</td><td>NO (ignored)</td></tr>
+    </table>
+
+    <h2 id="m9e">9. Common meta tag mistakes</h2>
+    <ul>
+      <li><strong>Same title on all pages</strong> &mdash; every page needs a unique title</li>
+      <li><strong>Missing title or description</strong> &mdash; Google picks random text</li>
+      <li><strong>Keyword stuffing</strong> &mdash; Google penalizes this</li>
+      <li><strong>Title too long</strong> &mdash; gets truncated with "..."</li>
+      <li><strong>Description without CTA</strong> &mdash; it's an ad, not an encyclopedia entry</li>
+      <li><strong>noindex on production</strong> &mdash; staging config copied to prod</li>
+      <li><strong>Missing viewport</strong> &mdash; not mobile-friendly, lower rankings</li>
+      <li><strong>Missing canonical</strong> &mdash; duplicate content splits link equity</li>
+      <li><strong>user-scalable=no</strong> &mdash; blocks zoom, accessibility issue</li>
+    </ul>
+
+    <h2 id="m10e">10. Optimization tools</h2>
+    <ul>
+      <li><strong><a href="./index.html">Web Security Scanner</a></strong> &mdash; checks title, description, viewport, canonical, OG tags, headings, structured data</li>
+      <li><strong>Google Search Console</strong> &mdash; shows how Google sees your pages</li>
+      <li><strong>SERP Simulator</strong> &mdash; preview your title/description in Google results</li>
+      <li><strong>Yoast SEO / Rank Math</strong> &mdash; WordPress plugins for meta optimization</li>
+      <li><strong>Ahrefs Webmaster Tools</strong> &mdash; free site audit for meta issues</li>
+      <li><strong>Screaming Frog</strong> &mdash; desktop crawler that extracts all meta tags</li>
+    </ul>
+
+    <h2 id="m11e">11. References and resources</h2>
+    <ul>
+      <li><a href="https://developers.google.com/search/docs/appearance/title-link" target="_blank">Google Search Central &mdash; Title links</a></li>
+      <li><a href="https://developers.google.com/search/docs/appearance/snippet" target="_blank">Google Search Central &mdash; Snippets</a></li>
+      <li><a href="https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag" target="_blank">Google &mdash; Robots meta tag</a></li>
+      <li><a href="https://moz.com/learn/seo/title-tag" target="_blank">Moz &mdash; Title Tag Best Practices</a></li>
+      <li><a href="https://ahrefs.com/blog/meta-description/" target="_blank">Ahrefs &mdash; Meta Description Study</a></li>
+      <li><a href="https://backlinko.com/google-ctr-stats" target="_blank">Backlinko &mdash; Google CTR Statistics</a></li>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta" target="_blank">MDN &mdash; Meta element</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Check your site's meta tags &rarr;</a>
+  </div>
+
+  <div class="nav-links">
+    <a href="./blog-seo.html"><span class="sr">SEO vodic</span><span class="en">SEO Guide</span></a>
+    <a href="./blog-seo-schema.html"><span class="sr">Schema.org</span><span class="en">Schema.org</span></a>
+    <a href="./blog-seo-sitemap.html"><span class="sr">Sitemap.xml</span><span class="en">Sitemap.xml</span></a>
+    <a href="./blog-seo-opengraph.html"><span class="sr">Open Graph</span><span class="en">Open Graph</span></a>
+    <a href="./blog-seo-headings.html"><span class="sr">Heading struktura</span><span class="en">Heading Structure</span></a>
+    <a href="./blog-seo-mobile.html"><span class="sr">Mobile SEO</span><span class="en">Mobile SEO</span></a>
+    <a href="./blog-seo-local.html"><span class="sr">Lokalni SEO</span><span class="en">Local SEO</span></a>
+  </div>
+
+  </main>
+</div>
+<script src="./blog-common.js" defer></script>
+</body>
+</html>

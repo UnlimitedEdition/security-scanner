@@ -65,6 +65,7 @@
   <script>(function(){function signalGooglefcPresent(){if(!window.frames['googlefcPresent']){if(document.body){var iframe=document.createElement('iframe');iframe.style='width:0;height:0;border:none;z-index:-1000;left:-1000px;top:-1000px;';iframe.style.display='none';iframe.name='googlefcPresent';document.body.appendChild(iframe);}else{setTimeout(signalGooglefcPresent,0);}}}signalGooglefcPresent();})();</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
   <style>
     :root {
       --bg: #0a0c15;
@@ -111,13 +112,33 @@
     .nav-brand svg { width: 24px; height: 24px; }
     .nav-links { display: flex; gap: 0.3rem; }
     .nav-link {
-      background: none; border: none; color: var(--text-dim);
+      color: var(--text-dim); text-decoration: none;
       font-size: 0.85rem; font-weight: 600; padding: 6px 14px;
-      border-radius: 8px; cursor: pointer; transition: all 0.2s;
+      border-radius: 8px; transition: all 0.2s;
       font-family: inherit;
     }
     .nav-link:hover { color: var(--text); background: var(--surface2); }
     .nav-link.active { color: var(--accent); background: var(--accent-glow); }
+
+    /* RESULT TABS (below scanner) */
+    .result-tabs {
+      display: none; max-width: 800px; margin: 1.5rem auto 0;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 4px;
+      justify-content: center; gap: 2px;
+    }
+    .result-tabs.visible { display: flex; }
+    .result-tab {
+      background: none; border: none; color: var(--text-dim);
+      font-size: 0.82rem; font-weight: 600; padding: 8px 18px;
+      border-radius: 10px; cursor: pointer; transition: all 0.2s;
+      font-family: inherit; flex: 1; text-align: center;
+    }
+    .result-tab:hover { color: var(--text); background: var(--surface2); }
+    .result-tab.active { color: #fff; background: var(--accent); box-shadow: 0 2px 12px rgba(108,99,255,0.3); }
+    @media (max-width: 500px) {
+      .result-tab { font-size: 0.75rem; padding: 7px 8px; }
+    }
     .nav-right { display: flex; align-items: center; gap: 0.6rem; }
     .hamburger {
       display: none; background: none; border: none; color: var(--text);
@@ -600,26 +621,7 @@
 <div class="page-wrap">
 <div class="page-content">
 
-<!-- NAVBAR -->
-<nav class="navbar">
-  <a href="#" class="nav-brand">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-    SecurityScanner
-  </a>
-  <div class="nav-links" id="navLinks">
-    <button class="nav-link active" data-tab="security" onclick="switchTab('security')">Bezbednost</button>
-    <button class="nav-link" data-tab="seo" onclick="switchTab('seo')">SEO</button>
-    <button class="nav-link" data-tab="performance" onclick="switchTab('performance')">Performanse</button>
-    <button class="nav-link" data-tab="gdpr" onclick="switchTab('gdpr')">GDPR</button>
-  </div>
-  <div class="nav-right">
-    <div class="lang-toggle" id="navLangToggle">
-      <button class="lang-btn active" data-lang="sr" onclick="setLang('sr')">SR</button>
-      <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
-    </div>
-    <button class="hamburger" onclick="document.getElementById('navLinks').classList.toggle('open')">&#9776;</button>
-  </div>
-</nav>
+<!-- Header injected by blog-common.js -->
 
 <!-- HERO -->
 <section class="hero">
@@ -652,6 +654,14 @@
       </div>
     </div>
   </div>
+</div>
+
+<!-- RESULT TABS (shown after scan starts) -->
+<div class="result-tabs" id="resultTabs">
+  <button class="result-tab active" data-tab="security" onclick="switchTab('security')" data-sr="Bezbednost" data-en="Security">Bezbednost</button>
+  <button class="result-tab" data-tab="seo" onclick="switchTab('seo')">SEO</button>
+  <button class="result-tab" data-tab="performance" onclick="switchTab('performance')" data-sr="Performanse" data-en="Performance">Performanse</button>
+  <button class="result-tab" data-tab="gdpr" onclick="switchTab('gdpr')">GDPR</button>
 </div>
 
 <!-- FEATURES LIST -->
@@ -776,21 +786,10 @@
 
 </div><!-- /.page-content -->
 
-<!-- FOOTER -->
-<footer class="footer">
-  <div class="footer-links">
-    <a href="https://toske-programer.web.app" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:0.4rem;"><span data-sr="Izradu radio:" data-en="Developed by:">Izradu radio:</span> <span style="font-family:monospace;font-weight:bold;font-size:0.95rem;color:var(--accent2);">&lt;To&#353;ke/&gt;</span></a>
-    <a href="/blog-security.html" data-sr="Bezbednost" data-en="Security">Bezbednost</a>
-    <a href="/blog-seo.html">SEO</a>
-    <a href="/blog-performance.html" data-sr="Performanse" data-en="Performance">Performanse</a>
-    <a href="/blog-gdpr.html">GDPR</a>
-    <a href="/privacy.html" data-sr="Privatnost" data-en="Privacy">Privatnost</a>
-  </div>
-  <div class="footer-divider"></div>
-  <p>Web Security Scanner &copy; 2026</p>
-</footer>
+<!-- Footer injected by blog-common.js -->
 </div><!-- /.page-wrap -->
 
+<script src="./blog-common.js" defer></script>
 <script>
 const API_BASE = (location.hostname === "localhost" || location.hostname === "127.0.0.1")
   ? "http://localhost:8000"
@@ -803,16 +802,19 @@ const MODULES = ["SSL/TLS","Headers","DNS","Files","Cookies","Redirects","CMS","
 
 function switchTab(tab) {
   document.querySelectorAll(".tab-panel").forEach(function(p) { p.classList.remove("active"); });
-  document.querySelectorAll(".nav-link").forEach(function(b) { b.classList.remove("active"); });
+  document.querySelectorAll(".result-tab").forEach(function(b) { b.classList.remove("active"); });
   document.getElementById("panel-" + tab).classList.add("active");
-  document.querySelector('.nav-link[data-tab="' + tab + '"]').classList.add("active");
-  document.getElementById("navLinks").classList.remove("open");
+  var activeBtn = document.querySelector('.result-tab[data-tab="' + tab + '"]');
+  if (activeBtn) activeBtn.classList.add("active");
 }
 
 function setLang(lang) {
   currentLang = lang;
+  // Toggle body class for .sr/.en elements (header/footer from blog-common.js)
+  document.body.classList.toggle("lang-en", lang === "en");
   document.querySelectorAll(".lang-btn").forEach(function(b) {
-    b.classList.toggle("active", b.dataset.lang === lang);
+    var bLang = b.getAttribute("data-lang") || b.textContent.toLowerCase();
+    b.classList.toggle("active", bLang === lang);
   });
   // Translate static elements
   document.querySelectorAll("[data-sr][data-en]").forEach(function(el) {
@@ -830,9 +832,9 @@ function setLang(lang) {
       btn.textContent = btn.getAttribute("data-" + lang);
     }
   }
-  // Translate nav tabs
+  // Translate result tabs
   var tabNames = { security: { sr: "Bezbednost", en: "Security" }, seo: { sr: "SEO", en: "SEO" }, performance: { sr: "Performanse", en: "Performance" }, gdpr: { sr: "GDPR", en: "GDPR" } };
-  document.querySelectorAll(".nav-link[data-tab]").forEach(function(b) {
+  document.querySelectorAll(".result-tab[data-tab]").forEach(function(b) {
     var tab = b.dataset.tab;
     if (tabNames[tab]) b.textContent = tabNames[tab][lang];
   });
@@ -863,6 +865,7 @@ async function startScan() {
 
   document.getElementById("progressWrap").style.display = "block";
   document.getElementById("resultsWrap").style.display = "none";
+  document.getElementById("resultTabs").classList.add("visible");
   document.getElementById("adSlotTop").classList.add("visible");
   document.getElementById("adSlotBottom").classList.remove("visible");
 
@@ -925,7 +928,7 @@ async function pollScan(scanId) {
       document.getElementById("adSlotTop").classList.remove("visible");
       document.getElementById("adSlotBottom").classList.add("visible");
       // Show active tab's results
-      var activeTab = document.querySelector(".nav-link.active");
+      var activeTab = document.querySelector(".result-tab.active");
       if (activeTab) switchTab(activeTab.dataset.tab);
       return;
     }
