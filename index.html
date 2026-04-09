@@ -899,6 +899,16 @@ async function pollScan(scanId) {
     var resp = await fetch(API_BASE + "/scan/" + scanId);
     var data = await resp.json();
 
+    // Queue status
+    if (data.status === "queued") {
+      var qPos = data.queue_position || 1;
+      var qMsg = currentLang === "en"
+        ? "In queue... position " + qPos + ". Free service — please wait."
+        : "U redu za skeniranje... pozicija " + qPos + ". Besplatan servis — sacekajte.";
+      setProgress(qMsg, 0);
+      continue;
+    }
+
     setProgress(data.step || "...", data.progress || 0);
     updateModules(data.step || "", data.progress || 0);
 

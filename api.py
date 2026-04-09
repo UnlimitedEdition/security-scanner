@@ -74,10 +74,15 @@ app.add_middleware(SecurityHeadersMiddleware)
 # In-memory scan store (use Redis in production)
 scans: Dict[str, Dict[str, Any]] = {}
 
-# Rate limiter: max 10 scans per IP per hour
+# Rate limiter: max 2 scans per IP per 30 min
 _rate_store: Dict[str, list] = defaultdict(list)
 _RATE_LIMIT = 2
 _RATE_WINDOW = 1800
+
+# Queue system: max 1 concurrent scan
+_scan_queue: list = []
+_active_scan: Dict[str, Any] = {"id": None}
+_MAX_CONCURRENT = 1
 
 
 def _check_rate_limit(ip: str) -> bool:
@@ -87,6 +92,49 @@ def _check_rate_limit(ip: str) -> bool:
         return False
     _rate_store[ip].append(now)
     return True
+
+
+def _process_queue():
+    """Process the next scan in queue if no active scan."""
+    if _active_scan["id"] is not None:
+        # Check if active scan is still running
+        active = scans.get(_active_scan["id"])
+        if active and active["status"] in ("completed", "error"):
+            _active_scan["id"] = None
+        else:
+            return
+
+    if not _scan_queue:
+        return
+
+    scan_id = _scan_queue.pop(0)
+    scan = scans.get(scan_id)
+    if not scan:
+        return
+
+    _active_scan["id"] = scan_id
+    scan["status"] = "running"
+    scan["step"] = "Pokretanje skeniranja..." if True else "Starting scan..."
+
+    def run_scan():
+        def progress_cb(step: str, pct: int):
+            scans[scan_id]["step"] = step
+            scans[scan_id]["progress"] = pct
+
+        try:
+            result = scanner.scan(scan["url"], progress_callback=progress_cb)
+            scans[scan_id]["status"] = "completed"
+            scans[scan_id]["progress"] = 100
+            scans[scan_id]["result"] = result
+        except Exception as e:
+            scans[scan_id]["status"] = "error"
+            scans[scan_id]["error"] = str(e)[:200]
+        finally:
+            _active_scan["id"] = None
+            _process_queue()
+
+    thread = threading.Thread(target=run_scan, daemon=True)
+    thread.start()
 
 
 class ScanRequest(BaseModel):
@@ -187,35 +235,52 @@ def start_scan(req: ScanRequest, request: Request):
             detail="Previše zahteva. Maksimalno 10 skeniranja po satu. / Too many requests. Max 10 scans per hour."
         )
     scan_id = str(uuid.uuid4())[:8]
+
+    # Determine queue position
+    queue_position = len(_scan_queue) + (1 if _active_scan["id"] else 0)
+
     scans[scan_id] = {
         "id": scan_id,
         "url": req.url,
-        "status": "running",
+        "status": "queued" if queue_position > 0 else "running",
         "progress": 0,
-        "step": "Pokretanje skeniranja...",
+        "step": "",
+        "queue_position": queue_position,
         "created_at": datetime.utcnow().isoformat(),
         "result": None,
         "error": None,
     }
 
-    def run_scan():
-        def progress_cb(step: str, pct: int):
-            scans[scan_id]["step"] = step
-            scans[scan_id]["progress"] = pct
+    if queue_position > 0:
+        # Add to queue
+        scans[scan_id]["step"] = f"U redu za skeniranje... pozicija {queue_position}"
+        _scan_queue.append(scan_id)
+    else:
+        # Start immediately
+        _active_scan["id"] = scan_id
+        scans[scan_id]["step"] = "Pokretanje skeniranja..."
 
-        try:
-            result = scanner.scan(req.url, progress_callback=progress_cb)
-            scans[scan_id]["status"] = "completed"
-            scans[scan_id]["progress"] = 100
-            scans[scan_id]["result"] = result
-        except Exception as e:
-            scans[scan_id]["status"] = "error"
-            scans[scan_id]["error"] = str(e)[:200]
+        def run_scan():
+            def progress_cb(step: str, pct: int):
+                scans[scan_id]["step"] = step
+                scans[scan_id]["progress"] = pct
 
-    thread = threading.Thread(target=run_scan, daemon=True)
-    thread.start()
+            try:
+                result = scanner.scan(req.url, progress_callback=progress_cb)
+                scans[scan_id]["status"] = "completed"
+                scans[scan_id]["progress"] = 100
+                scans[scan_id]["result"] = result
+            except Exception as e:
+                scans[scan_id]["status"] = "error"
+                scans[scan_id]["error"] = str(e)[:200]
+            finally:
+                _active_scan["id"] = None
+                _process_queue()
 
-    return {"scan_id": scan_id, "status": "running"}
+        thread = threading.Thread(target=run_scan, daemon=True)
+        thread.start()
+
+    return {"scan_id": scan_id, "status": scans[scan_id]["status"], "queue_position": queue_position}
 
 
 @app.get("/scan/{scan_id}")
@@ -225,12 +290,23 @@ def get_scan(scan_id: str):
         raise HTTPException(status_code=404, detail="Skeniranje nije pronađeno.")
 
     scan = scans[scan_id]
+
+    # Update queue position
+    if scan["status"] == "queued":
+        if scan_id in _scan_queue:
+            scan["queue_position"] = _scan_queue.index(scan_id) + 1
+            scan["step"] = f"U redu za skeniranje... pozicija {scan['queue_position']}"
+        else:
+            # Was in queue, now should be processing
+            scan["queue_position"] = 0
+
     return {
         "id": scan["id"],
         "url": scan["url"],
         "status": scan["status"],
         "progress": scan["progress"],
         "step": scan["step"],
+        "queue_position": scan.get("queue_position", 0),
         "result": scan.get("result"),
         "error": scan.get("error"),
     }
@@ -238,4 +314,9 @@ def get_scan(scan_id: str):
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "scans_in_memory": len(scans)}
+    return {
+        "status": "ok",
+        "scans_in_memory": len(scans),
+        "queue_length": len(_scan_queue),
+        "active_scan": _active_scan["id"] is not None,
+    }

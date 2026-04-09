@@ -269,6 +269,17 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
         errors.append(f"Greška: {str(e)[:100]}")
 
     # --- 1. SSL/TLS Checks ---
+    # --- Crawl site pages ---
+    pages_found = 1
+    try:
+        if not bot_blocked and response_body:
+            update("Otkrivam stranice sajta...", 5)
+            discovered = crawl(base_url, session, response_body)
+            pages_found = len(discovered)
+    except Exception:
+        pass
+
+    # --- 1. SSL/TLS Checks ---
     update("Proveravam SSL/TLS sertifikat...", 7)
     try:
         ssl_results = ssl_check.run(domain)
@@ -490,15 +501,6 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
 
     # Risk priorities
     top_priorities = risk_engine.get_top_priorities(all_results, count=5)
-
-    # Crawl for discovered pages (informational)
-    pages_found = 1
-    try:
-        if not bot_blocked and response_body:
-            discovered = crawl(base_url, session, response_body)
-            pages_found = len(discovered)
-    except Exception:
-        pass
 
     update("Završeno!", 100)
 
