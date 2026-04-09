@@ -240,14 +240,22 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
         # Detect bot protection / challenge pages
         bot_blocked = _detect_bot_protection(response_body, response_headers)
         if bot_blocked:
-            errors.append("Bot zaštita detektovana — sajt prikazuje challenge stranicu umesto pravog sadržaja. "
-                          "Rezultati za HTTP headere i SEO mogu biti netačni. "
-                          "Pokušajte skeniranje sa localhost (start.bat).")
-            # Clear body/headers so we don't report false results
-            response_body = ""
-            response_headers = {}
-            response_time_ms = 0
-            page_size_bytes = 0
+            # If page has real content despite bot detection, keep it (false positive)
+            has_real_content = (
+                '<title' in response_body.lower()
+                and len(response_body) > 3000
+                and ('<meta name="description"' in response_body.lower() or '<meta name="viewport"' in response_body.lower())
+            )
+            if has_real_content:
+                bot_blocked = False  # False positive — real page with some challenge-like string
+            else:
+                errors.append("Bot zaštita detektovana — sajt prikazuje challenge stranicu umesto pravog sadržaja. "
+                              "Rezultati za HTTP headere i SEO mogu biti netačni. "
+                              "Pokušajte skeniranje sa localhost (start.bat).")
+                # Keep headers for security checks, only clear body
+                response_body = ""
+                response_time_ms = 0
+                page_size_bytes = 0
     except requests.exceptions.SSLError as e:
         errors.append(f"SSL greška: {str(e)[:100]}")
         is_https = False
