@@ -693,19 +693,23 @@ function setLang(lang) {
   if (currentResults) renderResults(currentResults);
 }
 
-function isAdBlocked() {
-  var testAd = document.createElement("div");
-  testAd.className = "adsbygoogle";
-  testAd.style.cssText = "position:absolute;left:-9999px;width:1px;height:1px;";
-  document.body.appendChild(testAd);
-  var blocked = testAd.offsetHeight === 0 && window.getComputedStyle(testAd).display === "none";
-  if (!blocked) blocked = typeof window.adsbygoogle === "undefined";
-  document.body.removeChild(testAd);
-  return blocked;
+var _adBlockDetected = null;
+function detectAdBlock() {
+  return new Promise(function(resolve) {
+    if (_adBlockDetected !== null) { resolve(_adBlockDetected); return; }
+    var testScript = document.createElement("script");
+    testScript.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6525862847461769";
+    testScript.async = true;
+    testScript.onerror = function() { _adBlockDetected = true; resolve(true); testScript.remove(); };
+    testScript.onload = function() { _adBlockDetected = false; resolve(false); testScript.remove(); };
+    document.head.appendChild(testScript);
+    setTimeout(function() { if (_adBlockDetected === null) { _adBlockDetected = true; resolve(true); } }, 3000);
+  });
 }
 
 async function startScan() {
-  if (isAdBlocked()) {
+  var adBlocked = await detectAdBlock();
+  if (adBlocked) {
     var msg = currentLang === "en"
       ? "Please disable your ad blocker to use the scanner. This free service is supported by ads."
       : "Molimo iskljucite blokator reklama da biste koristili skener. Ovaj besplatni servis je podrzan reklamama.";
