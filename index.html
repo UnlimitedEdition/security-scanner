@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Web Security Scanner — Besplatna provera sajta</title>
-  <meta name="description" content="Besplatan skener bezbednosti sajta sa 96+ provera. SSL, HTTP headeri, DNS, SEO, GDPR, performanse, ranjivosti, API security. Jedini alat koji sve radi na jednom mestu.">
+  <meta name="description" content="Besplatan skener bezbednosti sajta sa 110+ provera. SSL, HTTP headeri, DNS, SEO, GDPR, performanse, ranjivosti, API security. Jedini alat koji sve radi na jednom mestu.">
   <meta name="keywords" content="security scanner, web security, website scanner, provera sajta, bezbednost sajta, SSL checker, SEO analiza, GDPR provera, vulnerability scanner, besplatno, free, Srbija, online security tool">
   <meta name="author" content="Toske-Programer">
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
@@ -14,8 +14,8 @@
   <link rel="alternate" hreflang="x-default" href="https://security-scanner-ruddy.vercel.app/">
   <!-- Open Graph -->
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Web Security Scanner — 96+ provera besplatno">
-  <meta property="og:description" content="Jedini besplatni alat koji na jednom mestu proverava bezbednost, SEO, performanse i GDPR uskladjenost vaseg sajta. 96+ automatskih provera.">
+  <meta property="og:title" content="Web Security Scanner — 110+ provera besplatno">
+  <meta property="og:description" content="Jedini besplatni alat koji na jednom mestu proverava bezbednost, SEO, performanse i GDPR uskladjenost vaseg sajta. 110+ automatskih provera.">
   <meta property="og:url" content="https://security-scanner-ruddy.vercel.app/">
   <meta property="og:image" content="https://security-scanner-ruddy.vercel.app/og-image.png">
   <meta property="og:site_name" content="Web Security Scanner">
@@ -23,8 +23,8 @@
   <meta property="og:locale:alternate" content="en_US">
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Web Security Scanner — 96+ provera besplatno">
-  <meta name="twitter:description" content="Bezbednost, SEO, performanse, GDPR — sve na jednom mestu. 96+ automatskih provera. Besplatno.">
+  <meta name="twitter:title" content="Web Security Scanner — 110+ provera besplatno">
+  <meta name="twitter:description" content="Bezbednost, SEO, performanse, GDPR — sve na jednom mestu. 110+ automatskih provera. Besplatno.">
   <meta name="twitter:image" content="https://security-scanner-ruddy.vercel.app/og-image.png">
   <!-- Structured Data: WebApplication -->
   <script type="application/ld+json">
@@ -34,7 +34,7 @@
     "name": "Web Security Scanner",
     "alternateName": ["Website Security Checker", "Provera bezbednosti sajta", "Skener sajta"],
     "url": "https://security-scanner-ruddy.vercel.app/",
-    "description": "Free online tool for comprehensive website security, SEO, performance and GDPR analysis with 96+ automated checks.",
+    "description": "Free online tool for comprehensive website security, SEO, performance and GDPR analysis with 110+ automated checks.",
     "applicationCategory": "SecurityApplication",
     "operatingSystem": "Web",
     "inLanguage": ["sr", "en"],
@@ -50,8 +50,8 @@
     "@context": "https://schema.org",
     "@type": "FAQPage",
     "mainEntity": [
-      {"@type": "Question", "name": "How to check website security for free?", "acceptedAnswer": {"@type": "Answer", "text": "Use Web Security Scanner at security-scanner-ruddy.vercel.app. It performs 96+ automated security checks including SSL, headers, DNS, vulnerabilities, and more. Completely free, no registration required."}},
-      {"@type": "Question", "name": "Kako besplatno proveriti bezbednost sajta?", "acceptedAnswer": {"@type": "Answer", "text": "Koristite Web Security Scanner koji izvrsava 96+ automatskih provera bezbednosti ukljucujuci SSL, HTTP headere, DNS, ranjivosti i jos mnogo toga. Potpuno besplatno, bez registracije."}},
+      {"@type": "Question", "name": "How to check website security for free?", "acceptedAnswer": {"@type": "Answer", "text": "Use Web Security Scanner at security-scanner-ruddy.vercel.app. It performs 110+ automated security checks including SSL, headers, DNS, vulnerabilities, and more. Completely free, no registration required."}},
+      {"@type": "Question", "name": "Kako besplatno proveriti bezbednost sajta?", "acceptedAnswer": {"@type": "Answer", "text": "Koristite Web Security Scanner koji izvrsava 110+ automatskih provera bezbednosti ukljucujuci SSL, HTTP headere, DNS, ranjivosti i jos mnogo toga. Potpuno besplatno, bez registracije."}},
       {"@type": "Question", "name": "What does a website security scanner check?", "acceptedAnswer": {"@type": "Answer", "text": "Our scanner checks SSL/TLS certificates, HTTP security headers, DNS security (SPF/DMARC/DNSSEC), sensitive file exposure, vulnerability patterns, JavaScript security, API security, SEO optimization, performance metrics, GDPR compliance, accessibility, and dependency vulnerabilities."}},
       {"@type": "Question", "name": "Is this website security scanner safe to use?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, the scanner is completely passive. It only reads publicly available information and never modifies or attacks the target website. It works like a browser visiting your site."}}
     ]
@@ -635,15 +635,16 @@
 <div class="scan-wrap">
   <div class="scan-box">
     <div class="scan-row">
-      <input class="scan-input" type="text" id="urlInput"
+      <label for="urlInput" class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">URL sajta za skeniranje</label>
+      <input class="scan-input" type="url" id="urlInput"
         placeholder="vasajt.rs ili https://example.com" data-placeholder-sr="vasajt.rs ili https://example.com" data-placeholder-en="yoursite.com or https://example.com"
-        autocomplete="off" autocorrect="off" spellcheck="false" />
-      <button class="scan-btn" id="scanBtn" onclick="startScan()" data-sr="Skeniraj sajt" data-en="Scan site">Skeniraj sajt</button>
+        autocomplete="off" autocorrect="off" spellcheck="false" aria-label="URL sajta za skeniranje" />
+      <button class="scan-btn" id="scanBtn" onclick="startScan()" data-sr="Skeniraj sajt" data-en="Scan site" aria-label="Pokreni skeniranje">Skeniraj sajt</button>
     </div>
     <div class="scan-note" id="scanNote" data-sr="Samo pasivno citanje javnih informacija — ne menjamo vas sajt" data-en="Passive reading of public information only — we do not modify your site">
       Samo pasivno citanje javnih informacija — ne menjamo vas sajt
     </div>
-    <div class="progress-wrap" id="progressWrap">
+    <div class="progress-wrap" id="progressWrap" role="status" aria-live="polite">
       <div class="progress-modules" id="progressModules"></div>
       <div class="progress-label">
         <span id="progressStep">Inicijalizacija...</span>
@@ -657,11 +658,11 @@
 </div>
 
 <!-- RESULT TABS (shown after scan starts) -->
-<div class="result-tabs" id="resultTabs">
-  <button class="result-tab active" data-tab="security" onclick="switchTab('security')" data-sr="Bezbednost" data-en="Security">Bezbednost</button>
-  <button class="result-tab" data-tab="seo" onclick="switchTab('seo')">SEO</button>
-  <button class="result-tab" data-tab="performance" onclick="switchTab('performance')" data-sr="Performanse" data-en="Performance">Performanse</button>
-  <button class="result-tab" data-tab="gdpr" onclick="switchTab('gdpr')">GDPR</button>
+<div class="result-tabs" id="resultTabs" role="tablist" aria-label="Rezultati skeniranja">
+  <button class="result-tab active" data-tab="security" onclick="switchTab('security')" data-sr="Bezbednost" data-en="Security" role="tab" aria-selected="true">Bezbednost</button>
+  <button class="result-tab" data-tab="seo" onclick="switchTab('seo')" role="tab" aria-selected="false">SEO</button>
+  <button class="result-tab" data-tab="performance" onclick="switchTab('performance')" data-sr="Performanse" data-en="Performance" role="tab" aria-selected="false">Performanse</button>
+  <button class="result-tab" data-tab="gdpr" onclick="switchTab('gdpr')" role="tab" aria-selected="false">GDPR</button>
 </div>
 
 <!-- FEATURES LIST -->
@@ -747,7 +748,7 @@
 </div>
 
 <!-- TAB: SECURITY -->
-<div class="tab-panel security-panel active" id="panel-security">
+<div class="tab-panel security-panel active" id="panel-security" role="tabpanel" aria-label="Security results">
   <div class="print-header" id="printHeader">
     <h2>Web Security Scanner — Izvestaj</h2>
     <p id="printMeta"></p>
@@ -756,19 +757,19 @@
 </div>
 
 <!-- TAB: SEO -->
-<div class="tab-panel" id="panel-seo">
+<div class="tab-panel" id="panel-seo" role="tabpanel" aria-label="SEO results">
   <div class="print-header" style="display:none"><h2>SEO Analiza</h2><p class="print-tab-meta"></p></div>
   <div class="results-wrap" id="seoResultsWrap"></div>
 </div>
 
 <!-- TAB: PERFORMANCE -->
-<div class="tab-panel" id="panel-performance">
+<div class="tab-panel" id="panel-performance" role="tabpanel" aria-label="Performance results">
   <div class="print-header" style="display:none"><h2>Performanse i Pristupacnost</h2><p class="print-tab-meta"></p></div>
   <div class="results-wrap" id="perfResultsWrap"></div>
 </div>
 
 <!-- TAB: GDPR -->
-<div class="tab-panel" id="panel-gdpr">
+<div class="tab-panel" id="panel-gdpr" role="tabpanel" aria-label="GDPR results">
   <div class="print-header" style="display:none"><h2>GDPR / Privatnost</h2><p class="print-tab-meta"></p></div>
   <div class="results-wrap" id="gdprResultsWrap"></div>
 </div>
@@ -802,10 +803,10 @@ const MODULES = ["SSL/TLS","Headers","DNS","Files","Cookies","Redirects","CMS","
 
 function switchTab(tab) {
   document.querySelectorAll(".tab-panel").forEach(function(p) { p.classList.remove("active"); });
-  document.querySelectorAll(".result-tab").forEach(function(b) { b.classList.remove("active"); });
+  document.querySelectorAll(".result-tab").forEach(function(b) { b.classList.remove("active"); b.setAttribute("aria-selected", "false"); });
   document.getElementById("panel-" + tab).classList.add("active");
   var activeBtn = document.querySelector('.result-tab[data-tab="' + tab + '"]');
-  if (activeBtn) activeBtn.classList.add("active");
+  if (activeBtn) { activeBtn.classList.add("active"); activeBtn.setAttribute("aria-selected", "true"); }
 }
 
 function setLang(lang) {
