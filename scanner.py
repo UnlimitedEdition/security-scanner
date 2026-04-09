@@ -29,6 +29,7 @@ from checks import admin_check, robots_check, ports_check, cors_check, extras_ch
 from checks import ct_check, subdomain_check, seo_check
 from checks import performance_check, gdpr_check, vuln_check
 from checks import js_check, api_check, accessibility_check, dependency_check
+from checks import observatory_check
 from checks.crawler import crawl
 import risk_engine
 
@@ -435,8 +436,16 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
     except Exception as e:
         errors.append(f"Accessibility check greška: {str(e)[:80]}")
 
-    # --- 22. Certificate Transparency ---
-    update("Proveravam Certificate Transparency logove...", 96)
+    # --- 22. Mozilla Observatory ---
+    update("Mozilla Observatory analiza...", 95)
+    try:
+        obs_results = observatory_check.run(domain)
+        all_results.extend(obs_results)
+    except Exception as e:
+        errors.append(f"Observatory check greška: {str(e)[:80]}")
+
+    # --- 23. Certificate Transparency ---
+    update("Proveravam Certificate Transparency logove...", 97)
     try:
         ct_results = ct_check.run(domain)
         all_results.extend(ct_results)
