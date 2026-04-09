@@ -31,7 +31,7 @@ def run(base_url: str, response_body: str, response_headers: dict,
 def _check_privacy_policy(base_url, body, session):
     results = []
     privacy_patterns = [
-        r'href=["\'][^"\']*(?:/privacy|/privacy-policy|/politika-privatnosti)[^"\']*["\']'
+        r'href=["\'][^"\']*(?:privacy|privacy-policy|politika-privatnosti)[^"\']*["\']'
     ]
     found = False
     for pattern in privacy_patterns:
@@ -74,7 +74,9 @@ def _has_cookie_consent(body):
     """Check for cookie consent mechanisms and return True if found."""
     consent_scripts = [
         "cookieconsent", "onetrust", "cookiebot", "osano",
-        "klaro", "tarteaucitron", "quantcast"
+        "klaro", "tarteaucitron", "quantcast",
+        "fundingchoicesmessages", "googlefcpresent", "consent-mode",
+        "cookieyes", "iubenda", "complianz", "cookie_notice",
     ]
     consent_classes = [
         "cookie-banner", "cookie-notice", "consent-banner", "gdpr-consent"

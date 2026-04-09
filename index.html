@@ -622,8 +622,10 @@
 <div class="page-content">
 
 <!-- Header injected by blog-common.js -->
+<nav aria-label="Main navigation"></nav>
 
 <!-- HERO -->
+<main>
 <section class="hero">
   <div class="hero-glow"></div>
   <div class="hero-badge" data-sr="110+ provera na jednom mestu" data-en="110+ checks in one place" id="heroBadge">110+ provera na jednom mestu</div>
@@ -670,7 +672,7 @@
   <div class="features-grid">
     <div class="feature-card">
       <div class="feature-icon" style="color:#ef4444">&#128272;</div>
-      <h3 data-sr="Bezbednost (60+ provera)" data-en="Security (60+ checks)">Bezbednost (60+ provera)</h3>
+      <h2 data-sr="Bezbednost (60+ provera)" data-en="Security (60+ checks)" style="font-size:1rem;">Bezbednost (60+ provera)</h2>
       <ul>
         <li data-sr="SSL/TLS sertifikati i enkripcija" data-en="SSL/TLS certificates & encryption">SSL/TLS sertifikati i enkripcija</li>
         <li data-sr="HTTP sigurnosni headeri (7 provera)" data-en="HTTP security headers (7 checks)">HTTP sigurnosni headeri (7 provera)</li>
@@ -691,7 +693,7 @@
     </div>
     <div class="feature-card">
       <div class="feature-icon" style="color:#3b82f6">&#128270;</div>
-      <h3 data-sr="SEO Analiza (12 provera)" data-en="SEO Analysis (12 checks)">SEO Analiza (12 provera)</h3>
+      <h2 data-sr="SEO Analiza (12 provera)" data-en="SEO Analysis (12 checks)" style="font-size:1rem;">SEO Analiza (12 provera)</h2>
       <ul>
         <li data-sr="Title i meta description (duzina)" data-en="Title & meta description (length)">Title i meta description (duzina)</li>
         <li data-sr="Open Graph i Twitter Cards" data-en="Open Graph & Twitter Cards">Open Graph i Twitter Cards</li>
@@ -705,7 +707,7 @@
     </div>
     <div class="feature-card">
       <div class="feature-icon" style="color:#eab308">&#9889;</div>
-      <h3 data-sr="Performanse (16 provera)" data-en="Performance (16 checks)">Performanse (16 provera)</h3>
+      <h2 data-sr="Performanse (16 provera)" data-en="Performance (16 checks)" style="font-size:1rem;">Performanse (16 provera)</h2>
       <ul>
         <li data-sr="TTFB (vreme odgovora servera)" data-en="TTFB (server response time)">TTFB (vreme odgovora servera)</li>
         <li data-sr="Kompresija (Gzip/Brotli)" data-en="Compression (Gzip/Brotli)">Kompresija (Gzip/Brotli)</li>
@@ -719,7 +721,7 @@
     </div>
     <div class="feature-card">
       <div class="feature-icon" style="color:#22c55e">&#128274;</div>
-      <h3 data-sr="GDPR / Privatnost (7 provera)" data-en="GDPR / Privacy (7 checks)">GDPR / Privatnost (7 provera)</h3>
+      <h2 data-sr="GDPR / Privatnost (7 provera)" data-en="GDPR / Privacy (7 checks)" style="font-size:1rem;">GDPR / Privatnost (7 provera)</h2>
       <ul>
         <li data-sr="Privacy Policy detekcija" data-en="Privacy Policy detection">Privacy Policy detekcija</li>
         <li data-sr="Cookie consent mehanizam" data-en="Cookie consent mechanism">Cookie consent mehanizam</li>
@@ -785,9 +787,18 @@
   <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
 </div>
 
+</main>
 </div><!-- /.page-content -->
 
-<!-- Footer injected by blog-common.js -->
+<!-- Static footer links for SEO crawlers (dynamic footer added by blog-common.js) -->
+<footer style="text-align:center;padding:1.5rem;color:#7b83a6;font-size:0.8rem;border-top:1px solid #252a4a;margin-top:2rem;">
+  <a href="./privacy.html" style="color:#a78bfa;">Politika privatnosti / Privacy Policy</a> &mdash;
+  <a href="./blog-security.html" style="color:#a78bfa;">Bezbednost</a> &mdash;
+  <a href="./blog-seo.html" style="color:#a78bfa;">SEO</a> &mdash;
+  <a href="./blog-performance.html" style="color:#a78bfa;">Performanse</a> &mdash;
+  <a href="./blog-gdpr.html" style="color:#a78bfa;">GDPR</a>
+  <p style="margin-top:0.5rem;">Web Security Scanner &copy; 2026 &mdash; <a href="https://toske-programer.web.app" style="color:#a78bfa;">&lt;Toske/&gt;</a></p>
+</footer>
 </div><!-- /.page-wrap -->
 
 <script src="./blog-common.js" defer></script>
