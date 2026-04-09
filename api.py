@@ -74,9 +74,9 @@ app.add_middleware(SecurityHeadersMiddleware)
 # In-memory scan store (use Redis in production)
 scans: Dict[str, Dict[str, Any]] = {}
 
-# Rate limiter: max 2 scans per IP per 30 min
+# Rate limiter: max 5 scans per IP per 30 min
 _rate_store: Dict[str, list] = defaultdict(list)
-_RATE_LIMIT = 2
+_RATE_LIMIT = 5
 _RATE_WINDOW = 1800
 
 # Queue system: max 1 concurrent scan
@@ -257,7 +257,7 @@ def start_scan(req: ScanRequest, request: Request):
     if not _check_rate_limit(client_ip):
         raise HTTPException(
             status_code=429,
-            detail="Previše zahteva. Maksimalno 10 skeniranja po satu. / Too many requests. Max 10 scans per hour."
+            detail="Previše zahteva. Maksimalno 5 skeniranja po 30 minuta. / Too many requests. Max 5 scans per 30 minutes."
         )
     scan_id = str(uuid.uuid4())[:8]
 
