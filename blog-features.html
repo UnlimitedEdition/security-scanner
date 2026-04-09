@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>110+ Provera — Kompletna lista | Web Security Scanner</title>
+  <meta name="description" content="Kompletna lista svih 110+ automatskih provera: bezbednost (60+), SEO (12), performanse (16), GDPR (7), pristupacnost (7), WHOIS, tech stack, email, Mozilla Observatory.">
+  <meta name="keywords" content="security scanner, provere, checks, SSL, headers, DNS, SEO, GDPR, performanse, pristupacnost">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <link rel="canonical" href="https://security-scanner-ruddy.vercel.app/blog-features.html">
+  <link rel="alternate" hreflang="sr" href="https://security-scanner-ruddy.vercel.app/blog-features.html">
+  <link rel="alternate" hreflang="en" href="https://security-scanner-ruddy.vercel.app/blog-features.html">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="110+ Provera — Kompletna lista svih checks">
+  <meta property="og:description" content="Bezbednost, SEO, performanse, GDPR, pristupacnost — sve sto nas scanner proverava.">
+  <meta property="og:url" content="https://security-scanner-ruddy.vercel.app/blog-features.html">
+  <meta property="og:site_name" content="Web Security Scanner">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="110+ Provera — Kompletna lista svih checks">
+  <meta name="twitter:description" content="Bezbednost, SEO, performanse, GDPR, pristupacnost — sve sto nas scanner proverava.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+</head>
+<body>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr"><div class="timeline-title">Kategorije</div><ol id="timeline-sr"></ol></div>
+    <div class="en"><div class="timeline-title">Categories</div><ol id="timeline-en"></ol></div>
+  </aside>
+  <main class="blog-content">
+
+  <div class="sr">
+    <h1>110+ Provera &mdash; Kompletna lista</h1>
+    <p class="subtitle">Sve sto Web Security Scanner automatski proverava na vasem sajtu</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">110+</div><div class="stat-label">Ukupno provera</div></div>
+      <div class="stat-card"><div class="stat-num">4</div><div class="stat-label">Glavne kategorije</div></div>
+      <div class="stat-card"><div class="stat-num">20</div><div class="stat-label">Stranica crawler analizira</div></div>
+      <div class="stat-card"><div class="stat-num">~15s</div><div class="stat-label">Prosecno vreme skeniranja</div></div>
+    </div>
+
+    <h2 id="f-sec">Bezbednost (60+ provera)</h2>
+    <h3>SSL/TLS sertifikati</h3>
+    <ul><li>Validnost sertifikata i lanac poverenja</li><li>TLS verzija (1.2 / 1.3)</li><li>Istek sertifikata i dani do isteka</li><li>Izdavac (Let's Encrypt, DigiCert, itd.)</li></ul>
+    <h3>HTTP Security Headers (7)</h3>
+    <ul><li>Strict-Transport-Security (HSTS)</li><li>Content-Security-Policy (CSP)</li><li>X-Frame-Options</li><li>X-Content-Type-Options</li><li>Referrer-Policy</li><li>Permissions-Policy</li><li>Cross-Origin-Opener-Policy (COOP)</li></ul>
+    <h3>DNS bezbednost</h3>
+    <ul><li>SPF record (email autentifikacija)</li><li>DMARC record i policy</li><li>DNSSEC validacija</li></ul>
+    <h3>Osetljivi fajlovi (11)</h3>
+    <ul><li>.env, .git/config, .htaccess</li><li>wp-config.php, phpinfo.php</li><li>backup.sql, database.sql</li><li>.DS_Store, server-status</li><li>docker-compose.yml, .npmrc</li></ul>
+    <h3>Ranjivosti (8)</h3>
+    <ul><li>SQL Injection pattern detekcija</li><li>XSS refleksija u parametrima</li><li>Open redirect ranjivosti</li><li>Directory traversal</li><li>Server version disclosure</li><li>Default credentials stranice</li><li>Backup fajl detekcija</li><li>Information disclosure headeri</li></ul>
+    <h3>JavaScript bezbednost (6)</h3>
+    <ul><li>Izlozeni API kljucevi u kodu</li><li>Opasne JS funkcije u kodu</li><li>Inline event handleri</li><li>Mixed content (HTTP na HTTPS)</li><li>Source map fajlovi</li><li>Console.log sa osetljivim podacima</li></ul>
+    <h3>API bezbednost (5)</h3>
+    <ul><li>Otkriveni API endpointi</li><li>GraphQL introspection</li><li>Swagger/OpenAPI dokumentacija</li><li>CORS konfiguracija</li><li>Rate limiting headeri</li></ul>
+    <h3>Ostalo</h3>
+    <ul><li>Kolacici: HttpOnly, Secure, SameSite</li><li>Redirecti: HTTP&rarr;HTTPS, otvoreni redirecti</li><li>CMS detekcija (WordPress, Joomla, Drupal)</li><li>Admin paneli (/admin, /wp-admin, /login)</li><li>Otvoreni portovi (10 kriticnih: 21, 22, 23, 25, 3306, 5432, 6379, 8080, 8443, 9200)</li><li>CORS: wildcard, credentials</li><li>robots.txt i security.txt</li><li>Subdomain enumeracija</li><li>Certificate Transparency logovi</li><li>Dependency check (poznati CVE-ovi)</li></ul>
+
+    <h2 id="f-extra">Dodatne analize</h2>
+    <ul><li><strong>WHOIS</strong> &mdash; istek domena, starost, registrar, status</li><li><strong>Tech Stack</strong> &mdash; detekcija 45+ tehnologija (framework, CMS, CDN, analytics, server)</li><li><strong>Email bezbednost</strong> &mdash; MX zapisi, STARTTLS, BIMI, DKIM</li><li><strong>Mozilla Observatory</strong> &mdash; nezavisna ocena sa mozilla.org</li><li><strong>Crawler</strong> &mdash; otkriva do 20 stranica na sajtu (2 nivoa dubine)</li><li><strong>Risk Engine</strong> &mdash; Top 5 prioritetnih problema sa preporukama</li></ul>
+
+    <h2 id="f-seo">SEO Analiza (12 provera)</h2>
+    <ul><li>Title tag &mdash; prisustvo, duzina (30-60 kar.), jedinstvenost</li><li>Meta description &mdash; prisustvo, duzina (120-160 kar.)</li><li>Meta viewport &mdash; mobile-friendly konfiguracija</li><li>Canonical URL &mdash; prisustvo i ispravnost</li><li>H1 naslov &mdash; prisustvo, jedinstvenost, sadrzaj</li><li>Slike &mdash; alt atributi za SVE slike</li><li>Open Graph &mdash; og:title, og:description, og:image</li><li>Twitter Cards &mdash; twitter:card, twitter:title</li><li>HTML lang atribut &mdash; jezicka identifikacija</li><li>Sitemap.xml &mdash; prisustvo i validnost</li><li>robots.txt &mdash; prisustvo i konfiguracija</li><li>Strukturirani podaci &mdash; Schema.org / JSON-LD detekcija</li></ul>
+
+    <h2 id="f-perf">Performanse i Pristupacnost (16 provera)</h2>
+    <h3>Performanse (9)</h3>
+    <ul><li>TTFB (Time to First Byte) &mdash; vreme odgovora servera</li><li>Velicina stranice &mdash; HTML + resursi</li><li>HTTP kompresija &mdash; Gzip / Brotli detekcija</li><li>Cache-Control headeri</li><li>Broj eksternih resursa</li><li>Optimizacija slika</li><li>Lazy loading implementacija</li><li>Minifikacija CSS/JS</li><li>HTTP/2 podrska</li></ul>
+    <h3>Pristupacnost (7)</h3>
+    <ul><li>Alt tekst na slikama</li><li>Form labele i aria-label</li><li>ARIA landmark elementi (main, nav, header, footer)</li><li>Heading hijerarhija (h1&rarr;h2&rarr;h3, bez preskakanja)</li><li>Link tekst (izbegavanje generickog teksta)</li><li>HTML lang atribut</li><li>Tabindex validacija</li></ul>
+
+    <h2 id="f-gdpr">GDPR / Privatnost (7 provera)</h2>
+    <ul><li>Privacy Policy &mdash; detekcija linka u HTML-u + provera URL-a</li><li>Cookie consent &mdash; baner/dijalog detekcija (CookieConsent, OneTrust, Cookiebot, Google Funding Choices)</li><li>Third-party trackeri &mdash; Google Analytics, Facebook Pixel, Hotjar, Clarity, LinkedIn</li><li>Tracking kolacici &mdash; poznati tracking cookies u Set-Cookie headerima</li><li>Uslovi koriscenja &mdash; Terms of Service link detekcija</li><li>Forme za prikupljanje &mdash; osetljiva polja (password, credit card)</li><li>HTTPS &mdash; enkripcija podataka u prenosu</li></ul>
+
+    <a href="./index.html" class="cta">Skenirajte svoj sajt &mdash; 110+ provera besplatno &rarr;</a>
+  </div>
+
+  <div class="en">
+    <h1>110+ Checks &mdash; Complete List</h1>
+    <p class="subtitle">Everything Web Security Scanner automatically checks on your site</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">110+</div><div class="stat-label">Total checks</div></div>
+      <div class="stat-card"><div class="stat-num">4</div><div class="stat-label">Main categories</div></div>
+      <div class="stat-card"><div class="stat-num">20</div><div class="stat-label">Pages crawler analyzes</div></div>
+      <div class="stat-card"><div class="stat-num">~15s</div><div class="stat-label">Average scan time</div></div>
+    </div>
+
+    <h2 id="f-sec-e">Security (60+ checks)</h2>
+    <h3>SSL/TLS</h3>
+    <ul><li>Certificate validity and chain</li><li>TLS version (1.2/1.3)</li><li>Expiry and days remaining</li><li>Issuer</li></ul>
+    <h3>HTTP Security Headers (7)</h3>
+    <ul><li>HSTS, CSP, X-Frame-Options, X-Content-Type-Options</li><li>Referrer-Policy, Permissions-Policy, COOP</li></ul>
+    <h3>DNS Security</h3>
+    <ul><li>SPF, DMARC, DNSSEC</li></ul>
+    <h3>Sensitive Files (11)</h3>
+    <ul><li>.env, .git, .htaccess, wp-config, phpinfo, backups, docker-compose</li></ul>
+    <h3>Vulnerabilities (8)</h3>
+    <ul><li>SQL Injection, XSS, open redirect, directory traversal</li><li>Server disclosure, default credentials, backup files, info disclosure</li></ul>
+    <h3>JavaScript Security (6)</h3>
+    <ul><li>Exposed API keys, dangerous JS functions, inline handlers</li><li>Mixed content, source maps, console logging</li></ul>
+    <h3>API Security (5)</h3>
+    <ul><li>Exposed endpoints, GraphQL introspection, Swagger, CORS, rate limiting</li></ul>
+    <h3>Other</h3>
+    <ul><li>Cookies (HttpOnly, Secure, SameSite), redirects, CMS detection</li><li>Admin panels, open ports (10), CORS, robots.txt, security.txt</li><li>Subdomains, CT logs, dependency CVEs</li></ul>
+
+    <h2 id="f-extra-e">Additional Analyses</h2>
+    <ul><li><strong>WHOIS</strong> &mdash; domain expiry, age, registrar</li><li><strong>Tech Stack</strong> &mdash; 45+ technologies detected</li><li><strong>Email Security</strong> &mdash; MX, STARTTLS, BIMI, DKIM</li><li><strong>Mozilla Observatory</strong> &mdash; independent grade</li><li><strong>Crawler</strong> &mdash; discovers up to 20 pages (2 levels)</li><li><strong>Risk Engine</strong> &mdash; Top 5 priorities with recommendations</li></ul>
+
+    <h2 id="f-seo-e">SEO Analysis (12 checks)</h2>
+    <ul><li>Title, description, viewport, canonical, H1, images alt</li><li>Open Graph, Twitter Cards, lang attribute</li><li>Sitemap.xml, robots.txt, structured data</li></ul>
+
+    <h2 id="f-perf-e">Performance &amp; Accessibility (16 checks)</h2>
+    <ul><li><strong>Performance (9):</strong> TTFB, page size, compression, cache, external resources, images, lazy loading, minification, HTTP/2</li><li><strong>Accessibility (7):</strong> Alt text, form labels, ARIA landmarks, heading hierarchy, link text, lang, tabindex</li></ul>
+
+    <h2 id="f-gdpr-e">GDPR / Privacy (7 checks)</h2>
+    <ul><li>Privacy Policy, cookie consent, trackers, tracking cookies</li><li>Terms of service, data collection forms, HTTPS</li></ul>
+
+    <a href="./index.html" class="cta">Scan your site &mdash; 110+ checks for free &rarr;</a>
+  </div>
+
+  </main>
+</div>
+<script src="./blog-common.js" defer></script>
+</body>
+</html>

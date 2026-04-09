@@ -179,8 +179,9 @@
   document.body.appendChild(footerEl);
 
   // --- LANGUAGE TOGGLE ---
-  function setLang(lang) {
-    document.body.className = lang === 'en' ? 'lang-en' : '';
+  function _blogSetLang(lang) {
+    // Toggle lang-en class without wiping other body classes
+    document.body.classList.toggle('lang-en', lang === 'en');
     document.querySelectorAll('.lang-btn').forEach(function(b) {
       var bLang = b.getAttribute('data-lang') || b.textContent.toLowerCase();
       b.classList.toggle('active', bLang === lang);
@@ -191,20 +192,26 @@
   // Restore saved language
   try {
     var saved = localStorage.getItem('wss-lang');
-    if (saved === 'en') setLang('en');
+    if (saved === 'en') _blogSetLang('en');
   } catch(e) {}
 
   // Bind all lang buttons via delegation
+  // If page defines its own window.setLang (index.html), call that instead
   document.addEventListener('click', function(e) {
     var btn = e.target.closest('.lang-btn');
     if (btn) {
       var lang = btn.getAttribute('data-lang') || btn.textContent.toLowerCase();
-      setLang(lang);
+      if (window.setLang && window.setLang !== _blogSetLang) {
+        window.setLang(lang);  // index.html's full setLang (translates data-sr/data-en)
+      }
+      _blogSetLang(lang);  // Always toggle body class + buttons for .sr/.en elements
     }
   });
 
-  // Expose globally for any inline onclick handlers
-  window.setLang = setLang;
+  // Expose as fallback for pages without their own setLang
+  if (!window.setLang) {
+    window.setLang = _blogSetLang;
+  }
 
   // --- TIMELINE SIDEBAR ---
   function initTimeline() {
