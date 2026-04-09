@@ -204,25 +204,22 @@
 
     /* FEATURES */
     .features-section {
-      max-width: 1000px; margin: 2rem auto 2.5rem;
+      max-width: 800px; margin: 2.5rem auto 2.5rem;
       padding: 0 1.5rem;
     }
     .features-title {
       text-align: center; margin-bottom: 2rem;
     }
     .features-title h2 {
-      font-size: 1.5rem; font-weight: 800; color: var(--text); margin-bottom: 0.4rem;
+      font-size: 1.4rem; font-weight: 800; color: var(--text); margin-bottom: 0.4rem;
     }
-    .features-title p { color: var(--text-dim); font-size: 0.9rem; }
+    .features-title p { color: var(--text-dim); font-size: 0.88rem; }
     .features-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1.2rem;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
     }
-    @media (max-width: 900px) {
-      .features-grid { grid-template-columns: repeat(2, 1fr); }
-    }
-    @media (max-width: 500px) {
+    @media (max-width: 550px) {
       .features-grid { grid-template-columns: 1fr; }
     }
     .feature-card {
@@ -287,6 +284,10 @@
     }
     .feature-card .card-link:hover { color: var(--accent); }
     .feature-card .card-link::after { content: ' \2192'; }
+    .feature-card .card-more {
+      font-size: 0.72rem; color: var(--text-dim); font-style: italic;
+      margin-top: 0.4rem; padding-left: 1.1rem; opacity: 0.7;
+    }
 
     /* SCAN BOX */
     .scan-wrap {
@@ -736,18 +737,9 @@
         <li data-sr="HTTP sigurnosni headeri (7 provera)" data-en="HTTP security headers (7 checks)">HTTP sigurnosni headeri (7 provera)</li>
         <li data-sr="DNS bezbednost (SPF/DMARC/DNSSEC)" data-en="DNS security (SPF/DMARC/DNSSEC)">DNS bezbednost (SPF/DMARC/DNSSEC)</li>
         <li data-sr="Detekcija ranjivosti (SQL, XSS, CSRF)" data-en="Vulnerability detection (SQL, XSS, CSRF)">Detekcija ranjivosti (SQL, XSS, CSRF)</li>
-        <li data-sr="JavaScript bezbednost i API kljucevi" data-en="JavaScript security & API keys">JavaScript bezbednost i API kljucevi</li>
-        <li data-sr="API Security i GraphQL introspection" data-en="API Security & GraphQL introspection">API Security i GraphQL introspection</li>
-        <li data-sr="Osetljivi fajlovi (.env, .git, backup)" data-en="Sensitive files (.env, .git, backup)">Osetljivi fajlovi (.env, .git, backup)</li>
-        <li data-sr="Admin paneli i otvoreni portovi (10)" data-en="Admin panels & open ports (10)">Admin paneli i otvoreni portovi (10)</li>
-        <li data-sr="CORS, kolacici, redirecti" data-en="CORS, cookies, redirects">CORS, kolacici, redirecti</li>
-        <li data-sr="Subdomeni i Certificate Transparency" data-en="Subdomains & Certificate Transparency">Subdomeni i Certificate Transparency</li>
-        <li data-sr="WHOIS — istek domena, starost, registrar" data-en="WHOIS — domain expiry, age, registrar">WHOIS — istek domena, starost, registrar</li>
-        <li data-sr="Email bezbednost (MX, STARTTLS, BIMI)" data-en="Email security (MX, STARTTLS, BIMI)">Email bezbednost (MX, STARTTLS, BIMI)</li>
-        <li data-sr="Mozilla Observatory nezavisna ocena" data-en="Mozilla Observatory independent grade">Mozilla Observatory nezavisna ocena</li>
-        <li data-sr="Tehnoloski stek (45+ tehnologija)" data-en="Technology stack (45+ technologies)">Tehnoloski stek (45+ tehnologija)</li>
-        <li data-sr="Zavisnosti i poznati CVE-ovi" data-en="Dependencies & known CVEs">Zavisnosti i poznati CVE-ovi</li>
+        <li data-sr="Osetljivi fajlovi, portovi, CORS" data-en="Sensitive files, ports, CORS">Osetljivi fajlovi, portovi, CORS</li>
       </ul>
+      <div class="card-more" data-sr="+ WHOIS, email, Mozilla Observatory, tech stack i jos 10 provera" data-en="+ WHOIS, email, Mozilla Observatory, tech stack and 10 more checks">+ WHOIS, email, Mozilla Observatory, tech stack i jos 10 provera</div>
       <a href="./blog-security.html" class="card-link" data-sr="Saznajte vise" data-en="Learn more">Saznajte vise</a>
     </div>
     <div class="feature-card card-seo">
@@ -759,15 +751,13 @@
         </div>
       </div>
       <ul>
-        <li data-sr="Title i meta description (duzina)" data-en="Title & meta description (length)">Title i meta description (duzina)</li>
+        <li data-sr="Title, description, viewport" data-en="Title, description, viewport">Title, description, viewport</li>
         <li data-sr="Open Graph i Twitter Cards" data-en="Open Graph & Twitter Cards">Open Graph i Twitter Cards</li>
         <li data-sr="Heading struktura (H1-H6)" data-en="Heading structure (H1-H6)">Heading struktura (H1-H6)</li>
-        <li data-sr="Canonical URL i lang atribut" data-en="Canonical URL & lang attribute">Canonical URL i lang atribut</li>
         <li data-sr="Sitemap.xml i robots.txt" data-en="Sitemap.xml & robots.txt">Sitemap.xml i robots.txt</li>
         <li data-sr="Strukturirani podaci (Schema.org)" data-en="Structured data (Schema.org)">Strukturirani podaci (Schema.org)</li>
-        <li data-sr="Alt atributi na slikama" data-en="Image alt attributes">Alt atributi na slikama</li>
-        <li data-sr="Viewport (mobile-friendly)" data-en="Viewport (mobile-friendly)">Viewport (mobile-friendly)</li>
       </ul>
+      <div class="card-more" data-sr="+ canonical, lang, slike i jos 4 provere" data-en="+ canonical, lang, images and 4 more checks">+ canonical, lang, slike i jos 4 provere</div>
       <a href="./blog-seo.html" class="card-link" data-sr="Saznajte vise" data-en="Learn more">Saznajte vise</a>
     </div>
     <div class="feature-card card-perf">
@@ -782,12 +772,10 @@
         <li data-sr="TTFB (vreme odgovora servera)" data-en="TTFB (server response time)">TTFB (vreme odgovora servera)</li>
         <li data-sr="Kompresija (Gzip/Brotli)" data-en="Compression (Gzip/Brotli)">Kompresija (Gzip/Brotli)</li>
         <li data-sr="Cache headeri i HTTP/2" data-en="Cache headers & HTTP/2">Cache headeri i HTTP/2</li>
-        <li data-sr="Velicina stranice i broj resursa" data-en="Page size & resource count">Velicina stranice i broj resursa</li>
         <li data-sr="Lazy loading i optimizacija slika" data-en="Lazy loading & image optimization">Lazy loading i optimizacija slika</li>
-        <li data-sr="Minifikacija CSS/JS" data-en="CSS/JS minification">Minifikacija CSS/JS</li>
-        <li data-sr="Pristupacnost — ARIA, forme, labele" data-en="Accessibility — ARIA, forms, labels">Pristupacnost — ARIA, forme, labele</li>
-        <li data-sr="Heading hijerarhija i tabindex" data-en="Heading hierarchy & tabindex">Heading hijerarhija i tabindex</li>
+        <li data-sr="Pristupacnost (ARIA, forme, headings)" data-en="Accessibility (ARIA, forms, headings)">Pristupacnost (ARIA, forme, headings)</li>
       </ul>
+      <div class="card-more" data-sr="+ velicina stranice, minifikacija, tabindex i jos 3 provere" data-en="+ page size, minification, tabindex and 3 more checks">+ velicina stranice, minifikacija, tabindex i jos 3 provere</div>
       <a href="./blog-performance.html" class="card-link" data-sr="Saznajte vise" data-en="Learn more">Saznajte vise</a>
     </div>
     <div class="feature-card card-gdpr">
@@ -804,9 +792,8 @@
         <li data-sr="Third-party trackeri (GA, FB, Hotjar)" data-en="Third-party trackers (GA, FB, Hotjar)">Third-party trackeri (GA, FB, Hotjar)</li>
         <li data-sr="HTTPS za podatke korisnika" data-en="HTTPS for user data">HTTPS za podatke korisnika</li>
         <li data-sr="Forme i enkripcija podataka" data-en="Forms & data encryption">Forme i enkripcija podataka</li>
-        <li data-sr="Uslovi koriscenja (ToS)" data-en="Terms of Service (ToS)">Uslovi koriscenja (ToS)</li>
-        <li data-sr="Third-party cookies analiza" data-en="Third-party cookies analysis">Third-party cookies analiza</li>
       </ul>
+      <div class="card-more" data-sr="+ uslovi koriscenja, third-party cookies" data-en="+ terms of service, third-party cookies">+ uslovi koriscenja, third-party cookies</div>
       <a href="./blog-gdpr.html" class="card-link" data-sr="Saznajte vise" data-en="Learn more">Saznajte vise</a>
     </div>
   </div>
