@@ -197,7 +197,7 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
     domain = _get_domain(base_url)
     is_https = base_url.startswith("https://")
 
-    update("Inicijalizacija konekcije...", 5)
+    update("Inicijalizacija konekcije...", 2)
 
     # Create a session with common headers
     session = requests.Session()
@@ -224,7 +224,7 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
     bot_blocked = False
 
     try:
-        update("Učitavanje sajta...", 10)
+        update("Učitavanje sajta...", 4)
         main_response = session.get(base_url, timeout=15, allow_redirects=True)
         response_headers = dict(main_response.headers)
         response_body = main_response.text[:50000]  # Cap at 50KB
@@ -269,7 +269,7 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
         errors.append(f"Greška: {str(e)[:100]}")
 
     # --- 1. SSL/TLS Checks ---
-    update("Proveravam SSL/TLS sertifikat...", 18)
+    update("Proveravam SSL/TLS sertifikat...", 7)
     try:
         ssl_results = ssl_check.run(domain)
         all_results.extend(ssl_results)
@@ -277,7 +277,7 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
         errors.append(f"SSL check greška: {str(e)[:80]}")
 
     # --- 2. HTTP Security Headers ---
-    update("Proveravam sigurnosne HTTP headere...", 28)
+    update("Proveravam sigurnosne HTTP headere...", 11)
     try:
         hdr_results = headers_check.run(response_headers)
         all_results.extend(hdr_results)
@@ -285,7 +285,7 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
         errors.append(f"Headers check greška: {str(e)[:80]}")
 
     # --- 3. DNS Security ---
-    update("Proveravam DNS sigurnost (SPF, DMARC)...", 40)
+    update("Proveravam DNS sigurnost (SPF, DMARC)...", 15)
     try:
         dns_results = dns_check.run(domain)
         all_results.extend(dns_results)
@@ -293,7 +293,7 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
         errors.append(f"DNS check greška: {str(e)[:80]}")
 
     # --- 4. Sensitive File Exposure ---
-    update("Tražim osetljive fajlove...", 52)
+    update("Tražim osetljive fajlove...", 19)
     try:
         files_results = files_check.run(base_url, session)
         all_results.extend(files_results)
@@ -301,7 +301,7 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
         errors.append(f"Files check greška: {str(e)[:80]}")
 
     # --- 5. Information Disclosure ---
-    update("Analiziram otkrivanje informacija o sistemu...", 62)
+    update("Analiziram otkrivanje informacija o sistemu...", 23)
     try:
         disc_results = disclosure_check.run(response_headers, response_body)
         all_results.extend(disc_results)
@@ -309,7 +309,7 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
         errors.append(f"Disclosure check greška: {str(e)[:80]}")
 
     # --- 6. Cookie Security ---
-    update("Proveravam sigurnost kolačića...", 70)
+    update("Proveravam sigurnost kolačića...", 27)
     try:
         cookie_results = cookies_check.run(response_headers, is_https)
         all_results.extend(cookie_results)
@@ -317,7 +317,7 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
         errors.append(f"Cookie check greška: {str(e)[:80]}")
 
     # --- 7. Redirect Security ---
-    update("Proveravam HTTPS preusmeravanja...", 80)
+    update("Proveravam HTTPS preusmeravanja...", 31)
     try:
         redirect_results = redirect_check.run(domain, session)
         all_results.extend(redirect_results)
@@ -325,7 +325,7 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
         errors.append(f"Redirect check greška: {str(e)[:80]}")
 
     # --- 8. CMS & Technology ---
-    update("Detektujem CMS i tehnologije...", 84)
+    update("Detektujem CMS i tehnologije...", 35)
     try:
         cms_results = cms_check.run(base_url, response_body, session)
         all_results.extend(cms_results)
@@ -333,7 +333,7 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
         errors.append(f"CMS check greška: {str(e)[:80]}")
 
     # --- 9. Admin Page Exposure ---
-    update("Tražim izložene admin stranice...", 88)
+    update("Tražim izložene admin stranice...", 39)
     try:
         admin_results = admin_check.run(base_url, session)
         all_results.extend(admin_results)
@@ -341,7 +341,7 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
         errors.append(f"Admin check greška: {str(e)[:80]}")
 
     # --- 10. robots.txt Analysis ---
-    update("Analiziram robots.txt...", 91)
+    update("Analiziram robots.txt...", 43)
     try:
         robots_results = robots_check.run(base_url, session)
         all_results.extend(robots_results)
@@ -349,7 +349,7 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
         errors.append(f"Robots check greška: {str(e)[:80]}")
 
     # --- 11. Dangerous Open Ports ---
-    update("Proveravam opasne otvorene portove...", 93)
+    update("Proveravam opasne otvorene portove...", 47)
     try:
         ports_results = ports_check.run(domain)
         all_results.extend(ports_results)
@@ -357,7 +357,7 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
         errors.append(f"Ports check greška: {str(e)[:80]}")
 
     # --- 12. CORS Policy ---
-    update("Proveravam CORS politiku...", 95)
+    update("Proveravam CORS politiku...", 50)
     try:
         cors_results = cors_check.run(base_url, response_headers, session)
         all_results.extend(cors_results)
@@ -365,7 +365,7 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
         errors.append(f"CORS check greška: {str(e)[:80]}")
 
     # --- 13. Extras: security.txt, CAA, SRI ---
-    update("Proveravam security.txt, CAA, SRI...", 85)
+    update("Proveravam security.txt, CAA, SRI...", 54)
     try:
         extras_results = extras_check.run(base_url, domain, response_body, session)
         all_results.extend(extras_results)
@@ -373,7 +373,7 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
         errors.append(f"Extras check greška: {str(e)[:80]}")
 
     # --- 14. Vulnerability Scan ---
-    update("Skeniram ranjivosti (pasivno)...", 87)
+    update("Skeniram ranjivosti (pasivno)...", 58)
     try:
         vuln_results = vuln_check.run(base_url, response_body, response_headers, session)
         all_results.extend(vuln_results)
@@ -381,7 +381,7 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
         errors.append(f"Vuln check greška: {str(e)[:80]}")
 
     # --- 15. JavaScript Security ---
-    update("Analiziram JavaScript bezbednost...", 88)
+    update("Analiziram JavaScript bezbednost...", 62)
     try:
         js_results = js_check.run(base_url, response_body, session)
         all_results.extend(js_results)
@@ -389,7 +389,7 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
         errors.append(f"JS check greška: {str(e)[:80]}")
 
     # --- 16. API Security ---
-    update("Proveravam API bezbednost...", 89)
+    update("Proveravam API bezbednost...", 65)
     try:
         api_results = api_check.run(base_url, session)
         all_results.extend(api_results)
@@ -397,7 +397,7 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
         errors.append(f"API check greška: {str(e)[:80]}")
 
     # --- 17. Dependencies ---
-    update("Proveravam zavisnosti i biblioteke...", 90)
+    update("Proveravam zavisnosti i biblioteke...", 69)
     try:
         dep_results = dependency_check.run(base_url, response_body, session)
         all_results.extend(dep_results)
@@ -405,7 +405,7 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
         errors.append(f"Dependency check greška: {str(e)[:80]}")
 
     # --- 18. SEO Analysis ---
-    update("Analiziram SEO...", 91)
+    update("Analiziram SEO...", 73)
     try:
         seo_results = seo_check.run(base_url, response_body, response_headers, session)
         all_results.extend(seo_results)
@@ -413,7 +413,7 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
         errors.append(f"SEO check greška: {str(e)[:80]}")
 
     # --- 19. Performance ---
-    update("Analiziram performanse sajta...", 92)
+    update("Analiziram performanse sajta...", 77)
     try:
         perf_results = performance_check.run(base_url, response_body, response_headers, session, response_time_ms, page_size_bytes)
         all_results.extend(perf_results)
@@ -421,7 +421,7 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
         errors.append(f"Performance check greška: {str(e)[:80]}")
 
     # --- 20. GDPR / Privacy ---
-    update("Proveravam GDPR usklađenost...", 93)
+    update("Proveravam GDPR usklađenost...", 80)
     try:
         gdpr_results = gdpr_check.run(base_url, response_body, response_headers, session)
         all_results.extend(gdpr_results)
@@ -429,7 +429,7 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
         errors.append(f"GDPR check greška: {str(e)[:80]}")
 
     # --- 21. Accessibility ---
-    update("Proveravam pristupačnost (a11y)...", 94)
+    update("Proveravam pristupačnost (a11y)...", 84)
     try:
         a11y_results = accessibility_check.run(response_body)
         all_results.extend(a11y_results)
@@ -437,7 +437,7 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
         errors.append(f"Accessibility check greška: {str(e)[:80]}")
 
     # --- 22. WHOIS / Domain Info ---
-    update("Proveravam WHOIS podatke domena...", 92)
+    update("Proveravam WHOIS podatke domena...", 87)
     try:
         whois_results = whois_check.run(domain)
         all_results.extend(whois_results)
@@ -445,7 +445,7 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
         errors.append(f"WHOIS check greška: {str(e)[:80]}")
 
     # --- 23. Technology Stack Detection ---
-    update("Detektujem tehnoloski stek...", 93)
+    update("Detektujem tehnoloski stek...", 89)
     try:
         tech_results = tech_stack_check.run(response_body, response_headers)
         all_results.extend(tech_results)
@@ -453,7 +453,7 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
         errors.append(f"Tech stack check greška: {str(e)[:80]}")
 
     # --- 24. Email Security ---
-    update("Proveravam email bezbednost...", 94)
+    update("Proveravam email bezbednost...", 91)
     try:
         email_results = email_security_check.run(domain)
         all_results.extend(email_results)
@@ -461,7 +461,7 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
         errors.append(f"Email check greška: {str(e)[:80]}")
 
     # --- 25. Mozilla Observatory ---
-    update("Mozilla Observatory analiza...", 95)
+    update("Mozilla Observatory analiza...", 93)
     try:
         obs_results = observatory_check.run(domain)
         all_results.extend(obs_results)
