@@ -127,6 +127,13 @@
   var colSeo = el('div', { className: 'footer-col' });
   colSeo.appendChild(el('h4', {}, ['SEO']));
   colSeo.appendChild(footerLinkBi('./blog-seo.html', 'SEO vodic', 'SEO Guide'));
+  colSeo.appendChild(footerLink('./blog-seo-meta.html', 'Meta Tagovi'));
+  colSeo.appendChild(footerLink('./blog-seo-schema.html', 'Schema.org'));
+  colSeo.appendChild(footerLink('./blog-seo-sitemap.html', 'Sitemap.xml'));
+  colSeo.appendChild(footerLink('./blog-seo-local.html', 'Lokalni SEO'));
+  colSeo.appendChild(footerLink('./blog-seo-opengraph.html', 'Open Graph'));
+  colSeo.appendChild(footerLink('./blog-seo-headings.html', 'Headings H1-H6'));
+  colSeo.appendChild(footerLink('./blog-seo-mobile.html', 'Mobile SEO'));
   footerGrid.appendChild(colSeo);
 
   // Performance column
