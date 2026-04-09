@@ -5,10 +5,10 @@
 - ✅ index.html — header/footer iz blog-common, result tabs ispod skenera
 - ✅ 8/8 SECURITY clanaka + hub stranica + timeline fix (EN h2 id-jevi)
 - ✅ 7/7 SEO clanaka + hub stranica (meta, schema, sitemap, local, opengraph, headings, mobile)
-- ✅ 0/6 PERFORMANCE clanaka + hub stranica gotova (clanci preostali)
-- ✅ 0/5 GDPR clanaka + hub stranica gotova (clanci preostali)
+- ✅ 6/6 PERFORMANCE clanaka + hub stranica (cwv, images, cache, compression, cdn, lazy)
+- ✅ 5/5 GDPR clanaka + hub stranica (cookies, policy, trackers, rights, fines)
 - ✅ privacy.html
-- ❌ 11 novih blog clanaka preostalo (6 Perf + 5 GDPR)
+- ✅ SVE BLOG STRANICE ZAVRSENE! 26/26 clanaka + 4 hub stranice
 - ✅ sitemap.xml (31 URL-ova, buduci clanci ukljuceni)
 - ✅ api.py (blog-common.css/js rute + wildcard + GZip + /index.html ruta)
 - ✅ scanner.py fix: SSL retry verify=False, bot detection false-positive fix, Vercel challenge retry
@@ -110,9 +110,9 @@ Niko ne ceka da drugi zavrsi. Progresivni rezultati.
 
 ---
 
-## PERFORMANCE (6 fajlova)
+## PERFORMANCE (6 fajlova) — ✅ SVE GOTOVO
 
-### 16. blog-perf-cwv.html
+### 16. blog-perf-cwv.html ✅ (540 linija)
 **Title:** "Core Web Vitals — LCP, CLS, INP vodic | Web Security Scanner"
 **Keywords:** Core Web Vitals, LCP, CLS, INP, FID, Google ranking, page speed
 **Sadrzaj MORA da sadrzi:**
@@ -129,7 +129,7 @@ Niko ne ceka da drugi zavrsi. Progresivni rezultati.
 - Reference: web.dev/vitals, Google Search Central, Chrome UX Report
 - FAQPage: "Sta su Core Web Vitals?", "Da li uticu na rangiranje?", "Koji je najvazniji?"
 
-### 17. blog-perf-images.html
+### 17. blog-perf-images.html ✅ (434 linija)
 **Title:** "Optimizacija slika za web — Formati, kompresija, lazy loading | Web Security Scanner"
 **Keywords:** optimizacija slika, WebP, AVIF, lazy loading, kompresija, srcset
 **Sadrzaj MORA da sadrzi:**
@@ -146,7 +146,7 @@ Niko ne ceka da drugi zavrsi. Progresivni rezultati.
 - Reference: web.dev Image Optimization, MDN <picture> docs
 - FAQPage: "Koji format koristiti?", "Sta je lazy loading?", "Kako smanjiti slike bez gubitka kvaliteta?"
 
-### 18. blog-perf-cache.html
+### 18. blog-perf-cache.html ✅ (462 linija)
 **Title:** "HTTP Caching — Cache-Control, ETag, CDN vodic | Web Security Scanner"
 **Keywords:** cache, Cache-Control, ETag, CDN, browser cache, HTTP caching
 **Sadrzaj MORA da sadrzi:**
@@ -165,7 +165,7 @@ Niko ne ceka da drugi zavrsi. Progresivni rezultati.
 - Reference: MDN HTTP Caching, web.dev Caching guide, RFC 7234
 - FAQPage: "Sta je Cache-Control?", "Koliko dugo kesirati?", "Sta je CDN?"
 
-### 19. blog-perf-compression.html
+### 19. blog-perf-compression.html ✅ (470 linija)
 **Title:** "Gzip i Brotli kompresija — Kako smanjiti velicinu sajta | Web Security Scanner"
 **Keywords:** Gzip, Brotli, kompresija, Content-Encoding, transfer size
 **Sadrzaj MORA da sadrzi:**
@@ -181,7 +181,7 @@ Niko ne ceka da drugi zavrsi. Progresivni rezultati.
 - Reference: RFC 7932 (Brotli), Google Brotli GitHub, MDN Content-Encoding
 - FAQPage: "Sta je bolje Gzip ili Brotli?", "Da li kompresija usporava server?", "Kako proveriti da li je ukljucena?"
 
-### 20. blog-perf-cdn.html
+### 20. blog-perf-cdn.html ✅ (367 linija)
 **Title:** "CDN — Sta je Content Delivery Network i zasto vam treba | Web Security Scanner"
 **Keywords:** CDN, Content Delivery Network, Cloudflare, performanse, latencija
 **Sadrzaj MORA da sadrzi:**
@@ -202,7 +202,7 @@ Niko ne ceka da drugi zavrsi. Progresivni rezultati.
 - Reference: Cloudflare docs, AWS CloudFront docs, Web Almanac
 - FAQPage: "Da li mi treba CDN?", "Koliko kosta?", "Da li Cloudflare usporava sajt?"
 
-### 21. blog-perf-lazy.html
+### 21. blog-perf-lazy.html ✅ (442 linija)
 **Title:** "Lazy Loading — Odlozeno ucitavanje resursa | Web Security Scanner"
 **Keywords:** lazy loading, loading=lazy, Intersection Observer, performanse
 **Sadrzaj MORA da sadrzi:**
@@ -221,9 +221,9 @@ Niko ne ceka da drugi zavrsi. Progresivni rezultati.
 
 ---
 
-## GDPR (5 fajlova)
+## GDPR (5 fajlova) — ✅ SVE GOTOVO
 
-### 22. blog-gdpr-cookies.html
+### 22. blog-gdpr-cookies.html ✅ (417 linija)
 **Title:** "Cookie Consent — GDPR vodic za kolacice | Web Security Scanner"
 **Keywords:** cookies, cookie consent, GDPR, kolacici, cookie banner, ePrivacy
 **Sadrzaj MORA da sadrzi:**
@@ -246,7 +246,7 @@ Niko ne ceka da drugi zavrsi. Progresivni rezultati.
 - Reference: GDPR Recital 30, ePrivacy Directive, CNIL cookie guidelines
 - FAQPage: "Da li mi treba cookie baner?", "Koji cookies su essential?", "Sta ako ignorisuem GDPR?"
 
-### 23. blog-gdpr-policy.html
+### 23. blog-gdpr-policy.html ✅ (377 linija)
 **Title:** "Privacy Policy — Kako napisati politiku privatnosti | Web Security Scanner"
 **Keywords:** privacy policy, politika privatnosti, GDPR, obavezne informacije
 **Sadrzaj MORA da sadrzi:**
@@ -269,7 +269,7 @@ Niko ne ceka da drugi zavrsi. Progresivni rezultati.
 - Reference: GDPR clanci 13-14, ICO Privacy Policy checklist
 - FAQPage: "Da li mi treba Privacy Policy?", "Moze li biti na srpskom?", "Ko pise Privacy Policy?"
 
-### 24. blog-gdpr-trackers.html
+### 24. blog-gdpr-trackers.html ✅ (325 linija)
 **Title:** "Third-Party Trackeri — Google Analytics, Facebook Pixel i GDPR | Web Security Scanner"
 **Keywords:** trackeri, Google Analytics, Facebook Pixel, GDPR, praćenje korisnika
 **Sadrzaj MORA da sadrzi:**
@@ -294,7 +294,7 @@ Niko ne ceka da drugi zavrsi. Progresivni rezultati.
 - Reference: CNIL GA odluka, EDPB preporuke, Google Consent Mode docs
 - FAQPage: "Da li je Google Analytics legalan?", "Koja je alternativa?", "Sta je server-side tracking?"
 
-### 25. blog-gdpr-rights.html
+### 25. blog-gdpr-rights.html ✅ (373 linija)
 **Title:** "Prava korisnika po GDPR — Pristup, brisanje, prenosivost | Web Security Scanner"
 **Keywords:** GDPR prava, pravo na brisanje, pravo na pristup, data portability
 **Sadrzaj MORA da sadrzi:**
@@ -316,7 +316,7 @@ Niko ne ceka da drugi zavrsi. Progresivni rezultati.
 - Reference: GDPR clanci 12-22, EDPB Guidelines, ICO Individual Rights
 - FAQPage: "Kako da zatrazim brisanje?", "Koliko treba da cekam?", "Moze li firma da odbije?"
 
-### 26. blog-gdpr-fines.html
+### 26. blog-gdpr-fines.html ✅ (315 linija)
 **Title:** "GDPR Kazne — Najvece kazne i kako ih izbeci | Web Security Scanner"
 **Keywords:** GDPR kazne, GDPR fines, penali, compliance, zastita podataka
 **Sadrzaj MORA da sadrzi:**

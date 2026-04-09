@@ -143,12 +143,23 @@
   h4Perf.appendChild(srSpan('Performanse', 'Performance'));
   colPerf.appendChild(h4Perf);
   colPerf.appendChild(footerLinkBi('./blog-performance.html', 'Vodic za performanse', 'Performance Guide'));
+  colPerf.appendChild(footerLink('./blog-perf-cwv.html', 'Core Web Vitals'));
+  colPerf.appendChild(footerLink('./blog-perf-images.html', 'Optimizacija slika'));
+  colPerf.appendChild(footerLink('./blog-perf-cache.html', 'HTTP Caching'));
+  colPerf.appendChild(footerLink('./blog-perf-compression.html', 'Gzip & Brotli'));
+  colPerf.appendChild(footerLink('./blog-perf-cdn.html', 'CDN'));
+  colPerf.appendChild(footerLink('./blog-perf-lazy.html', 'Lazy Loading'));
   footerGrid.appendChild(colPerf);
 
   // GDPR column
   var colGdpr = el('div', { className: 'footer-col' });
   colGdpr.appendChild(el('h4', {}, ['GDPR']));
   colGdpr.appendChild(footerLinkBi('./blog-gdpr.html', 'GDPR vodic', 'GDPR Guide'));
+  colGdpr.appendChild(footerLink('./blog-gdpr-cookies.html', 'Cookie Consent'));
+  colGdpr.appendChild(footerLink('./blog-gdpr-policy.html', 'Privacy Policy'));
+  colGdpr.appendChild(footerLink('./blog-gdpr-trackers.html', 'Third-Party Trackeri'));
+  colGdpr.appendChild(footerLinkBi('./blog-gdpr-rights.html', 'Prava korisnika', 'User Rights'));
+  colGdpr.appendChild(footerLinkBi('./blog-gdpr-fines.html', 'GDPR Kazne', 'GDPR Fines'));
   colGdpr.appendChild(footerLinkBi('./privacy.html', 'Politika privatnosti', 'Privacy Policy'));
   footerGrid.appendChild(colGdpr);
 

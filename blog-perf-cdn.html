@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CDN — Sta je Content Delivery Network i zasto vam treba | Web Security Scanner</title>
+  <meta name="description" content="Kompletni vodic za CDN: kako radi, Cloudflare besplatan setup, AWS CloudFront, Vercel Edge, Bunny.net. Push vs Pull, cache invalidation, DDoS zastita i SEO.">
+  <meta name="keywords" content="CDN, Content Delivery Network, Cloudflare, AWS CloudFront, Vercel Edge, Bunny.net, latencija, DDoS, performanse">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <link rel="canonical" href="https://security-scanner-ruddy.vercel.app/blog-perf-cdn.html">
+  <link rel="alternate" hreflang="sr" href="https://security-scanner-ruddy.vercel.app/blog-perf-cdn.html">
+  <link rel="alternate" hreflang="en" href="https://security-scanner-ruddy.vercel.app/blog-perf-cdn.html">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="CDN — Content Delivery Network kompletni vodic">
+  <meta property="og:description" content="Kako CDN radi, Cloudflare besplatno, DDoS zastita, cache invalidation i SEO uticaj.">
+  <meta property="og:url" content="https://security-scanner-ruddy.vercel.app/blog-perf-cdn.html">
+  <meta property="og:site_name" content="Web Security Scanner">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="CDN — Content Delivery Network kompletni vodic">
+  <meta name="twitter:description" content="Kako CDN radi, Cloudflare besplatno, DDoS zastita, cache invalidation i SEO uticaj.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "CDN — Sta je Content Delivery Network i zasto vam treba",
+    "author": {"@type": "Person", "name": "Toske", "url": "https://toske-programer.web.app"},
+    "publisher": {"@type": "Organization", "name": "Web Security Scanner"},
+    "datePublished": "2026-04-09",
+    "dateModified": "2026-04-09",
+    "description": "Kompletni vodic za CDN: Cloudflare, CloudFront, Vercel Edge, cache invalidation, DDoS.",
+    "mainEntityOfPage": {"@type": "WebPage", "@id": "https://security-scanner-ruddy.vercel.app/blog-perf-cdn.html"}
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Da li mi treba CDN?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ako imate posetioce iz razlicitih geografskih lokacija — da. CDN smanjuje latenciju za 50-70%. Cak i za lokalne sajtove, CDN donosi DDoS zastitu, besplatan SSL i automatsku kompresiju. Cloudflare nudi besplatan tier koji pokriva vecinu potreba."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Koliko CDN kosta?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Cloudflare Free tier: $0 — ukljucuje CDN, SSL, DDoS zastitu i DNS. Bunny.net: od $0.01/GB (najjeftiniji). AWS CloudFront: pay-as-you-go od $0.085/GB. Vercel: ukljucen besplatno sa hostingom. Za vecinu sajtova, Cloudflare Free je vise nego dovoljno."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Da li Cloudflare usporava sajt?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ne — Cloudflare ubrzava sajt. Jedini slucaj kad moze usporiti je ako je origin server veoma blizu korisnicima (isti grad), ali cak i tada je razlika minimalna. Prednosti (caching, kompresija, HTTP/3) daleko nadmasuju eventualni overhead rutiranja."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Sta je razlika izmedju Push i Pull CDN?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Pull CDN: sadrzaj se automatski kesa kad korisnik prvi put zatrazi resurs. CDN 'vuche' sa vaseg servera. Primer: Cloudflare, Vercel. Push CDN: vi rucno uploadujete fajlove na CDN. Primer: AWS S3 + CloudFront. Pull je jednostavniji za vecinu sajtova."
+        }
+      }
+    ]
+  }
+  </script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+</head>
+<body>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr"><div class="timeline-title">Sadrzaj</div><ol id="timeline-sr"></ol></div>
+    <div class="en"><div class="timeline-title">Contents</div><ol id="timeline-en"></ol></div>
+  </aside>
+  <main class="blog-content">
+
+  <!-- ==================== SRPSKI ==================== -->
+  <div class="sr">
+    <h1>CDN &mdash; Sta je Content Delivery Network i zasto vam treba</h1>
+    <p class="subtitle">Kompletni vodic: kako CDN ubrzava sajt, smanjuje latenciju i stiti od DDoS napada</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">50-70%</div><div class="stat-label">Smanjenje latencije sa CDN-om</div></div>
+      <div class="stat-card"><div class="stat-num">300+</div><div class="stat-label">Cloudflare POP lokacija</div></div>
+      <div class="stat-card"><div class="stat-num">$0</div><div class="stat-label">Cloudflare Free tier</div></div>
+      <div class="stat-card"><div class="stat-num">100Tbps</div><div class="stat-label">Cloudflare mrezni kapacitet</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Sadrzaj</h3>
+      <ol>
+        <li><a href="#cdn1">Sta je CDN i kako radi</a></li>
+        <li><a href="#cdn2">Zasto vam treba CDN</a></li>
+        <li><a href="#cdn3">Popularne CDN usluge</a></li>
+        <li><a href="#cdn4">Push vs Pull CDN</a></li>
+        <li><a href="#cdn5">CDN za staticke vs dinamicke sajtove</a></li>
+        <li><a href="#cdn6">Cloudflare besplatan setup</a></li>
+        <li><a href="#cdn7">Cache invalidation na CDN-u</a></li>
+        <li><a href="#cdn8">CDN i SEO</a></li>
+        <li><a href="#cdn9">Najcesce greske</a></li>
+        <li><a href="#cdn10">Reference i resursi</a></li>
+      </ol>
+    </div>
+
+    <h2 id="cdn1">1. Sta je CDN i kako radi</h2>
+    <p>CDN (Content Delivery Network) je mreza servera rasporedjena po celom svetu (edge servers / POP &mdash; Points of Presence). Umesto da svaki zahtev ide do vaseg origin servera (mozda u Americi), CDN servira sadrzaj sa najblizeg servera korisniku.</p>
+    <ul>
+      <li><strong>Korisnik iz Beograda</strong> &rarr; CDN edge server u Frankfurtu (~20ms) umesto origin u SAD (~150ms)</li>
+      <li><strong>Korisnik iz Tokija</strong> &rarr; CDN edge u Tokiju (~5ms) umesto origin u SAD (~200ms)</li>
+      <li><strong>Korisnik iz Njujorka</strong> &rarr; CDN edge u Njujorku (~3ms) umesto origin u istom gradu (~10ms)</li>
+    </ul>
+    <h3>Kako funkcionise (Pull CDN)</h3>
+    <ol>
+      <li>Korisnik zatrazi <code>vasajt.rs/style.css</code></li>
+      <li>DNS resolvuje na CDN edge server (najblizi korisniku)</li>
+      <li>Ako edge IMA kesiranu kopiju &rarr; odmah vraca (~20ms)</li>
+      <li>Ako edge NEMA &rarr; zatrazi od origin servera, kesa i vraca korisniku</li>
+      <li>Sledeci korisnik u istoj regiji dobija kesiranu verziju odmah</li>
+    </ol>
+    <div class="callout"><strong>Analogija:</strong> CDN je kao lanac prodavnica umesto jedne centralne fabrike. Umesto da svi putuju do fabrike (origin server), kupuju u najblizoj prodavnici (edge server) koja se redovno snabdeva.</div>
+
+    <h2 id="cdn2">2. Zasto vam treba CDN</h2>
+    <table>
+      <tr><th>Benefit</th><th>Bez CDN-a</th><th>Sa CDN-om</th></tr>
+      <tr><td><strong>Latencija</strong></td><td>100-300ms (zavisno od lokacije)</td><td>5-30ms (najblizi edge)</td></tr>
+      <tr><td><strong>DDoS zastita</strong></td><td>Origin server pada</td><td>CDN apsorbuje napad (100+ Tbps)</td></tr>
+      <tr><td><strong>SSL</strong></td><td>Morate konfigurisati sami</td><td>Automatski besplatan SSL</td></tr>
+      <tr><td><strong>Kompresija</strong></td><td>Morate konfigurisati</td><td>Automatski Brotli/Gzip</td></tr>
+      <tr><td><strong>HTTP/3</strong></td><td>Kompleksna konfiguracija</td><td>Automatski podrzan</td></tr>
+      <tr><td><strong>Skaliranje</strong></td><td>Origin se ruzi pod pritiskom</td><td>CDN distribuira opterecenje</td></tr>
+      <tr><td><strong>Uptime</strong></td><td>Origin down = sajt down</td><td>CDN servira kesirani sadrzaj cak i kad origin padne</td></tr>
+    </table>
+
+    <h2 id="cdn3">3. Popularne CDN usluge</h2>
+    <table>
+      <tr><th>CDN</th><th>Besplatan tier</th><th>POP lokacije</th><th>DDoS</th><th>Najbolje za</th></tr>
+      <tr><td><strong>Cloudflare</strong></td><td>Da (odlican!)</td><td>300+</td><td>Da (100+ Tbps)</td><td>Sve — univerzalan izbor</td></tr>
+      <tr><td><strong>Vercel Edge</strong></td><td>Da (sa hostingom)</td><td>~70</td><td>Osnovno</td><td>Next.js / JAMstack sajtove</td></tr>
+      <tr><td><strong>AWS CloudFront</strong></td><td>1TB/mesec free tier</td><td>450+</td><td>AWS Shield</td><td>Enterprise, AWS ekosistem</td></tr>
+      <tr><td><strong>Fastly</strong></td><td>Ne</td><td>90+</td><td>Da</td><td>Real-time log, edge compute</td></tr>
+      <tr><td><strong>Bunny.net</strong></td><td>14 dana trial</td><td>120+</td><td>Da</td><td>Najjeftiniji ($0.01/GB)</td></tr>
+      <tr><td><strong>Netlify Edge</strong></td><td>Da (sa hostingom)</td><td>~40</td><td>Osnovno</td><td>Staticke sajtove, JAMstack</td></tr>
+    </table>
+    <div class="callout"><strong>Preporuka 2026:</strong> Za vecinu sajtova, <strong>Cloudflare Free</strong> je najbolji izbor — besplatan CDN + SSL + DDoS + DNS + Brotli + HTTP/3. Za Next.js projekte, Vercel je prirodan izbor jer je CDN integrisan.</div>
+
+    <h2 id="cdn4">4. Push vs Pull CDN</h2>
+    <table>
+      <tr><th>Tip</th><th>Kako radi</th><th>Primer</th><th>Prednosti</th><th>Mane</th></tr>
+      <tr><td><strong>Pull CDN</strong></td><td>CDN automatski vuche sa origin servera kad korisnik zatrazi</td><td>Cloudflare, Vercel, Bunny</td><td>Jednostavno, automatsko</td><td>Prva poseta moze biti spora (cache miss)</td></tr>
+      <tr><td><strong>Push CDN</strong></td><td>Vi rucno uploadujete fajlove na CDN</td><td>AWS S3 + CloudFront, Bunny Storage</td><td>Potpuna kontrola</td><td>Zahteva CI/CD integraciju</td></tr>
+    </table>
+    <p><strong>Za vecinu sajtova Pull CDN je bolji izbor</strong> &mdash; nema potrebe za rucnim upload-om, CDN se sam brine o kesiranju.</p>
+
+    <h2 id="cdn5">5. CDN za staticke vs dinamicke sajtove</h2>
+    <h3>Staticki sajtovi (HTML/CSS/JS)</h3>
+    <ul>
+      <li>CDN kesa SVE &mdash; HTML, CSS, JS, slike</li>
+      <li>Origin server skoro nikad ne prima zahtev</li>
+      <li>Perfektan use case za CDN &mdash; 95%+ cache hit rate</li>
+      <li>Primer: blog, landing page, dokumentacija</li>
+    </ul>
+    <h3>Dinamicki sajtovi (API, baza)</h3>
+    <ul>
+      <li>CDN kesa staticke resurse (CSS, JS, slike) ali NE HTML/API odgovore</li>
+      <li>HTML se generise na origin serveru pri svakom zahtevu</li>
+      <li>I dalje velika korist: kompresija, SSL, DDoS zastita</li>
+      <li>Opcija: <strong>Edge Functions</strong> (Cloudflare Workers, Vercel Edge) &mdash; dinamicki sadrzaj na edge-u</li>
+    </ul>
+    <div class="callout callout-warn"><strong>stale-while-revalidate:</strong> Za dinamicki sadrzaj koji moze biti malo zastareo, koristite <code>Cache-Control: s-maxage=60, stale-while-revalidate=86400</code> &mdash; CDN servira stari kes odmah i azurira u pozadini. Vise o cache strategijama u nasem <a href="./blog-perf-cache.html">HTTP Caching vodicu</a>.</div>
+
+    <h2 id="cdn6">6. Cloudflare besplatan setup (korak po korak)</h2>
+    <ol>
+      <li>Registrujte se na <a href="https://dash.cloudflare.com/sign-up" target="_blank">dash.cloudflare.com</a> (besplatno)</li>
+      <li>Kliknite <strong>"Add a Site"</strong> i unesite vas domen (npr. vasajt.rs)</li>
+      <li>Izaberite <strong>"Free"</strong> plan</li>
+      <li>Cloudflare skenira vase DNS zapise &mdash; proverite da su tacni</li>
+      <li>Promenite <strong>nameservere</strong> kod vaseg registrara na Cloudflare-ove (npr. ns1.cloudflare.com)</li>
+      <li>Sacekajte propagaciju (5 min do 24h, obicno ~30 min)</li>
+      <li><strong>Gotovo!</strong> Cloudflare sada rutira sav saobracaj kroz svoju mrezu</li>
+    </ol>
+    <h3>Posle setup-a, ukljucite</h3>
+    <ul>
+      <li><strong>SSL/TLS:</strong> Encryption mode &rarr; "Full (strict)" za najjacu enkripciju</li>
+      <li><strong>Always Use HTTPS:</strong> Edge Certificates &rarr; ON</li>
+      <li><strong>Brotli:</strong> Speed &rarr; Optimization &rarr; Brotli: ON</li>
+      <li><strong>Auto Minify:</strong> Speed &rarr; Optimization &rarr; HTML/CSS/JS: ON</li>
+      <li><strong>HTTP/3:</strong> Network &rarr; HTTP/3: ON</li>
+      <li><strong>Browser Cache TTL:</strong> Caching &rarr; postavite na 1 year za staticke resurse</li>
+    </ul>
+
+    <h2 id="cdn7">7. Cache invalidation na CDN-u</h2>
+    <p>Kad promenite sajt, CDN i dalje servira staru verziju dok kes ne istekne. Metode za forsiranje azuriranja:</p>
+    <ul>
+      <li><strong>Purge by URL:</strong> Cloudflare &rarr; Caching &rarr; Purge &rarr; Custom Purge &rarr; unesite URL-ove</li>
+      <li><strong>Purge Everything:</strong> Cisti ceo CDN kes &mdash; koristite retko jer uzrokuje cache miss storm</li>
+      <li><strong>API Purge:</strong> Automatizovano u CI/CD &mdash; <code>curl -X POST "https://api.cloudflare.com/client/v4/zones/{id}/purge_cache" -d '{"purge_everything":true}'</code></li>
+      <li><strong>Cache-busting:</strong> Hash u filename-u (style.a1b2c3.css) &mdash; novi fajl = novi URL = CDN automatski preuzima. Detaljnije u <a href="./blog-perf-cache.html">HTTP Caching vodicu</a>.</li>
+      <li><strong>Cache Tags:</strong> Enterprise feature &mdash; tagujete resurse i purge-ujete po tagu</li>
+    </ul>
+    <div class="callout callout-danger"><strong>Pravilo:</strong> Nikad ne kesirajte HTML na CDN-u za duzi period. Koristite <code>s-maxage=0</code> ili <code>no-cache</code> za HTML, a dugotrajno kesiranje samo za staticke fajlove sa hash-om u imenu.</div>
+
+    <h2 id="cdn8">8. CDN i SEO</h2>
+    <ul>
+      <li><strong>Brzina = bolji rang:</strong> Google koristi page speed kao faktor rangiranja. CDN smanjuje TTFB za 50-70% sto direktno poboljsava LCP (Core Web Vital).</li>
+      <li><strong>Uptime = bolji crawling:</strong> Ako je sajt cesto nedostupan, Googlebot dolazi redje. CDN obezbeduje visoku dostupnost.</li>
+      <li><strong>HTTPS besplatno:</strong> SSL je faktor rangiranja od 2014. CDN daje besplatan SSL.</li>
+      <li><strong>Mobile speed:</strong> CDN dramaticno ubrzava mobilne korisnike (60%+ pretraga) jer smanjuje latenciju.</li>
+      <li><strong>Canonical i redirect:</strong> Pazite da CDN pravilno prosleđuje canonical URL-ove i redirecte (www/non-www, HTTP/HTTPS).</li>
+    </ul>
+
+    <h2 id="cdn9">9. Najcesce greske</h2>
+    <ul>
+      <li><strong>Kesiranje HTML-a predugo</strong> &mdash; korisnici vide staru verziju sajta. HTML: <code>no-cache</code> ili <code>s-maxage=0</code>.</li>
+      <li><strong>Zaboravljen Purge posle deploy-a</strong> &mdash; CDN servira stare CSS/JS. Koristite hash u filename-u.</li>
+      <li><strong>Mixed content</strong> &mdash; HTTP resursi na HTTPS sajtu. CDN SSL ne resava ovo automatski &mdash; sve reference moraju biti HTTPS.</li>
+      <li><strong>Origin IP exposed</strong> &mdash; Direktan pristup IP adresi origin servera zaobilazi CDN. Blokirajte pristup po IP-u.</li>
+      <li><strong>Preskupljenje</strong> &mdash; Nepotrebni purge_everything &rarr; svi korisnici dobijaju cache miss odjednom &rarr; origin preopterecen.</li>
+      <li><strong>CDN za lokalni sajt</strong> &mdash; Ako su svi korisnici u istom gradu kao server, CDN donosi minimalan benefiti (ali DDoS zastita vredi).</li>
+      <li><strong>Websocket problemi</strong> &mdash; Neki CDN-ovi ne podrzavaju WebSocket bez konfiguracije. Cloudflare ga podrzava na Free planu.</li>
+    </ul>
+
+    <h2 id="cdn10">10. Reference i resursi</h2>
+    <ul>
+      <li><a href="https://developers.cloudflare.com/" target="_blank">Cloudflare &mdash; Developer Docs</a></li>
+      <li><a href="https://docs.aws.amazon.com/cloudfront/" target="_blank">AWS CloudFront &mdash; Documentation</a></li>
+      <li><a href="https://vercel.com/docs/edge-network" target="_blank">Vercel &mdash; Edge Network</a></li>
+      <li><a href="https://bunny.net/cdn/" target="_blank">Bunny.net &mdash; CDN</a></li>
+      <li><a href="https://web.dev/articles/content-delivery-networks" target="_blank">web.dev &mdash; Content Delivery Networks</a></li>
+      <li><a href="https://almanac.httparchive.org/en/2024/cdn" target="_blank">HTTP Archive Web Almanac &mdash; CDN</a></li>
+      <li><a href="https://www.cdnplanet.com/" target="_blank">CDN Planet &mdash; CDN Comparison</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Proverite brzinu vaseg sajta &rarr;</a>
+  </div>
+
+  <!-- ==================== ENGLISH ==================== -->
+  <div class="en">
+    <h1>CDN &mdash; What is Content Delivery Network and Why You Need It</h1>
+    <p class="subtitle">Complete guide: how CDN speeds up your site, reduces latency and protects from DDoS</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">50-70%</div><div class="stat-label">Latency reduction with CDN</div></div>
+      <div class="stat-card"><div class="stat-num">300+</div><div class="stat-label">Cloudflare POP locations</div></div>
+      <div class="stat-card"><div class="stat-num">$0</div><div class="stat-label">Cloudflare Free tier</div></div>
+      <div class="stat-card"><div class="stat-num">100Tbps</div><div class="stat-label">Cloudflare network capacity</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#cdn1e">What is CDN and how it works</a></li>
+        <li><a href="#cdn2e">Why you need CDN</a></li>
+        <li><a href="#cdn3e">Popular CDN services</a></li>
+        <li><a href="#cdn4e">Push vs Pull CDN</a></li>
+        <li><a href="#cdn5e">Static vs dynamic sites</a></li>
+        <li><a href="#cdn6e">Free Cloudflare setup</a></li>
+        <li><a href="#cdn7e">Cache invalidation</a></li>
+        <li><a href="#cdn8e">CDN and SEO</a></li>
+        <li><a href="#cdn9e">Common mistakes</a></li>
+        <li><a href="#cdn10e">References</a></li>
+      </ol>
+    </div>
+
+    <h2 id="cdn1e">1. What is CDN and how it works</h2>
+    <p>CDN is a network of servers worldwide (edge servers / POP). Instead of every request going to your origin server, CDN serves content from the nearest server to the user.</p>
+    <div class="callout"><strong>Analogy:</strong> CDN is like a chain of stores instead of one central warehouse. Customers buy from the nearest store (edge) which regularly restocks from the warehouse (origin).</div>
+
+    <h2 id="cdn2e">2. Why you need CDN</h2>
+    <table>
+      <tr><th>Benefit</th><th>Without CDN</th><th>With CDN</th></tr>
+      <tr><td>Latency</td><td>100-300ms</td><td>5-30ms</td></tr>
+      <tr><td>DDoS protection</td><td>Origin crashes</td><td>CDN absorbs (100+ Tbps)</td></tr>
+      <tr><td>SSL</td><td>Manual config</td><td>Free automatic SSL</td></tr>
+      <tr><td>Compression</td><td>Manual config</td><td>Auto Brotli/Gzip</td></tr>
+      <tr><td>Uptime</td><td>Origin down = site down</td><td>CDN serves cached even if origin is down</td></tr>
+    </table>
+
+    <h2 id="cdn3e">3. Popular CDN services</h2>
+    <table>
+      <tr><th>CDN</th><th>Free tier</th><th>POPs</th><th>Best for</th></tr>
+      <tr><td><strong>Cloudflare</strong></td><td>Yes (great!)</td><td>300+</td><td>Universal choice</td></tr>
+      <tr><td><strong>Vercel Edge</strong></td><td>Yes (with hosting)</td><td>~70</td><td>Next.js / JAMstack</td></tr>
+      <tr><td><strong>AWS CloudFront</strong></td><td>1TB/mo free</td><td>450+</td><td>Enterprise, AWS</td></tr>
+      <tr><td><strong>Bunny.net</strong></td><td>14-day trial</td><td>120+</td><td>Cheapest ($0.01/GB)</td></tr>
+    </table>
+    <div class="callout"><strong>2026 recommendation:</strong> <strong>Cloudflare Free</strong> for most sites. Vercel for Next.js projects.</div>
+
+    <h2 id="cdn4e">4. Push vs Pull CDN</h2>
+    <p><strong>Pull:</strong> CDN automatically fetches from origin on first request (Cloudflare, Vercel). Simple, automatic.</p>
+    <p><strong>Push:</strong> You manually upload files to CDN (S3 + CloudFront). Full control, needs CI/CD.</p>
+    <p>Pull CDN is better for most sites.</p>
+
+    <h2 id="cdn5e">5. Static vs dynamic sites</h2>
+    <p><strong>Static:</strong> CDN caches everything — 95%+ hit rate. Perfect use case.</p>
+    <p><strong>Dynamic:</strong> CDN caches static assets (CSS, JS, images) but not HTML/API. Still valuable: compression, SSL, DDoS. Option: Edge Functions for dynamic content at edge.</p>
+
+    <h2 id="cdn6e">6. Free Cloudflare setup (step by step)</h2>
+    <ol>
+      <li>Sign up at <a href="https://dash.cloudflare.com/sign-up" target="_blank">dash.cloudflare.com</a> (free)</li>
+      <li>Click "Add a Site" and enter your domain</li>
+      <li>Select "Free" plan</li>
+      <li>Cloudflare scans DNS records — verify they're correct</li>
+      <li>Change nameservers at your registrar to Cloudflare's</li>
+      <li>Wait for propagation (~30 min)</li>
+      <li>Enable: SSL Full (strict), Always HTTPS, Brotli, Auto Minify, HTTP/3</li>
+    </ol>
+
+    <h2 id="cdn7e">7. Cache invalidation on CDN</h2>
+    <ul>
+      <li><strong>Purge by URL</strong> — clear specific URLs</li>
+      <li><strong>Purge Everything</strong> — use rarely (causes cache miss storm)</li>
+      <li><strong>API Purge</strong> — automate in CI/CD</li>
+      <li><strong>Cache-busting</strong> — hash in filename (best approach). More in <a href="./blog-perf-cache.html">HTTP Caching guide</a>.</li>
+    </ul>
+    <div class="callout callout-danger"><strong>Rule:</strong> Never cache HTML on CDN for long periods. Use <code>s-maxage=0</code> for HTML, long-term caching only for static files with hash in name.</div>
+
+    <h2 id="cdn8e">8. CDN and SEO</h2>
+    <ul>
+      <li><strong>Speed = better ranking</strong> — CDN reduces TTFB by 50-70%, improving LCP</li>
+      <li><strong>Uptime = better crawling</strong> — Googlebot crawls more when site is reliable</li>
+      <li><strong>Free HTTPS</strong> — SSL is a ranking factor since 2014</li>
+      <li><strong>Mobile speed</strong> — dramatically faster for 60%+ of searches</li>
+    </ul>
+
+    <h2 id="cdn9e">9. Common mistakes</h2>
+    <ul>
+      <li><strong>Caching HTML too long</strong> — users see stale content</li>
+      <li><strong>Forgotten purge after deploy</strong> — use hash in filenames</li>
+      <li><strong>Mixed content</strong> — HTTP resources on HTTPS site</li>
+      <li><strong>Origin IP exposed</strong> — direct IP access bypasses CDN</li>
+      <li><strong>Excessive purge_everything</strong> — causes cache miss storm on origin</li>
+    </ul>
+
+    <h2 id="cdn10e">10. References and resources</h2>
+    <ul>
+      <li><a href="https://developers.cloudflare.com/" target="_blank">Cloudflare Docs</a></li>
+      <li><a href="https://docs.aws.amazon.com/cloudfront/" target="_blank">AWS CloudFront Docs</a></li>
+      <li><a href="https://vercel.com/docs/edge-network" target="_blank">Vercel Edge Network</a></li>
+      <li><a href="https://bunny.net/cdn/" target="_blank">Bunny.net CDN</a></li>
+      <li><a href="https://web.dev/articles/content-delivery-networks" target="_blank">web.dev — CDN</a></li>
+      <li><a href="https://www.cdnplanet.com/" target="_blank">CDN Planet — Comparison</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Check your site's speed &rarr;</a>
+  </div>
+
+  <div class="nav-links">
+    <a href="./blog-performance.html"><span class="sr">Performanse vodic</span><span class="en">Performance Guide</span></a>
+    <a href="./blog-perf-cwv.html"><span class="sr">Core Web Vitals</span><span class="en">Core Web Vitals</span></a>
+    <a href="./blog-perf-images.html"><span class="sr">Optimizacija slika</span><span class="en">Image Optimization</span></a>
+    <a href="./blog-perf-cache.html"><span class="sr">HTTP Caching</span><span class="en">HTTP Caching</span></a>
+    <a href="./blog-perf-compression.html"><span class="sr">Gzip i Brotli</span><span class="en">Gzip &amp; Brotli</span></a>
+    <a href="./blog-perf-lazy.html"><span class="sr">Lazy Loading</span><span class="en">Lazy Loading</span></a>
+  </div>
+
+  </main>
+</div>
+<script src="./blog-common.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Core Web Vitals — LCP, CLS, INP vodic | Web Security Scanner</title>
+  <meta name="description" content="Kompletni vodic za Core Web Vitals: LCP (ucitavanje), CLS (stabilnost), INP (odzivnost). Pragovi, optimizacija, alati za merenje, Field vs Lab data. Google ranking faktor.">
+  <meta name="keywords" content="Core Web Vitals, LCP, CLS, INP, FID, Google ranking, page speed, Largest Contentful Paint, Cumulative Layout Shift">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <link rel="canonical" href="https://security-scanner-ruddy.vercel.app/blog-perf-cwv.html">
+  <link rel="alternate" hreflang="sr" href="https://security-scanner-ruddy.vercel.app/blog-perf-cwv.html">
+  <link rel="alternate" hreflang="en" href="https://security-scanner-ruddy.vercel.app/blog-perf-cwv.html">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Core Web Vitals — LCP, CLS, INP kompletni vodic">
+  <meta property="og:description" content="Sve o Google-ovim metrikama za korisnicko iskustvo: pragovi, optimizacija i alati za merenje.">
+  <meta property="og:url" content="https://security-scanner-ruddy.vercel.app/blog-perf-cwv.html">
+  <meta property="og:site_name" content="Web Security Scanner">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Core Web Vitals — LCP, CLS, INP kompletni vodic">
+  <meta name="twitter:description" content="Sve o Google-ovim metrikama za korisnicko iskustvo: pragovi, optimizacija i alati za merenje.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Core Web Vitals — LCP, CLS, INP vodic",
+    "author": {"@type": "Person", "name": "Toske", "url": "https://toske-programer.web.app"},
+    "publisher": {"@type": "Organization", "name": "Web Security Scanner"},
+    "datePublished": "2026-04-09",
+    "dateModified": "2026-04-09",
+    "description": "Kompletni vodic za Core Web Vitals: LCP, CLS, INP. Pragovi, optimizacija, alati, Field vs Lab data.",
+    "mainEntityOfPage": {"@type": "WebPage", "@id": "https://security-scanner-ruddy.vercel.app/blog-perf-cwv.html"}
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Sta su Core Web Vitals?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Core Web Vitals su 3 Google metrike koje mere korisnicko iskustvo na web stranici: LCP (Largest Contentful Paint) meri brzinu ucitavanja, CLS (Cumulative Layout Shift) meri vizuelnu stabilnost, a INP (Interaction to Next Paint) meri odzivnost na korisnicke akcije. Od 2021. su faktor rangiranja u Google pretrazi."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Da li Core Web Vitals uticu na Google rangiranje?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Da. Od juna 2021, Core Web Vitals su zvanican faktor rangiranja kroz Page Experience Update. Sajtovi koji prolaze CWV pragove imaju 24% manje napustanja. Google prikazuje CWV status u Search Console i koristi Field data (stvarni korisnici) za evaluaciju."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Koji je najvazniji Core Web Vital?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "LCP (Largest Contentful Paint) je najuticajniji jer direktno meri percipiranu brzinu ucitavanja — koliko brzo korisnik vidi glavni sadrzaj. CLS je najcesci problem (slike bez dimenzija, dinamicki oglasi), a INP je najtezi za optimizaciju (zahteva efikasan JavaScript)."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Sta je razlika izmedju Field data i Lab data?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Field data (CrUX) dolazi od stvarnih korisnika sa Chrome browser-a — to je ono sto Google koristi za rangiranje. Lab data (Lighthouse) su simulirani testovi u kontrolisanom okruzenju — korisni za debugging ali ne uticu direktno na rang. PageSpeed Insights prikazuje oba."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Sta je INP i zasto je zamenio FID?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "INP (Interaction to Next Paint) meri odzivnost na SVE korisnicke interakcije tokom cele posete, dok je FID merio samo PRVU interakciju. INP je bolji pokazatelj jer hvata spore event handlere, tezak JavaScript i blokirajuci main thread. Zamenio je FID u martu 2024."
+        }
+      }
+    ]
+  }
+  </script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+</head>
+<body>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr"><div class="timeline-title">Sadrzaj</div><ol id="timeline-sr"></ol></div>
+    <div class="en"><div class="timeline-title">Contents</div><ol id="timeline-en"></ol></div>
+  </aside>
+  <main class="blog-content">
+
+  <!-- ==================== SRPSKI ==================== -->
+  <div class="sr">
+    <h1>Core Web Vitals &mdash; LCP, CLS, INP vodic</h1>
+    <p class="subtitle">Kompletni vodic za 3 Google metrike koje direktno uticu na rangiranje i korisnicko iskustvo</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">3</div><div class="stat-label">Metrike: LCP, CLS, INP</div></div>
+      <div class="stat-card"><div class="stat-num">2021</div><div class="stat-label">CWV postali faktor rangiranja</div></div>
+      <div class="stat-card"><div class="stat-num">24%</div><div class="stat-label">Manje napustanja sa dobrim CWV</div></div>
+      <div class="stat-card"><div class="stat-num">2024</div><div class="stat-label">INP zamenio FID (mart)</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Sadrzaj</h3>
+      <ol>
+        <li><a href="#cwv1">Sta su Core Web Vitals</a></li>
+        <li><a href="#cwv2">LCP — Largest Contentful Paint</a></li>
+        <li><a href="#cwv3">CLS — Cumulative Layout Shift</a></li>
+        <li><a href="#cwv4">INP — Interaction to Next Paint</a></li>
+        <li><a href="#cwv5">Pragovi i ocenjivanje</a></li>
+        <li><a href="#cwv6">Field data vs Lab data</a></li>
+        <li><a href="#cwv7">CWV i Google rangiranje</a></li>
+        <li><a href="#cwv8">Optimizacija LCP</a></li>
+        <li><a href="#cwv9">Optimizacija CLS</a></li>
+        <li><a href="#cwv10">Optimizacija INP</a></li>
+        <li><a href="#cwv11">Alati za merenje</a></li>
+        <li><a href="#cwv12">Reference i resursi</a></li>
+      </ol>
+    </div>
+
+    <h2 id="cwv1">1. Sta su Core Web Vitals</h2>
+    <p>Core Web Vitals (CWV) su skup od <strong>3 metrike</strong> koje je Google definisao u maju 2020. za merenje korisnickog iskustva na web stranicama. Svaka metrika pokriva kljucni aspekt:</p>
+    <ul>
+      <li><strong>LCP (Largest Contentful Paint)</strong> &mdash; brzina ucitavanja: koliko brzo korisnik vidi glavni sadrzaj</li>
+      <li><strong>CLS (Cumulative Layout Shift)</strong> &mdash; vizuelna stabilnost: koliko se elementi pomeraju tokom ucitavanja</li>
+      <li><strong>INP (Interaction to Next Paint)</strong> &mdash; odzivnost: koliko brzo stranica reaguje na klikove i tapove</li>
+    </ul>
+    <p>Od <strong>juna 2021</strong>, CWV su zvanican faktor rangiranja u Google pretrazi kroz Page Experience Update. Google meri CWV na osnovu <strong>stvarnih podataka korisnika</strong> (Chrome User Experience Report / CrUX) &mdash; ne laboratorijskih testova.</p>
+    <div class="callout"><strong>Istorija:</strong> Originalno su CWV bili LCP + CLS + FID (First Input Delay). U <strong>martu 2024</strong>, Google je zamenio FID sa INP jer INP meri SVE interakcije, ne samo prvu.</div>
+
+    <h2 id="cwv2">2. LCP &mdash; Largest Contentful Paint</h2>
+    <p>LCP meri koliko vremena treba da se ucita <strong>najveci vidljivi element</strong> na stranici u viewport-u. To je obicno:</p>
+    <ul>
+      <li>Hero slika ili banner</li>
+      <li>Veliki blok teksta (H1 naslov + paragraf)</li>
+      <li>Video poster frame</li>
+      <li><code>&lt;img&gt;</code>, <code>&lt;svg&gt;</code>, <code>&lt;video&gt;</code> ili element sa <code>background-image</code></li>
+    </ul>
+    <table>
+      <tr><th>LCP vrednost</th><th>Ocena</th><th>Boja</th></tr>
+      <tr><td>&le; 2.5 sekunde</td><td style="color:#22c55e">Dobar</td><td style="color:#22c55e">&#9679; Zelena</td></tr>
+      <tr><td>2.5s &ndash; 4.0s</td><td style="color:#f97316">Treba poboljsati</td><td style="color:#f97316">&#9679; Narandzasta</td></tr>
+      <tr><td>&gt; 4.0 sekunde</td><td style="color:#ef4444">Los</td><td style="color:#ef4444">&#9679; Crvena</td></tr>
+    </table>
+    <h3>Najcesci uzroci loseg LCP-a</h3>
+    <ul>
+      <li><strong>Spor server (TTFB)</strong> &mdash; ako server odgovara sporo, sve kasni. Cilj: TTFB &lt; 600ms.</li>
+      <li><strong>Render-blocking resursi</strong> &mdash; CSS i JS u <code>&lt;head&gt;</code> koji blokiraju renderovanje dok se ne ucitaju.</li>
+      <li><strong>Velike slike</strong> &mdash; neoptimizovane hero slike od 2-5MB. Koristite WebP/AVIF + srcset.</li>
+      <li><strong>Client-side rendering</strong> &mdash; SPA (React/Vue) koje renderuju sadrzaj tek nakon sto se JS izvrsi.</li>
+      <li><strong>Web fontovi</strong> &mdash; FOIT (Flash of Invisible Text) dok se font ucitava. Koristite <code>font-display: swap</code>.</li>
+    </ul>
+    <div class="callout callout-warn"><strong>Pro tip:</strong> Koristite <code>&lt;link rel="preload"&gt;</code> za hero sliku i kriticni CSS. Ovo govori browseru da pocne da ih ucitava odmah, pre nego sto parser dodje do <code>&lt;img&gt;</code> taga.</div>
+
+    <h2 id="cwv3">3. CLS &mdash; Cumulative Layout Shift</h2>
+    <p>CLS meri koliko se <strong>vizuelno pomeraju elementi</strong> tokom ucitavanja stranice. Svako neocekivano pomeranje frustrira korisnike &mdash; kliknete na dugme, ali ono se pomeri i kliknete na nesto drugo.</p>
+    <table>
+      <tr><th>CLS vrednost</th><th>Ocena</th><th>Boja</th></tr>
+      <tr><td>&le; 0.1</td><td style="color:#22c55e">Dobar</td><td style="color:#22c55e">&#9679; Zelena</td></tr>
+      <tr><td>0.1 &ndash; 0.25</td><td style="color:#f97316">Treba poboljsati</td><td style="color:#f97316">&#9679; Narandzasta</td></tr>
+      <tr><td>&gt; 0.25</td><td style="color:#ef4444">Los</td><td style="color:#ef4444">&#9679; Crvena</td></tr>
+    </table>
+    <h3>Kako se racuna CLS</h3>
+    <p>CLS = impact fraction &times; distance fraction. Impact fraction je procenat viewport-a koji je pogodjen, a distance fraction koliko se element pomerio. Rezultat se akumulira tokom cele posete stranici.</p>
+    <h3>Najcesci uzroci loseg CLS-a</h3>
+    <ul>
+      <li><strong>Slike bez width/height</strong> &mdash; #1 uzrok. Browser ne zna koliko prostora da rezervise dok se slika ucitava.</li>
+      <li><strong>Dinamicki oglasi</strong> &mdash; AdSense/display ads koji se ubacuju posle ucitavanja i guraju sadrzaj nadole.</li>
+      <li><strong>Web fontovi (FOUT)</strong> &mdash; fallback font zauzima drugaciju sirinu od web fonta, pa se tekst pomeri kad font stigne.</li>
+      <li><strong>Dinamicki sadrzaj</strong> &mdash; baneri, notification bar-ovi, cookie consent koji se ubacuju posle ucitavanja.</li>
+      <li><strong>Iframes bez dimenzija</strong> &mdash; YouTube embed, Google Maps bez width/height.</li>
+    </ul>
+    <pre><code>&lt;!-- LOSE — nema dimenzije, uzrokuje CLS --&gt;
+&lt;img src="hero.jpg" alt="Hero"&gt;
+
+&lt;!-- DOBRO — dimenzije rezervisu prostor --&gt;
+&lt;img src="hero.jpg" alt="Hero" width="1200" height="630"&gt;
+
+&lt;!-- NAJBOLJE — responsive sa rezervisanim prostorom --&gt;
+&lt;img src="hero.jpg" alt="Hero" width="1200" height="630"
+     style="max-width:100%; height:auto;"
+     srcset="hero-400.jpg 400w, hero-800.jpg 800w, hero-1200.jpg 1200w"
+     sizes="(max-width:600px) 400px, (max-width:1000px) 800px, 1200px"&gt;</code></pre>
+    <div class="callout callout-danger"><strong>Najcesca greska:</strong> Dodavanje <code>width</code> i <code>height</code> atributa u CSS umesto u HTML. Browser treba HTML atribute da rezervise prostor PRE nego sto se CSS ucita.</div>
+
+    <h2 id="cwv4">4. INP &mdash; Interaction to Next Paint</h2>
+    <p>INP meri odzivnost stranice na korisnicke interakcije &mdash; koliko vremena prodje od klika/tapa do vizuelne reakcije na ekranu. INP je zamenio FID u <strong>martu 2024</strong>.</p>
+    <table>
+      <tr><th>INP vrednost</th><th>Ocena</th><th>Boja</th></tr>
+      <tr><td>&le; 200ms</td><td style="color:#22c55e">Dobar</td><td style="color:#22c55e">&#9679; Zelena</td></tr>
+      <tr><td>200ms &ndash; 500ms</td><td style="color:#f97316">Treba poboljsati</td><td style="color:#f97316">&#9679; Narandzasta</td></tr>
+      <tr><td>&gt; 500ms</td><td style="color:#ef4444">Los</td><td style="color:#ef4444">&#9679; Crvena</td></tr>
+    </table>
+    <h3>INP vs FID — zasto je INP bolji</h3>
+    <table>
+      <tr><th>Aspekt</th><th>FID (zastareo)</th><th>INP (aktuelan)</th></tr>
+      <tr><td>Sta meri</td><td>Samo prvu interakciju</td><td>SVE interakcije tokom posete</td></tr>
+      <tr><td>Rezultat</td><td>Input delay (samo deo)</td><td>Ceo lifecycle: input + processing + paint</td></tr>
+      <tr><td>Pokriva</td><td>~1 interakciju</td><td>Desetine/stotine interakcija</td></tr>
+      <tr><td>Realniji</td><td>Ne &mdash; stranica moze biti spora posle prvog klika</td><td>Da &mdash; meri najgoru interakciju (P98)</td></tr>
+    </table>
+    <h3>Najcesci uzroci loseg INP-a</h3>
+    <ul>
+      <li><strong>Tezak JavaScript</strong> &mdash; event handleri koji rade previse posla (DOM manipulacija, kalkulacije)</li>
+      <li><strong>Long tasks</strong> &mdash; JS zadaci koji blokiraju main thread duze od 50ms</li>
+      <li><strong>Third-party skripte</strong> &mdash; analytics, chat widgets, ad skripte koje blokiraju main thread</li>
+      <li><strong>Veliki DOM</strong> &mdash; stranice sa 1500+ DOM elemenata usporavaju interakcije</li>
+      <li><strong>Layout thrashing</strong> &mdash; citanje i pisanje DOM-a u petlji (force reflow)</li>
+    </ul>
+    <pre><code>// LOSE — layout thrashing (force reflow u petlji)
+for (var i = 0; i &lt; elements.length; i++) {
+  var height = elements[i].offsetHeight;  // citanje → force reflow
+  elements[i].style.height = height + 10 + 'px';  // pisanje
+}
+
+// DOBRO — batch read pa batch write
+var heights = [];
+for (var i = 0; i &lt; elements.length; i++) {
+  heights.push(elements[i].offsetHeight);  // sva citanja
+}
+for (var i = 0; i &lt; elements.length; i++) {
+  elements[i].style.height = heights[i] + 10 + 'px';  // sva pisanja
+}</code></pre>
+
+    <h2 id="cwv5">5. Pragovi i ocenjivanje</h2>
+    <p>Google koristi <strong>75. percentil</strong> (P75) Field data za ocenjivanje. To znaci: CWV se ocenjuje na osnovu iskustva 75% vasih korisnika &mdash; ne proseka, ne najgoreg, vec P75.</p>
+    <table>
+      <tr><th>Metrika</th><th style="color:#22c55e">Dobar</th><th style="color:#f97316">Srednji</th><th style="color:#ef4444">Los</th><th>P75 znaci</th></tr>
+      <tr><td><strong>LCP</strong></td><td>&le; 2.5s</td><td>2.5 &ndash; 4s</td><td>&gt; 4s</td><td>75% korisnika vidi glavni sadrzaj za &lt;2.5s</td></tr>
+      <tr><td><strong>CLS</strong></td><td>&le; 0.1</td><td>0.1 &ndash; 0.25</td><td>&gt; 0.25</td><td>75% korisnika ima score &lt;0.1</td></tr>
+      <tr><td><strong>INP</strong></td><td>&le; 200ms</td><td>200 &ndash; 500ms</td><td>&gt; 500ms</td><td>75% interakcija je brze od 200ms</td></tr>
+    </table>
+    <div class="callout"><strong>Da bi stranica "prosla" CWV:</strong> SVE TRI metrike moraju biti u "Dobar" zoni na P75 nivou. Ako je LCP dobar ali CLS los — stranica NE prolazi.</div>
+
+    <h2 id="cwv6">6. Field data vs Lab data</h2>
+    <table>
+      <tr><th>Aspekt</th><th>Field data (CrUX)</th><th>Lab data (Lighthouse)</th></tr>
+      <tr><td><strong>Izvor</strong></td><td>Stvarni Chrome korisnici</td><td>Simulacija u kontrolisanom okruzenju</td></tr>
+      <tr><td><strong>Google koristi za rang</strong></td><td>DA &mdash; ovo je sto utice na SEO</td><td>NE &mdash; samo za debugging</td></tr>
+      <tr><td><strong>Gde videti</strong></td><td>Search Console, PageSpeed Insights (gornji deo)</td><td>Lighthouse, PageSpeed Insights (donji deo)</td></tr>
+      <tr><td><strong>Vreme</strong></td><td>Poslednja 28 dana (rolling)</td><td>Trenutni snapshot</td></tr>
+      <tr><td><strong>Metrike</strong></td><td>LCP, CLS, INP + TTFB, FCP</td><td>LCP, CLS, TBT (zamena za INP), FCP, SI, TTI</td></tr>
+      <tr><td><strong>Prednosti</strong></td><td>Realno iskustvo, razliciti uredjaji/konekcije</td><td>Reproducibilno, detaljan waterfall</td></tr>
+      <tr><td><strong>Mane</strong></td><td>Treba dovoljno saobracaja, kasni 28 dana</td><td>Ne odrazava stvarne uslove</td></tr>
+    </table>
+    <div class="callout callout-warn"><strong>Vazno:</strong> Lighthouse skor 100 NE garantuje dobre CWV u Field data. Vas Lighthouse test koristi brzu masinu i dobru konekciju, ali vasi korisnici su na mobilnom sa 4G. Uvek proverite OBA.</div>
+
+    <h2 id="cwv7">7. CWV i Google rangiranje</h2>
+    <p>Google je potvrdio da CWV uticu na rangiranje, ali sa nijansama:</p>
+    <ul>
+      <li><strong>CWV su "tiebreaker"</strong> &mdash; pri istoj relevantnosti sadrzaja, sajt sa boljim CWV dobija prednost</li>
+      <li><strong>Sadrzaj je i dalje #1</strong> &mdash; sajt sa odlicnim sadrzajem i losim CWV ce i dalje rangirati bolje od sajta sa dobrim CWV i losim sadrzajem</li>
+      <li><strong>Page-level, ne site-level</strong> &mdash; svaka stranica se ocenjuje zasebno</li>
+      <li><strong>Mobile i desktop odvojeno</strong> &mdash; mobilni CWV uticu na mobilno rangiranje, desktop na desktop</li>
+      <li><strong>24% manje napustanja</strong> &mdash; sajtovi koji prolaze CWV imaju znacajno bolje korisnicke metrike (Google studija)</li>
+    </ul>
+
+    <h2 id="cwv8">8. Optimizacija LCP</h2>
+    <ul>
+      <li><strong>Preload hero sliku:</strong> <code>&lt;link rel="preload" as="image" href="hero.webp"&gt;</code></li>
+      <li><strong>Koristite WebP/AVIF</strong> umesto PNG/JPEG &mdash; 25-50% manji fajlovi</li>
+      <li><strong>Eliminisajte render-blocking CSS:</strong> inline kriticni CSS, ostalo async</li>
+      <li><strong>font-display: swap</strong> &mdash; prikazite tekst odmah sa fallback fontom</li>
+      <li><strong>Server-side rendering</strong> &mdash; za SPA (React/Next.js) koristite SSR ili SSG</li>
+      <li><strong>CDN</strong> &mdash; servirajte sadrzaj sa najblizeg servera (<a href="./blog-perf-cdn.html">CDN vodic</a>)</li>
+      <li><strong>TTFB &lt; 600ms</strong> &mdash; optimizujte backend, koristite caching</li>
+      <li><strong>fetchpriority="high"</strong> na hero slici &mdash; prioritizujte ucitavanje</li>
+    </ul>
+    <pre><code>&lt;!-- Preload hero slika + fetchpriority --&gt;
+&lt;link rel="preload" as="image" href="hero.webp" fetchpriority="high"&gt;
+
+&lt;!-- Hero slika sa svim optimizacijama --&gt;
+&lt;img src="hero.webp" alt="Hero" width="1200" height="630"
+     fetchpriority="high"
+     decoding="async"
+     srcset="hero-400.webp 400w, hero-800.webp 800w, hero-1200.webp 1200w"
+     sizes="(max-width:600px) 100vw, (max-width:1000px) 80vw, 1200px"&gt;</code></pre>
+
+    <h2 id="cwv9">9. Optimizacija CLS</h2>
+    <ul>
+      <li><strong>width + height na svim slikama i video-ima</strong> &mdash; browser rezervise prostor pre ucitavanja</li>
+      <li><strong>aspect-ratio CSS</strong> &mdash; <code>aspect-ratio: 16/9</code> za responsive kontejnere</li>
+      <li><strong>Rezervisan prostor za oglase</strong> &mdash; <code>min-height</code> na ad slot-ovima</li>
+      <li><strong>font-display: optional</strong> &mdash; ako CLS od fontova je problem, <code>optional</code> ne menja layout</li>
+      <li><strong>Izbegavajte dinamicko ubacivanje sadrzaja iznad fold-a</strong></li>
+      <li><strong>CSS contain: layout</strong> &mdash; izoluje layout promene unutar elementa</li>
+      <li><strong>transform animacije</strong> umesto width/height/top/left &mdash; ne uzrokuju layout shift</li>
+    </ul>
+    <pre><code>/* Rezervisan prostor za reklamu */
+.ad-slot {
+  min-height: 250px;
+  background: #f0f0f0;
+  contain: layout;
+}
+
+/* Aspect ratio za video embed */
+.video-container {
+  aspect-ratio: 16 / 9;
+  width: 100%;
+}
+
+/* Font koji ne uzrokuje CLS */
+@font-face {
+  font-family: 'Inter';
+  src: url('inter.woff2') format('woff2');
+  font-display: swap; /* ili 'optional' za nula CLS */
+}</code></pre>
+
+    <h2 id="cwv10">10. Optimizacija INP</h2>
+    <ul>
+      <li><strong>Izbegavajte long tasks</strong> &mdash; razbijte JS zadatke na delove &lt;50ms sa <code>requestIdleCallback</code> ili <code>scheduler.yield()</code></li>
+      <li><strong>Debounce/throttle event handlere</strong> &mdash; scroll, resize, input handleri ne trebaju da se fire svakih 16ms</li>
+      <li><strong>Web Workers</strong> &mdash; prebacite teske kalkulacije van main thread-a</li>
+      <li><strong>Smanjite DOM velicinu</strong> &mdash; ispod 1500 elemenata, idealno &lt;800</li>
+      <li><strong>Lazy load third-party skripte</strong> &mdash; analytics, chat, ads ucitajte posle interakcije</li>
+      <li><strong>Koristite CSS za animacije</strong> umesto JS &mdash; CSS animacije ne blokiraju main thread</li>
+      <li><strong>requestAnimationFrame</strong> za vizuelne update-e umesto setTimeout</li>
+    </ul>
+    <pre><code>// Razbijanje long task-a sa scheduler.yield()
+async function processLargeList(items) {
+  for (let i = 0; i &lt; items.length; i++) {
+    processItem(items[i]);
+    // Yield main thread svakih 10 stavki
+    if (i % 10 === 0 &amp;&amp; navigator.scheduling) {
+      await navigator.scheduling.yield();
+    }
+  }
+}
+
+// Debounce za input handler
+function debounce(fn, ms) {
+  let timer;
+  return function(...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() =&gt; fn.apply(this, args), ms);
+  };
+}
+searchInput.addEventListener('input', debounce(handleSearch, 300));</code></pre>
+
+    <h2 id="cwv11">11. Alati za merenje</h2>
+    <ul>
+      <li><strong><a href="./index.html">Web Security Scanner</a></strong> &mdash; proverava TTFB, velicinu stranice, kompresiju, cache, HTTP/2 i lazy loading.</li>
+      <li><strong><a href="https://pagespeed.web.dev/" target="_blank">PageSpeed Insights</a></strong> &mdash; prikazuje i Field data (CrUX) i Lab data (Lighthouse). Najvazniji alat za CWV.</li>
+      <li><strong>Google Search Console</strong> &mdash; Core Web Vitals izvestaj za ceo sajt. Prikazuje koliko URL-ova prolazi/ne prolazi, grupisano po problemu.</li>
+      <li><strong>Chrome DevTools</strong> &mdash; Performance tab za detaljnu analizu. Prikazuje Long Tasks, Layout Shifts, LCP element.</li>
+      <li><strong>web-vitals.js</strong> &mdash; JavaScript biblioteka za merenje CWV u produkciji. Salje podatke u vasu analitiku.</li>
+      <li><strong><a href="https://www.webpagetest.org/" target="_blank">WebPageTest</a></strong> &mdash; napredniji testovi sa razlicitih lokacija, filmstrip, waterfall.</li>
+      <li><strong>Chrome UX Report (CrUX)</strong> &mdash; besplatan BigQuery dataset sa Field data za milione sajtova.</li>
+    </ul>
+    <pre><code>&lt;!-- Merenje CWV u produkciji sa web-vitals.js --&gt;
+&lt;script type="module"&gt;
+  import {onLCP, onCLS, onINP} from 'https://unpkg.com/web-vitals@4?module';
+  function sendToAnalytics(metric) {
+    console.log(metric.name, metric.value, metric.rating);
+    // Posaljite u Google Analytics, custom endpoint, itd.
+  }
+  onLCP(sendToAnalytics);
+  onCLS(sendToAnalytics);
+  onINP(sendToAnalytics);
+&lt;/script&gt;</code></pre>
+
+    <h2 id="cwv12">12. Reference i resursi</h2>
+    <ul>
+      <li><a href="https://web.dev/articles/vitals" target="_blank">web.dev &mdash; Web Vitals</a></li>
+      <li><a href="https://web.dev/articles/lcp" target="_blank">web.dev &mdash; LCP</a></li>
+      <li><a href="https://web.dev/articles/cls" target="_blank">web.dev &mdash; CLS</a></li>
+      <li><a href="https://web.dev/articles/inp" target="_blank">web.dev &mdash; INP</a></li>
+      <li><a href="https://developers.google.com/search/docs/appearance/page-experience" target="_blank">Google &mdash; Page Experience</a></li>
+      <li><a href="https://pagespeed.web.dev/" target="_blank">PageSpeed Insights</a></li>
+      <li><a href="https://github.com/GoogleChrome/web-vitals" target="_blank">web-vitals.js &mdash; GitHub</a></li>
+      <li><a href="https://developer.chrome.com/docs/crux/" target="_blank">Chrome UX Report (CrUX)</a></li>
+      <li><a href="https://web.dev/articles/optimize-lcp" target="_blank">web.dev &mdash; Optimize LCP</a></li>
+      <li><a href="https://web.dev/articles/optimize-cls" target="_blank">web.dev &mdash; Optimize CLS</a></li>
+      <li><a href="https://web.dev/articles/optimize-inp" target="_blank">web.dev &mdash; Optimize INP</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Proverite performanse vaseg sajta &rarr;</a>
+  </div>
+
+  <!-- ==================== ENGLISH ==================== -->
+  <div class="en">
+    <h1>Core Web Vitals &mdash; LCP, CLS, INP Guide</h1>
+    <p class="subtitle">Complete guide to Google's 3 metrics that directly impact rankings and user experience</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">3</div><div class="stat-label">Metrics: LCP, CLS, INP</div></div>
+      <div class="stat-card"><div class="stat-num">2021</div><div class="stat-label">CWV became ranking factor</div></div>
+      <div class="stat-card"><div class="stat-num">24%</div><div class="stat-label">Less abandonment with good CWV</div></div>
+      <div class="stat-card"><div class="stat-num">2024</div><div class="stat-label">INP replaced FID (March)</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#cwv1e">What are Core Web Vitals</a></li>
+        <li><a href="#cwv2e">LCP — Largest Contentful Paint</a></li>
+        <li><a href="#cwv3e">CLS — Cumulative Layout Shift</a></li>
+        <li><a href="#cwv4e">INP — Interaction to Next Paint</a></li>
+        <li><a href="#cwv5e">Thresholds and scoring</a></li>
+        <li><a href="#cwv6e">Field data vs Lab data</a></li>
+        <li><a href="#cwv7e">CWV and Google ranking</a></li>
+        <li><a href="#cwv8e">Optimizing LCP</a></li>
+        <li><a href="#cwv9e">Optimizing CLS</a></li>
+        <li><a href="#cwv10e">Optimizing INP</a></li>
+        <li><a href="#cwv11e">Measurement tools</a></li>
+        <li><a href="#cwv12e">References</a></li>
+      </ol>
+    </div>
+
+    <h2 id="cwv1e">1. What are Core Web Vitals</h2>
+    <p>Core Web Vitals (CWV) are <strong>3 metrics</strong> defined by Google in May 2020 to measure user experience: <strong>LCP</strong> (loading speed), <strong>CLS</strong> (visual stability), <strong>INP</strong> (responsiveness). Since <strong>June 2021</strong>, they're an official ranking factor.</p>
+    <div class="callout"><strong>History:</strong> Originally CWV were LCP + CLS + FID. In <strong>March 2024</strong>, Google replaced FID with INP because INP measures ALL interactions, not just the first one.</div>
+
+    <h2 id="cwv2e">2. LCP — Largest Contentful Paint</h2>
+    <p>LCP measures how long it takes for the <strong>largest visible element</strong> to load: hero image, large text block, video poster.</p>
+    <table>
+      <tr><th>LCP value</th><th>Rating</th></tr>
+      <tr><td>&le; 2.5s</td><td style="color:#22c55e">Good</td></tr>
+      <tr><td>2.5s &ndash; 4.0s</td><td style="color:#f97316">Needs improvement</td></tr>
+      <tr><td>&gt; 4.0s</td><td style="color:#ef4444">Poor</td></tr>
+    </table>
+    <p><strong>Common causes:</strong> slow server (TTFB), render-blocking CSS/JS, large images, client-side rendering, web fonts (FOIT).</p>
+    <div class="callout callout-warn"><strong>Pro tip:</strong> Use <code>&lt;link rel="preload"&gt;</code> for hero image and <code>fetchpriority="high"</code> on the LCP element.</div>
+
+    <h2 id="cwv3e">3. CLS — Cumulative Layout Shift</h2>
+    <p>CLS measures how much <strong>elements visually shift</strong> during page load. Every unexpected movement frustrates users.</p>
+    <table>
+      <tr><th>CLS value</th><th>Rating</th></tr>
+      <tr><td>&le; 0.1</td><td style="color:#22c55e">Good</td></tr>
+      <tr><td>0.1 &ndash; 0.25</td><td style="color:#f97316">Needs improvement</td></tr>
+      <tr><td>&gt; 0.25</td><td style="color:#ef4444">Poor</td></tr>
+    </table>
+    <p><strong>Common causes:</strong> images without width/height (#1), dynamic ads, web fonts (FOUT), dynamically injected content, iframes without dimensions.</p>
+    <pre><code>&lt;!-- BAD — no dimensions, causes CLS --&gt;
+&lt;img src="hero.jpg" alt="Hero"&gt;
+
+&lt;!-- GOOD — dimensions reserve space --&gt;
+&lt;img src="hero.jpg" alt="Hero" width="1200" height="630"&gt;</code></pre>
+    <div class="callout callout-danger"><strong>Common mistake:</strong> Adding width/height in CSS instead of HTML. Browser needs HTML attributes to reserve space BEFORE CSS loads.</div>
+
+    <h2 id="cwv4e">4. INP — Interaction to Next Paint</h2>
+    <p>INP measures responsiveness to user interactions. Replaced FID in <strong>March 2024</strong> because INP measures ALL interactions, not just the first.</p>
+    <table>
+      <tr><th>INP value</th><th>Rating</th></tr>
+      <tr><td>&le; 200ms</td><td style="color:#22c55e">Good</td></tr>
+      <tr><td>200ms &ndash; 500ms</td><td style="color:#f97316">Needs improvement</td></tr>
+      <tr><td>&gt; 500ms</td><td style="color:#ef4444">Poor</td></tr>
+    </table>
+    <p><strong>Common causes:</strong> heavy JavaScript, long tasks (&gt;50ms), third-party scripts, large DOM (&gt;1500 elements), layout thrashing.</p>
+
+    <h2 id="cwv5e">5. Thresholds and scoring</h2>
+    <p>Google uses <strong>75th percentile</strong> (P75) of Field data. All THREE metrics must be "Good" for a page to pass.</p>
+
+    <h2 id="cwv6e">6. Field data vs Lab data</h2>
+    <table>
+      <tr><th>Aspect</th><th>Field (CrUX)</th><th>Lab (Lighthouse)</th></tr>
+      <tr><td>Source</td><td>Real Chrome users</td><td>Simulated environment</td></tr>
+      <tr><td>Used for ranking</td><td>YES</td><td>NO — debugging only</td></tr>
+      <tr><td>Where to see</td><td>Search Console, PSI (top)</td><td>Lighthouse, PSI (bottom)</td></tr>
+      <tr><td>Time</td><td>Last 28 days (rolling)</td><td>Current snapshot</td></tr>
+    </table>
+    <div class="callout callout-warn"><strong>Important:</strong> Lighthouse score 100 does NOT guarantee good Field CWV. Your test uses a fast machine; users are on mobile with 4G.</div>
+
+    <h2 id="cwv7e">7. CWV and Google ranking</h2>
+    <ul>
+      <li>CWV are a <strong>"tiebreaker"</strong> — at equal content relevance, better CWV wins</li>
+      <li>Content is still #1 — great content with poor CWV beats poor content with great CWV</li>
+      <li>Page-level, not site-level evaluation</li>
+      <li>Mobile and desktop measured separately</li>
+    </ul>
+
+    <h2 id="cwv8e">8. Optimizing LCP</h2>
+    <ul>
+      <li>Preload hero image: <code>&lt;link rel="preload" as="image" href="hero.webp"&gt;</code></li>
+      <li>Use WebP/AVIF (25-50% smaller)</li>
+      <li>Eliminate render-blocking CSS: inline critical CSS</li>
+      <li><code>font-display: swap</code> for web fonts</li>
+      <li>SSR/SSG for SPAs, CDN, TTFB &lt; 600ms</li>
+      <li><code>fetchpriority="high"</code> on hero image</li>
+    </ul>
+
+    <h2 id="cwv9e">9. Optimizing CLS</h2>
+    <ul>
+      <li>width + height on ALL images and videos</li>
+      <li><code>aspect-ratio</code> CSS for responsive containers</li>
+      <li><code>min-height</code> on ad slots</li>
+      <li><code>font-display: optional</code> if font CLS is a problem</li>
+      <li><code>contain: layout</code> to isolate layout changes</li>
+      <li>Use <code>transform</code> animations instead of width/height/top/left</li>
+    </ul>
+
+    <h2 id="cwv10e">10. Optimizing INP</h2>
+    <ul>
+      <li>Break long tasks with <code>scheduler.yield()</code> or <code>requestIdleCallback</code></li>
+      <li>Debounce/throttle event handlers</li>
+      <li>Web Workers for heavy computation</li>
+      <li>Keep DOM &lt; 1500 elements</li>
+      <li>Lazy load third-party scripts</li>
+      <li>CSS animations instead of JS</li>
+    </ul>
+
+    <h2 id="cwv11e">11. Measurement tools</h2>
+    <ul>
+      <li><strong><a href="./index.html">Web Security Scanner</a></strong> &mdash; checks TTFB, page size, compression, cache, HTTP/2</li>
+      <li><strong><a href="https://pagespeed.web.dev/" target="_blank">PageSpeed Insights</a></strong> &mdash; Field + Lab data, most important CWV tool</li>
+      <li><strong>Google Search Console</strong> &mdash; CWV report for entire site</li>
+      <li><strong>Chrome DevTools</strong> &mdash; Performance tab for detailed analysis</li>
+      <li><strong>web-vitals.js</strong> &mdash; measure CWV in production</li>
+      <li><strong><a href="https://www.webpagetest.org/" target="_blank">WebPageTest</a></strong> &mdash; advanced multi-location testing</li>
+    </ul>
+
+    <h2 id="cwv12e">12. References and resources</h2>
+    <ul>
+      <li><a href="https://web.dev/articles/vitals" target="_blank">web.dev &mdash; Web Vitals</a></li>
+      <li><a href="https://web.dev/articles/lcp" target="_blank">web.dev &mdash; LCP</a></li>
+      <li><a href="https://web.dev/articles/cls" target="_blank">web.dev &mdash; CLS</a></li>
+      <li><a href="https://web.dev/articles/inp" target="_blank">web.dev &mdash; INP</a></li>
+      <li><a href="https://developers.google.com/search/docs/appearance/page-experience" target="_blank">Google &mdash; Page Experience</a></li>
+      <li><a href="https://github.com/GoogleChrome/web-vitals" target="_blank">web-vitals.js</a></li>
+      <li><a href="https://developer.chrome.com/docs/crux/" target="_blank">CrUX</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Check your site's performance &rarr;</a>
+  </div>
+
+  <div class="nav-links">
+    <a href="./blog-performance.html"><span class="sr">Performanse vodic</span><span class="en">Performance Guide</span></a>
+    <a href="./blog-perf-images.html"><span class="sr">Optimizacija slika</span><span class="en">Image Optimization</span></a>
+    <a href="./blog-perf-cache.html"><span class="sr">HTTP Caching</span><span class="en">HTTP Caching</span></a>
+    <a href="./blog-perf-compression.html"><span class="sr">Gzip i Brotli</span><span class="en">Gzip &amp; Brotli</span></a>
+    <a href="./blog-perf-cdn.html"><span class="sr">CDN</span><span class="en">CDN</span></a>
+    <a href="./blog-perf-lazy.html"><span class="sr">Lazy Loading</span><span class="en">Lazy Loading</span></a>
+  </div>
+
+  </main>
+</div>
+<script src="./blog-common.js" defer></script>
+</body>
+</html>

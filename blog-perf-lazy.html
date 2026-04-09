@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lazy Loading — Odlozeno ucitavanje resursa | Web Security Scanner</title>
+  <meta name="description" content="Kompletni vodic za lazy loading: native loading=lazy, Intersection Observer, dynamic import, code splitting, fetchpriority, above/below fold pravilo.">
+  <meta name="keywords" content="lazy loading, loading=lazy, Intersection Observer, performanse, dynamic import, code splitting, fetchpriority">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <link rel="canonical" href="https://security-scanner-ruddy.vercel.app/blog-perf-lazy.html">
+  <link rel="alternate" hreflang="sr" href="https://security-scanner-ruddy.vercel.app/blog-perf-lazy.html">
+  <link rel="alternate" hreflang="en" href="https://security-scanner-ruddy.vercel.app/blog-perf-lazy.html">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Lazy Loading — Odlozeno ucitavanje resursa za brzi sajt">
+  <meta property="og:description" content="Native lazy loading, Intersection Observer, code splitting, fetchpriority i above/below fold pravilo.">
+  <meta property="og:url" content="https://security-scanner-ruddy.vercel.app/blog-perf-lazy.html">
+  <meta property="og:site_name" content="Web Security Scanner">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Lazy Loading — Odlozeno ucitavanje resursa za brzi sajt">
+  <meta name="twitter:description" content="Native lazy loading, Intersection Observer, code splitting, fetchpriority i above/below fold pravilo.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Lazy Loading — Odlozeno ucitavanje resursa",
+    "author": {"@type": "Person", "name": "Toske", "url": "https://toske-programer.web.app"},
+    "publisher": {"@type": "Organization", "name": "Web Security Scanner"},
+    "datePublished": "2026-04-09",
+    "dateModified": "2026-04-09",
+    "description": "Kompletni vodic za lazy loading: native, Intersection Observer, dynamic import, code splitting.",
+    "mainEntityOfPage": {"@type": "WebPage", "@id": "https://security-scanner-ruddy.vercel.app/blog-perf-lazy.html"}
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Sta je lazy loading?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Lazy loading je tehnika koja odlaze ucitavanje resursa (slika, iframe-ova, JavaScript modula) dok nisu potrebni. Slike se ucitavaju tek kad korisnik skroluje do njih, umesto svih odjednom. Ovo smanjuje inicijalni page load za 40-60%."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Da li lazy loading usporava sajt?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ne — lazy loading UBRZAVA sajt jer smanjuje koliko podataka se ucitava na pocetku. Jedini slucaj kad usporava je ako stavite loading='lazy' na hero sliku (above-the-fold) — to kasni LCP jer browser ceka da korisnik skroluje blizu slike pre ucitavanja."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Koje slike NE treba lazy loadovati?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "NE lazy loadujte: 1) Hero/banner sliku (LCP element), 2) Logo u headeru, 3) Bilo koju sliku vidljivu bez skrolovanja (above-the-fold). Ove slike trebaju loading='eager' (default) i opciono fetchpriority='high' za hero sliku."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Sta je fetchpriority atribut?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "fetchpriority je HTML atribut koji govori browseru koliko je vazan resurs. fetchpriority='high' na hero slici ubrzava LCP jer browser prioritizuje njeno ucitavanje. fetchpriority='low' na manje vaznim slikama oslobadja bandwidth za kriticne resurse."
+        }
+      }
+    ]
+  }
+  </script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+</head>
+<body>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr"><div class="timeline-title">Sadrzaj</div><ol id="timeline-sr"></ol></div>
+    <div class="en"><div class="timeline-title">Contents</div><ol id="timeline-en"></ol></div>
+  </aside>
+  <main class="blog-content">
+
+  <!-- ==================== SRPSKI ==================== -->
+  <div class="sr">
+    <h1>Lazy Loading &mdash; Odlozeno ucitavanje resursa</h1>
+    <p class="subtitle">Kako smanjiti inicijalni page load za 40-60% ucitavanjem resursa tek kad su potrebni</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">40-60%</div><div class="stat-label">Smanjenje inicijalnog load-a</div></div>
+      <div class="stat-card"><div class="stat-num">96%</div><div class="stat-label">Browser podrska za loading=lazy</div></div>
+      <div class="stat-card"><div class="stat-num">0</div><div class="stat-label">Linija JS-a potrebno (native)</div></div>
+      <div class="stat-card"><div class="stat-num">LCP</div><div class="stat-label">NE lazy loadujte hero sliku!</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Sadrzaj</h3>
+      <ol>
+        <li><a href="#ll1">Sta je lazy loading</a></li>
+        <li><a href="#ll2">Native lazy loading: loading="lazy"</a></li>
+        <li><a href="#ll3">Above-the-fold vs Below-the-fold</a></li>
+        <li><a href="#ll4">fetchpriority atribut</a></li>
+        <li><a href="#ll5">Intersection Observer API</a></li>
+        <li><a href="#ll6">Lazy loading JavaScript: dynamic import</a></li>
+        <li><a href="#ll7">Code splitting u React/Next.js/Vue</a></li>
+        <li><a href="#ll8">Lazy loading iframe-ova</a></li>
+        <li><a href="#ll9">Najcesce greske</a></li>
+        <li><a href="#ll10">Reference i resursi</a></li>
+      </ol>
+    </div>
+
+    <h2 id="ll1">1. Sta je lazy loading i zasto je bitan</h2>
+    <p>Lazy loading je tehnika koja <strong>odlaze ucitavanje resursa dok nisu vidljivi</strong> na ekranu. Umesto da browser ucita svih 50 slika na stranici odjednom, ucitava samo onih 3-4 vidljivih, a ostale tek kad korisnik skroluje do njih.</p>
+    <ul>
+      <li><strong>Brzi inicijalni load:</strong> Manje podataka na pocetku = stranica se prikazuje brze</li>
+      <li><strong>Usteda bandwidth-a:</strong> Korisnik koji pogleda samo vrh stranice ne ucitava slike na dnu</li>
+      <li><strong>Bolji LCP:</strong> Browser prioritizuje kriticne resurse umesto da ucitava sve paralelno</li>
+      <li><strong>Manji Data Transfer:</strong> Mobilni korisnici na ogranicenom planu trse manje podataka</li>
+    </ul>
+    <div class="callout"><strong>Statistika:</strong> Lazy loading moze smanjiti inicijalni page load za <strong>40-60%</strong> na stranicama sa mnogo slika (blog, e-commerce, galerije). Na nasem sajtu, 15 blog stranica u footeru se ne ucitavaju dok korisnik ne skroluje.</div>
+
+    <h2 id="ll2">2. Native lazy loading: loading="lazy"</h2>
+    <p>Najjednostavniji nacin &mdash; jedan HTML atribut, nula JavaScript-a:</p>
+    <pre><code>&lt;!-- Lazy loading za slike --&gt;
+&lt;img src="photo.webp" alt="Opis" width="800" height="450" loading="lazy"&gt;
+
+&lt;!-- Lazy loading za iframe --&gt;
+&lt;iframe src="https://youtube.com/embed/abc123" loading="lazy"
+        width="560" height="315"&gt;&lt;/iframe&gt;
+
+&lt;!-- Eager loading (default) — za kriticne slike --&gt;
+&lt;img src="hero.webp" alt="Hero" width="1200" height="630" loading="eager"&gt;</code></pre>
+    <h3>Kako browser odlucuje kad da ucita</h3>
+    <p>Browser koristi heuristiku baziranu na:</p>
+    <ul>
+      <li><strong>Udaljenost od viewport-a:</strong> Slika se pocinje ucitavati kad je ~1250px od vidljivog dela (zavisi od brzine konekcije)</li>
+      <li><strong>Brzina konekcije:</strong> Na sporijim konekcijama, browser pocinje ucitavanje ranije (veci threshold)</li>
+      <li><strong>Data Saver:</strong> Ako je ukljucen, threshold je jos veci</li>
+    </ul>
+    <table>
+      <tr><th>Vrednost</th><th>Ponasanje</th><th>Kada koristiti</th></tr>
+      <tr><td><code>loading="lazy"</code></td><td>Ucitava tek kad je blizu viewport-a</td><td>Slike/iframe ispod fold-a</td></tr>
+      <tr><td><code>loading="eager"</code></td><td>Ucitava odmah (default)</td><td>Hero slika, logo, kriticne slike</td></tr>
+      <tr><td>(bez atributa)</td><td>Isto kao eager</td><td>—</td></tr>
+    </table>
+    <div class="callout callout-warn"><strong>Browser podrska:</strong> <code>loading="lazy"</code> podrzava <strong>96%+</strong> modernih browsera (Chrome 77+, Firefox 75+, Safari 15.4+, Edge 79+). Za preostalih ~4%, slika se ucitava normalno (graceful degradation).</div>
+
+    <h2 id="ll3">3. Above-the-fold vs Below-the-fold pravilo</h2>
+    <p><strong>Above-the-fold</strong> = deo stranice vidljiv bez skrolovanja. <strong>Below-the-fold</strong> = sve ispod toga.</p>
+    <table>
+      <tr><th>Pozicija</th><th>loading</th><th>fetchpriority</th><th>Primer</th></tr>
+      <tr><td><strong>Hero slika (LCP)</strong></td><td><code>eager</code> (ili bez atributa)</td><td><code>high</code></td><td>Banner, glavna slika</td></tr>
+      <tr><td><strong>Logo</strong></td><td><code>eager</code></td><td>—</td><td>Header logo</td></tr>
+      <tr><td><strong>Above-fold slike</strong></td><td><code>eager</code></td><td>—</td><td>Prvih 2-3 slike</td></tr>
+      <tr><td><strong>Below-fold slike</strong></td><td><code>lazy</code></td><td>—</td><td>Clanak slike, galerija</td></tr>
+      <tr><td><strong>Footer slike</strong></td><td><code>lazy</code></td><td><code>low</code></td><td>Partneri, badges</td></tr>
+      <tr><td><strong>YouTube embed</strong></td><td><code>lazy</code></td><td>—</td><td>Video u clanku</td></tr>
+    </table>
+    <pre><code>&lt;!-- Hero — NIKAD lazy, visok prioritet --&gt;
+&lt;img src="hero.webp" alt="Hero" width="1200" height="630"
+     fetchpriority="high" decoding="async"&gt;
+
+&lt;!-- Clanak slike — lazy --&gt;
+&lt;img src="diagram.webp" alt="Dijagram" width="800" height="450" loading="lazy"&gt;
+&lt;img src="screenshot.webp" alt="Screenshot" width="800" height="450" loading="lazy"&gt;
+&lt;img src="chart.webp" alt="Grafikon" width="800" height="450" loading="lazy"&gt;</code></pre>
+    <div class="callout callout-danger"><strong>#1 greska:</strong> <code>loading="lazy"</code> na hero slici usporava LCP jer browser ceka da korisnik skroluje blizu pre ucitavanja. Hero slika mora biti eager + fetchpriority="high".</div>
+
+    <h2 id="ll4">4. fetchpriority atribut</h2>
+    <p><code>fetchpriority</code> govori browseru koliko je vazan resurs u odnosu na ostale. Radi sa <code>&lt;img&gt;</code>, <code>&lt;link&gt;</code>, <code>&lt;script&gt;</code> i <code>fetch()</code>.</p>
+    <table>
+      <tr><th>Vrednost</th><th>Znacenje</th><th>Kada</th></tr>
+      <tr><td><code>high</code></td><td>Prioritizuj ucitavanje</td><td>Hero/LCP slika, kriticni CSS</td></tr>
+      <tr><td><code>low</code></td><td>Smanji prioritet</td><td>Manje vazne slike, prefetch</td></tr>
+      <tr><td><code>auto</code></td><td>Browser odlucuje (default)</td><td>Sve ostalo</td></tr>
+    </table>
+    <pre><code>&lt;!-- Kombinacija: preload + fetchpriority za najbrzi LCP --&gt;
+&lt;link rel="preload" as="image" href="hero.webp" fetchpriority="high"&gt;
+
+&lt;!-- Hero slika --&gt;
+&lt;img src="hero.webp" alt="Hero" width="1200" height="630"
+     fetchpriority="high" decoding="async"&gt;
+
+&lt;!-- Manje vazna slika — smanji prioritet --&gt;
+&lt;img src="decoration.webp" alt="Dekoracija" width="200" height="200"
+     fetchpriority="low" loading="lazy"&gt;</code></pre>
+
+    <h2 id="ll5">5. Intersection Observer API</h2>
+    <p>Za custom lazy loading gde native <code>loading="lazy"</code> nije dovoljan (animacije pri skrolovanju, beskonacni scroll, custom threshold):</p>
+    <pre><code>// Custom lazy loading sa Intersection Observer
+const observer = new IntersectionObserver((entries) =&gt; {
+  entries.forEach(entry =&gt; {
+    if (entry.isIntersecting) {
+      const img = entry.target;
+      img.src = img.dataset.src;       // Ucitaj pravu sliku
+      img.classList.add('loaded');      // Dodaj fade-in animaciju
+      observer.unobserve(img);         // Prestani da posmatras
+    }
+  });
+}, {
+  rootMargin: '200px',  // Pocni 200px pre viewport-a
+  threshold: 0.01       // Triggeruj kad je 1% vidljiv
+});
+
+// Observiraj sve slike sa data-src atributom
+document.querySelectorAll('img[data-src]').forEach(img =&gt; {
+  observer.observe(img);
+});
+
+/* HTML: */
+// &lt;img data-src="photo.webp" alt="Opis" width="800" height="450"
+//      src="placeholder.svg" class="lazy"&gt;</code></pre>
+    <div class="callout"><strong>Kad koristiti Intersection Observer umesto native:</strong> Animacije pri pojavljivanju (fade-in, slide-up), beskonacni scroll (ucitavanje novih stavki), custom threshold, placeholder sa blur efektom.</div>
+
+    <h2 id="ll6">6. Lazy loading JavaScript: dynamic import()</h2>
+    <p>Ne ucitavajte sav JavaScript odjednom. <code>import()</code> ucitava module tek kad su potrebni:</p>
+    <pre><code>// UMESTO: import Chart from 'chart.js';  (ucitava odmah, 200KB)
+
+// KORISTITE: ucitaj tek kad korisnik klikne na tab sa grafikonima
+document.getElementById('charts-tab').addEventListener('click', async () =&gt; {
+  const { Chart } = await import('chart.js');  // Ucitava tek sada
+  const chart = new Chart(canvas, config);
+});
+
+// Ucitaj tezak modul tek kad je potreban
+async function openEditor() {
+  const { Editor } = await import('./heavy-editor.js');  // 500KB
+  return new Editor('#container');
+}
+
+// Prefetch u idle vreme (ucitaj unapred ali ne izvrsi)
+if ('requestIdleCallback' in window) {
+  requestIdleCallback(() =&gt; {
+    import('./analytics.js');  // Pripremi za kasniju upotrebu
+  });
+}</code></pre>
+
+    <h2 id="ll7">7. Code splitting u React/Next.js/Vue</h2>
+    <h3>React (React.lazy + Suspense)</h3>
+    <pre><code>import React, { lazy, Suspense } from 'react';
+
+// Ucitaj komponentu tek kad je potrebna
+const HeavyChart = lazy(() =&gt; import('./HeavyChart'));
+const AdminPanel = lazy(() =&gt; import('./AdminPanel'));
+
+function App() {
+  return (
+    &lt;Suspense fallback={&lt;div&gt;Ucitavanje...&lt;/div&gt;}&gt;
+      {showChart &amp;&amp; &lt;HeavyChart /&gt;}
+      {isAdmin &amp;&amp; &lt;AdminPanel /&gt;}
+    &lt;/Suspense&gt;
+  );
+}</code></pre>
+    <h3>Next.js (next/dynamic)</h3>
+    <pre><code>import dynamic from 'next/dynamic';
+
+// SSR: false — ucitaj samo na klijentu
+const Map = dynamic(() =&gt; import('./Map'), {
+  ssr: false,
+  loading: () =&gt; &lt;p&gt;Ucitavanje mape...&lt;/p&gt;
+});
+
+// Automatski code-split za svaku stranicu (pages/ direktorijum)</code></pre>
+    <h3>Vue (defineAsyncComponent)</h3>
+    <pre><code>import { defineAsyncComponent } from 'vue';
+
+const AsyncChart = defineAsyncComponent(() =&gt;
+  import('./components/HeavyChart.vue')
+);
+
+// Sa loading i error komponentama
+const AsyncEditor = defineAsyncComponent({
+  loader: () =&gt; import('./Editor.vue'),
+  loadingComponent: LoadingSpinner,
+  errorComponent: ErrorDisplay,
+  delay: 200,    // Prikazi loading posle 200ms
+  timeout: 10000 // Timeout posle 10s
+});</code></pre>
+    <div class="callout callout-warn"><strong>Pravilo:</strong> Lazy loadujte sve sto korisnik ne vidi odmah: modalne dijaloge, tabove koji nisu aktivni, admin panele, teske biblioteke (charting, editore, mape). Inicijalni bundle treba biti &lt;170KB kompresovan za 3s load na 4G.</div>
+
+    <h2 id="ll8">8. Lazy loading iframe-ova</h2>
+    <pre><code>&lt;!-- YouTube embed — lazy --&gt;
+&lt;iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ"
+        width="560" height="315" loading="lazy"
+        title="Video naslov"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope"
+        allowfullscreen&gt;&lt;/iframe&gt;
+
+&lt;!-- Google Maps — lazy --&gt;
+&lt;iframe src="https://www.google.com/maps/embed?pb=..."
+        width="600" height="450" loading="lazy"
+        style="border:0" allowfullscreen
+        referrerpolicy="no-referrer-when-downgrade"&gt;&lt;/iframe&gt;</code></pre>
+    <p>YouTube embed ucitava ~800KB resursa. Sa <code>loading="lazy"</code>, to se ucitava tek kad korisnik skroluje do videa. Za jos bolju optimizaciju, koristite <strong>lite-youtube-embed</strong> &mdash; prikazuje thumbnail, ucitava iframe tek na klik (usteda: ~800KB &rarr; ~5KB).</p>
+
+    <h2 id="ll9">9. Najcesce greske</h2>
+    <ul>
+      <li><strong>Lazy loading hero/LCP slike</strong> &mdash; #1 greska. Usporava LCP. Hero mora biti eager + fetchpriority="high".</li>
+      <li><strong>Lazy loading above-the-fold slika</strong> &mdash; Korisnik vidi prazno mesto dok se slika ucitava. Lazy samo za below-fold.</li>
+      <li><strong>Bez width/height na lazy slikama</strong> &mdash; Browser ne zna koliko prostora da rezervise = CLS kad se slika ucita.</li>
+      <li><strong>Previse aggressive threshold</strong> &mdash; Intersection Observer sa rootMargin: 0 ucitava sliku tek kad je vidljiva = korisnik vidi placeholder.</li>
+      <li><strong>Lazy loading svih slika</strong> &mdash; Prvih 2-3 slike (above-fold) trebaju biti eager. Samo below-fold je lazy.</li>
+      <li><strong>Lazy loading CSS/fontova</strong> &mdash; Kriticni CSS i fontovi moraju se ucitati odmah. Lazy samo za nekriticne resurse.</li>
+      <li><strong>JavaScript lazy loading bez code splitting</strong> &mdash; dynamic import() bez Webpack/Vite ne deli bundle. Koristite build tool.</li>
+      <li><strong>Nedostaje fallback za stare browsere</strong> &mdash; Native <code>loading="lazy"</code> ima graceful degradation (ucitava normalno). Za Intersection Observer, dodajte polyfill ili fallback.</li>
+    </ul>
+
+    <h2 id="ll10">10. Reference i resursi</h2>
+    <ul>
+      <li><a href="https://web.dev/articles/browser-level-image-lazy-loading" target="_blank">web.dev &mdash; Browser-Level Lazy Loading</a></li>
+      <li><a href="https://web.dev/articles/lazy-loading" target="_blank">web.dev &mdash; Lazy Loading Images and Video</a></li>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/img#loading" target="_blank">MDN &mdash; loading attribute</a></li>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API" target="_blank">MDN &mdash; Intersection Observer API</a></li>
+      <li><a href="https://web.dev/articles/fetch-priority" target="_blank">web.dev &mdash; Fetch Priority</a></li>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import" target="_blank">MDN &mdash; Dynamic import()</a></li>
+      <li><a href="https://github.com/nicmord/nicmord-nicmordr/nicmord-nicmordr" target="_blank">lite-youtube-embed</a></li>
+      <li><a href="https://caniuse.com/loading-lazy-attr" target="_blank">Can I Use &mdash; loading=lazy</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Proverite lazy loading na vasem sajtu &rarr;</a>
+  </div>
+
+  <!-- ==================== ENGLISH ==================== -->
+  <div class="en">
+    <h1>Lazy Loading &mdash; Deferred Resource Loading</h1>
+    <p class="subtitle">How to reduce initial page load by 40-60% by loading resources only when needed</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">40-60%</div><div class="stat-label">Initial load reduction</div></div>
+      <div class="stat-card"><div class="stat-num">96%</div><div class="stat-label">Browser support for loading=lazy</div></div>
+      <div class="stat-card"><div class="stat-num">0</div><div class="stat-label">Lines of JS needed (native)</div></div>
+      <div class="stat-card"><div class="stat-num">LCP</div><div class="stat-label">DON'T lazy load hero image!</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#ll1e">What is lazy loading</a></li>
+        <li><a href="#ll2e">Native: loading="lazy"</a></li>
+        <li><a href="#ll3e">Above vs below the fold</a></li>
+        <li><a href="#ll4e">fetchpriority attribute</a></li>
+        <li><a href="#ll5e">Intersection Observer API</a></li>
+        <li><a href="#ll6e">JS lazy loading: dynamic import</a></li>
+        <li><a href="#ll7e">Code splitting in frameworks</a></li>
+        <li><a href="#ll8e">Lazy loading iframes</a></li>
+        <li><a href="#ll9e">Common mistakes</a></li>
+        <li><a href="#ll10e">References</a></li>
+      </ol>
+    </div>
+
+    <h2 id="ll1e">1. What is lazy loading and why it matters</h2>
+    <p>Lazy loading defers loading resources until they're visible on screen. Instead of loading all 50 images at once, browser loads only the 3-4 visible ones, and the rest when user scrolls to them.</p>
+    <div class="callout"><strong>Statistic:</strong> Lazy loading can reduce initial page load by <strong>40-60%</strong> on image-heavy pages.</div>
+
+    <h2 id="ll2e">2. Native lazy loading: loading="lazy"</h2>
+    <pre><code>&lt;img src="photo.webp" alt="Desc" width="800" height="450" loading="lazy"&gt;
+&lt;iframe src="https://youtube.com/embed/..." loading="lazy"&gt;&lt;/iframe&gt;</code></pre>
+    <table>
+      <tr><th>Value</th><th>Behavior</th><th>When</th></tr>
+      <tr><td><code>lazy</code></td><td>Load when near viewport</td><td>Below-fold images/iframes</td></tr>
+      <tr><td><code>eager</code></td><td>Load immediately (default)</td><td>Hero, logo, critical images</td></tr>
+    </table>
+    <p>96%+ browser support. Old browsers load normally (graceful degradation).</p>
+
+    <h2 id="ll3e">3. Above vs below the fold</h2>
+    <table>
+      <tr><th>Position</th><th>loading</th><th>fetchpriority</th></tr>
+      <tr><td>Hero/LCP image</td><td>eager</td><td>high</td></tr>
+      <tr><td>Logo</td><td>eager</td><td>—</td></tr>
+      <tr><td>Above-fold images</td><td>eager</td><td>—</td></tr>
+      <tr><td>Below-fold images</td><td>lazy</td><td>—</td></tr>
+      <tr><td>Footer images</td><td>lazy</td><td>low</td></tr>
+    </table>
+    <div class="callout callout-danger"><strong>#1 mistake:</strong> <code>loading="lazy"</code> on hero image slows LCP. Hero must be eager + fetchpriority="high".</div>
+
+    <h2 id="ll4e">4. fetchpriority attribute</h2>
+    <p><code>fetchpriority="high"</code> on hero image, <code>low</code> on decorative images, <code>auto</code> (default) for everything else.</p>
+    <pre><code>&lt;link rel="preload" as="image" href="hero.webp" fetchpriority="high"&gt;
+&lt;img src="hero.webp" fetchpriority="high" decoding="async"&gt;</code></pre>
+
+    <h2 id="ll5e">5. Intersection Observer API</h2>
+    <p>For custom lazy loading: animations on scroll, infinite scroll, custom thresholds, blur-up placeholders.</p>
+    <pre><code>const observer = new IntersectionObserver((entries) =&gt; {
+  entries.forEach(entry =&gt; {
+    if (entry.isIntersecting) {
+      entry.target.src = entry.target.dataset.src;
+      observer.unobserve(entry.target);
+    }
+  });
+}, { rootMargin: '200px' });</code></pre>
+
+    <h2 id="ll6e">6. JS lazy loading: dynamic import()</h2>
+    <pre><code>// Load heavy module only when needed
+button.addEventListener('click', async () =&gt; {
+  const { Chart } = await import('chart.js');
+  new Chart(canvas, config);
+});</code></pre>
+
+    <h2 id="ll7e">7. Code splitting in frameworks</h2>
+    <p><strong>React:</strong> <code>React.lazy() + Suspense</code>. <strong>Next.js:</strong> <code>next/dynamic</code> with <code>ssr: false</code>. <strong>Vue:</strong> <code>defineAsyncComponent()</code>.</p>
+    <div class="callout callout-warn"><strong>Rule:</strong> Lazy load everything user doesn't see immediately: modals, inactive tabs, admin panels, heavy libraries. Initial bundle should be &lt;170KB compressed.</div>
+
+    <h2 id="ll8e">8. Lazy loading iframes</h2>
+    <p>YouTube embed loads ~800KB. With <code>loading="lazy"</code>, only loads when user scrolls to video. For better: use <strong>lite-youtube-embed</strong> (~800KB → ~5KB until click).</p>
+
+    <h2 id="ll9e">9. Common mistakes</h2>
+    <ul>
+      <li><strong>Lazy loading hero image</strong> — slows LCP</li>
+      <li><strong>Lazy above-fold images</strong> — user sees empty space</li>
+      <li><strong>No width/height on lazy images</strong> — causes CLS</li>
+      <li><strong>Too aggressive threshold</strong> — rootMargin: 0 shows placeholder</li>
+      <li><strong>Lazy loading ALL images</strong> — first 2-3 should be eager</li>
+      <li><strong>Lazy loading CSS/fonts</strong> — critical CSS must load immediately</li>
+    </ul>
+
+    <h2 id="ll10e">10. References and resources</h2>
+    <ul>
+      <li><a href="https://web.dev/articles/browser-level-image-lazy-loading" target="_blank">web.dev — Lazy Loading</a></li>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/img#loading" target="_blank">MDN — loading attribute</a></li>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API" target="_blank">MDN — Intersection Observer</a></li>
+      <li><a href="https://web.dev/articles/fetch-priority" target="_blank">web.dev — Fetch Priority</a></li>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import" target="_blank">MDN — Dynamic import()</a></li>
+      <li><a href="https://caniuse.com/loading-lazy-attr" target="_blank">Can I Use — loading=lazy</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Check lazy loading on your site &rarr;</a>
+  </div>
+
+  <div class="nav-links">
+    <a href="./blog-performance.html"><span class="sr">Performanse vodic</span><span class="en">Performance Guide</span></a>
+    <a href="./blog-perf-cwv.html"><span class="sr">Core Web Vitals</span><span class="en">Core Web Vitals</span></a>
+    <a href="./blog-perf-images.html"><span class="sr">Optimizacija slika</span><span class="en">Image Optimization</span></a>
+    <a href="./blog-perf-cache.html"><span class="sr">HTTP Caching</span><span class="en">HTTP Caching</span></a>
+    <a href="./blog-perf-compression.html"><span class="sr">Gzip i Brotli</span><span class="en">Gzip &amp; Brotli</span></a>
+    <a href="./blog-perf-cdn.html"><span class="sr">CDN</span><span class="en">CDN</span></a>
+  </div>
+
+  </main>
+</div>
+<script src="./blog-common.js" defer></script>
+</body>
+</html>

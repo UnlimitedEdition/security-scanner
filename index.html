@@ -204,15 +204,22 @@
 
     /* FEATURES */
     .features-section {
-      max-width: 900px; margin: 1rem auto 2rem;
-      padding: 0 1rem;
+      max-width: 1000px; margin: 2rem auto 2.5rem;
+      padding: 0 1.5rem;
     }
+    .features-title {
+      text-align: center; margin-bottom: 2rem;
+    }
+    .features-title h2 {
+      font-size: 1.5rem; font-weight: 800; color: var(--text); margin-bottom: 0.4rem;
+    }
+    .features-title p { color: var(--text-dim); font-size: 0.9rem; }
     .features-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 1rem;
+      gap: 1.2rem;
     }
-    @media (max-width: 800px) {
+    @media (max-width: 900px) {
       .features-grid { grid-template-columns: repeat(2, 1fr); }
     }
     @media (max-width: 500px) {
@@ -223,21 +230,63 @@
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 1.5rem 1.2rem;
+      transition: all 0.25s ease;
+      text-decoration: none;
+      display: block;
+      position: relative;
+      overflow: hidden;
     }
-    .feature-icon { font-size: 1.8rem; margin-bottom: 0.6rem; }
-    .feature-card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.7rem; }
+    .feature-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-4px);
+      box-shadow: 0 8px 30px rgba(108,99,255,0.15);
+    }
+    .feature-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 3px;
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+    .feature-card.card-security::before { background: linear-gradient(90deg, #ef4444, #f97316); }
+    .feature-card.card-seo::before { background: linear-gradient(90deg, #3b82f6, #6c63ff); }
+    .feature-card.card-perf::before { background: linear-gradient(90deg, #eab308, #f97316); }
+    .feature-card.card-gdpr::before { background: linear-gradient(90deg, #22c55e, #3b82f6); }
+    .feature-card-header {
+      display: flex; align-items: center; gap: 0.7rem;
+      margin-bottom: 0.8rem;
+    }
+    .feature-icon {
+      font-size: 1.6rem; width: 42px; height: 42px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--surface2); border-radius: 10px; flex-shrink: 0;
+    }
+    .feature-card h2 {
+      font-size: 0.92rem; font-weight: 700; margin: 0; line-height: 1.3; color: var(--text);
+    }
+    .feature-count {
+      font-size: 0.7rem; color: var(--accent2); font-weight: 600;
+      margin-top: 2px;
+    }
     .feature-card ul {
-      list-style: none; padding: 0;
+      list-style: none; padding: 0; margin: 0;
     }
     .feature-card li {
-      font-size: 0.78rem; color: var(--text-dim);
-      padding: 0.2rem 0; padding-left: 1rem;
-      position: relative;
+      font-size: 0.76rem; color: var(--text-dim);
+      padding: 0.25rem 0; padding-left: 1.1rem;
+      position: relative; line-height: 1.4;
     }
     .feature-card li::before {
       content: "\2713"; position: absolute; left: 0;
-      color: var(--green); font-weight: 700; font-size: 0.7rem;
+      color: var(--green); font-weight: 700; font-size: 0.65rem;
+      top: 0.3rem;
     }
+    .feature-card .card-link {
+      display: inline-block; margin-top: 0.8rem;
+      font-size: 0.75rem; color: var(--accent2); font-weight: 600;
+      text-decoration: none;
+    }
+    .feature-card .card-link:hover { color: var(--accent); }
+    .feature-card .card-link::after { content: ' \2192'; }
 
     /* SCAN BOX */
     .scan-wrap {
@@ -669,10 +718,19 @@
 
 <!-- FEATURES LIST -->
 <div class="features-section" id="featuresSection">
+  <div class="features-title">
+    <h2 data-sr="Sta proveravamo" data-en="What we check">Sta proveravamo</h2>
+    <p data-sr="110+ automatskih provera u 4 kategorije" data-en="110+ automated checks in 4 categories">110+ automatskih provera u 4 kategorije</p>
+  </div>
   <div class="features-grid">
-    <div class="feature-card">
-      <div class="feature-icon" style="color:#ef4444">&#128272;</div>
-      <h2 data-sr="Bezbednost (60+ provera)" data-en="Security (60+ checks)" style="font-size:1rem;">Bezbednost (60+ provera)</h2>
+    <div class="feature-card card-security">
+      <div class="feature-card-header">
+        <div class="feature-icon" style="color:#ef4444">&#128272;</div>
+        <div>
+          <h2 data-sr="Bezbednost" data-en="Security" style="font-size:0.92rem;">Bezbednost</h2>
+          <div class="feature-count" data-sr="60+ provera" data-en="60+ checks">60+ provera</div>
+        </div>
+      </div>
       <ul>
         <li data-sr="SSL/TLS sertifikati i enkripcija" data-en="SSL/TLS certificates & encryption">SSL/TLS sertifikati i enkripcija</li>
         <li data-sr="HTTP sigurnosni headeri (7 provera)" data-en="HTTP security headers (7 checks)">HTTP sigurnosni headeri (7 provera)</li>
@@ -690,10 +748,16 @@
         <li data-sr="Tehnoloski stek (45+ tehnologija)" data-en="Technology stack (45+ technologies)">Tehnoloski stek (45+ tehnologija)</li>
         <li data-sr="Zavisnosti i poznati CVE-ovi" data-en="Dependencies & known CVEs">Zavisnosti i poznati CVE-ovi</li>
       </ul>
+      <a href="./blog-security.html" class="card-link" data-sr="Saznajte vise" data-en="Learn more">Saznajte vise</a>
     </div>
-    <div class="feature-card">
-      <div class="feature-icon" style="color:#3b82f6">&#128270;</div>
-      <h2 data-sr="SEO Analiza (12 provera)" data-en="SEO Analysis (12 checks)" style="font-size:1rem;">SEO Analiza (12 provera)</h2>
+    <div class="feature-card card-seo">
+      <div class="feature-card-header">
+        <div class="feature-icon" style="color:#3b82f6">&#128270;</div>
+        <div>
+          <h2 data-sr="SEO Analiza" data-en="SEO Analysis" style="font-size:0.92rem;">SEO Analiza</h2>
+          <div class="feature-count" data-sr="12 provera" data-en="12 checks">12 provera</div>
+        </div>
+      </div>
       <ul>
         <li data-sr="Title i meta description (duzina)" data-en="Title & meta description (length)">Title i meta description (duzina)</li>
         <li data-sr="Open Graph i Twitter Cards" data-en="Open Graph & Twitter Cards">Open Graph i Twitter Cards</li>
@@ -704,10 +768,16 @@
         <li data-sr="Alt atributi na slikama" data-en="Image alt attributes">Alt atributi na slikama</li>
         <li data-sr="Viewport (mobile-friendly)" data-en="Viewport (mobile-friendly)">Viewport (mobile-friendly)</li>
       </ul>
+      <a href="./blog-seo.html" class="card-link" data-sr="Saznajte vise" data-en="Learn more">Saznajte vise</a>
     </div>
-    <div class="feature-card">
-      <div class="feature-icon" style="color:#eab308">&#9889;</div>
-      <h2 data-sr="Performanse (16 provera)" data-en="Performance (16 checks)" style="font-size:1rem;">Performanse (16 provera)</h2>
+    <div class="feature-card card-perf">
+      <div class="feature-card-header">
+        <div class="feature-icon" style="color:#eab308">&#9889;</div>
+        <div>
+          <h2 data-sr="Performanse" data-en="Performance" style="font-size:0.92rem;">Performanse</h2>
+          <div class="feature-count" data-sr="16 provera" data-en="16 checks">16 provera</div>
+        </div>
+      </div>
       <ul>
         <li data-sr="TTFB (vreme odgovora servera)" data-en="TTFB (server response time)">TTFB (vreme odgovora servera)</li>
         <li data-sr="Kompresija (Gzip/Brotli)" data-en="Compression (Gzip/Brotli)">Kompresija (Gzip/Brotli)</li>
@@ -718,10 +788,16 @@
         <li data-sr="Pristupacnost — ARIA, forme, labele" data-en="Accessibility — ARIA, forms, labels">Pristupacnost — ARIA, forme, labele</li>
         <li data-sr="Heading hijerarhija i tabindex" data-en="Heading hierarchy & tabindex">Heading hijerarhija i tabindex</li>
       </ul>
+      <a href="./blog-performance.html" class="card-link" data-sr="Saznajte vise" data-en="Learn more">Saznajte vise</a>
     </div>
-    <div class="feature-card">
-      <div class="feature-icon" style="color:#22c55e">&#128274;</div>
-      <h2 data-sr="GDPR / Privatnost (7 provera)" data-en="GDPR / Privacy (7 checks)" style="font-size:1rem;">GDPR / Privatnost (7 provera)</h2>
+    <div class="feature-card card-gdpr">
+      <div class="feature-card-header">
+        <div class="feature-icon" style="color:#22c55e">&#128274;</div>
+        <div>
+          <h2 data-sr="GDPR / Privatnost" data-en="GDPR / Privacy" style="font-size:0.92rem;">GDPR / Privatnost</h2>
+          <div class="feature-count" data-sr="7 provera" data-en="7 checks">7 provera</div>
+        </div>
+      </div>
       <ul>
         <li data-sr="Privacy Policy detekcija" data-en="Privacy Policy detection">Privacy Policy detekcija</li>
         <li data-sr="Cookie consent mehanizam" data-en="Cookie consent mechanism">Cookie consent mehanizam</li>
@@ -731,10 +807,11 @@
         <li data-sr="Uslovi koriscenja (ToS)" data-en="Terms of Service (ToS)">Uslovi koriscenja (ToS)</li>
         <li data-sr="Third-party cookies analiza" data-en="Third-party cookies analysis">Third-party cookies analiza</li>
       </ul>
+      <a href="./blog-gdpr.html" class="card-link" data-sr="Saznajte vise" data-en="Learn more">Saznajte vise</a>
     </div>
   </div>
   <div style="text-align:center;margin-top:1.5rem;">
-    <p style="color:var(--accent2);font-weight:700;font-size:0.95rem;" data-sr="+ Crawler (do 20 stranica) + Risk Engine (Top 5 prioriteta) + Mozilla Observatory" data-en="+ Crawler (up to 20 pages) + Risk Engine (Top 5 priorities) + Mozilla Observatory">+ Crawler (do 20 stranica) + Risk Engine (Top 5 prioriteta) + Mozilla Observatory</p>
+    <p style="color:var(--accent2);font-weight:700;font-size:0.88rem;letter-spacing:0.02em;" data-sr="+ Crawler (do 20 stranica) &bull; Risk Engine (Top 5 prioriteta) &bull; Mozilla Observatory" data-en="+ Crawler (up to 20 pages) &bull; Risk Engine (Top 5 priorities) &bull; Mozilla Observatory">+ Crawler (do 20 stranica) &bull; Risk Engine (Top 5 prioriteta) &bull; Mozilla Observatory</p>
   </div>
 </div>
 

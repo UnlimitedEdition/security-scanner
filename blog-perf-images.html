@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Optimizacija slika za web — Formati, kompresija, lazy loading | Web Security Scanner</title>
+  <meta name="description" content="Kompletni vodic za optimizaciju slika: WebP vs AVIF vs JPEG, lossy/lossless kompresija, srcset, picture element, lazy loading, width/height za CLS, CDN i alati.">
+  <meta name="keywords" content="optimizacija slika, WebP, AVIF, lazy loading, kompresija, srcset, picture element, responsive images, Squoosh">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <link rel="canonical" href="https://security-scanner-ruddy.vercel.app/blog-perf-images.html">
+  <link rel="alternate" hreflang="sr" href="https://security-scanner-ruddy.vercel.app/blog-perf-images.html">
+  <link rel="alternate" hreflang="en" href="https://security-scanner-ruddy.vercel.app/blog-perf-images.html">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Optimizacija slika za web — WebP, AVIF, srcset, lazy loading">
+  <meta property="og:description" content="Formati, kompresija, responsive images, lazy loading, CLS prevencija i alati za optimizaciju.">
+  <meta property="og:url" content="https://security-scanner-ruddy.vercel.app/blog-perf-images.html">
+  <meta property="og:site_name" content="Web Security Scanner">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Optimizacija slika za web — WebP, AVIF, srcset, lazy loading">
+  <meta name="twitter:description" content="Formati, kompresija, responsive images, lazy loading, CLS prevencija i alati za optimizaciju.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Optimizacija slika za web — Formati, kompresija, lazy loading",
+    "author": {"@type": "Person", "name": "Toske", "url": "https://toske-programer.web.app"},
+    "publisher": {"@type": "Organization", "name": "Web Security Scanner"},
+    "datePublished": "2026-04-09",
+    "dateModified": "2026-04-09",
+    "description": "Kompletni vodic za optimizaciju slika: formati, kompresija, srcset, lazy loading, CLS prevencija.",
+    "mainEntityOfPage": {"@type": "WebPage", "@id": "https://security-scanner-ruddy.vercel.app/blog-perf-images.html"}
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Koji format slika koristiti za web?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "WebP je najbolji opsti izbor — 25-35% manji od JPEG pri istom kvalitetu, podrzava transparentnost i animaciju, i ima 97%+ browser podrsku. AVIF je jos bolji (50% manji) ali ima sporije enkodovanje i 93% podrsku. Koristite <picture> element sa AVIF kao primarnim, WebP kao fallback-om i JPEG kao poslednjom opcijom."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Sta je lazy loading i kako ga implementirati?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Lazy loading odlaze ucitavanje slika dok korisnik ne skroluje do njih. Implementacija: dodajte loading='lazy' atribut na <img> tag. Browser nece ucitati sliku dok nije blizu viewport-a. VAZNO: NE stavljajte lazy loading na hero sliku (above-the-fold) jer to usporava LCP."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Kako smanjiti slike bez gubitka kvaliteta?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Koristite lossy kompresiju na 80% kvaliteta za fotografije (JPEG/WebP) — ljudsko oko ne primecuje razliku. Za PNG koristite lossless alate (TinyPNG, pngquant). Za sve formate: Squoosh (besplatan, u browseru) daje najbolju kontrolu. Takodje smanjite dimenzije — ne servirajte 4000px sliku za 800px kontejner."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Zasto slike moraju imati width i height atribute?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Bez width i height, browser ne zna koliko prostora da rezervise dok se slika ucitava. Kad slika stigne, sadrzaj se pomera (layout shift) sto pogorsava CLS (Core Web Vital). Sa atributima, browser odmah rezervise prostor i nema pomeranja."
+        }
+      }
+    ]
+  }
+  </script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+</head>
+<body>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr"><div class="timeline-title">Sadrzaj</div><ol id="timeline-sr"></ol></div>
+    <div class="en"><div class="timeline-title">Contents</div><ol id="timeline-en"></ol></div>
+  </aside>
+  <main class="blog-content">
+
+  <!-- ==================== SRPSKI ==================== -->
+  <div class="sr">
+    <h1>Optimizacija slika za web &mdash; Formati, kompresija, lazy loading</h1>
+    <p class="subtitle">Kompletni vodic: kako smanjiti velicinu slika za 50-80% bez vidljivog gubitka kvaliteta</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">50%</div><div class="stat-label">Prosecna tezina stranice su slike</div></div>
+      <div class="stat-card"><div class="stat-num">25-35%</div><div class="stat-label">WebP manji od JPEG</div></div>
+      <div class="stat-card"><div class="stat-num">50%</div><div class="stat-label">AVIF manji od JPEG</div></div>
+      <div class="stat-card"><div class="stat-num">97%</div><div class="stat-label">Browser podrska za WebP</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Sadrzaj</h3>
+      <ol>
+        <li><a href="#img1">Zasto su slike najveci problem</a></li>
+        <li><a href="#img2">Formati: JPEG, PNG, WebP, AVIF</a></li>
+        <li><a href="#img3">Kompresija: lossy vs lossless</a></li>
+        <li><a href="#img4">Responsive images: srcset i sizes</a></li>
+        <li><a href="#img5">Art direction: picture element</a></li>
+        <li><a href="#img6">Lazy loading</a></li>
+        <li><a href="#img7">Width i height — sprecavanje CLS</a></li>
+        <li><a href="#img8">CDN za slike</a></li>
+        <li><a href="#img9">Alati za optimizaciju</a></li>
+        <li><a href="#img10">Najcesce greske</a></li>
+        <li><a href="#img11">Reference i resursi</a></li>
+      </ol>
+    </div>
+
+    <h2 id="img1">1. Zasto su slike najveci problem za performanse</h2>
+    <p>Prema HTTP Archive, slike cine <strong>prosecno 50% ukupne velicine</strong> web stranice. Na mnogim sajtovima to je i vise &mdash; e-commerce sa velikim fotografijama proizvoda moze imati 70-80% tezine u slikama.</p>
+    <ul>
+      <li><strong>Prosecna web stranica:</strong> ~2.5 MB ukupno, od cega ~1.2 MB su slike</li>
+      <li><strong>Neoptimizovana hero slika:</strong> 2-5 MB sama &mdash; vise od cele stranice</li>
+      <li><strong>LCP uticaj:</strong> hero slika je najcesci LCP element &mdash; ako je velika, LCP je los</li>
+      <li><strong>Bandwidth:</strong> mobilni korisnici na 4G ucitavaju 1MB za ~0.8s. Svaki nepotreban MB = skoro sekunda kasnjenja</li>
+    </ul>
+    <div class="callout callout-danger"><strong>Cinjenica:</strong> Optimizacija slika je najlaksi i najefektivniji nacin za ubrzavanje sajta. Konverzija u WebP + pravilne dimenzije mogu smanjiti tezinu stranice za 50-70% bez ikakve promene dizajna.</div>
+
+    <h2 id="img2">2. Formati: JPEG, PNG, WebP, AVIF</h2>
+    <table>
+      <tr><th>Format</th><th>Tip</th><th>Transparentnost</th><th>Animacija</th><th>Kompresija</th><th>Podrska</th></tr>
+      <tr><td><strong>JPEG</strong></td><td>Lossy</td><td>Ne</td><td>Ne</td><td>Dobra</td><td>100%</td></tr>
+      <tr><td><strong>PNG</strong></td><td>Lossless</td><td>Da</td><td>Ne (APNG da)</td><td>Slaba</td><td>100%</td></tr>
+      <tr><td><strong>WebP</strong></td><td>Oba</td><td>Da</td><td>Da</td><td>25-35% bolja od JPEG</td><td>97%+</td></tr>
+      <tr><td><strong>AVIF</strong></td><td>Oba</td><td>Da</td><td>Da</td><td>50% bolja od JPEG</td><td>93%</td></tr>
+      <tr><td>GIF</td><td>Lossless</td><td>Da (1-bit)</td><td>Da</td><td>Losa</td><td>100%</td></tr>
+      <tr><td>SVG</td><td>Vektor</td><td>Da</td><td>Da (CSS/JS)</td><td>N/A (tekst)</td><td>100%</td></tr>
+    </table>
+
+    <h3>Kada koristiti koji format</h3>
+    <ul>
+      <li><strong>Fotografije:</strong> AVIF &gt; WebP &gt; JPEG. Koristite <code>&lt;picture&gt;</code> sa fallback-om.</li>
+      <li><strong>Ikone, logotipi, ilustracije:</strong> SVG (vektorski, beskonacno skalabilan, mali).</li>
+      <li><strong>Transparentne slike:</strong> WebP ili AVIF (zamena za PNG). PNG samo kao fallback.</li>
+      <li><strong>Animacije:</strong> Video (MP4/WebM) umesto GIF-a. GIF od 5MB = MP4 od 500KB.</li>
+      <li><strong>Screenshot-ovi:</strong> WebP lossless ili PNG (ostar tekst).</li>
+    </ul>
+    <div class="callout"><strong>Preporuka 2026:</strong> WebP je bezbedan izbor za sve &mdash; 97%+ podrska, odlicna kompresija, transparentnost. AVIF je buducnost ali koristite ga sa <code>&lt;picture&gt;</code> fallback-om dok podrska ne dostigne 97%+.</div>
+
+    <h2 id="img3">3. Kompresija: lossy vs lossless</h2>
+    <h3>Lossy kompresija</h3>
+    <p>Uklanja podatke koje ljudsko oko tesko primecuje. Svaka konverzija gubi kvalitet &mdash; ne kompresujte vec kompresovanu sliku ponovo.</p>
+    <ul>
+      <li><strong>JPEG kvalitet 80%</strong> &mdash; optimalan balans velicine i kvaliteta. 80% je vizuelno identicno 100% za vecinu fotografija.</li>
+      <li><strong>WebP kvalitet 75-80%</strong> &mdash; ekvivalentan JPEG 85-90% po vizuelnom kvalitetu.</li>
+      <li><strong>AVIF kvalitet 60-70%</strong> &mdash; ekvivalentan JPEG 85% ali dramaticno manji fajl.</li>
+    </ul>
+    <h3>Lossless kompresija</h3>
+    <p>Smanjuje velicinu bez gubitka podataka. Za PNG, alati kao TinyPNG smanjuju velicinu za 40-70% lossless optimizacijom (uklanjanje metapodataka, bolja kompresija).</p>
+    <pre><code>&lt;!-- Primer velicina za istu fotografiju 1200x630 --&gt;
+Original PNG:      2.4 MB  (100%)
+PNG optimizovan:   1.1 MB  (46%)
+JPEG 80%:          180 KB  (7.5%)
+WebP 80%:          130 KB  (5.4%)
+AVIF 65%:           85 KB  (3.5%)</code></pre>
+
+    <h2 id="img4">4. Responsive images: srcset i sizes</h2>
+    <p>Ne servirajte istu 1200px sliku mobilnom korisniku na 400px ekranu. <code>srcset</code> i <code>sizes</code> dozvoljavaju browseru da izabere optimalnu velicinu.</p>
+    <pre><code>&lt;img
+  src="photo-800.webp"
+  srcset="photo-400.webp 400w,
+         photo-800.webp 800w,
+         photo-1200.webp 1200w,
+         photo-1600.webp 1600w"
+  sizes="(max-width: 600px) 100vw,
+         (max-width: 1000px) 80vw,
+         1200px"
+  alt="Opis fotografije"
+  width="1200" height="630"
+  loading="lazy"
+&gt;</code></pre>
+    <h3>Kako radi</h3>
+    <ul>
+      <li><strong>srcset</strong> &mdash; lista slika sa njihovom sirinom (<code>400w</code> = slika od 400px)</li>
+      <li><strong>sizes</strong> &mdash; koliko prostora slika zauzima na razlicitim ekranima</li>
+      <li><strong>Browser bira</strong> &mdash; na osnovu ekrana, DPI-ja i konekcije, browser sam izabere optimalnu sliku</li>
+      <li><strong>src</strong> &mdash; fallback za stare browsere koji ne podrzavaju srcset</li>
+    </ul>
+    <div class="callout callout-warn"><strong>Vazno:</strong> Napravite 3-4 velicine svake slike: 400px, 800px, 1200px, 1600px (za Retina). Vise od toga je nepotreban overhead.</div>
+
+    <h2 id="img5">5. Art direction: picture element</h2>
+    <p><code>&lt;picture&gt;</code> element vam daje potpunu kontrolu — razlicit crop, format ili cak potpuno razlicita slika za razlicite ekrane:</p>
+    <pre><code>&lt;picture&gt;
+  &lt;!-- AVIF za browsere koji podrzavaju --&gt;
+  &lt;source type="image/avif"
+    srcset="photo-400.avif 400w, photo-800.avif 800w, photo-1200.avif 1200w"
+    sizes="(max-width:600px) 100vw, 1200px"&gt;
+
+  &lt;!-- WebP fallback --&gt;
+  &lt;source type="image/webp"
+    srcset="photo-400.webp 400w, photo-800.webp 800w, photo-1200.webp 1200w"
+    sizes="(max-width:600px) 100vw, 1200px"&gt;
+
+  &lt;!-- JPEG za stare browsere --&gt;
+  &lt;img src="photo-800.jpg" alt="Opis" width="1200" height="630" loading="lazy"&gt;
+&lt;/picture&gt;
+
+&lt;!-- Art direction: razlicit crop za mobile --&gt;
+&lt;picture&gt;
+  &lt;source media="(max-width: 600px)" srcset="photo-mobile-crop.webp"&gt;
+  &lt;source media="(max-width: 1000px)" srcset="photo-tablet.webp"&gt;
+  &lt;img src="photo-desktop.webp" alt="Opis" width="1200" height="630"&gt;
+&lt;/picture&gt;</code></pre>
+
+    <h2 id="img6">6. Lazy loading</h2>
+    <p>Lazy loading odlaze ucitavanje slika dok korisnik ne skroluje do njih. Dramaticno smanjuje inicijalni page load.</p>
+    <h3>Native lazy loading (preporuceno)</h3>
+    <pre><code>&lt;!-- Jednostavno — samo dodajte atribut --&gt;
+&lt;img src="photo.webp" alt="Opis" width="800" height="450" loading="lazy"&gt;
+
+&lt;!-- Iframe takodje --&gt;
+&lt;iframe src="https://youtube.com/embed/..." loading="lazy"&gt;&lt;/iframe&gt;</code></pre>
+    <h3>Pravila za lazy loading</h3>
+    <ul>
+      <li><strong>NE stavljajte na hero sliku!</strong> Hero/LCP slika mora se ucitati odmah. <code>loading="lazy"</code> bi usporilo LCP.</li>
+      <li><strong>NE stavljajte na above-the-fold slike</strong> &mdash; slike vidljive bez skrolovanja trebaju <code>loading="eager"</code> (default).</li>
+      <li><strong>Koristite na svim ostalim slikama</strong> &mdash; galerije, clanci, footer slike.</li>
+      <li><strong>fetchpriority="high"</strong> na hero slici za eksplicitno visok prioritet.</li>
+    </ul>
+    <pre><code>&lt;!-- Hero slika — NE lazy, visok prioritet --&gt;
+&lt;img src="hero.webp" alt="Hero" width="1200" height="630"
+     fetchpriority="high" decoding="async"&gt;
+
+&lt;!-- Slike u clanku — lazy --&gt;
+&lt;img src="diagram.webp" alt="Dijagram" width="800" height="450" loading="lazy"&gt;
+&lt;img src="screenshot.webp" alt="Screenshot" width="800" height="450" loading="lazy"&gt;</code></pre>
+    <div class="callout"><strong>Browser podrska:</strong> <code>loading="lazy"</code> podrzava 96%+ modernih browsera (Chrome, Firefox, Safari 15.4+, Edge). Za starije, slike se ucitavaju normalno (graceful degradation).</div>
+
+    <h2 id="img7">7. Width i height — sprecavanje CLS</h2>
+    <p>Bez <code>width</code> i <code>height</code> atributa, browser ne zna koliko prostora da rezervise. Kad slika stigne, sadrzaj se pomeri — to je <strong>layout shift (CLS)</strong>. Detaljnije u <a href="./blog-perf-cwv.html">Core Web Vitals vodicu</a>.</p>
+    <pre><code>&lt;!-- LOSE — uzrokuje CLS --&gt;
+&lt;img src="photo.webp" alt="Opis"&gt;
+
+&lt;!-- DOBRO — rezervise prostor, responsive --&gt;
+&lt;img src="photo.webp" alt="Opis" width="1200" height="630"
+     style="max-width:100%; height:auto;"&gt;
+
+&lt;!-- TAKODJE DOBRO — CSS aspect-ratio --&gt;
+&lt;img src="photo.webp" alt="Opis" style="aspect-ratio:16/9; width:100%;"&gt;</code></pre>
+    <div class="callout callout-danger"><strong>Pravilo:</strong> SVAKA <code>&lt;img&gt;</code> na sajtu MORA imati <code>width</code> i <code>height</code> atribute. Ovo je najlaksi nacin za eliminaciju CLS problema.</div>
+
+    <h2 id="img8">8. CDN za slike</h2>
+    <p>Image CDN automatski optimizuje, resizuje i konvertuje slike na letu. Ne morate rucno praviti 4 velicine u 3 formata.</p>
+    <table>
+      <tr><th>Servis</th><th>Besplatan tier</th><th>Auto-format</th><th>Resize</th><th>Napomena</th></tr>
+      <tr><td><strong>Cloudinary</strong></td><td>25 kredita/mesec</td><td>Da (f_auto)</td><td>Da</td><td>Najpopularniji, odlican API</td></tr>
+      <tr><td><strong>imgix</strong></td><td>Ne (trial)</td><td>Da</td><td>Da</td><td>Enterprise fokus, brz</td></tr>
+      <tr><td><strong>Cloudflare Images</strong></td><td>Ne ($5/100K)</td><td>Da</td><td>Da</td><td>Integrisan sa Cloudflare CDN</td></tr>
+      <tr><td><strong>Bunny Optimizer</strong></td><td>500 besplatno</td><td>Da</td><td>Da</td><td>Najjeftiniji za volume</td></tr>
+      <tr><td><strong>Vercel Image</strong></td><td>1000/mesec</td><td>Da</td><td>Da</td><td>Automatski za Next.js</td></tr>
+    </table>
+    <pre><code>&lt;!-- Cloudinary primer — automatski format i resize --&gt;
+&lt;img src="https://res.cloudinary.com/vasnalog/image/upload/w_800,f_auto,q_auto/photo.jpg"
+     alt="Opis" width="800" height="450" loading="lazy"&gt;
+
+&lt;!-- URL parametri: w_800 = sirina, f_auto = format, q_auto = kvalitet --&gt;</code></pre>
+
+    <h2 id="img9">9. Alati za optimizaciju</h2>
+    <ul>
+      <li><strong><a href="https://squoosh.app/" target="_blank">Squoosh</a></strong> &mdash; besplatan, radi u browseru. Vizuelno poredjenje pre/posle sa slider-om. Podrzava WebP, AVIF, MozJPEG. <strong>Najbolji za pojedinacne slike.</strong></li>
+      <li><strong><a href="https://tinypng.com/" target="_blank">TinyPNG/TinyJPG</a></strong> &mdash; besplatan za do 20 slika odjednom. Odlican za batch PNG/JPEG optimizaciju. API za automatizaciju.</li>
+      <li><strong>ImageOptim</strong> &mdash; macOS desktop app. Lossless optimizacija, batch processing, drag-and-drop.</li>
+      <li><strong><a href="https://sharp.pixelplumbing.com/" target="_blank">Sharp</a></strong> &mdash; Node.js biblioteka za programsku konverziju. Najbrzi za build pipeline. <code>sharp('input.jpg').webp({quality:80}).toFile('output.webp')</code></li>
+      <li><strong>cwebp / avifenc</strong> &mdash; command-line alati za batch konverziju u WebP/AVIF.</li>
+      <li><strong><a href="./index.html">Web Security Scanner</a></strong> &mdash; proverava da li slike na sajtu imaju alt tekst, lazy loading i optimalne dimenzije.</li>
+    </ul>
+
+    <h2 id="img10">10. Najcesce greske</h2>
+    <ul>
+      <li><strong>4000px slike za 800px kontejner</strong> &mdash; #1 greska. Koristite srcset sa vise velicina.</li>
+      <li><strong>PNG za fotografije</strong> &mdash; PNG je za ikone/ilustracije sa transparentnoscu. Za foto: WebP ili JPEG.</li>
+      <li><strong>GIF za animacije</strong> &mdash; GIF od 5MB = MP4 od 500KB. Koristite <code>&lt;video autoplay loop muted&gt;</code>.</li>
+      <li><strong>Lazy loading na hero slici</strong> &mdash; usporava LCP. Hero slika mora biti eager + fetchpriority="high".</li>
+      <li><strong>Bez width/height</strong> &mdash; uzrokuje CLS. SVAKA slika mora imati dimenzije.</li>
+      <li><strong>Bez alt teksta</strong> &mdash; lose za SEO i pristupacnost. Svaka slika treba opisni alt.</li>
+      <li><strong>Jedan format za sve</strong> &mdash; koristite <code>&lt;picture&gt;</code> sa AVIF + WebP + JPEG fallback.</li>
+      <li><strong>Re-kompresija</strong> &mdash; ucitavanje JPEG, editovanje, cuvanje kao JPEG ponovo. Svaka konverzija gubi kvalitet. Cuvajte originale.</li>
+      <li><strong>Inline base64 slike</strong> &mdash; za sitne ikone OK (&lt;1KB), ali za vece slike base64 je 33% veci od binarnog i ne kesira se zasebno.</li>
+    </ul>
+
+    <h2 id="img11">11. Reference i resursi</h2>
+    <ul>
+      <li><a href="https://web.dev/articles/choose-the-right-image-format" target="_blank">web.dev &mdash; Choose the Right Image Format</a></li>
+      <li><a href="https://web.dev/articles/browser-level-image-lazy-loading" target="_blank">web.dev &mdash; Browser-Level Lazy Loading</a></li>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/picture" target="_blank">MDN &mdash; &lt;picture&gt; element</a></li>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Learn/HTML/Multimedia_and_embedding/Responsive_images" target="_blank">MDN &mdash; Responsive Images</a></li>
+      <li><a href="https://squoosh.app/" target="_blank">Squoosh &mdash; Image Optimizer</a></li>
+      <li><a href="https://httparchive.org/reports/page-weight" target="_blank">HTTP Archive &mdash; Page Weight</a></li>
+      <li><a href="https://caniuse.com/webp" target="_blank">Can I Use &mdash; WebP Support</a></li>
+      <li><a href="https://caniuse.com/avif" target="_blank">Can I Use &mdash; AVIF Support</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Proverite optimizaciju slika na vasem sajtu &rarr;</a>
+  </div>
+
+  <!-- ==================== ENGLISH ==================== -->
+  <div class="en">
+    <h1>Image Optimization for Web &mdash; Formats, Compression, Lazy Loading</h1>
+    <p class="subtitle">Complete guide: how to reduce image size by 50-80% without visible quality loss</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">50%</div><div class="stat-label">Average page weight is images</div></div>
+      <div class="stat-card"><div class="stat-num">25-35%</div><div class="stat-label">WebP smaller than JPEG</div></div>
+      <div class="stat-card"><div class="stat-num">50%</div><div class="stat-label">AVIF smaller than JPEG</div></div>
+      <div class="stat-card"><div class="stat-num">97%</div><div class="stat-label">Browser support for WebP</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#img1e">Why images are the biggest problem</a></li>
+        <li><a href="#img2e">Formats: JPEG, PNG, WebP, AVIF</a></li>
+        <li><a href="#img3e">Compression: lossy vs lossless</a></li>
+        <li><a href="#img4e">Responsive images: srcset and sizes</a></li>
+        <li><a href="#img5e">Art direction: picture element</a></li>
+        <li><a href="#img6e">Lazy loading</a></li>
+        <li><a href="#img7e">Width and height — CLS prevention</a></li>
+        <li><a href="#img8e">Image CDN</a></li>
+        <li><a href="#img9e">Optimization tools</a></li>
+        <li><a href="#img10e">Common mistakes</a></li>
+        <li><a href="#img11e">References</a></li>
+      </ol>
+    </div>
+
+    <h2 id="img1e">1. Why images are the biggest performance problem</h2>
+    <p>According to HTTP Archive, images make up <strong>~50% of total page weight</strong>. An unoptimized hero image alone (2-5MB) can be larger than the entire page should be.</p>
+    <div class="callout callout-danger"><strong>Fact:</strong> Image optimization is the easiest and most effective way to speed up a site. Converting to WebP + proper dimensions can reduce page weight by 50-70% without any design changes.</div>
+
+    <h2 id="img2e">2. Formats: JPEG, PNG, WebP, AVIF</h2>
+    <table>
+      <tr><th>Format</th><th>Type</th><th>Transparency</th><th>Compression</th><th>Support</th></tr>
+      <tr><td><strong>JPEG</strong></td><td>Lossy</td><td>No</td><td>Good</td><td>100%</td></tr>
+      <tr><td><strong>PNG</strong></td><td>Lossless</td><td>Yes</td><td>Poor</td><td>100%</td></tr>
+      <tr><td><strong>WebP</strong></td><td>Both</td><td>Yes</td><td>25-35% better than JPEG</td><td>97%+</td></tr>
+      <tr><td><strong>AVIF</strong></td><td>Both</td><td>Yes</td><td>50% better than JPEG</td><td>93%</td></tr>
+    </table>
+    <p><strong>Photos:</strong> AVIF &gt; WebP &gt; JPEG. <strong>Icons/logos:</strong> SVG. <strong>Transparency:</strong> WebP/AVIF. <strong>Animation:</strong> Video (MP4) not GIF.</p>
+    <div class="callout"><strong>2026 recommendation:</strong> WebP is the safe choice — 97%+ support, great compression, transparency. AVIF is the future but use with <code>&lt;picture&gt;</code> fallback.</div>
+
+    <h2 id="img3e">3. Compression: lossy vs lossless</h2>
+    <p><strong>Lossy:</strong> JPEG 80% quality is visually identical to 100% for most photos. WebP 75-80% = JPEG 85-90%. AVIF 60-70% = JPEG 85%.</p>
+    <p><strong>Lossless:</strong> TinyPNG reduces PNG by 40-70% without quality loss (removes metadata, better compression).</p>
+    <pre><code>&lt;!-- Same 1200x630 photo, different formats --&gt;
+PNG original:    2.4 MB (100%)
+PNG optimized:   1.1 MB (46%)
+JPEG 80%:        180 KB (7.5%)
+WebP 80%:        130 KB (5.4%)
+AVIF 65%:         85 KB (3.5%)</code></pre>
+
+    <h2 id="img4e">4. Responsive images: srcset and sizes</h2>
+    <p>Don't serve 1200px images to 400px mobile screens.</p>
+    <pre><code>&lt;img src="photo-800.webp"
+  srcset="photo-400.webp 400w, photo-800.webp 800w, photo-1200.webp 1200w"
+  sizes="(max-width:600px) 100vw, (max-width:1000px) 80vw, 1200px"
+  alt="Description" width="1200" height="630" loading="lazy"&gt;</code></pre>
+    <p><strong>srcset</strong> = list of images with widths. <strong>sizes</strong> = how much space the image takes. Browser picks the optimal size.</p>
+
+    <h2 id="img5e">5. Art direction: picture element</h2>
+    <p><code>&lt;picture&gt;</code> gives full control — different crop, format, or image per screen size. Use for format fallback (AVIF → WebP → JPEG) and mobile-specific crops.</p>
+
+    <h2 id="img6e">6. Lazy loading</h2>
+    <pre><code>&lt;!-- Simply add the attribute --&gt;
+&lt;img src="photo.webp" alt="Desc" width="800" height="450" loading="lazy"&gt;</code></pre>
+    <ul>
+      <li><strong>DO NOT</strong> lazy load the hero/LCP image — it must load immediately</li>
+      <li>Use <code>fetchpriority="high"</code> on hero image</li>
+      <li>Lazy load everything below the fold</li>
+      <li>96%+ browser support, graceful degradation</li>
+    </ul>
+
+    <h2 id="img7e">7. Width and height — CLS prevention</h2>
+    <p>Without <code>width</code> and <code>height</code>, browser doesn't know how much space to reserve → layout shift when image loads → bad CLS. More in our <a href="./blog-perf-cwv.html">Core Web Vitals guide</a>.</p>
+    <div class="callout callout-danger"><strong>Rule:</strong> EVERY <code>&lt;img&gt;</code> MUST have width and height attributes. Easiest CLS fix.</div>
+
+    <h2 id="img8e">8. Image CDN</h2>
+    <table>
+      <tr><th>Service</th><th>Free tier</th><th>Auto-format</th><th>Resize</th></tr>
+      <tr><td>Cloudinary</td><td>25 credits/mo</td><td>Yes (f_auto)</td><td>Yes</td></tr>
+      <tr><td>Cloudflare Images</td><td>No ($5/100K)</td><td>Yes</td><td>Yes</td></tr>
+      <tr><td>Bunny Optimizer</td><td>500 free</td><td>Yes</td><td>Yes</td></tr>
+      <tr><td>Vercel Image</td><td>1000/mo</td><td>Yes</td><td>Yes</td></tr>
+    </table>
+
+    <h2 id="img9e">9. Optimization tools</h2>
+    <ul>
+      <li><strong><a href="https://squoosh.app/" target="_blank">Squoosh</a></strong> &mdash; free, browser-based, visual before/after comparison</li>
+      <li><strong><a href="https://tinypng.com/" target="_blank">TinyPNG</a></strong> &mdash; free batch optimization (20 images)</li>
+      <li><strong><a href="https://sharp.pixelplumbing.com/" target="_blank">Sharp</a></strong> &mdash; Node.js library for build pipeline</li>
+      <li><strong>cwebp / avifenc</strong> &mdash; CLI tools for batch conversion</li>
+      <li><strong><a href="./index.html">Web Security Scanner</a></strong> &mdash; checks alt text, lazy loading, image optimization</li>
+    </ul>
+
+    <h2 id="img10e">10. Common mistakes</h2>
+    <ul>
+      <li><strong>4000px images for 800px containers</strong> — use srcset with multiple sizes</li>
+      <li><strong>PNG for photos</strong> — PNG is for icons/illustrations. Use WebP/JPEG for photos.</li>
+      <li><strong>GIF for animations</strong> — 5MB GIF = 500KB MP4. Use <code>&lt;video autoplay loop muted&gt;</code>.</li>
+      <li><strong>Lazy loading hero image</strong> — slows LCP. Hero must be eager + fetchpriority="high".</li>
+      <li><strong>Missing width/height</strong> — causes CLS.</li>
+      <li><strong>Missing alt text</strong> — bad for SEO and accessibility.</li>
+      <li><strong>Re-compression</strong> — each JPEG save loses quality. Keep originals.</li>
+    </ul>
+
+    <h2 id="img11e">11. References and resources</h2>
+    <ul>
+      <li><a href="https://web.dev/articles/choose-the-right-image-format" target="_blank">web.dev &mdash; Image Format</a></li>
+      <li><a href="https://web.dev/articles/browser-level-image-lazy-loading" target="_blank">web.dev &mdash; Lazy Loading</a></li>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/picture" target="_blank">MDN &mdash; &lt;picture&gt;</a></li>
+      <li><a href="https://squoosh.app/" target="_blank">Squoosh</a></li>
+      <li><a href="https://httparchive.org/reports/page-weight" target="_blank">HTTP Archive</a></li>
+      <li><a href="https://caniuse.com/webp" target="_blank">Can I Use &mdash; WebP</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Check your image optimization &rarr;</a>
+  </div>
+
+  <div class="nav-links">
+    <a href="./blog-performance.html"><span class="sr">Performanse vodic</span><span class="en">Performance Guide</span></a>
+    <a href="./blog-perf-cwv.html"><span class="sr">Core Web Vitals</span><span class="en">Core Web Vitals</span></a>
+    <a href="./blog-perf-cache.html"><span class="sr">HTTP Caching</span><span class="en">HTTP Caching</span></a>
+    <a href="./blog-perf-compression.html"><span class="sr">Gzip i Brotli</span><span class="en">Gzip &amp; Brotli</span></a>
+    <a href="./blog-perf-cdn.html"><span class="sr">CDN</span><span class="en">CDN</span></a>
+    <a href="./blog-perf-lazy.html"><span class="sr">Lazy Loading</span><span class="en">Lazy Loading</span></a>
+  </div>
+
+  </main>
+</div>
+<script src="./blog-common.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cookie Consent — GDPR vodic za kolacice | Web Security Scanner</title>
+  <meta name="description" content="Kompletni vodic za cookie consent po GDPR-u: tipovi kolacica, ePrivacy Directive, implementacija banera (CookieConsent, OneTrust, Cookiebot), Google Consent Mode, kazne.">
+  <meta name="keywords" content="cookies, cookie consent, GDPR, kolacici, cookie banner, ePrivacy, CookieConsent, OneTrust, Cookiebot, Google Consent Mode">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <link rel="canonical" href="https://security-scanner-ruddy.vercel.app/blog-gdpr-cookies.html">
+  <link rel="alternate" hreflang="sr" href="https://security-scanner-ruddy.vercel.app/blog-gdpr-cookies.html">
+  <link rel="alternate" hreflang="en" href="https://security-scanner-ruddy.vercel.app/blog-gdpr-cookies.html">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Cookie Consent — GDPR vodic za kolacice i cookie banner">
+  <meta property="og:description" content="Tipovi kolacica, GDPR zahtevi, implementacija banera, Google Consent Mode, dark patterns i kazne.">
+  <meta property="og:url" content="https://security-scanner-ruddy.vercel.app/blog-gdpr-cookies.html">
+  <meta property="og:site_name" content="Web Security Scanner">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Cookie Consent — GDPR vodic za kolacice i cookie banner">
+  <meta name="twitter:description" content="Tipovi kolacica, GDPR zahtevi, implementacija banera, Google Consent Mode, dark patterns i kazne.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Cookie Consent — GDPR vodic za kolacice",
+    "author": {"@type": "Person", "name": "Toske", "url": "https://toske-programer.web.app"},
+    "publisher": {"@type": "Organization", "name": "Web Security Scanner"},
+    "datePublished": "2026-04-09",
+    "dateModified": "2026-04-09",
+    "description": "Kompletni vodic za cookie consent: tipovi kolacica, GDPR zahtevi, implementacija banera, kazne.",
+    "mainEntityOfPage": {"@type": "WebPage", "@id": "https://security-scanner-ruddy.vercel.app/blog-gdpr-cookies.html"}
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Da li mi treba cookie banner?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Da, ako koristite BILO KOJE kolacice osim strogo neophodnih (session, korpa, autentifikacija). Cim imate Google Analytics, Facebook Pixel, AdSense, chat widget ili bilo koji third-party servis koji postavlja kolacice — morate traziti saglasnost PRE njihovog postavljanja."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Koji cookies su essential (neophodni)?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Essential cookies su oni bez kojih sajt ne moze da funkcionise: session ID za login, korpa u e-shopu, CSRF token, load balancer cookie, jezicka preferencija. Za ove NE treba saglasnost. Ali Google Analytics, Facebook Pixel, marketing cookies, A/B testing — to NISU essential i zahtevaju consent."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Sta ako ignorisuem GDPR cookie zahteve?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Rizikujete kaznu do 20 miliona EUR ili 4% globalnog prometa. CNIL (Francuska) je kaznio Google sa 150M EUR za cookie consent krsenja. Cak i mali sajtovi dobijaju kazne od 10,000-50,000 EUR. Regulatorni organi sve cesce kontrolisu i manje kompanije."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Sta je Google Consent Mode?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Google Consent Mode v2 (obavezan od marta 2024) je API koji govori Google servisima (Analytics, Ads, Tag Manager) da li korisnik daje consent. Bez njega, Google nece obradjivati podatke iz EU. Implementira se kroz GTM ili direktno sa gtag('consent', 'update', {...})."
+        }
+      }
+    ]
+  }
+  </script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+</head>
+<body>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr"><div class="timeline-title">Sadrzaj</div><ol id="timeline-sr"></ol></div>
+    <div class="en"><div class="timeline-title">Contents</div><ol id="timeline-en"></ol></div>
+  </aside>
+  <main class="blog-content">
+
+  <!-- ==================== SRPSKI ==================== -->
+  <div class="sr">
+    <h1>Cookie Consent &mdash; GDPR vodic za kolacice</h1>
+    <p class="subtitle">Sve o kolacicima: tipovi, GDPR zahtevi, implementacija banera, Google Consent Mode i kazne</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">60%</div><div class="stat-label">EU sajtova bez validnog consent-a</div></div>
+      <div class="stat-card"><div class="stat-num">&euro;150M</div><div class="stat-label">CNIL kazna Google-u (cookies)</div></div>
+      <div class="stat-card"><div class="stat-num">2024</div><div class="stat-label">Google Consent Mode v2 obavezan</div></div>
+      <div class="stat-card"><div class="stat-num">4</div><div class="stat-label">Kategorije kolacica</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Sadrzaj</h3>
+      <ol>
+        <li><a href="#ck1">Sta su kolacici i tipovi</a></li>
+        <li><a href="#ck2">ePrivacy Directive (Cookie Law)</a></li>
+        <li><a href="#ck3">GDPR zahtevi za kolacice</a></li>
+        <li><a href="#ck4">Kategorije kolacica</a></li>
+        <li><a href="#ck5">Implementacija cookie banera</a></li>
+        <li><a href="#ck6">Google Consent Mode v2</a></li>
+        <li><a href="#ck7">Tehnicka implementacija</a></li>
+        <li><a href="#ck8">Dark patterns — sta NE raditi</a></li>
+        <li><a href="#ck9">Kazne i presude</a></li>
+        <li><a href="#ck10">Reference i resursi</a></li>
+      </ol>
+    </div>
+
+    <h2 id="ck1">1. Sta su kolacici i tipovi</h2>
+    <p>Kolacici (cookies) su mali tekstualni fajlovi koje web sajt cuva u browseru korisnika. Koriste se za pamcenje sesije, preferencija, pracenje ponasanja i ciljano reklamiranje.</p>
+    <table>
+      <tr><th>Tip</th><th>Trajanje</th><th>Opis</th><th>Primer</th></tr>
+      <tr><td><strong>Session</strong></td><td>Do zatvaranja browsera</td><td>Privremeni, brisu se automatski</td><td>Login sesija, korpa</td></tr>
+      <tr><td><strong>Persistent</strong></td><td>Definisano (dani/meseci/godine)</td><td>Ostaju posle zatvaranja browsera</td><td>"Zapamti me", jezicka pref.</td></tr>
+      <tr><td><strong>First-party</strong></td><td>Razlicito</td><td>Postavljeni od sajta koji posetilac gleda</td><td>vasajt.rs sesija</td></tr>
+      <tr><td><strong>Third-party</strong></td><td>Razlicito</td><td>Postavljeni od trecih strana (ads, analytics)</td><td>Google Analytics, FB Pixel</td></tr>
+    </table>
+    <div class="callout callout-danger"><strong>Third-party cookies nestaju:</strong> Chrome planira da blokira third-party cookies (Privacy Sandbox). Safari i Firefox ih vec blokiraju. Ovo menja ceo advertising ekosistem i cini server-side tracking sve vaznijim.</div>
+
+    <h2 id="ck2">2. ePrivacy Directive (Cookie Law)</h2>
+    <p>ePrivacy Directive (2002/58/EC, azurirana 2009) je EU regulativa koja specificno regulise kolacice. GDPR regulise licne podatke generalno, a ePrivacy specificno elektronske komunikacije i kolacice.</p>
+    <ul>
+      <li><strong>Clan 5(3):</strong> Pristup informacijama na uredjaju korisnika (kolacici) zahteva informisanu saglasnost</li>
+      <li><strong>Izuzetak:</strong> Kolacici koji su strogo neophodni za pruzanje usluge koju je korisnik eksplicitno zatrazio NE zahtevaju saglasnost</li>
+      <li><strong>ePrivacy Regulation:</strong> Nova regulativa (zamenjuje Directive) je u pripremi od 2017. i trebala bi da harmonizuje pravila u celoj EU</li>
+    </ul>
+
+    <h2 id="ck3">3. GDPR zahtevi za kolacice</h2>
+    <p>GDPR postavlja stroge zahteve za prikupljanje saglasnosti:</p>
+    <table>
+      <tr><th>Zahtev</th><th>Sta znaci</th><th>Primer</th></tr>
+      <tr><td><strong>Informed consent</strong></td><td>Korisnik mora znati STA, ZASTO i KO prikuplja</td><td>Jasno navesti kategorije i svrhu svakog kolacica</td></tr>
+      <tr><td><strong>Prior consent</strong></td><td>Saglasnost PRE postavljanja non-essential kolacica</td><td>Nema GA skripte dok korisnik ne klikne "Prihvati"</td></tr>
+      <tr><td><strong>Granular consent</strong></td><td>Mogucnost izbora po kategorijama</td><td>"Prihvatam analytics ALI ne marketing"</td></tr>
+      <tr><td><strong>Free consent</strong></td><td>Odbijanje mora biti jednako lako kao prihvatanje</td><td>"Odbij sve" dugme jednako vidljivo kao "Prihvati"</td></tr>
+      <tr><td><strong>Easy withdrawal</strong></td><td>Korisnik moze promeniti odluku u svakom trenutku</td><td>Link "Upravljanje kolacicima" u footeru</td></tr>
+      <tr><td><strong>Documented</strong></td><td>Dokaz da je saglasnost data</td><td>Log sa timestamp-om, verzijom consent-a</td></tr>
+    </table>
+    <div class="callout callout-warn"><strong>Kljucno:</strong> "Nastavkom koriscenja sajta prihvatate kolacice" NIJE validan consent. GDPR zahteva <strong>afirmativnu akciju</strong> (klik na dugme). Takodje, unapred cekirani checkbox-ovi nisu validni (Planet49 presuda, CJEU 2019).</div>
+
+    <h2 id="ck4">4. Kategorije kolacica</h2>
+    <table>
+      <tr><th>Kategorija</th><th>Consent?</th><th>Primeri</th></tr>
+      <tr><td><strong>Neophodni (Essential)</strong></td><td>NE treba</td><td>Session ID, CSRF token, load balancer, korpa, jezik</td></tr>
+      <tr><td><strong>Analiticki (Analytics)</strong></td><td>DA</td><td>Google Analytics, Hotjar, Microsoft Clarity, Plausible*</td></tr>
+      <tr><td><strong>Funkcionalni</strong></td><td>DA</td><td>Chat widget, video preferences, A/B testing</td></tr>
+      <tr><td><strong>Marketinski (Advertising)</strong></td><td>DA</td><td>Facebook Pixel, Google Ads remarketing, AdSense</td></tr>
+    </table>
+    <p class="ref">* Plausible ne koristi kolacice ali prikuplja podatke koji mogu biti licni (IP, User-Agent). Strogo pravno, i dalje moze zahtevati consent u nekim jurisdikcijama.</p>
+
+    <h2 id="ck5">5. Implementacija cookie banera</h2>
+    <table>
+      <tr><th>Resenje</th><th>Cena</th><th>Tip</th><th>Prednosti</th></tr>
+      <tr><td><strong>CookieConsent</strong></td><td>Besplatno (open source)</td><td>JS biblioteka</td><td>Lagan, prilagodljiv, GDPR compliant</td></tr>
+      <tr><td><strong>Cookiebot</strong></td><td>Od &euro;9/mesec</td><td>SaaS</td><td>Auto-detekcija kolacica, scanner</td></tr>
+      <tr><td><strong>OneTrust</strong></td><td>Enterprise</td><td>SaaS</td><td>Najkompletniji, IAB TCF podrska</td></tr>
+      <tr><td><strong>Osano</strong></td><td>Od $0 (basic)</td><td>SaaS</td><td>Jednostavan, consent kategorije</td></tr>
+      <tr><td><strong>Google Funding Choices</strong></td><td>Besplatno</td><td>Google</td><td>Integrisan sa AdSense/GAM</td></tr>
+    </table>
+    <h3>CookieConsent (open source) — brzi start</h3>
+    <pre><code>&lt;!-- Dodajte u &lt;head&gt; --&gt;
+&lt;link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orestbida/cookieconsent@3/dist/cookieconsent.css"&gt;
+
+&lt;!-- Dodajte pre &lt;/body&gt; --&gt;
+&lt;script src="https://cdn.jsdelivr.net/gh/orestbida/cookieconsent@3/dist/cookieconsent.umd.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+CookieConsent.run({
+  categories: {
+    necessary: { enabled: true, readOnly: true },
+    analytics: {},
+    marketing: {}
+  },
+  language: {
+    default: 'sr',
+    translations: {
+      sr: {
+        consentModal: {
+          title: 'Koristimo kolacice',
+          description: 'Koristimo kolacice za analitiku i poboljsanje iskustva.',
+          acceptAllBtn: 'Prihvati sve',
+          acceptNecessaryBtn: 'Samo neophodni',
+          showPreferencesBtn: 'Podesavanja'
+        }
+      }
+    }
+  }
+});
+&lt;/script&gt;</code></pre>
+
+    <h2 id="ck6">6. Google Consent Mode v2</h2>
+    <p>Od <strong>marta 2024</strong>, Google zahteva Consent Mode v2 za sve sajtove koji koriste Google servise (Analytics, Ads, Tag Manager) i imaju korisnike iz EU.</p>
+    <h3>Kako radi</h3>
+    <ul>
+      <li>Consent Mode komunicira sa Google servisima o statusu saglasnosti korisnika</li>
+      <li>Ako korisnik NIJE dao consent, Google ne prikuplja podatke (ili koristi modeling)</li>
+      <li>Dva obavezna signala: <code>ad_storage</code> i <code>analytics_storage</code></li>
+      <li>Novi signali u v2: <code>ad_user_data</code> i <code>ad_personalization</code></li>
+    </ul>
+    <pre><code>&lt;!-- Default: sve blokirano dok korisnik ne da consent --&gt;
+&lt;script&gt;
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+
+// Default stanje: blokiraj sve
+gtag('consent', 'default', {
+  'ad_storage': 'denied',
+  'ad_user_data': 'denied',
+  'ad_personalization': 'denied',
+  'analytics_storage': 'denied'
+});
+
+// Kad korisnik prihvati analytics:
+gtag('consent', 'update', {
+  'analytics_storage': 'granted'
+});
+
+// Kad korisnik prihvati marketing:
+gtag('consent', 'update', {
+  'ad_storage': 'granted',
+  'ad_user_data': 'granted',
+  'ad_personalization': 'granted'
+});
+&lt;/script&gt;</code></pre>
+    <div class="callout callout-danger"><strong>Obavezno od marta 2024:</strong> Bez Consent Mode v2, Google nece kreirati nove audience liste za EU korisnike i remarketing nece raditi. Ovo utice na Google Ads konverzije i Analytics podatke.</div>
+
+    <h2 id="ck7">7. Tehnicka implementacija — blokiranje skripti</h2>
+    <p>Kljucno: non-essential skripte NE SMEJU se ucitati dok korisnik ne da consent.</p>
+    <pre><code>&lt;!-- POGRESNO — GA se ucitava odmah, pre consent-a --&gt;
+&lt;script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXX"&gt;&lt;/script&gt;
+
+&lt;!-- ISPRAVNO — blokirana skripta, ucitava se tek posle consent-a --&gt;
+&lt;script type="text/plain" data-cookiecategory="analytics"
+  src="https://www.googletagmanager.com/gtag/js?id=G-XXXXX"&gt;&lt;/script&gt;
+
+&lt;!-- CookieConsent automatski menja type="text/plain" u type="text/javascript"
+     kad korisnik prihvati analytics kategoriju --&gt;</code></pre>
+    <h3>Google Tag Manager pristup</h3>
+    <ul>
+      <li>GTM sa Consent Mode: postavite default consent na "denied"</li>
+      <li>Cookie banner azurira consent status</li>
+      <li>GTM triggeri se pale samo kad je consent "granted"</li>
+      <li>Ovo je najcistiji pristup za sajtove sa mnogo trackera</li>
+    </ul>
+
+    <h2 id="ck8">8. Dark patterns &mdash; sta NE raditi</h2>
+    <ul>
+      <li><strong>"Prihvati sve" veliko, "Odbij" sitno/sakriveno</strong> &mdash; GDPR zahteva jednaku vidljivost obe opcije</li>
+      <li><strong>Unapred cekirani checkbox-ovi</strong> &mdash; Nezakonito od Planet49 presude (CJEU, 2019)</li>
+      <li><strong>"Cookie wall"</strong> &mdash; Blokirate pristup sajtu dok korisnik ne prihvati. EDPB je rekao da ovo nije validan consent.</li>
+      <li><strong>"Nastavkom koriscenja prihvatate"</strong> &mdash; Nije afirmativna akcija. Nevazeci consent.</li>
+      <li><strong>Samo "Prihvati" bez "Odbij"</strong> &mdash; Korisnik MORA imati mogucnost odbijanja</li>
+      <li><strong>Tesko pronaci "Upravljanje podesavanjima"</strong> &mdash; Granularna kontrola mora biti lako dostupna</li>
+      <li><strong>Ponavljanje pitanja</strong> &mdash; Ako korisnik odbije, ne pitajte ponovo pri svakoj poseti</li>
+    </ul>
+    <div class="callout callout-warn"><strong>Test:</strong> Da li je jednako lako odbiti kolacice kao prihvatiti? Ako treba 1 klik za "Prihvati" a 3 klika za "Odbij" &mdash; to je dark pattern i potencijalno nezakonito.</div>
+
+    <h2 id="ck9">9. Kazne i presude</h2>
+    <table>
+      <tr><th>Kompanija</th><th>Kazna</th><th>Razlog</th><th>Organ</th></tr>
+      <tr><td><strong>Google</strong></td><td>&euro;150M</td><td>Cookie consent — tesko odbijanje</td><td>CNIL (Francuska)</td></tr>
+      <tr><td><strong>Amazon</strong></td><td>&euro;35M</td><td>Kolacici bez consent-a</td><td>CNIL</td></tr>
+      <tr><td><strong>Facebook</strong></td><td>&euro;60M</td><td>Cookie consent dark patterns</td><td>CNIL</td></tr>
+      <tr><td><strong>TikTok</strong></td><td>&euro;5M</td><td>Cookie consent krsenje</td><td>CNIL</td></tr>
+      <tr><td><strong>Planet49</strong></td><td>Presuda</td><td>Pre-checked checkbox = nevazeci consent</td><td>CJEU (2019)</td></tr>
+      <tr><td><strong>Vueling</strong></td><td>&euro;30K</td><td>Cookie wall</td><td>AEPD (Spanija)</td></tr>
+    </table>
+    <p>Kazne rastu svake godine. Regulatorni organi (CNIL, ICO, AEPD, BfDI) sve cesce sprovode kontrole i za manje sajtove.</p>
+
+    <h2 id="ck10">10. Reference i resursi</h2>
+    <ul>
+      <li><a href="https://gdpr-info.eu/recitals/no-30/" target="_blank">GDPR Recital 30 &mdash; Online identifiers</a></li>
+      <li><a href="https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A02002L0058-20091219" target="_blank">ePrivacy Directive 2002/58/EC</a></li>
+      <li><a href="https://www.cnil.fr/en/cookies-and-other-tracking-devices" target="_blank">CNIL &mdash; Cookie Guidelines</a></li>
+      <li><a href="https://developers.google.com/tag-platform/security/guides/consent" target="_blank">Google &mdash; Consent Mode v2</a></li>
+      <li><a href="https://cookieconsent.orestbida.com/" target="_blank">CookieConsent &mdash; Open Source Library</a></li>
+      <li><a href="https://www.cookiebot.com/" target="_blank">Cookiebot &mdash; Cookie Compliance</a></li>
+      <li><a href="https://edpb.europa.eu/our-work-tools/general-guidance/guidelines-recommendations-best-practices_en" target="_blank">EDPB &mdash; Guidelines</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Proverite cookie consent na vasem sajtu &rarr;</a>
+  </div>
+
+  <!-- ==================== ENGLISH ==================== -->
+  <div class="en">
+    <h1>Cookie Consent &mdash; GDPR Cookie Guide</h1>
+    <p class="subtitle">Everything about cookies: types, GDPR requirements, banner implementation, Consent Mode and fines</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">60%</div><div class="stat-label">EU sites without valid consent</div></div>
+      <div class="stat-card"><div class="stat-num">&euro;150M</div><div class="stat-label">CNIL fined Google (cookies)</div></div>
+      <div class="stat-card"><div class="stat-num">2024</div><div class="stat-label">Consent Mode v2 required</div></div>
+      <div class="stat-card"><div class="stat-num">4</div><div class="stat-label">Cookie categories</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#ck1e">Cookie types</a></li>
+        <li><a href="#ck2e">ePrivacy Directive</a></li>
+        <li><a href="#ck3e">GDPR cookie requirements</a></li>
+        <li><a href="#ck4e">Cookie categories</a></li>
+        <li><a href="#ck5e">Banner implementation</a></li>
+        <li><a href="#ck6e">Google Consent Mode v2</a></li>
+        <li><a href="#ck7e">Technical implementation</a></li>
+        <li><a href="#ck8e">Dark patterns</a></li>
+        <li><a href="#ck9e">Fines and rulings</a></li>
+        <li><a href="#ck10e">References</a></li>
+      </ol>
+    </div>
+
+    <h2 id="ck1e">1. Cookie types</h2>
+    <table>
+      <tr><th>Type</th><th>Duration</th><th>Description</th><th>Example</th></tr>
+      <tr><td><strong>Session</strong></td><td>Until browser close</td><td>Temporary</td><td>Login, cart</td></tr>
+      <tr><td><strong>Persistent</strong></td><td>Defined (days/months)</td><td>Survives browser close</td><td>"Remember me"</td></tr>
+      <tr><td><strong>First-party</strong></td><td>Varies</td><td>Set by visited site</td><td>Site session</td></tr>
+      <tr><td><strong>Third-party</strong></td><td>Varies</td><td>Set by third parties</td><td>GA, FB Pixel</td></tr>
+    </table>
+    <div class="callout callout-danger"><strong>Third-party cookies are dying:</strong> Chrome plans to block them (Privacy Sandbox). Safari and Firefox already do. Server-side tracking becomes increasingly important.</div>
+
+    <h2 id="ck2e">2. ePrivacy Directive (Cookie Law)</h2>
+    <p>EU regulation specifically about cookies (2002/58/EC). Article 5(3): accessing user device information (cookies) requires informed consent. Exception: strictly necessary cookies.</p>
+
+    <h2 id="ck3e">3. GDPR cookie requirements</h2>
+    <table>
+      <tr><th>Requirement</th><th>Meaning</th></tr>
+      <tr><td><strong>Informed</strong></td><td>User must know WHAT, WHY, and WHO collects</td></tr>
+      <tr><td><strong>Prior</strong></td><td>Consent BEFORE setting non-essential cookies</td></tr>
+      <tr><td><strong>Granular</strong></td><td>Choice per category (analytics, marketing)</td></tr>
+      <tr><td><strong>Free</strong></td><td>Rejecting must be as easy as accepting</td></tr>
+      <tr><td><strong>Withdrawable</strong></td><td>User can change decision anytime</td></tr>
+      <tr><td><strong>Documented</strong></td><td>Proof of consent given (timestamp, version)</td></tr>
+    </table>
+    <div class="callout callout-warn"><strong>Key:</strong> "By continuing to use this site you accept cookies" is NOT valid consent. GDPR requires affirmative action (button click). Pre-checked boxes are invalid (Planet49 ruling, CJEU 2019).</div>
+
+    <h2 id="ck4e">4. Cookie categories</h2>
+    <table>
+      <tr><th>Category</th><th>Consent?</th><th>Examples</th></tr>
+      <tr><td><strong>Essential</strong></td><td>NOT needed</td><td>Session ID, CSRF, load balancer, cart, language</td></tr>
+      <tr><td><strong>Analytics</strong></td><td>YES</td><td>Google Analytics, Hotjar, Clarity</td></tr>
+      <tr><td><strong>Functional</strong></td><td>YES</td><td>Chat widget, video prefs, A/B testing</td></tr>
+      <tr><td><strong>Marketing</strong></td><td>YES</td><td>FB Pixel, Google Ads remarketing, AdSense</td></tr>
+    </table>
+
+    <h2 id="ck5e">5. Banner implementation</h2>
+    <table>
+      <tr><th>Solution</th><th>Price</th><th>Type</th></tr>
+      <tr><td><strong>CookieConsent</strong></td><td>Free (open source)</td><td>JS library</td></tr>
+      <tr><td><strong>Cookiebot</strong></td><td>From &euro;9/mo</td><td>SaaS</td></tr>
+      <tr><td><strong>OneTrust</strong></td><td>Enterprise</td><td>SaaS</td></tr>
+      <tr><td><strong>Google Funding Choices</strong></td><td>Free</td><td>Google</td></tr>
+    </table>
+
+    <h2 id="ck6e">6. Google Consent Mode v2</h2>
+    <p>Required since <strong>March 2024</strong> for all sites using Google services with EU users. Without it, Google won't process EU user data.</p>
+    <p>Two mandatory signals: <code>ad_storage</code>, <code>analytics_storage</code>. New in v2: <code>ad_user_data</code>, <code>ad_personalization</code>.</p>
+    <div class="callout callout-danger"><strong>Required since March 2024:</strong> Without Consent Mode v2, Google won't create new audience lists for EU users and remarketing won't work.</div>
+
+    <h2 id="ck7e">7. Technical implementation</h2>
+    <p>Key: non-essential scripts MUST NOT load before consent.</p>
+    <pre><code>&lt;!-- WRONG — GA loads before consent --&gt;
+&lt;script src="https://www.googletagmanager.com/gtag/js?id=G-XXX"&gt;&lt;/script&gt;
+
+&lt;!-- RIGHT — blocked until consent --&gt;
+&lt;script type="text/plain" data-cookiecategory="analytics"
+  src="https://www.googletagmanager.com/gtag/js?id=G-XXX"&gt;&lt;/script&gt;</code></pre>
+
+    <h2 id="ck8e">8. Dark patterns — what NOT to do</h2>
+    <ul>
+      <li>"Accept all" big, "Reject" tiny/hidden — must be equally visible</li>
+      <li>Pre-checked checkboxes — illegal (Planet49, CJEU 2019)</li>
+      <li>"Cookie wall" — blocking access until accept, invalid per EDPB</li>
+      <li>"By continuing you accept" — not affirmative action</li>
+      <li>Only "Accept" without "Reject" option</li>
+      <li>Repeated asking after rejection</li>
+    </ul>
+    <div class="callout callout-warn"><strong>Test:</strong> Is it equally easy to reject cookies as to accept? If "Accept" takes 1 click but "Reject" takes 3 — that's a dark pattern and potentially illegal.</div>
+
+    <h2 id="ck9e">9. Fines and rulings</h2>
+    <table>
+      <tr><th>Company</th><th>Fine</th><th>Reason</th></tr>
+      <tr><td>Google</td><td>&euro;150M</td><td>Cookie consent — hard to reject</td></tr>
+      <tr><td>Amazon</td><td>&euro;35M</td><td>Cookies without consent</td></tr>
+      <tr><td>Facebook</td><td>&euro;60M</td><td>Dark patterns</td></tr>
+      <tr><td>TikTok</td><td>&euro;5M</td><td>Cookie consent violation</td></tr>
+      <tr><td>Planet49</td><td>Ruling</td><td>Pre-checked = invalid consent</td></tr>
+    </table>
+
+    <h2 id="ck10e">10. References and resources</h2>
+    <ul>
+      <li><a href="https://gdpr-info.eu/recitals/no-30/" target="_blank">GDPR Recital 30</a></li>
+      <li><a href="https://www.cnil.fr/en/cookies-and-other-tracking-devices" target="_blank">CNIL Cookie Guidelines</a></li>
+      <li><a href="https://developers.google.com/tag-platform/security/guides/consent" target="_blank">Google Consent Mode v2</a></li>
+      <li><a href="https://cookieconsent.orestbida.com/" target="_blank">CookieConsent Library</a></li>
+      <li><a href="https://edpb.europa.eu/" target="_blank">EDPB Guidelines</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Check cookie consent on your site &rarr;</a>
+  </div>
+
+  <div class="nav-links">
+    <a href="./blog-gdpr.html"><span class="sr">GDPR vodic</span><span class="en">GDPR Guide</span></a>
+    <a href="./blog-gdpr-policy.html"><span class="sr">Privacy Policy</span><span class="en">Privacy Policy</span></a>
+    <a href="./blog-gdpr-trackers.html"><span class="sr">Third-Party Trackeri</span><span class="en">Third-Party Trackers</span></a>
+    <a href="./blog-gdpr-rights.html"><span class="sr">Prava korisnika</span><span class="en">User Rights</span></a>
+    <a href="./blog-gdpr-fines.html"><span class="sr">GDPR Kazne</span><span class="en">GDPR Fines</span></a>
+    <a href="./privacy.html"><span class="sr">Politika privatnosti</span><span class="en">Privacy Policy</span></a>
+  </div>
+
+  </main>
+</div>
+<script src="./blog-common.js" defer></script>
+</body>
+</html>

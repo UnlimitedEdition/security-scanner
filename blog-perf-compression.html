@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gzip i Brotli kompresija — Kako smanjiti velicinu sajta | Web Security Scanner</title>
+  <meta name="description" content="Kompletni vodic za HTTP kompresiju: Gzip vs Brotli benchmarks, konfiguracija za Nginx/Apache/Express/Vercel, pre-kompresija, koji fajlovi se kompresuju a koji ne.">
+  <meta name="keywords" content="Gzip, Brotli, kompresija, Content-Encoding, Accept-Encoding, transfer size, HTTP kompresija, Nginx, Apache">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <link rel="canonical" href="https://security-scanner-ruddy.vercel.app/blog-perf-compression.html">
+  <link rel="alternate" hreflang="sr" href="https://security-scanner-ruddy.vercel.app/blog-perf-compression.html">
+  <link rel="alternate" hreflang="en" href="https://security-scanner-ruddy.vercel.app/blog-perf-compression.html">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Gzip i Brotli kompresija — Smanjite sajt za 70-90%">
+  <meta property="og:description" content="Gzip vs Brotli benchmarks, konfiguracija za sve servere, pre-kompresija i testiranje.">
+  <meta property="og:url" content="https://security-scanner-ruddy.vercel.app/blog-perf-compression.html">
+  <meta property="og:site_name" content="Web Security Scanner">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Gzip i Brotli kompresija — Smanjite sajt za 70-90%">
+  <meta name="twitter:description" content="Gzip vs Brotli benchmarks, konfiguracija za sve servere, pre-kompresija i testiranje.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Gzip i Brotli kompresija — Kako smanjiti velicinu sajta",
+    "author": {"@type": "Person", "name": "Toske", "url": "https://toske-programer.web.app"},
+    "publisher": {"@type": "Organization", "name": "Web Security Scanner"},
+    "datePublished": "2026-04-09",
+    "dateModified": "2026-04-09",
+    "description": "Kompletni vodic za HTTP kompresiju: Gzip vs Brotli, konfiguracija, pre-kompresija.",
+    "mainEntityOfPage": {"@type": "WebPage", "@id": "https://security-scanner-ruddy.vercel.app/blog-perf-compression.html"}
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Sta je bolje Gzip ili Brotli?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Brotli je 15-25% efikasniji od Gzip-a za tekstualne resurse (HTML, CSS, JS). Podrzava ga 97%+ modernih browsera. Brotli je sporiji za kompresiju ali to resava pre-kompresija (kompresujete fajlove unapred, ne na letu). Preporuka: Brotli kao primarni, Gzip kao fallback za stare browsere."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Da li kompresija usporava server?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Minimalno. Gzip na nivou 6 (default) dodaje samo 1-2ms po zahtevu. Brotli na visokim nivoima (11) moze biti spor za dinamicku kompresiju, ali na nivou 4-6 je brz. Resenje: pre-kompresija statickih fajlova (build time) i dinamicka kompresija na niskom nivou za HTML."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Kako proveriti da li je kompresija ukljucena?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Chrome DevTools: Network tab → kliknite na zahtev → Headers → trazite 'Content-Encoding: br' (Brotli) ili 'Content-Encoding: gzip'. Ili koristite Web Security Scanner koji automatski proverava kompresiju. Curl: 'curl -I -H Accept-Encoding:br,gzip yoursite.com'."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Koji fajlovi se NE kompresuju?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Fajlovi koji su VEC kompresovani: JPEG, PNG, WebP, AVIF (slike), WOFF2 (fontovi), MP4/WebM (video), ZIP/GZ (arhive). Kompresija ovih fajlova ne smanjuje velicinu (moze cak povecati) i samo trosi CPU."
+        }
+      }
+    ]
+  }
+  </script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+</head>
+<body>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr"><div class="timeline-title">Sadrzaj</div><ol id="timeline-sr"></ol></div>
+    <div class="en"><div class="timeline-title">Contents</div><ol id="timeline-en"></ol></div>
+  </aside>
+  <main class="blog-content">
+
+  <!-- ==================== SRPSKI ==================== -->
+  <div class="sr">
+    <h1>Gzip i Brotli kompresija &mdash; Kako smanjiti velicinu sajta</h1>
+    <p class="subtitle">Kompletni vodic: HTTP kompresija koja smanjuje transfer za 70-90% bez promene sadrzaja</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">70-90%</div><div class="stat-label">Smanjenje velicine sa kompresijom</div></div>
+      <div class="stat-card"><div class="stat-num">15-25%</div><div class="stat-label">Brotli bolji od Gzip-a</div></div>
+      <div class="stat-card"><div class="stat-num">97%</div><div class="stat-label">Browser podrska za Brotli</div></div>
+      <div class="stat-card"><div class="stat-num">2015</div><div class="stat-label">Google objavio Brotli</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Sadrzaj</h3>
+      <ol>
+        <li><a href="#co1">Sta je HTTP kompresija</a></li>
+        <li><a href="#co2">Kako radi: Accept-Encoding / Content-Encoding</a></li>
+        <li><a href="#co3">Gzip</a></li>
+        <li><a href="#co4">Brotli</a></li>
+        <li><a href="#co5">Gzip vs Brotli vs Deflate</a></li>
+        <li><a href="#co6">Koji fajlovi se kompresuju</a></li>
+        <li><a href="#co7">Pre-kompresija vs dinamicka</a></li>
+        <li><a href="#co8">Konfiguracija: Nginx, Apache, Express, Vercel</a></li>
+        <li><a href="#co9">Testiranje kompresije</a></li>
+        <li><a href="#co10">Najcesce greske</a></li>
+        <li><a href="#co11">Reference i resursi</a></li>
+      </ol>
+    </div>
+
+    <h2 id="co1">1. Sta je HTTP kompresija</h2>
+    <p>HTTP kompresija smanjuje velicinu podataka koji se prenose izmedju servera i browsera. Server kompresuje odgovor (HTML, CSS, JS), browser ga dekompresuje i prikazuje. Korisnik ne primecuje razliku &mdash; sadrzaj je identican, samo je prenos brzi.</p>
+    <ul>
+      <li><strong>HTML od 100KB</strong> &rarr; kompresovan na ~15KB (85% usteda)</li>
+      <li><strong>CSS od 50KB</strong> &rarr; kompresovan na ~8KB (84% usteda)</li>
+      <li><strong>JavaScript od 200KB</strong> &rarr; kompresovan na ~45KB (77% usteda)</li>
+    </ul>
+    <div class="callout"><strong>Cinjenica:</strong> Kompresija je najlaksi "quick win" za performanse. Jedno podesavanje na serveru smanjuje SVE tekstualne transfere za 70-90%. Nema promene koda, nema promene dizajna.</div>
+
+    <h2 id="co2">2. Kako radi: Accept-Encoding / Content-Encoding</h2>
+    <pre><code># 1. Browser salje zahtev sa listom podrzanih kompresija
+GET /style.css HTTP/1.1
+Accept-Encoding: gzip, deflate, br
+
+# 2. Server bira najbolju i kompresuje odgovor
+HTTP/1.1 200 OK
+Content-Encoding: br
+Content-Type: text/css
+Content-Length: 8234
+Vary: Accept-Encoding
+
+[kompresovani podaci]
+
+# 3. Browser dekompresuje i prikazuje normalno</code></pre>
+    <ul>
+      <li><code>br</code> = Brotli (najpopularniji, najefikasniji)</li>
+      <li><code>gzip</code> = Gzip (univerzalan, svuda podrzan)</li>
+      <li><code>deflate</code> = Deflate (zastareo, retko se koristi)</li>
+    </ul>
+    <div class="callout callout-warn"><strong>Vary: Accept-Encoding</strong> je obavezan header kad koristite kompresiju. Bez njega, CDN moze servirati kompresovanu verziju browseru koji ne podrzava tu kompresiju.</div>
+
+    <h2 id="co3">3. Gzip</h2>
+    <p>Gzip je najstariji i najsire podrzan algoritam kompresije za web. Kreiran 1992, baziran na DEFLATE algoritmu (LZ77 + Huffman coding).</p>
+    <h3>Nivoi kompresije (1-9)</h3>
+    <table>
+      <tr><th>Nivo</th><th>Kompresija</th><th>Brzina</th><th>Preporuka</th></tr>
+      <tr><td>1</td><td>Najslabija</td><td>Najbrza</td><td>Real-time streaming</td></tr>
+      <tr><td>4-5</td><td>Dobra</td><td>Brza</td><td>Dinamicki sadrzaj (HTML)</td></tr>
+      <tr><td><strong>6</strong></td><td><strong>Odlicna</strong></td><td><strong>Umerena</strong></td><td><strong>Default — najbolji balans</strong></td></tr>
+      <tr><td>9</td><td>Maksimalna</td><td>Spora</td><td>Pre-kompresija statickih fajlova</td></tr>
+    </table>
+    <ul>
+      <li><strong>Browser podrska:</strong> 100% &mdash; svaki browser od IE6 podrzava Gzip</li>
+      <li><strong>Prosecna usteda:</strong> 70-80% za tekstualne fajlove</li>
+      <li><strong>CPU overhead:</strong> Minimalan na nivou 6 (~1-2ms po zahtevu)</li>
+    </ul>
+
+    <h2 id="co4">4. Brotli</h2>
+    <p>Brotli je Google-ov algoritam kompresije, objavljen 2015. godine (RFC 7932). Dizajniran specificno za web, koristi unapred definisan recnik od 120KB sa cestim web paternima (HTML tagovi, CSS propertiji, JS kljucne reci).</p>
+    <h3>Prednosti nad Gzip-om</h3>
+    <ul>
+      <li><strong>15-25% bolja kompresija</strong> za tekstualne resurse pri istom kvalitetu</li>
+      <li><strong>Ugradjeni web recnik</strong> &mdash; zna unapred ceste web paterne sto poboljsava kompresiju malih fajlova</li>
+      <li><strong>Brza dekompresija</strong> &mdash; browser dekompresuje Brotli brze od Gzip-a</li>
+      <li><strong>11 nivoa kompresije</strong> (vs 9 za Gzip) &mdash; vise fleksibilnosti</li>
+    </ul>
+    <h3>Nivoi kompresije (0-11)</h3>
+    <table>
+      <tr><th>Nivo</th><th>Kompresija</th><th>Brzina</th><th>Preporuka</th></tr>
+      <tr><td>1-3</td><td>Dobra</td><td>Vrlo brza</td><td>Real-time, brzi od Gzip 6</td></tr>
+      <tr><td><strong>4-6</strong></td><td><strong>Odlicna</strong></td><td><strong>Brza</strong></td><td><strong>Dinamicki sadrzaj</strong></td></tr>
+      <tr><td>7-9</td><td>Vrlo dobra</td><td>Umerena</td><td>CDN pre-kompresija</td></tr>
+      <tr><td>10-11</td><td>Maksimalna</td><td>Spora</td><td>Build-time pre-kompresija SAMO</td></tr>
+    </table>
+    <div class="callout callout-warn"><strong>Vazno:</strong> Brotli nivo 11 je 10-50x sporiji od nivoa 6. NIKAD ne koristite nivo 11 za dinamicku kompresiju. Koristite ga samo za pre-kompresiju pri build-u.</div>
+
+    <h2 id="co5">5. Gzip vs Brotli vs Deflate — benchmarks</h2>
+    <table>
+      <tr><th>Metrika</th><th>Gzip (nivo 6)</th><th>Brotli (nivo 6)</th><th>Brotli (nivo 11)</th><th>Deflate</th></tr>
+      <tr><td>HTML 100KB</td><td>~18KB</td><td>~14KB</td><td>~12KB</td><td>~19KB</td></tr>
+      <tr><td>CSS 50KB</td><td>~10KB</td><td>~8KB</td><td>~6.5KB</td><td>~11KB</td></tr>
+      <tr><td>JS 200KB</td><td>~55KB</td><td>~45KB</td><td>~38KB</td><td>~58KB</td></tr>
+      <tr><td>Kompresija vreme</td><td>~2ms</td><td>~3ms</td><td>~150ms</td><td>~2ms</td></tr>
+      <tr><td>Dekompresija</td><td>~1ms</td><td>~0.8ms</td><td>~0.8ms</td><td>~1ms</td></tr>
+      <tr><td>Browser podrska</td><td>100%</td><td>97%+</td><td>97%+</td><td>100%</td></tr>
+      <tr><td><strong>Preporuka</strong></td><td>Fallback</td><td><strong>Primarni</strong></td><td>Pre-kompresija</td><td>Ne koristiti</td></tr>
+    </table>
+
+    <h2 id="co6">6. Koji fajlovi se kompresuju, koji NE</h2>
+    <h3>KOMPRESOVATI &#10004;</h3>
+    <table>
+      <tr><th>Tip fajla</th><th>MIME type</th><th>Tipicna usteda</th></tr>
+      <tr><td>HTML</td><td>text/html</td><td>80-90%</td></tr>
+      <tr><td>CSS</td><td>text/css</td><td>80-85%</td></tr>
+      <tr><td>JavaScript</td><td>application/javascript</td><td>75-80%</td></tr>
+      <tr><td>JSON</td><td>application/json</td><td>80-90%</td></tr>
+      <tr><td>XML</td><td>application/xml</td><td>80-85%</td></tr>
+      <tr><td>SVG</td><td>image/svg+xml</td><td>60-75%</td></tr>
+      <tr><td>Plain text</td><td>text/plain</td><td>70-80%</td></tr>
+      <tr><td>Web fonts (TTF, OTF)</td><td>font/ttf</td><td>40-50%</td></tr>
+    </table>
+    <h3>NE KOMPRESOVATI &#10008;</h3>
+    <ul>
+      <li><strong>JPEG, PNG, WebP, AVIF, GIF</strong> &mdash; vec kompresovani. Dodatna kompresija ne pomaze i trosi CPU.</li>
+      <li><strong>WOFF2</strong> &mdash; vec koristi Brotli kompresiju interno. Kompresija nad kompresijom nema efekta.</li>
+      <li><strong>MP4, WebM, MP3, AAC</strong> &mdash; video i audio su vec kompresovani.</li>
+      <li><strong>ZIP, GZ, BR, RAR</strong> &mdash; arhive su vec kompresovane.</li>
+      <li><strong>PDF</strong> &mdash; vecina PDF-ova je vec kompresovana interno.</li>
+    </ul>
+    <div class="callout callout-danger"><strong>Greska:</strong> Kompresija vec kompresovanih fajlova moze POVECATI velicinu (overhead kompresije bez ustede) i bespotrebno trositi CPU.</div>
+
+    <h2 id="co7">7. Pre-kompresija vs dinamicka kompresija</h2>
+    <table>
+      <tr><th>Aspekt</th><th>Dinamicka</th><th>Pre-kompresija</th></tr>
+      <tr><td><strong>Kada</strong></td><td>Na svaki zahtev, u realnom vremenu</td><td>Jednom, pri build/deploy-u</td></tr>
+      <tr><td><strong>CPU</strong></td><td>Koristi CPU na svaki zahtev</td><td>Jednom pri buildu, nula runtime CPU</td></tr>
+      <tr><td><strong>Nivo</strong></td><td>Nizak-srednji (Gzip 6, Brotli 4-6)</td><td>Maksimalan (Gzip 9, Brotli 11)</td></tr>
+      <tr><td><strong>Za</strong></td><td>Dinamicki sadrzaj (HTML, API)</td><td>Staticni fajlovi (CSS, JS, slike)</td></tr>
+      <tr><td><strong>Primer</strong></td><td>Nginx <code>gzip on</code></td><td><code>gzip style.css</code> &rarr; style.css.gz</td></tr>
+    </table>
+    <pre><code># Pre-kompresija pri build-u
+# Generise .gz i .br verzije svih statickih fajlova
+find ./dist -name "*.css" -o -name "*.js" -o -name "*.html" -o -name "*.svg" | \
+  while read f; do
+    gzip -9 -k "$f"                    # style.css → style.css.gz
+    brotli -q 11 -o "$f.br" "$f"       # style.css → style.css.br
+  done
+
+# Nginx servira pre-kompresovane fajlove ako postoje
+gzip_static on;    # Servira .gz ako postoji
+brotli_static on;  # Servira .br ako postoji (nginx-brotli modul)</code></pre>
+
+    <h2 id="co8">8. Konfiguracija</h2>
+    <h3>Nginx</h3>
+    <pre><code># /etc/nginx/nginx.conf
+http {
+    # Gzip
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 256;
+    gzip_comp_level 6;
+    gzip_types
+        text/plain text/css text/xml text/javascript
+        application/javascript application/json application/xml
+        image/svg+xml application/xhtml+xml;
+
+    # Brotli (zahteva nginx-brotli modul)
+    brotli on;
+    brotli_comp_level 6;
+    brotli_types
+        text/plain text/css text/xml text/javascript
+        application/javascript application/json application/xml
+        image/svg+xml;
+
+    # Pre-kompresija (servira .gz/.br ako postoji)
+    gzip_static on;
+    brotli_static on;
+}</code></pre>
+    <h3>Apache (.htaccess)</h3>
+    <pre><code>&lt;IfModule mod_deflate.c&gt;
+  AddOutputFilterByType DEFLATE text/html text/plain text/css
+  AddOutputFilterByType DEFLATE text/xml text/javascript
+  AddOutputFilterByType DEFLATE application/javascript application/json
+  AddOutputFilterByType DEFLATE application/xml image/svg+xml
+
+  # Ne kompresuj vec kompresovane
+  SetEnvIfNoCase Request_URI \.(?:gif|jpe?g|png|webp|avif)$ no-gzip
+  SetEnvIfNoCase Request_URI \.(?:woff2?|ttf|otf)$ no-gzip
+&lt;/IfModule&gt;</code></pre>
+    <h3>Express.js (Node)</h3>
+    <pre><code>const compression = require('compression');
+const express = require('express');
+const app = express();
+
+// Gzip kompresija za sve tekstualne odgovore
+app.use(compression({
+  level: 6,
+  threshold: 256,  // Ne kompresuj fajlove manje od 256B
+  filter: (req, res) =&gt; {
+    // Ne kompresuj vec kompresovane formate
+    if (req.headers['x-no-compression']) return false;
+    return compression.filter(req, res);
+  }
+}));
+
+// Za Brotli: npm install shrink-ray-current
+// const shrinkRay = require('shrink-ray-current');
+// app.use(shrinkRay());</code></pre>
+    <h3>Vercel / Cloudflare</h3>
+    <p><strong>Vercel:</strong> Automatski kompresuje sa Brotli. Nema konfiguracije &mdash; radi iz kutije.</p>
+    <p><strong>Cloudflare:</strong> Speed &rarr; Optimization &rarr; Auto Minify + Brotli: ON. Takodje automatski.</p>
+    <h3>FastAPI (Python)</h3>
+    <pre><code>from fastapi import FastAPI
+from fastapi.middleware.gzip import GZipMiddleware
+
+app = FastAPI()
+app.add_middleware(GZipMiddleware, minimum_size=500)
+# Kompresuje sve odgovore vece od 500 bajtova</code></pre>
+
+    <h2 id="co9">9. Testiranje kompresije</h2>
+    <ul>
+      <li><strong>Chrome DevTools:</strong> Network tab &rarr; kliknite zahtev &rarr; Response Headers &rarr; trazite <code>Content-Encoding: br</code> ili <code>gzip</code></li>
+      <li><strong>curl:</strong></li>
+    </ul>
+    <pre><code># Provera sa curl-om
+curl -I -H "Accept-Encoding: br,gzip" https://vasajt.rs/
+
+# Trazite u odgovoru:
+# Content-Encoding: br     ← Brotli aktivan
+# Content-Encoding: gzip   ← Gzip aktivan
+# (nista)                  ← Kompresija NIJE aktivna!</code></pre>
+    <ul>
+      <li><strong><a href="./index.html">Web Security Scanner</a></strong> &mdash; automatski proverava da li je kompresija aktivna na vasem sajtu.</li>
+      <li><strong>PageSpeed Insights</strong> &mdash; prikazuje "Enable text compression" preporuku ako kompresija nije aktivna.</li>
+      <li><strong>GTmetrix</strong> &mdash; prikazuje kompresovanu vs nekompresovanu velicinu za svaki resurs.</li>
+    </ul>
+
+    <h2 id="co10">10. Najcesce greske</h2>
+    <ul>
+      <li><strong>Kompresija iskljucena</strong> &mdash; #1 greska. Mnogi hosting provajderi ne ukljucuju kompresiju po defaultu.</li>
+      <li><strong>Kompresija slika</strong> &mdash; Gzip/Brotli na JPEG/PNG trose CPU bez ustede. Iskljucite za binarne formate.</li>
+      <li><strong>Brotli nivo 11 dinamicki</strong> &mdash; 10-50x sporije od nivoa 6. Koristite samo za pre-kompresiju.</li>
+      <li><strong>Nedostaje Vary: Accept-Encoding</strong> &mdash; CDN moze servirati pogresan format. Nginx automatski dodaje sa <code>gzip_vary on</code>.</li>
+      <li><strong>Kompresija malih fajlova</strong> &mdash; fajlovi &lt;256 bajtova posle kompresije mogu biti VECI (overhead). Postavite <code>min_length</code>.</li>
+      <li><strong>Dupla kompresija</strong> &mdash; CDN kompresuje + server kompresuje = CPU waste. Koristite samo jedan nivo.</li>
+      <li><strong>WOFF2 kompresija</strong> &mdash; WOFF2 VEC koristi Brotli interno. Ne kompresujte ponovo.</li>
+    </ul>
+
+    <h2 id="co11">11. Reference i resursi</h2>
+    <ul>
+      <li><a href="https://datatracker.ietf.org/doc/html/rfc7932" target="_blank">RFC 7932 &mdash; Brotli Compressed Data Format</a></li>
+      <li><a href="https://github.com/google/brotli" target="_blank">Google Brotli &mdash; GitHub</a></li>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Encoding" target="_blank">MDN &mdash; Content-Encoding</a></li>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Encoding" target="_blank">MDN &mdash; Accept-Encoding</a></li>
+      <li><a href="https://web.dev/articles/optimizing-content-efficiency-optimize-encoding-and-transfer" target="_blank">web.dev &mdash; Optimize Encoding and Transfer</a></li>
+      <li><a href="https://caniuse.com/brotli" target="_blank">Can I Use &mdash; Brotli</a></li>
+      <li><a href="https://nginx.org/en/docs/http/ngx_http_gzip_module.html" target="_blank">Nginx &mdash; Gzip Module</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Proverite kompresiju vaseg sajta &rarr;</a>
+  </div>
+
+  <!-- ==================== ENGLISH ==================== -->
+  <div class="en">
+    <h1>Gzip &amp; Brotli Compression &mdash; How to Reduce Site Size</h1>
+    <p class="subtitle">Complete guide: HTTP compression that reduces transfers by 70-90% without content changes</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">70-90%</div><div class="stat-label">Size reduction with compression</div></div>
+      <div class="stat-card"><div class="stat-num">15-25%</div><div class="stat-label">Brotli better than Gzip</div></div>
+      <div class="stat-card"><div class="stat-num">97%</div><div class="stat-label">Browser support for Brotli</div></div>
+      <div class="stat-card"><div class="stat-num">2015</div><div class="stat-label">Google released Brotli</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#co1e">What is HTTP compression</a></li>
+        <li><a href="#co2e">How it works</a></li>
+        <li><a href="#co3e">Gzip</a></li>
+        <li><a href="#co4e">Brotli</a></li>
+        <li><a href="#co5e">Gzip vs Brotli vs Deflate</a></li>
+        <li><a href="#co6e">Which files to compress</a></li>
+        <li><a href="#co7e">Pre-compression vs dynamic</a></li>
+        <li><a href="#co8e">Configuration</a></li>
+        <li><a href="#co9e">Testing compression</a></li>
+        <li><a href="#co10e">Common mistakes</a></li>
+        <li><a href="#co11e">References</a></li>
+      </ol>
+    </div>
+
+    <h2 id="co1e">1. What is HTTP compression</h2>
+    <p>HTTP compression reduces data size between server and browser. Server compresses, browser decompresses. User sees identical content, just faster transfer.</p>
+    <div class="callout"><strong>Fact:</strong> Compression is the easiest "quick win" for performance. One server setting reduces ALL text transfers by 70-90%.</div>
+
+    <h2 id="co2e">2. How it works: Accept-Encoding / Content-Encoding</h2>
+    <p>Browser sends <code>Accept-Encoding: gzip, deflate, br</code> → Server picks best algorithm → responds with <code>Content-Encoding: br</code> (or gzip) → Browser decompresses.</p>
+    <div class="callout callout-warn"><strong>Vary: Accept-Encoding</strong> header is mandatory with compression. Without it, CDN might serve compressed version to a browser that doesn't support it.</div>
+
+    <h2 id="co3e">3. Gzip</h2>
+    <p>Oldest and most widely supported. Created 1992, based on DEFLATE (LZ77 + Huffman). Levels 1-9, default 6 is best balance. 100% browser support. ~70-80% savings.</p>
+
+    <h2 id="co4e">4. Brotli</h2>
+    <p>Google's algorithm (2015, RFC 7932). Built-in web dictionary of common patterns. 15-25% better than Gzip. Faster decompression. 97%+ support.</p>
+    <table>
+      <tr><th>Level</th><th>Compression</th><th>Speed</th><th>Use for</th></tr>
+      <tr><td>1-3</td><td>Good</td><td>Very fast</td><td>Real-time, faster than Gzip 6</td></tr>
+      <tr><td><strong>4-6</strong></td><td><strong>Great</strong></td><td><strong>Fast</strong></td><td><strong>Dynamic content</strong></td></tr>
+      <tr><td>10-11</td><td>Maximum</td><td>Slow</td><td>Build-time pre-compression ONLY</td></tr>
+    </table>
+    <div class="callout callout-warn"><strong>Important:</strong> Brotli level 11 is 10-50x slower than level 6. NEVER use level 11 for dynamic compression.</div>
+
+    <h2 id="co5e">5. Gzip vs Brotli vs Deflate — benchmarks</h2>
+    <table>
+      <tr><th>Metric</th><th>Gzip 6</th><th>Brotli 6</th><th>Brotli 11</th></tr>
+      <tr><td>HTML 100KB</td><td>~18KB</td><td>~14KB</td><td>~12KB</td></tr>
+      <tr><td>CSS 50KB</td><td>~10KB</td><td>~8KB</td><td>~6.5KB</td></tr>
+      <tr><td>JS 200KB</td><td>~55KB</td><td>~45KB</td><td>~38KB</td></tr>
+      <tr><td>Compress time</td><td>~2ms</td><td>~3ms</td><td>~150ms</td></tr>
+      <tr><td>Support</td><td>100%</td><td>97%+</td><td>97%+</td></tr>
+    </table>
+
+    <h2 id="co6e">6. Which files to compress</h2>
+    <p><strong>Compress:</strong> HTML, CSS, JS, JSON, XML, SVG, plain text, TTF/OTF fonts (70-90% savings).</p>
+    <p><strong>DON'T compress:</strong> JPEG, PNG, WebP, AVIF (already compressed), WOFF2 (uses Brotli internally), MP4/WebM, ZIP/GZ/BR.</p>
+    <div class="callout callout-danger"><strong>Mistake:</strong> Compressing already-compressed files can INCREASE size and wastes CPU.</div>
+
+    <h2 id="co7e">7. Pre-compression vs dynamic</h2>
+    <table>
+      <tr><th>Aspect</th><th>Dynamic</th><th>Pre-compression</th></tr>
+      <tr><td>When</td><td>Every request, real-time</td><td>Once at build/deploy</td></tr>
+      <tr><td>CPU</td><td>Per-request CPU cost</td><td>Zero runtime CPU</td></tr>
+      <tr><td>Level</td><td>Low-medium (Gzip 6, Brotli 4-6)</td><td>Maximum (Gzip 9, Brotli 11)</td></tr>
+      <tr><td>For</td><td>Dynamic content (HTML, API)</td><td>Static files (CSS, JS)</td></tr>
+    </table>
+
+    <h2 id="co8e">8. Configuration</h2>
+    <p><strong>Nginx:</strong> <code>gzip on; gzip_comp_level 6; brotli on; brotli_comp_level 6;</code></p>
+    <p><strong>Apache:</strong> <code>mod_deflate</code> with <code>AddOutputFilterByType DEFLATE</code></p>
+    <p><strong>Express.js:</strong> <code>app.use(compression({level: 6}))</code></p>
+    <p><strong>FastAPI:</strong> <code>app.add_middleware(GZipMiddleware, minimum_size=500)</code></p>
+    <p><strong>Vercel/Cloudflare:</strong> Automatic Brotli, no configuration needed.</p>
+
+    <h2 id="co9e">9. Testing compression</h2>
+    <ul>
+      <li><strong>Chrome DevTools:</strong> Network → click request → Headers → look for <code>Content-Encoding: br</code> or <code>gzip</code></li>
+      <li><strong>curl:</strong> <code>curl -I -H "Accept-Encoding: br,gzip" yoursite.com</code></li>
+      <li><strong><a href="./index.html">Web Security Scanner</a></strong> — automatically checks compression</li>
+      <li><strong>PageSpeed Insights</strong> — shows "Enable text compression" if not active</li>
+    </ul>
+
+    <h2 id="co10e">10. Common mistakes</h2>
+    <ul>
+      <li><strong>Compression disabled</strong> — #1 mistake, many hosts don't enable by default</li>
+      <li><strong>Compressing images</strong> — Gzip on JPEG/PNG wastes CPU with no savings</li>
+      <li><strong>Brotli level 11 dynamic</strong> — 10-50x slower, use only for pre-compression</li>
+      <li><strong>Missing Vary header</strong> — CDN serves wrong format</li>
+      <li><strong>Small files</strong> — &lt;256 bytes may get LARGER after compression</li>
+      <li><strong>Double compression</strong> — CDN + server both compress = CPU waste</li>
+      <li><strong>WOFF2 compression</strong> — WOFF2 already uses Brotli internally</li>
+    </ul>
+
+    <h2 id="co11e">11. References and resources</h2>
+    <ul>
+      <li><a href="https://datatracker.ietf.org/doc/html/rfc7932" target="_blank">RFC 7932 &mdash; Brotli</a></li>
+      <li><a href="https://github.com/google/brotli" target="_blank">Google Brotli &mdash; GitHub</a></li>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Encoding" target="_blank">MDN &mdash; Content-Encoding</a></li>
+      <li><a href="https://web.dev/articles/optimizing-content-efficiency-optimize-encoding-and-transfer" target="_blank">web.dev &mdash; Optimize Encoding</a></li>
+      <li><a href="https://caniuse.com/brotli" target="_blank">Can I Use &mdash; Brotli</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Check your site's compression &rarr;</a>
+  </div>
+
+  <div class="nav-links">
+    <a href="./blog-performance.html"><span class="sr">Performanse vodic</span><span class="en">Performance Guide</span></a>
+    <a href="./blog-perf-cwv.html"><span class="sr">Core Web Vitals</span><span class="en">Core Web Vitals</span></a>
+    <a href="./blog-perf-images.html"><span class="sr">Optimizacija slika</span><span class="en">Image Optimization</span></a>
+    <a href="./blog-perf-cache.html"><span class="sr">HTTP Caching</span><span class="en">HTTP Caching</span></a>
+    <a href="./blog-perf-cdn.html"><span class="sr">CDN</span><span class="en">CDN</span></a>
+    <a href="./blog-perf-lazy.html"><span class="sr">Lazy Loading</span><span class="en">Lazy Loading</span></a>
+  </div>
+
+  </main>
+</div>
+<script src="./blog-common.js" defer></script>
+</body>
+</html>

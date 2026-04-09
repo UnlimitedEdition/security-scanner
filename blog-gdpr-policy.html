@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy — Kako napisati politiku privatnosti | Web Security Scanner</title>
+  <meta name="description" content="Kompletni vodic za Privacy Policy po GDPR-u: obavezne informacije (clan 13-14), template po sekcijama, generatori, srpski ZZPL, gde postaviti i kako azurirati.">
+  <meta name="keywords" content="privacy policy, politika privatnosti, GDPR, obavezne informacije, DPO, ZZPL, Termly, Iubenda">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <link rel="canonical" href="https://security-scanner-ruddy.vercel.app/blog-gdpr-policy.html">
+  <link rel="alternate" hreflang="sr" href="https://security-scanner-ruddy.vercel.app/blog-gdpr-policy.html">
+  <link rel="alternate" hreflang="en" href="https://security-scanner-ruddy.vercel.app/blog-gdpr-policy.html">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Privacy Policy — Kako napisati politiku privatnosti po GDPR-u">
+  <meta property="og:description" content="Obavezne informacije, template, generatori, srpski ZZPL i praktični saveti.">
+  <meta property="og:url" content="https://security-scanner-ruddy.vercel.app/blog-gdpr-policy.html">
+  <meta property="og:site_name" content="Web Security Scanner">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Privacy Policy — Kako napisati politiku privatnosti po GDPR-u">
+  <meta name="twitter:description" content="Obavezne informacije, template, generatori, srpski ZZPL i praktični saveti.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Privacy Policy — Kako napisati politiku privatnosti",
+    "author": {"@type": "Person", "name": "Toske", "url": "https://toske-programer.web.app"},
+    "publisher": {"@type": "Organization", "name": "Web Security Scanner"},
+    "datePublished": "2026-04-09",
+    "dateModified": "2026-04-09",
+    "description": "Kompletni vodic za Privacy Policy: GDPR clan 13-14, template, generatori, srpski ZZPL.",
+    "mainEntityOfPage": {"@type": "WebPage", "@id": "https://security-scanner-ruddy.vercel.app/blog-gdpr-policy.html"}
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Da li mi treba Privacy Policy?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Da, ako prikupljate BILO KAKVE licne podatke — a to radite cim imate kontakt formu, Google Analytics, kolacice, newsletter, e-shop ili login. GDPR (clan 13-14) i srpski ZZPL zahtevaju jasnu politiku privatnosti. Bez nje rizikujete kazne i gubitak poverenja korisnika."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Moze li Privacy Policy biti na srpskom?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Da. Privacy Policy mora biti na jeziku koji vasi korisnici razumeju. Za srpski sajt, srpski je obavezan. Ako imate medjunarodne korisnike, preporucuje se i engleska verzija. GDPR zahteva da bude 'jasna i razumljiva' — pravnicki zargon nije prihvatljiv."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Ko pise Privacy Policy?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Opcije: 1) Advokat specijalizovan za IT pravo (najsigurnije, 300-1000 EUR), 2) Privacy Policy generator (Termly, Iubenda — od 0-10 EUR/mesec), 3) Template + prilagodjavanja (besplatno ali riskantno). Za ozbiljne sajtove sa e-commerce ili osetljivim podacima, preporucuje se advokat."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Koliko cesto treba azurirati Privacy Policy?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Azurirajte kad: 1) Dodate novi servis koji prikuplja podatke (novi analytics, chat, payment), 2) Promenite nacin obrade podataka, 3) Dodate novu kategoriju kolacica, 4) Promenite hosting/infrastrukturu, 5) Zakon se promeni. Minimum jednom godisnje revizija. UVEK obavestite korisnike o promenama."
+        }
+      }
+    ]
+  }
+  </script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+</head>
+<body>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr"><div class="timeline-title">Sadrzaj</div><ol id="timeline-sr"></ol></div>
+    <div class="en"><div class="timeline-title">Contents</div><ol id="timeline-en"></ol></div>
+  </aside>
+  <main class="blog-content">
+
+  <!-- ==================== SRPSKI ==================== -->
+  <div class="sr">
+    <h1>Privacy Policy &mdash; Kako napisati politiku privatnosti</h1>
+    <p class="subtitle">Kompletni vodic: sta MORA da sadrzi, template, generatori, srpski ZZPL i prakticni saveti</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">Cl. 13-14</div><div class="stat-label">GDPR clanci koji regulisu Privacy Policy</div></div>
+      <div class="stat-card"><div class="stat-num">9</div><div class="stat-label">Obaveznih informacija po GDPR-u</div></div>
+      <div class="stat-card"><div class="stat-num">30 dana</div><div class="stat-label">Rok za odgovor na zahtev korisnika</div></div>
+      <div class="stat-card"><div class="stat-num">2018</div><div class="stat-label">Srpski ZZPL usvojen</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Sadrzaj</h3>
+      <ol>
+        <li><a href="#pp1">Zasto je Privacy Policy obavezan</a></li>
+        <li><a href="#pp2">9 obaveznih informacija po GDPR-u</a></li>
+        <li><a href="#pp3">Template po sekcijama</a></li>
+        <li><a href="#pp4">Privacy Policy generatori</a></li>
+        <li><a href="#pp5">Gde i kako postaviti na sajtu</a></li>
+        <li><a href="#pp6">Azuriranje i obavestavanje</a></li>
+        <li><a href="#pp7">Srpski ZZPL</a></li>
+        <li><a href="#pp8">Najcesce greske</a></li>
+        <li><a href="#pp9">Reference i resursi</a></li>
+      </ol>
+    </div>
+
+    <h2 id="pp1">1. Zasto je Privacy Policy obavezan</h2>
+    <p>GDPR (clanci 13 i 14) zahteva da svaki sajt koji prikuplja licne podatke ima jasnu i razumljivu politiku privatnosti. Licni podaci ukljucuju:</p>
+    <ul>
+      <li>Ime, email, telefon (kontakt forme, registracija)</li>
+      <li>IP adresa, kolacici, browser fingerprint (automatski se prikupljaju)</li>
+      <li>Podaci o ponasanju (Google Analytics, Hotjar, heatmaps)</li>
+      <li>Podaci za placanje (e-commerce)</li>
+      <li>Lokacija (GPS, IP geolokacija)</li>
+    </ul>
+    <div class="callout callout-danger"><strong>Cim imate sajt sa Google Analytics, kontakt formom ili kolacicima &mdash; zakonski ste obavezni da imate Privacy Policy.</strong> Cak i "obican" blog koji koristi AdSense prikuplja licne podatke kroz kolacice.</div>
+
+    <h2 id="pp2">2. 9 obaveznih informacija po GDPR-u (Clan 13)</h2>
+    <table>
+      <tr><th>#</th><th>Informacija</th><th>Sta napisati</th><th>Primer</th></tr>
+      <tr><td>1</td><td><strong>Identitet kontrolora</strong></td><td>Ko ste vi (ime, adresa, kontakt)</td><td>"Web Security Scanner, Beograd, info@vasajt.rs"</td></tr>
+      <tr><td>2</td><td><strong>Kontakt DPO</strong></td><td>Data Protection Officer (ako ga imate)</td><td>"DPO: dpo@vasajt.rs" ili "Nemamo DPO"</td></tr>
+      <tr><td>3</td><td><strong>Svrhe obrade</strong></td><td>ZASTO prikupljate podatke</td><td>"Analitika, poboljsanje usluge, marketing"</td></tr>
+      <tr><td>4</td><td><strong>Pravni osnov</strong></td><td>Na osnovu cega obradjujete</td><td>"Saglasnost (cl. 6.1.a), Legitimni interes (cl. 6.1.f)"</td></tr>
+      <tr><td>5</td><td><strong>Primaoci</strong></td><td>Ko jos dobija podatke</td><td>"Google (Analytics), Cloudflare (CDN), Stripe (placanja)"</td></tr>
+      <tr><td>6</td><td><strong>Transfer van EU</strong></td><td>Da li podaci idu izvan EU</td><td>"Google serveri u SAD, zastita: EU-US DPF"</td></tr>
+      <tr><td>7</td><td><strong>Period cuvanja</strong></td><td>Koliko dugo cuvate podatke</td><td>"Analytics: 26 meseci, Nalog: dok se ne obrise"</td></tr>
+      <tr><td>8</td><td><strong>Prava korisnika</strong></td><td>Lista svih prava</td><td>"Pristup, ispravka, brisanje, prenosivost, prigovor"</td></tr>
+      <tr><td>9</td><td><strong>Pravo na zalbu</strong></td><td>Kome se zaliti</td><td>"Poverenik za informacije od javnog znacaja, Beograd"</td></tr>
+    </table>
+
+    <h2 id="pp3">3. Template po sekcijama</h2>
+    <p>Evo strukture koja pokriva sve GDPR zahteve:</p>
+    <pre><code>1. Ko smo mi
+   - Naziv, adresa, email, telefon
+   - DPO kontakt (ako postoji)
+
+2. Koje podatke prikupljamo
+   - Podatke koje vi dajete: ime, email, telefon (forme)
+   - Automatski prikupljeni: IP, browser, OS, kolacici
+   - Podaci od trecih strana: Google Analytics, Facebook
+
+3. Zasto prikupljamo podatke (svrhe)
+   - Pruzanje usluge
+   - Poboljsanje sajta (analitika)
+   - Marketing (ako primenjivo)
+   - Zakonske obaveze
+
+4. Pravni osnov obrade
+   - Saglasnost (cl. 6.1.a) — kolacici, newsletter
+   - Izvrsenje ugovora (cl. 6.1.b) — e-shop narudzbine
+   - Legitimni interes (cl. 6.1.f) — osnovna analitika
+   - Zakonska obaveza (cl. 6.1.c) — poreske evidencije
+
+5. Kolacici
+   - Tipovi kolacica (link na Cookie Policy)
+   - Kako upravljati (link na cookie podesavanja)
+
+6. Trece strane (primaoci podataka)
+   - Google Analytics — analitika
+   - Cloudflare — CDN, bezbednost
+   - Stripe/PayPal — placanja
+   - Mailchimp — newsletter
+
+7. Transfer podataka van EU
+   - Koje trece strane su van EU
+   - Mehanizmi zastite (DPF, SCC)
+
+8. Period cuvanja
+   - Po tipu podataka: koliko dugo
+
+9. Vasa prava
+   - Pristup, ispravka, brisanje, prenosivost
+   - Ogranicenje obrade, prigovor
+   - Kako ostvariti: email/forma
+   - Rok: 30 dana
+
+10. Pravo na zalbu
+    - Poverenik za informacije (Srbija)
+    - Ili nadlezni DPA u EU
+
+11. Promene politike
+    - Kako obavestimo o promenama
+    - Datum poslednje izmene
+
+12. Kontakt
+    - Email, adresa, telefon</code></pre>
+
+    <h2 id="pp4">4. Privacy Policy generatori</h2>
+    <table>
+      <tr><th>Generator</th><th>Cena</th><th>Jezici</th><th>GDPR</th><th>Napomena</th></tr>
+      <tr><td><strong>Termly</strong></td><td>Besplatan basic</td><td>EN + 10</td><td>Da</td><td>Najpopularniji, dobra SR podrska</td></tr>
+      <tr><td><strong>Iubenda</strong></td><td>Od &euro;9/god</td><td>10+ jezika</td><td>Da</td><td>Auto-update kad se zakon promeni</td></tr>
+      <tr><td><strong>GetTerms</strong></td><td>Besplatan</td><td>EN</td><td>Da</td><td>Jednostavan, brz</td></tr>
+      <tr><td><strong>PrivacyPolicies.com</strong></td><td>Od $13</td><td>EN</td><td>Da</td><td>Detaljan, pokriva CCPA takodje</td></tr>
+      <tr><td><strong>Cookiebot</strong></td><td>Od &euro;9/mesec</td><td>40+</td><td>Da</td><td>Ukljucuje i Cookie Policy</td></tr>
+    </table>
+    <div class="callout callout-warn"><strong>Upozorenje:</strong> Generator je dobra OSNOVA ali ga MORATE prilagoditi vasem sajtu. Nijedan generator ne zna tacno koje servise koristite, kako obradjujete podatke i koliko dugo ih cuvate. Za e-commerce i osetljive podatke, konsultujte advokata.</div>
+
+    <h2 id="pp5">5. Gde i kako postaviti na sajtu</h2>
+    <ul>
+      <li><strong>Footer link</strong> &mdash; OBAVEZNO. Link "Politika privatnosti" ili "Privacy Policy" mora biti u footeru SVAKE stranice sajta.</li>
+      <li><strong>Zasebna stranica</strong> &mdash; Ne staviti u popup ili modal. Mora biti stalna stranica sa sopstvenim URL-om (npr. /privacy ili /politika-privatnosti).</li>
+      <li><strong>Kontakt forma</strong> &mdash; Link na Privacy Policy pored Submit dugmeta: "Slanjem ovog formulara prihvatate nasu <a href='#'>Politiku privatnosti</a>".</li>
+      <li><strong>Registracija</strong> &mdash; Checkbox sa linkom na Privacy Policy pre kreiranja naloga.</li>
+      <li><strong>Cookie banner</strong> &mdash; Link na punu Privacy Policy iz cookie consent banera.</li>
+      <li><strong>Google Play / App Store</strong> &mdash; Ako imate aplikaciju, Privacy Policy URL je obavezan pri objavi.</li>
+    </ul>
+
+    <h2 id="pp6">6. Azuriranje i obavestavanje korisnika</h2>
+    <ul>
+      <li><strong>Datum poslednje izmene</strong> &mdash; UVEK navedite na vrhu dokumenta: "Poslednje azuriranje: 9. april 2026."</li>
+      <li><strong>Email obavestenje</strong> &mdash; Za znacajne promene, obavestite registrovane korisnike emailom.</li>
+      <li><strong>Banner na sajtu</strong> &mdash; "Azurirali smo Politiku privatnosti. <a href='#'>Saznajte vise</a>."</li>
+      <li><strong>Verzioniranje</strong> &mdash; Opciono ali preporuceno: cuvajte prethodne verzije dostupne (v1, v2, v3).</li>
+      <li><strong>Grace period</strong> &mdash; Dajte korisnicima 14-30 dana da pregledaju promene pre stupanja na snagu.</li>
+    </ul>
+
+    <h2 id="pp7">7. Srpski ZZPL (Zakon o zastiti podataka o licnosti)</h2>
+    <p>Srbija je 2018. usvojila <strong>Zakon o zastiti podataka o licnosti (ZZPL)</strong> koji u velikoj meri prati GDPR:</p>
+    <ul>
+      <li><strong>Nadlezni organ:</strong> Poverenik za informacije od javnog znacaja i zastitu podataka o licnosti</li>
+      <li><strong>Prava korisnika:</strong> Ista kao GDPR &mdash; pristup, ispravka, brisanje, prenosivost, prigovor</li>
+      <li><strong>Rok za odgovor:</strong> 30 dana (produziv na 60 za slozene zahteve)</li>
+      <li><strong>Obavezne informacije:</strong> Iste kao GDPR clan 13-14</li>
+      <li><strong>Razlike od GDPR:</strong> Kazne su manje (do 2M RSD za pravna lica), ali princip je isti</li>
+      <li><strong>Transfer podataka:</strong> ZZPL zahteva adekvatan nivo zastite za transfer van Srbije, slicno GDPR-u</li>
+    </ul>
+    <div class="callout"><strong>Prakticno:</strong> Ako vas sajt postuje GDPR, automatski postuje i srpski ZZPL jer je ZZPL zasnovan na GDPR-u. Jedina razlika: navadite srpskog Poverenika kao nadlezni organ umesto EU DPA.</div>
+
+    <h2 id="pp8">8. Najcesce greske</h2>
+    <ul>
+      <li><strong>Nema Privacy Policy uopste</strong> &mdash; #1 greska. Zakonski je obavezan cim prikupljate podatke.</li>
+      <li><strong>Copy-paste od drugog sajta</strong> &mdash; Drugi sajt ima druge servise, svrhe, primacoce. Vas PP mora odgovarati VASEM sajtu.</li>
+      <li><strong>Pravnicki zargon</strong> &mdash; GDPR zahteva "jasnu i razumljivu" politiku. Pisati jednostavnim jezikom.</li>
+      <li><strong>Nedostaje footer link</strong> &mdash; Privacy Policy mora biti dostupan sa SVAKE stranice sajta.</li>
+      <li><strong>Zastareo</strong> &mdash; Dodali ste Google Analytics ali niste azurirali PP. Uvek azurirajte kad menjate servise.</li>
+      <li><strong>Nedostaju primaoci</strong> &mdash; Ne navesti Google, Facebook, Cloudflare kao primaoce podataka.</li>
+      <li><strong>Nema kontakt informacija</strong> &mdash; Korisnik mora znati KOME da se obrati za svoja prava.</li>
+      <li><strong>Nema datuma</strong> &mdash; Bez "poslednje azuriranje" datuma, niko ne zna da li je aktuelan.</li>
+    </ul>
+
+    <h2 id="pp9">9. Reference i resursi</h2>
+    <ul>
+      <li><a href="https://gdpr-info.eu/art-13-gdpr/" target="_blank">GDPR Clan 13 &mdash; Informacije koje treba pruziti</a></li>
+      <li><a href="https://gdpr-info.eu/art-14-gdpr/" target="_blank">GDPR Clan 14 &mdash; Informacije za indirektno prikupljene podatke</a></li>
+      <li><a href="https://ico.org.uk/for-organisations/make-your-own-privacy-notice/" target="_blank">ICO &mdash; Privacy Notice Checklist</a></li>
+      <li><a href="https://www.poverenik.rs/" target="_blank">Poverenik za informacije &mdash; Srbija</a></li>
+      <li><a href="https://termly.io/products/privacy-policy-generator/" target="_blank">Termly &mdash; Privacy Policy Generator</a></li>
+      <li><a href="https://www.iubenda.com/" target="_blank">Iubenda &mdash; Privacy Policy Solution</a></li>
+      <li><a href="https://www.paragraf.rs/propisi/zakon_o_zastiti_podataka_o_licnosti.html" target="_blank">ZZPL &mdash; Zakon o zastiti podataka o licnosti</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Proverite Privacy Policy na vasem sajtu &rarr;</a>
+  </div>
+
+  <!-- ==================== ENGLISH ==================== -->
+  <div class="en">
+    <h1>Privacy Policy &mdash; How to Write One for GDPR Compliance</h1>
+    <p class="subtitle">Complete guide: required information, templates, generators, and practical advice</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">Art. 13-14</div><div class="stat-label">GDPR articles governing Privacy Policy</div></div>
+      <div class="stat-card"><div class="stat-num">9</div><div class="stat-label">Required pieces of information</div></div>
+      <div class="stat-card"><div class="stat-num">30 days</div><div class="stat-label">Deadline to respond to user requests</div></div>
+      <div class="stat-card"><div class="stat-num">2018</div><div class="stat-label">Serbian ZZPL adopted</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#pp1e">Why Privacy Policy is mandatory</a></li>
+        <li><a href="#pp2e">9 required pieces of information</a></li>
+        <li><a href="#pp3e">Template by sections</a></li>
+        <li><a href="#pp4e">Privacy Policy generators</a></li>
+        <li><a href="#pp5e">Where to place on your site</a></li>
+        <li><a href="#pp6e">Updating and notifying users</a></li>
+        <li><a href="#pp7e">Serbian ZZPL</a></li>
+        <li><a href="#pp8e">Common mistakes</a></li>
+        <li><a href="#pp9e">References</a></li>
+      </ol>
+    </div>
+
+    <h2 id="pp1e">1. Why Privacy Policy is mandatory</h2>
+    <p>GDPR (Articles 13-14) requires every site collecting personal data to have a clear privacy policy. Personal data includes: name, email, IP address, cookies, behavioral data, payment info, location.</p>
+    <div class="callout callout-danger"><strong>If you have Google Analytics, a contact form, or cookies — you're legally required to have a Privacy Policy.</strong></div>
+
+    <h2 id="pp2e">2. 9 required pieces of information (Art. 13)</h2>
+    <table>
+      <tr><th>#</th><th>Information</th><th>Example</th></tr>
+      <tr><td>1</td><td>Controller identity</td><td>Company name, address, email</td></tr>
+      <tr><td>2</td><td>DPO contact</td><td>dpo@yoursite.com (if applicable)</td></tr>
+      <tr><td>3</td><td>Processing purposes</td><td>Analytics, service improvement, marketing</td></tr>
+      <tr><td>4</td><td>Legal basis</td><td>Consent (6.1.a), Legitimate interest (6.1.f)</td></tr>
+      <tr><td>5</td><td>Recipients</td><td>Google, Cloudflare, Stripe</td></tr>
+      <tr><td>6</td><td>Transfers outside EU</td><td>Google servers in US, protected by EU-US DPF</td></tr>
+      <tr><td>7</td><td>Retention period</td><td>Analytics: 26 months, Account: until deleted</td></tr>
+      <tr><td>8</td><td>User rights</td><td>Access, rectification, erasure, portability, objection</td></tr>
+      <tr><td>9</td><td>Right to complain</td><td>Supervisory authority contact</td></tr>
+    </table>
+
+    <h2 id="pp3e">3. Template by sections</h2>
+    <p>Structure covering all GDPR requirements: Who we are → What data we collect → Why → Legal basis → Cookies → Third parties → Transfers → Retention → Your rights → Complaint → Changes → Contact.</p>
+
+    <h2 id="pp4e">4. Privacy Policy generators</h2>
+    <table>
+      <tr><th>Generator</th><th>Price</th><th>GDPR</th><th>Note</th></tr>
+      <tr><td><strong>Termly</strong></td><td>Free basic</td><td>Yes</td><td>Most popular</td></tr>
+      <tr><td><strong>Iubenda</strong></td><td>From &euro;9/yr</td><td>Yes</td><td>Auto-updates with law changes</td></tr>
+      <tr><td><strong>GetTerms</strong></td><td>Free</td><td>Yes</td><td>Simple, fast</td></tr>
+      <tr><td><strong>Cookiebot</strong></td><td>From &euro;9/mo</td><td>Yes</td><td>Includes Cookie Policy</td></tr>
+    </table>
+    <div class="callout callout-warn"><strong>Warning:</strong> Generators are a good BASE but you MUST customize for your site. No generator knows exactly what services you use. For e-commerce and sensitive data, consult a lawyer.</div>
+
+    <h2 id="pp5e">5. Where to place on your site</h2>
+    <ul>
+      <li><strong>Footer link</strong> — MANDATORY on every page</li>
+      <li><strong>Dedicated page</strong> — not a popup, must have its own URL</li>
+      <li><strong>Contact form</strong> — link next to Submit button</li>
+      <li><strong>Registration</strong> — checkbox with Privacy Policy link</li>
+      <li><strong>Cookie banner</strong> — link to full Privacy Policy</li>
+    </ul>
+
+    <h2 id="pp6e">6. Updating and notifying users</h2>
+    <ul>
+      <li>Always show "Last updated: [date]" at the top</li>
+      <li>Email registered users about significant changes</li>
+      <li>Banner notification on site</li>
+      <li>Keep previous versions accessible</li>
+      <li>14-30 day grace period before changes take effect</li>
+    </ul>
+
+    <h2 id="pp7e">7. Serbian ZZPL</h2>
+    <p>Serbia adopted the <strong>Law on Personal Data Protection (ZZPL)</strong> in 2018, largely mirroring GDPR. Supervisory authority: Commissioner for Information of Public Importance and Personal Data Protection. If your site complies with GDPR, it automatically complies with ZZPL.</p>
+
+    <h2 id="pp8e">8. Common mistakes</h2>
+    <ul>
+      <li><strong>No Privacy Policy at all</strong> — legally required</li>
+      <li><strong>Copy-paste from another site</strong> — doesn't match YOUR services</li>
+      <li><strong>Legal jargon</strong> — GDPR requires "clear and understandable" language</li>
+      <li><strong>Missing footer link</strong> — must be accessible from every page</li>
+      <li><strong>Outdated</strong> — added new services but didn't update PP</li>
+      <li><strong>Missing recipients</strong> — must list Google, Facebook, etc.</li>
+      <li><strong>No contact info</strong> — users must know who to contact</li>
+      <li><strong>No date</strong> — must show when last updated</li>
+    </ul>
+
+    <h2 id="pp9e">9. References and resources</h2>
+    <ul>
+      <li><a href="https://gdpr-info.eu/art-13-gdpr/" target="_blank">GDPR Article 13</a></li>
+      <li><a href="https://gdpr-info.eu/art-14-gdpr/" target="_blank">GDPR Article 14</a></li>
+      <li><a href="https://ico.org.uk/for-organisations/make-your-own-privacy-notice/" target="_blank">ICO Privacy Notice Checklist</a></li>
+      <li><a href="https://termly.io/products/privacy-policy-generator/" target="_blank">Termly Generator</a></li>
+      <li><a href="https://www.iubenda.com/" target="_blank">Iubenda</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Check Privacy Policy on your site &rarr;</a>
+  </div>
+
+  <div class="nav-links">
+    <a href="./blog-gdpr.html"><span class="sr">GDPR vodic</span><span class="en">GDPR Guide</span></a>
+    <a href="./blog-gdpr-cookies.html"><span class="sr">Cookie Consent</span><span class="en">Cookie Consent</span></a>
+    <a href="./blog-gdpr-trackers.html"><span class="sr">Third-Party Trackeri</span><span class="en">Third-Party Trackers</span></a>
+    <a href="./blog-gdpr-rights.html"><span class="sr">Prava korisnika</span><span class="en">User Rights</span></a>
+    <a href="./blog-gdpr-fines.html"><span class="sr">GDPR Kazne</span><span class="en">GDPR Fines</span></a>
+    <a href="./privacy.html"><span class="sr">Politika privatnosti</span><span class="en">Privacy Policy</span></a>
+  </div>
+
+  </main>
+</div>
+<script src="./blog-common.js" defer></script>
+</body>
+</html>

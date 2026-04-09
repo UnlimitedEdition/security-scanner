@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTTP Caching — Cache-Control, ETag, CDN vodic | Web Security Scanner</title>
+  <meta name="description" content="Kompletni vodic za HTTP caching: Cache-Control direktive, ETag, Last-Modified, cache-busting, browser vs CDN vs server cache, Service Worker, invalidacija.">
+  <meta name="keywords" content="cache, Cache-Control, ETag, CDN, browser cache, HTTP caching, max-age, no-cache, Service Worker, cache invalidation">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <link rel="canonical" href="https://security-scanner-ruddy.vercel.app/blog-perf-cache.html">
+  <link rel="alternate" hreflang="sr" href="https://security-scanner-ruddy.vercel.app/blog-perf-cache.html">
+  <link rel="alternate" hreflang="en" href="https://security-scanner-ruddy.vercel.app/blog-perf-cache.html">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="HTTP Caching — Cache-Control, ETag, CDN kompletni vodic">
+  <meta property="og:description" content="Cache-Control direktive, ETag validacija, cache-busting, browser/CDN/server cache i Service Worker.">
+  <meta property="og:url" content="https://security-scanner-ruddy.vercel.app/blog-perf-cache.html">
+  <meta property="og:site_name" content="Web Security Scanner">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="HTTP Caching — Cache-Control, ETag, CDN kompletni vodic">
+  <meta name="twitter:description" content="Cache-Control direktive, ETag validacija, cache-busting, browser/CDN/server cache i Service Worker.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "HTTP Caching — Cache-Control, ETag, CDN vodic",
+    "author": {"@type": "Person", "name": "Toske", "url": "https://toske-programer.web.app"},
+    "publisher": {"@type": "Organization", "name": "Web Security Scanner"},
+    "datePublished": "2026-04-09",
+    "dateModified": "2026-04-09",
+    "description": "Kompletni vodic za HTTP caching: Cache-Control, ETag, cache-busting, CDN, Service Worker.",
+    "mainEntityOfPage": {"@type": "WebPage", "@id": "https://security-scanner-ruddy.vercel.app/blog-perf-cache.html"}
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Sta je Cache-Control header?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Cache-Control je HTTP header koji govori browseru i CDN-u koliko dugo smeju da cuvaju kopiju resursa. Na primer, 'Cache-Control: max-age=31536000' znaci da browser cuva fajl 1 godinu bez ponovnog zahteva serveru. Razlicite direktive kontrolisu gde se kesira (public/private), koliko dugo (max-age), i da li se mora revalidirati (no-cache)."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Koliko dugo treba kesirati resurse?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "HTML: kratko ili bez kes (no-cache ili max-age=0) jer se sadrzaj cesto menja. CSS/JS sa hash-om u imenu (app.a1b2c3.js): 1 godina (max-age=31536000, immutable). Slike: 1 mesec do 1 godina. Fontovi: 1 godina. API odgovori: zavisi, obicno kratko (max-age=60) ili no-store."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Koja je razlika izmedju no-cache i no-store?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "no-cache NE znaci 'ne kesiraj'. Znaci: kesiraj ali UVEK proveri sa serverom da li je kesirana verzija jos validna (revalidacija sa ETag/Last-Modified). no-store zaista znaci 'ne kesiraj uopste' — browser ne cuva kopiju i uvek preuzima ponovo. Koristite no-store za osetljive podatke (bankarski, medicinski)."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Sta je ETag i kako radi?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "ETag je jedinstven identifikator verzije resursa koji server generise (hash sadrzaja). Browser cuva ETag i pri sledecoj poseti salje 'If-None-Match: etag-vrednost'. Ako se resurs nije promenio, server odgovara 304 Not Modified (bez body-ja) — usteda bandwidth-a. Ako se promenio, server salje nov sadrzaj sa novim ETag-om."
+        }
+      }
+    ]
+  }
+  </script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+</head>
+<body>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr"><div class="timeline-title">Sadrzaj</div><ol id="timeline-sr"></ol></div>
+    <div class="en"><div class="timeline-title">Contents</div><ol id="timeline-en"></ol></div>
+  </aside>
+  <main class="blog-content">
+
+  <!-- ==================== SRPSKI ==================== -->
+  <div class="sr">
+    <h1>HTTP Caching &mdash; Cache-Control, ETag, CDN vodic</h1>
+    <p class="subtitle">Kako ubrzati sajt 5-10x za ponovne posete pravilnim kesiranjem resursa</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">5-10x</div><div class="stat-label">Brze ucitavanje sa kesom</div></div>
+      <div class="stat-card"><div class="stat-num">304</div><div class="stat-label">Not Modified — usteda bandwidth-a</div></div>
+      <div class="stat-card"><div class="stat-num">1 god.</div><div class="stat-label">Max cache za staticke resurse</div></div>
+      <div class="stat-card"><div class="stat-num">3</div><div class="stat-label">Nivoa: Browser, CDN, Server</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Sadrzaj</h3>
+      <ol>
+        <li><a href="#c1">Sta je HTTP caching</a></li>
+        <li><a href="#c2">Cache-Control header</a></li>
+        <li><a href="#c3">Preporuke po tipu resursa</a></li>
+        <li><a href="#c4">ETag — validacija kesa</a></li>
+        <li><a href="#c5">Last-Modified / If-Modified-Since</a></li>
+        <li><a href="#c6">Cache-busting strategije</a></li>
+        <li><a href="#c7">Browser vs CDN vs Server cache</a></li>
+        <li><a href="#c8">Service Worker cache</a></li>
+        <li><a href="#c9">Cache invalidation</a></li>
+        <li><a href="#c10">Konfiguracija: Nginx, Apache, Vercel</a></li>
+        <li><a href="#c11">Reference i resursi</a></li>
+      </ol>
+    </div>
+
+    <h2 id="c1">1. Sta je HTTP caching i zasto je bitan</h2>
+    <p>HTTP caching je mehanizam koji cuva kopije resursa (HTML, CSS, JS, slike) blize korisniku &mdash; u browseru, CDN-u ili proxy serveru. Kad korisnik ponovo poseti sajt, resursi se ucitavaju iz kesa umesto da se ponovo preuzimaju sa servera.</p>
+    <ul>
+      <li><strong>Brzina:</strong> Kesiran resurs se ucitava za ~1ms umesto 200-500ms sa servera</li>
+      <li><strong>Bandwidth:</strong> Smanjuje kolicinu podataka za 60-90% za ponovne posete</li>
+      <li><strong>Server opterecenje:</strong> Manje zahteva ka serveru = bolje skaliranje</li>
+      <li><strong>Offline pristup:</strong> Sa Service Worker-om, sajt moze raditi bez interneta</li>
+    </ul>
+    <div class="callout"><strong>Statistika:</strong> Pravilno kesirani sajt se ucitava <strong>5-10x brze</strong> za ponovne posete. Google PageSpeed Insights penalizuje sajtove bez cache headera.</div>
+
+    <h2 id="c2">2. Cache-Control header</h2>
+    <p>Cache-Control je najvazniji HTTP header za kontrolu kesiranja. Server ga salje u odgovoru, a browser/CDN ga postuje.</p>
+    <table>
+      <tr><th>Direktiva</th><th>Znacenje</th><th>Primer</th></tr>
+      <tr><td><code>max-age=N</code></td><td>Kesiraj N sekundi od zahteva</td><td><code>max-age=3600</code> = 1 sat</td></tr>
+      <tr><td><code>s-maxage=N</code></td><td>Kao max-age ali samo za CDN/proxy</td><td><code>s-maxage=86400</code> = CDN cuva 1 dan</td></tr>
+      <tr><td><code>public</code></td><td>Bilo ko moze kesirati (browser + CDN)</td><td>Staticke slike, CSS, JS</td></tr>
+      <tr><td><code>private</code></td><td>Samo browser kesa (ne CDN)</td><td>Personalizovani sadrzaj, sesije</td></tr>
+      <tr><td><code>no-cache</code></td><td>Kesiraj ALI revalidiraj svaki put</td><td>HTML stranice (cest sadrzaj)</td></tr>
+      <tr><td><code>no-store</code></td><td>NE kesiraj uopste</td><td>Osetljivi podaci (bankarstvo)</td></tr>
+      <tr><td><code>must-revalidate</code></td><td>Posle isteka, MORA revalidirati</td><td>Sa max-age za striktnost</td></tr>
+      <tr><td><code>immutable</code></td><td>Resurs se NIKAD ne menja</td><td>Fajlovi sa hash-om u imenu</td></tr>
+      <tr><td><code>stale-while-revalidate=N</code></td><td>Koristi stari kes dok revalidira u pozadini</td><td>Balans brzine i svezine</td></tr>
+    </table>
+    <div class="callout callout-danger"><strong>Cesta zabuna:</strong> <code>no-cache</code> NE znaci "ne kesiraj"! Znaci "kesiraj ali proveri sa serverom svaki put". Za potpuno iskljucivanje kesa koristite <code>no-store</code>.</div>
+
+    <h2 id="c3">3. Preporuke po tipu resursa</h2>
+    <table>
+      <tr><th>Resurs</th><th>Cache-Control</th><th>Zasto</th></tr>
+      <tr><td><strong>HTML</strong></td><td><code>no-cache</code> ili <code>max-age=0, must-revalidate</code></td><td>Sadrzaj se menja — uvek proveri svezinu</td></tr>
+      <tr><td><strong>CSS (sa hash-om)</strong></td><td><code>max-age=31536000, immutable</code></td><td>Hash u imenu se menja kad se fajl promeni</td></tr>
+      <tr><td><strong>JS (sa hash-om)</strong></td><td><code>max-age=31536000, immutable</code></td><td>Isto kao CSS — ime se menja pri promeni</td></tr>
+      <tr><td><strong>Slike</strong></td><td><code>max-age=2592000</code> (30 dana)</td><td>Retko se menjaju, ali nemaju hash</td></tr>
+      <tr><td><strong>Fontovi</strong></td><td><code>max-age=31536000, immutable</code></td><td>Nikad se ne menjaju</td></tr>
+      <tr><td><strong>API odgovori</strong></td><td><code>no-store</code> ili <code>max-age=60</code></td><td>Dinamicki podaci, cesto se menjaju</td></tr>
+      <tr><td><strong>Osetljivi podaci</strong></td><td><code>no-store, private</code></td><td>Nikad kesirati bankarske/medicinske podatke</td></tr>
+    </table>
+    <pre><code># Primer odgovora servera za CSS sa hash-om
+HTTP/1.1 200 OK
+Content-Type: text/css
+Cache-Control: public, max-age=31536000, immutable
+ETag: "a1b2c3d4"
+
+# Primer za HTML (uvek revalidiraj)
+HTTP/1.1 200 OK
+Content-Type: text/html
+Cache-Control: no-cache
+ETag: "page-v42"</code></pre>
+
+    <h2 id="c4">4. ETag &mdash; validacija kesa</h2>
+    <p>ETag (Entity Tag) je jedinstven identifikator verzije resursa. Server ga generise (obicno hash sadrzaja) i browser ga koristi za revalidaciju.</p>
+    <h3>Kako radi</h3>
+    <ol>
+      <li>Prva poseta: server salje resurs + <code>ETag: "abc123"</code></li>
+      <li>Browser cuva resurs i ETag</li>
+      <li>Druga poseta: browser salje <code>If-None-Match: "abc123"</code></li>
+      <li>Server poredi ETag-ove:</li>
+      <li>&mdash; Ako se poklapa: <strong>304 Not Modified</strong> (bez body-ja, ~100 bajtova)</li>
+      <li>&mdash; Ako se ne poklapa: <strong>200 OK</strong> sa novim sadrzajem i novim ETag-om</li>
+    </ol>
+    <pre><code># Zahtev za revalidaciju
+GET /style.css HTTP/1.1
+If-None-Match: "a1b2c3d4"
+
+# Odgovor: nije se promenilo — usteda bandwidth-a!
+HTTP/1.1 304 Not Modified
+ETag: "a1b2c3d4"
+Cache-Control: public, max-age=3600</code></pre>
+    <h3>Weak vs Strong ETag</h3>
+    <table>
+      <tr><th>Tip</th><th>Format</th><th>Znacenje</th></tr>
+      <tr><td><strong>Strong</strong></td><td><code>"abc123"</code></td><td>Bajt-za-bajt identican sadrzaj</td></tr>
+      <tr><td><strong>Weak</strong></td><td><code>W/"abc123"</code></td><td>Semanticki ekvivalentan (moze imati male razlike)</td></tr>
+    </table>
+
+    <h2 id="c5">5. Last-Modified / If-Modified-Since</h2>
+    <p>Stariji mehanizam validacije (pre ETag-a). Server salje datum poslednje izmene, browser ga cuva i pita "da li se promenilo od tada?"</p>
+    <pre><code># Prva poseta
+HTTP/1.1 200 OK
+Last-Modified: Wed, 09 Apr 2026 12:00:00 GMT
+
+# Druga poseta
+GET /page.html HTTP/1.1
+If-Modified-Since: Wed, 09 Apr 2026 12:00:00 GMT
+
+# Odgovor: 304 ako se nije promenilo</code></pre>
+    <div class="callout callout-warn"><strong>ETag vs Last-Modified:</strong> ETag je precizniji (hash sadrzaja vs datum). Koristite ETag kao primarni mehanizam, Last-Modified kao fallback. Vecina servera salje oba.</div>
+
+    <h2 id="c6">6. Cache-busting strategije</h2>
+    <p>Problem: ako kesirate CSS za 1 godinu, kako naterate browser da preuzme novu verziju kad promenite dizajn?</p>
+    <h3>Hash u filename-u (preporuceno)</h3>
+    <pre><code>&lt;!-- Stara verzija --&gt;
+&lt;link rel="stylesheet" href="/css/style.a1b2c3.css"&gt;
+
+&lt;!-- Nova verzija — drugaciji hash = browser preuzima ponovo --&gt;
+&lt;link rel="stylesheet" href="/css/style.d4e5f6.css"&gt;</code></pre>
+    <p>Build alati (Webpack, Vite, Parcel) automatski dodaju hash u ime fajla. Kad se fajl promeni, hash se menja, browser preuzima novu verziju jer je to "novi" URL.</p>
+    <h3>Query string (alternativa)</h3>
+    <pre><code>&lt;link rel="stylesheet" href="/css/style.css?v=2.1"&gt;
+&lt;script src="/js/app.js?v=20260409"&gt;&lt;/script&gt;</code></pre>
+    <div class="callout callout-warn"><strong>Paznja:</strong> Query string cache-busting ne radi pouzdano sa svim CDN-ovima. Neki CDN-ovi ignorisu query string za kesiranje. Hash u filename-u je pouzdaniji.</div>
+
+    <h2 id="c7">7. Browser vs CDN vs Server cache</h2>
+    <table>
+      <tr><th>Nivo</th><th>Gde</th><th>Ko kontrolise</th><th>Brzina</th><th>Primer</th></tr>
+      <tr><td><strong>Browser cache</strong></td><td>Korisnikov uredjaj</td><td>Cache-Control header</td><td>~1ms</td><td>Ponovna poseta sajtu</td></tr>
+      <tr><td><strong>CDN cache</strong></td><td>Edge server (blizu korisnika)</td><td>s-maxage, CDN pravila</td><td>~20-50ms</td><td>Cloudflare, Vercel Edge</td></tr>
+      <tr><td><strong>Server cache</strong></td><td>Origin server</td><td>Redis, Memcached, aplikacija</td><td>~5-20ms</td><td>Database query cache</td></tr>
+      <tr><td><strong>Origin (bez kesa)</strong></td><td>Server + baza</td><td>—</td><td>~100-500ms</td><td>Svezi podaci iz baze</td></tr>
+    </table>
+    <p>Zahtev prolazi nivoe: Browser &rarr; CDN &rarr; Server &rarr; Origin. Ako bilo koji nivo ima validan kes, odgovor se vraca odatle bez dalje propagacije.</p>
+
+    <h2 id="c8">8. Service Worker cache</h2>
+    <p>Service Worker je JavaScript koji radi u pozadini i moze presresti mrezne zahteve. Sa njim mozete napraviti <strong>offline-first</strong> sajt.</p>
+    <pre><code>// sw.js — Service Worker sa cache-first strategijom
+const CACHE_NAME = 'v1';
+const ASSETS = ['/', '/index.html', '/css/style.css', '/js/app.js'];
+
+// Instalacija: kesiraj kriticne resurse
+self.addEventListener('install', event =&gt; {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache =&gt; cache.addAll(ASSETS))
+  );
+});
+
+// Zahtev: vrati iz kesa, fallback na mrezu
+self.addEventListener('fetch', event =&gt; {
+  event.respondWith(
+    caches.match(event.request).then(cached =&gt; {
+      return cached || fetch(event.request).then(response =&gt; {
+        // Kesiraj novi resurs za sledecu posetu
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then(cache =&gt; cache.put(event.request, clone));
+        return response;
+      });
+    })
+  );
+});</code></pre>
+    <h3>Cache strategije</h3>
+    <table>
+      <tr><th>Strategija</th><th>Opis</th><th>Kada koristiti</th></tr>
+      <tr><td><strong>Cache First</strong></td><td>Kes &rarr; mreza (ako nema u kesu)</td><td>Staticni resursi (CSS, JS, slike)</td></tr>
+      <tr><td><strong>Network First</strong></td><td>Mreza &rarr; kes (ako mreza ne radi)</td><td>Dinamicki sadrzaj (API, HTML)</td></tr>
+      <tr><td><strong>Stale While Revalidate</strong></td><td>Vrati iz kesa odmah + azuriraj u pozadini</td><td>Sadrzaj gde je svezina pozeljna ali ne kriticna</td></tr>
+    </table>
+
+    <h2 id="c9">9. Cache invalidation</h2>
+    <p>Phil Karlton je rekao: <em>"There are only two hard things in Computer Science: cache invalidation and naming things."</em></p>
+    <ul>
+      <li><strong>Hash u filename-u</strong> &mdash; najcistije resenje. Promena fajla = novi hash = novi URL = browser automatski preuzima.</li>
+      <li><strong>CDN purge</strong> &mdash; rucno ili API pozivom ocistite CDN kes. Cloudflare: purge by URL ili purge all.</li>
+      <li><strong>Verzioniranje API-ja</strong> &mdash; <code>/api/v2/users</code> umesto <code>/api/users</code> kad se format promeni.</li>
+      <li><strong>stale-while-revalidate</strong> &mdash; korisnik dobija stari kes odmah, novi se ucitava u pozadini za sledecu posetu.</li>
+      <li><strong>Service Worker azuriranje</strong> &mdash; promena CACHE_NAME triggeruje reinstalaciju i kesiranje novih resursa.</li>
+    </ul>
+    <div class="callout callout-danger"><strong>Opasnost:</strong> Ako kesirate HTML za 1 godinu i promenite CSS bez promene HTML-a, korisnici ce videti star CSS sa novim HTML-om = pokvaren sajt. NIKAD ne kesirajte HTML dugotrajno.</div>
+
+    <h2 id="c10">10. Konfiguracija: Nginx, Apache, Vercel</h2>
+    <h3>Nginx</h3>
+    <pre><code># /etc/nginx/conf.d/cache.conf
+location ~* \.(css|js|woff2|png|jpg|webp|avif|svg)$ {
+    expires 1y;
+    add_header Cache-Control "public, max-age=31536000, immutable";
+}
+location ~* \.html$ {
+    add_header Cache-Control "no-cache";
+}
+location /api/ {
+    add_header Cache-Control "no-store";
+}</code></pre>
+    <h3>Apache (.htaccess)</h3>
+    <pre><code>&lt;IfModule mod_expires.c&gt;
+  ExpiresActive On
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType image/webp "access plus 1 year"
+  ExpiresByType text/html "access plus 0 seconds"
+&lt;/IfModule&gt;
+
+&lt;IfModule mod_headers.c&gt;
+  &lt;FilesMatch "\.(css|js|woff2|png|jpg|webp)$"&gt;
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  &lt;/FilesMatch&gt;
+  &lt;FilesMatch "\.html$"&gt;
+    Header set Cache-Control "no-cache"
+  &lt;/FilesMatch&gt;
+&lt;/IfModule&gt;</code></pre>
+    <h3>Vercel (vercel.json)</h3>
+    <pre><code>{
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {"key": "Cache-Control", "value": "public, max-age=31536000, immutable"}
+      ]
+    },
+    {
+      "source": "/(.*).html",
+      "headers": [
+        {"key": "Cache-Control", "value": "no-cache"}
+      ]
+    }
+  ]
+}</code></pre>
+
+    <h2 id="c11">11. Reference i resursi</h2>
+    <ul>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching" target="_blank">MDN &mdash; HTTP Caching</a></li>
+      <li><a href="https://web.dev/articles/http-cache" target="_blank">web.dev &mdash; HTTP Cache</a></li>
+      <li><a href="https://datatracker.ietf.org/doc/html/rfc7234" target="_blank">RFC 7234 &mdash; HTTP Caching</a></li>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control" target="_blank">MDN &mdash; Cache-Control</a></li>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag" target="_blank">MDN &mdash; ETag</a></li>
+      <li><a href="https://web.dev/articles/service-worker-caching-and-http-caching" target="_blank">web.dev &mdash; Service Worker vs HTTP Caching</a></li>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API" target="_blank">MDN &mdash; Service Worker API</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Proverite cache konfiguraciju vaseg sajta &rarr;</a>
+  </div>
+
+  <!-- ==================== ENGLISH ==================== -->
+  <div class="en">
+    <h1>HTTP Caching &mdash; Cache-Control, ETag, CDN Guide</h1>
+    <p class="subtitle">How to make your site 5-10x faster for return visits with proper resource caching</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">5-10x</div><div class="stat-label">Faster loading with cache</div></div>
+      <div class="stat-card"><div class="stat-num">304</div><div class="stat-label">Not Modified — bandwidth savings</div></div>
+      <div class="stat-card"><div class="stat-num">1 yr</div><div class="stat-label">Max cache for static assets</div></div>
+      <div class="stat-card"><div class="stat-num">3</div><div class="stat-label">Levels: Browser, CDN, Server</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#c1e">What is HTTP caching</a></li>
+        <li><a href="#c2e">Cache-Control header</a></li>
+        <li><a href="#c3e">Recommendations by resource type</a></li>
+        <li><a href="#c4e">ETag — cache validation</a></li>
+        <li><a href="#c5e">Last-Modified</a></li>
+        <li><a href="#c6e">Cache-busting strategies</a></li>
+        <li><a href="#c7e">Browser vs CDN vs Server cache</a></li>
+        <li><a href="#c8e">Service Worker cache</a></li>
+        <li><a href="#c9e">Cache invalidation</a></li>
+        <li><a href="#c10e">Configuration: Nginx, Apache, Vercel</a></li>
+        <li><a href="#c11e">References</a></li>
+      </ol>
+    </div>
+
+    <h2 id="c1e">1. What is HTTP caching and why it matters</h2>
+    <p>HTTP caching stores copies of resources closer to the user. On return visits, resources load from cache (~1ms) instead of the server (200-500ms).</p>
+    <div class="callout"><strong>Statistic:</strong> Properly cached sites load <strong>5-10x faster</strong> on return visits. PageSpeed Insights penalizes sites without cache headers.</div>
+
+    <h2 id="c2e">2. Cache-Control header</h2>
+    <table>
+      <tr><th>Directive</th><th>Meaning</th><th>Example</th></tr>
+      <tr><td><code>max-age=N</code></td><td>Cache for N seconds</td><td><code>max-age=3600</code> = 1 hour</td></tr>
+      <tr><td><code>s-maxage=N</code></td><td>CDN/proxy only cache</td><td><code>s-maxage=86400</code> = CDN 1 day</td></tr>
+      <tr><td><code>public</code></td><td>Anyone can cache</td><td>Static images, CSS, JS</td></tr>
+      <tr><td><code>private</code></td><td>Browser only (not CDN)</td><td>Personalized content</td></tr>
+      <tr><td><code>no-cache</code></td><td>Cache BUT revalidate every time</td><td>HTML pages</td></tr>
+      <tr><td><code>no-store</code></td><td>Don't cache at all</td><td>Sensitive data (banking)</td></tr>
+      <tr><td><code>immutable</code></td><td>Resource NEVER changes</td><td>Files with hash in name</td></tr>
+    </table>
+    <div class="callout callout-danger"><strong>Common confusion:</strong> <code>no-cache</code> does NOT mean "don't cache"! It means "cache but check with server every time". Use <code>no-store</code> to disable caching completely.</div>
+
+    <h2 id="c3e">3. Recommendations by resource type</h2>
+    <table>
+      <tr><th>Resource</th><th>Cache-Control</th><th>Why</th></tr>
+      <tr><td>HTML</td><td><code>no-cache</code></td><td>Content changes — always check freshness</td></tr>
+      <tr><td>CSS/JS (hashed)</td><td><code>max-age=31536000, immutable</code></td><td>Hash changes when file changes</td></tr>
+      <tr><td>Images</td><td><code>max-age=2592000</code> (30 days)</td><td>Rarely change, no hash</td></tr>
+      <tr><td>Fonts</td><td><code>max-age=31536000, immutable</code></td><td>Never change</td></tr>
+      <tr><td>API</td><td><code>no-store</code> or <code>max-age=60</code></td><td>Dynamic data</td></tr>
+    </table>
+
+    <h2 id="c4e">4. ETag — cache validation</h2>
+    <p>ETag is a unique version identifier. Browser sends <code>If-None-Match: "etag"</code> → server returns 304 (no body) if unchanged, or 200 with new content.</p>
+    <table>
+      <tr><th>Type</th><th>Format</th><th>Meaning</th></tr>
+      <tr><td>Strong</td><td><code>"abc123"</code></td><td>Byte-for-byte identical</td></tr>
+      <tr><td>Weak</td><td><code>W/"abc123"</code></td><td>Semantically equivalent</td></tr>
+    </table>
+
+    <h2 id="c5e">5. Last-Modified / If-Modified-Since</h2>
+    <p>Older validation mechanism using dates. ETag is more precise (content hash vs date). Most servers send both.</p>
+
+    <h2 id="c6e">6. Cache-busting strategies</h2>
+    <p><strong>Hash in filename (recommended):</strong> <code>style.a1b2c3.css</code> → build tools auto-generate. File change = new hash = browser downloads.</p>
+    <p><strong>Query string (alternative):</strong> <code>style.css?v=2.1</code> — less reliable with some CDNs.</p>
+
+    <h2 id="c7e">7. Browser vs CDN vs Server cache</h2>
+    <table>
+      <tr><th>Level</th><th>Where</th><th>Speed</th><th>Example</th></tr>
+      <tr><td>Browser</td><td>User's device</td><td>~1ms</td><td>Return visit</td></tr>
+      <tr><td>CDN</td><td>Edge server (near user)</td><td>~20-50ms</td><td>Cloudflare, Vercel</td></tr>
+      <tr><td>Server</td><td>Origin server</td><td>~5-20ms</td><td>Redis, Memcached</td></tr>
+      <tr><td>Origin</td><td>Server + database</td><td>~100-500ms</td><td>Fresh data</td></tr>
+    </table>
+
+    <h2 id="c8e">8. Service Worker cache</h2>
+    <p>Service Worker intercepts requests and can serve from cache even offline.</p>
+    <table>
+      <tr><th>Strategy</th><th>Description</th><th>Use for</th></tr>
+      <tr><td>Cache First</td><td>Cache → network fallback</td><td>Static assets</td></tr>
+      <tr><td>Network First</td><td>Network → cache fallback</td><td>Dynamic content</td></tr>
+      <tr><td>Stale While Revalidate</td><td>Return stale + update in background</td><td>Non-critical freshness</td></tr>
+    </table>
+
+    <h2 id="c9e">9. Cache invalidation</h2>
+    <p><em>"There are only two hard things in CS: cache invalidation and naming things."</em></p>
+    <ul>
+      <li><strong>Hash in filename</strong> — cleanest solution</li>
+      <li><strong>CDN purge</strong> — manual or API</li>
+      <li><strong>API versioning</strong> — <code>/api/v2/</code></li>
+      <li><strong>stale-while-revalidate</strong> — stale cache + background update</li>
+    </ul>
+    <div class="callout callout-danger"><strong>Danger:</strong> If you cache HTML for 1 year and change CSS without changing HTML, users see old CSS with new HTML = broken site. NEVER cache HTML long-term.</div>
+
+    <h2 id="c10e">10. Configuration: Nginx, Apache, Vercel</h2>
+    <p><strong>Nginx:</strong> <code>expires 1y</code> + <code>Cache-Control "public, max-age=31536000, immutable"</code> for static assets.</p>
+    <p><strong>Apache:</strong> <code>mod_expires</code> + <code>mod_headers</code> in .htaccess.</p>
+    <p><strong>Vercel:</strong> <code>vercel.json</code> headers config per source pattern.</p>
+
+    <h2 id="c11e">11. References and resources</h2>
+    <ul>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching" target="_blank">MDN &mdash; HTTP Caching</a></li>
+      <li><a href="https://web.dev/articles/http-cache" target="_blank">web.dev &mdash; HTTP Cache</a></li>
+      <li><a href="https://datatracker.ietf.org/doc/html/rfc7234" target="_blank">RFC 7234 &mdash; HTTP Caching</a></li>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control" target="_blank">MDN &mdash; Cache-Control</a></li>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag" target="_blank">MDN &mdash; ETag</a></li>
+      <li><a href="https://web.dev/articles/service-worker-caching-and-http-caching" target="_blank">web.dev &mdash; SW vs HTTP Caching</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Check your cache configuration &rarr;</a>
+  </div>
+
+  <div class="nav-links">
+    <a href="./blog-performance.html"><span class="sr">Performanse vodic</span><span class="en">Performance Guide</span></a>
+    <a href="./blog-perf-cwv.html"><span class="sr">Core Web Vitals</span><span class="en">Core Web Vitals</span></a>
+    <a href="./blog-perf-images.html"><span class="sr">Optimizacija slika</span><span class="en">Image Optimization</span></a>
+    <a href="./blog-perf-compression.html"><span class="sr">Gzip i Brotli</span><span class="en">Gzip &amp; Brotli</span></a>
+    <a href="./blog-perf-cdn.html"><span class="sr">CDN</span><span class="en">CDN</span></a>
+    <a href="./blog-perf-lazy.html"><span class="sr">Lazy Loading</span><span class="en">Lazy Loading</span></a>
+  </div>
+
+  </main>
+</div>
+<script src="./blog-common.js" defer></script>
+</body>
+</html>

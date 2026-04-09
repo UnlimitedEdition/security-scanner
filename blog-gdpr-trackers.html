@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Third-Party Trackeri — Google Analytics, Facebook Pixel i GDPR | Web Security Scanner</title>
+  <meta name="description" content="Kompletni vodic za third-party trackere i GDPR: Google Analytics, Facebook Pixel, Hotjar, Schrems II, GDPR-compliant alternative (Plausible, Matomo), server-side tracking.">
+  <meta name="keywords" content="trackeri, Google Analytics, Facebook Pixel, GDPR, Plausible, Matomo, Schrems II, server-side tracking, Consent Mode">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <link rel="canonical" href="https://security-scanner-ruddy.vercel.app/blog-gdpr-trackers.html">
+  <link rel="alternate" hreflang="sr" href="https://security-scanner-ruddy.vercel.app/blog-gdpr-trackers.html">
+  <link rel="alternate" hreflang="en" href="https://security-scanner-ruddy.vercel.app/blog-gdpr-trackers.html">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Third-Party Trackeri i GDPR — GA, FB Pixel, alternative">
+  <meta property="og:description" content="Schrems II, GDPR-compliant alternative, Consent Mode v2, server-side tracking.">
+  <meta property="og:url" content="https://security-scanner-ruddy.vercel.app/blog-gdpr-trackers.html">
+  <meta property="og:site_name" content="Web Security Scanner">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Third-Party Trackeri i GDPR — GA, FB Pixel, alternative">
+  <meta name="twitter:description" content="Schrems II, GDPR-compliant alternative, Consent Mode v2, server-side tracking.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Third-Party Trackeri — Google Analytics, Facebook Pixel i GDPR",
+    "author": {"@type": "Person", "name": "Toske", "url": "https://toske-programer.web.app"},
+    "publisher": {"@type": "Organization", "name": "Web Security Scanner"},
+    "datePublished": "2026-04-09",
+    "dateModified": "2026-04-09",
+    "description": "Kompletni vodic za trackere i GDPR: GA, FB Pixel, Schrems II, alternative, server-side tracking.",
+    "mainEntityOfPage": {"@type": "WebPage", "@id": "https://security-scanner-ruddy.vercel.app/blog-gdpr-trackers.html"}
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Da li je Google Analytics legalan u EU?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Komplikovano. Posle Schrems II presude (2020), vise EU DPA (Austrija, Francuska, Italija) je proglasilo koriscenje GA nelegalnim jer podatke salje u SAD. Google je odgovorio sa EU-US Data Privacy Framework (2023) i server-side procesiranjem. Sa Consent Mode v2 i pravilnim consent-om, GA4 je trenutno prihvatljiv ali situacija se moze promeniti."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Koja je GDPR-compliant alternativa za Google Analytics?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Najbolje opcije: 1) Plausible Analytics — EU hosting, open source, bez kolacica, od 9 EUR/mesec. 2) Matomo — self-hosted (besplatno) ili cloud, potpuna kontrola nad podacima. 3) Fathom Analytics — EU processing, jednostavan. 4) Simple Analytics — bez kolacica, EU servers. Plausible i Fathom ne zahtevaju cookie consent jer ne koriste kolacice."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Sta je server-side tracking?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Server-side tracking znaci da se podaci o korisniku salju vasem serveru PRVO, a onda vas server prosledjuje filtrirane podatke trecim stranama (GA, FB). Prednosti: kontrola nad podacima, zaobilazenje ad-blockera, mogucnost anonimizacije pre slanja. Mane: kompleksnije za setup, zahteva server infrastrukturu."
+        }
+      }
+    ]
+  }
+  </script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+</head>
+<body>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr"><div class="timeline-title">Sadrzaj</div><ol id="timeline-sr"></ol></div>
+    <div class="en"><div class="timeline-title">Contents</div><ol id="timeline-en"></ol></div>
+  </aside>
+  <main class="blog-content">
+
+  <!-- ==================== SRPSKI ==================== -->
+  <div class="sr">
+    <h1>Third-Party Trackeri &mdash; Google Analytics, Facebook Pixel i GDPR</h1>
+    <p class="subtitle">Sta prikupljaju, Schrems II posledice, GDPR-compliant alternative i server-side tracking</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">86%</div><div class="stat-label">Sajtova koristi Google Analytics</div></div>
+      <div class="stat-card"><div class="stat-num">2020</div><div class="stat-label">Schrems II presuda (CJEU)</div></div>
+      <div class="stat-card"><div class="stat-num">&euro;1.2B</div><div class="stat-label">Meta kazna za transfer podataka</div></div>
+      <div class="stat-card"><div class="stat-num">0</div><div class="stat-label">Kolacica kod Plausible/Fathom</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Sadrzaj</h3>
+      <ol>
+        <li><a href="#tr1">Sta su third-party trackeri</a></li>
+        <li><a href="#tr2">Najcesci trackeri i sta prikupljaju</a></li>
+        <li><a href="#tr3">Schrems II i Google Analytics</a></li>
+        <li><a href="#tr4">GDPR-compliant alternative</a></li>
+        <li><a href="#tr5">Google Consent Mode v2</a></li>
+        <li><a href="#tr6">Server-side tracking</a></li>
+        <li><a href="#tr7">Kako detektovati trackere na sajtu</a></li>
+        <li><a href="#tr8">Najcesce greske</a></li>
+        <li><a href="#tr9">Reference i resursi</a></li>
+      </ol>
+    </div>
+
+    <h2 id="tr1">1. Sta su third-party trackeri i kako rade</h2>
+    <p>Third-party trackeri su skripte i kolacici koje postavljaju <strong>trece strane</strong> (ne vas sajt) na uredjaj korisnika. Prikupljaju podatke o ponasanju, interesovanjima i identitetu korisnika &mdash; cesto na vise sajtova odjednom.</p>
+    <ul>
+      <li><strong>Korisnik poseti vasajt.rs</strong> &rarr; Google Analytics skripta se ucitava &rarr; salje podatke Google-u</li>
+      <li><strong>Isti korisnik poseti drugiajt.rs</strong> &rarr; isti GA kolacic &rarr; Google zna da je ista osoba</li>
+      <li><strong>Cross-site tracking:</strong> Facebook Pixel, Google Ads i LinkedIn prate korisnike KROZ sajtove za ciljano reklamiranje</li>
+    </ul>
+    <div class="callout callout-danger"><strong>GDPR perspektiva:</strong> Svaki tracker koji prikuplja licne podatke (IP, kolacici, device ID) zahteva <strong>informisanu saglasnost korisnika PRE ucitavanja</strong>. Ucitavanje GA ili FB Pixel-a pre consent-a je krsenje GDPR-a.</div>
+
+    <h2 id="tr2">2. Najcesci trackeri i sta prikupljaju</h2>
+    <table>
+      <tr><th>Tracker</th><th>Kompanija</th><th>Sta prikuplja</th><th>Kolacici</th><th>GDPR rizik</th></tr>
+      <tr><td><strong>Google Analytics (GA4)</strong></td><td>Google</td><td>Stranice, dogadjaji, lokacija, uredjaj, demografija</td><td>_ga, _gid (2 godine)</td><td>Visok (Schrems II)</td></tr>
+      <tr><td><strong>Google Tag Manager</strong></td><td>Google</td><td>Sam ne prikuplja — kontejner za druge skripte</td><td>Zavisi od tagova</td><td>Srednji</td></tr>
+      <tr><td><strong>Meta Pixel (FB)</strong></td><td>Meta</td><td>Posete, konverzije, pretraga, dodavanje u korpu</td><td>_fbp, _fbc (90 dana)</td><td>Vrlo visok</td></tr>
+      <tr><td><strong>Hotjar</strong></td><td>Hotjar (EU)</td><td>Session recording, heatmaps, klikovi, scroll</td><td>_hjSessionUser (1 god)</td><td>Srednji (EU hosting)</td></tr>
+      <tr><td><strong>Microsoft Clarity</strong></td><td>Microsoft</td><td>Session recording, heatmaps, klikovi</td><td>_clck, _clsk</td><td>Srednji</td></tr>
+      <tr><td><strong>LinkedIn Insight</strong></td><td>LinkedIn</td><td>Posete, konverzije, demografija profesionalaca</td><td>bcookie, li_sugr</td><td>Visok</td></tr>
+      <tr><td><strong>Google AdSense</strong></td><td>Google</td><td>Interesovanja, demografija za ciljane reklame</td><td>Mnostvo (IDE, DSID...)</td><td>Vrlo visok</td></tr>
+    </table>
+
+    <h2 id="tr3">3. Schrems II presuda i Google Analytics</h2>
+    <p><strong>Schrems II</strong> (CJEU, jul 2020) je presuda koja je poniitila EU-US Privacy Shield — pravni okvir za transfer podataka iz EU u SAD. Posledice za Google Analytics:</p>
+    <ul>
+      <li><strong>Jan 2022</strong> &mdash; Austrijski DPA: koriscenje GA je nelegalno jer podaci idu u SAD bez adekvatne zastite</li>
+      <li><strong>Feb 2022</strong> &mdash; CNIL (Francuska): isto zakljucenje, naredba za prestanak koriscenja GA</li>
+      <li><strong>Jun 2022</strong> &mdash; Garante (Italija): 90 dana rok za uskladjivanje ili prestanak koriscenja</li>
+      <li><strong>Jul 2023</strong> &mdash; EU-US Data Privacy Framework (DPF) usvojen &mdash; novi pravni osnov za transfer</li>
+      <li><strong>2024-2026</strong> &mdash; DPF je na snazi ali pravna neizvesnost ostaje (moguc Schrems III)</li>
+    </ul>
+    <div class="callout callout-warn"><strong>Google-ov odgovor:</strong> GA4 nudi EU-only data processing (podaci ostaju u EU), Consent Mode v2 (obavezan od marta 2024), i data retention podesavanja. Ali pravna situacija je i dalje nestabilna.</div>
+
+    <h2 id="tr4">4. GDPR-compliant alternative</h2>
+    <table>
+      <tr><th>Alternativa</th><th>Hosting</th><th>Cena</th><th>Kolacici</th><th>Consent potreban?</th><th>Open source</th></tr>
+      <tr><td><strong>Plausible</strong></td><td>EU (Nemacka)</td><td>Od &euro;9/mesec</td><td>Nula</td><td>Obicno ne*</td><td>Da</td></tr>
+      <tr><td><strong>Matomo</strong></td><td>Self-hosted / EU cloud</td><td>Besplatan (self) / od &euro;19</td><td>Opciono</td><td>Zavisi od konfig.</td><td>Da</td></tr>
+      <tr><td><strong>Fathom</strong></td><td>EU processing</td><td>Od $14/mesec</td><td>Nula</td><td>Obicno ne*</td><td>Ne</td></tr>
+      <tr><td><strong>Simple Analytics</strong></td><td>EU (Holandija)</td><td>Od &euro;9/mesec</td><td>Nula</td><td>Ne</td><td>Ne</td></tr>
+      <tr><td><strong>Umami</strong></td><td>Self-hosted</td><td>Besplatan</td><td>Nula</td><td>Ne</td><td>Da</td></tr>
+      <tr><td><strong>PostHog</strong></td><td>EU opcija</td><td>Besplatan tier</td><td>Da</td><td>Da</td><td>Da</td></tr>
+    </table>
+    <p class="ref">* "Obicno ne" jer ne koriste kolacice i ne prikupljaju PII, ali strogo pravno, neke jurisdikcije mogu zahtevati consent cak i za cookieless analytics (IP adresa je licni podatak).</p>
+    <div class="callout"><strong>Preporuka:</strong> Za GDPR-najsigurnije resenje: <strong>Plausible</strong> (EU hosting, bez kolacica, open source) ili <strong>Umami</strong> (self-hosted, potpuna kontrola, besplatan). Za napredne potrebe sa session recording: Matomo self-hosted.</div>
+
+    <h2 id="tr5">5. Google Consent Mode v2</h2>
+    <p>Obavezan od <strong>marta 2024</strong> za sajtove sa Google servisima i EU korisnicima. Detaljnije u nasem <a href="./blog-gdpr-cookies.html">Cookie Consent vodicu</a>.</p>
+    <ul>
+      <li>Bez Consent Mode: Google ne obradjuje EU podatke, remarketing ne radi</li>
+      <li>Sa Consent Mode + denied: Google koristi "modeling" (procenjuje podatke bez PII)</li>
+      <li>Sa Consent Mode + granted: puno prikupljanje podataka</li>
+      <li>Obavezni signali: <code>ad_storage</code>, <code>analytics_storage</code>, <code>ad_user_data</code>, <code>ad_personalization</code></li>
+    </ul>
+
+    <h2 id="tr6">6. Server-side tracking</h2>
+    <p>Server-side tracking (SST) je pristup gde se podaci salju VASEM serveru prvo, pa vas server prosledjuje filtrirane podatke trecim stranama.</p>
+    <h3>Kako radi</h3>
+    <pre><code>&lt;!-- Tradicionalno (client-side) --&gt;
+Browser → Google Analytics (direktno)
+Browser → Facebook Pixel (direktno)
+Browser → Hotjar (direktno)
+(Korisnik vidi sve skripte, ad-blocker ih blokira)
+
+&lt;!-- Server-side --&gt;
+Browser → Vas Server (first-party)
+  → Server filtrira/anonimizuje podatke
+  → Server salje Google-u (samo ono sto zelite)
+  → Server salje Facebook-u (samo konverzije)
+(Korisnik vidi samo zahtev ka vasem serveru)</code></pre>
+    <h3>Prednosti SST</h3>
+    <ul>
+      <li><strong>Kontrola nad podacima</strong> &mdash; vi odlucujete sta se salje trecim stranama</li>
+      <li><strong>Anonimizacija</strong> &mdash; mozete ukloniti IP, User-Agent pre slanja</li>
+      <li><strong>Ad-blocker otpornost</strong> &mdash; zahtevi idu ka vasem domenu, ne ka google-analytics.com</li>
+      <li><strong>GDPR uskladjenost</strong> &mdash; lakse dokazati da kontrolisete tok podataka</li>
+    </ul>
+    <h3>Implementacija</h3>
+    <ul>
+      <li><strong>Google Tag Manager Server-Side</strong> &mdash; Google Cloud Run + GTM server container</li>
+      <li><strong>Stape.io</strong> &mdash; managed SST za GTM (od $20/mesec)</li>
+      <li><strong>Custom endpoint</strong> &mdash; vas FastAPI/Express server koji prima events i prosledjuje GA4 Measurement Protocol-u</li>
+    </ul>
+    <div class="callout callout-warn"><strong>Paznja:</strong> Server-side tracking NE eliminise potrebu za consent-om. Cak i kad podaci idu preko vaseg servera, i dalje prikupljate licne podatke. SST je za KONTROLU, ne za zaobilazenje GDPR-a.</div>
+
+    <h2 id="tr7">7. Kako detektovati trackere na sajtu</h2>
+    <ul>
+      <li><strong><a href="./index.html">Web Security Scanner</a></strong> &mdash; automatski detektuje poznate trackere (GA, FB, Hotjar, Clarity, LinkedIn) na vasem sajtu</li>
+      <li><strong>Chrome DevTools</strong> &mdash; Network tab &rarr; filtrirajte po "google-analytics", "facebook", "hotjar"</li>
+      <li><strong><a href="https://themarkup.org/blacklight" target="_blank">Blacklight</a></strong> &mdash; skenira sajt za trackere, kolacice i fingerprinting</li>
+      <li><strong>Ghostery / uBlock Origin</strong> &mdash; browser extensioni koji prikazuju sve trackere na stranici</li>
+      <li><strong>Cookiebot Scanner</strong> &mdash; detektuje sve kolacice i trackere, mapira ih po kategorijama</li>
+    </ul>
+
+    <h2 id="tr8">8. Najcesce greske</h2>
+    <ul>
+      <li><strong>Ucitavanje trackera pre consent-a</strong> &mdash; #1 greska. GA/FB skripta u <code>&lt;head&gt;</code> se ucitava odmah. Koristite Consent Mode ili blokirajte skriptu do consent-a.</li>
+      <li><strong>"Nama ne treba consent jer koristimo GA4"</strong> &mdash; GA4 i dalje prikuplja licne podatke (IP). Consent je obavezan.</li>
+      <li><strong>Zaboravljen Hotjar/Clarity</strong> &mdash; Session recording prikuplja SVE sto korisnik radi, ukljucujuci osetljive podatke u formama. Zahteva consent + konfiguraciju da maskira osetljiva polja.</li>
+      <li><strong>Facebook Pixel bez LDU</strong> &mdash; Meta nudi Limited Data Use za EU ali ga morate eksplicitno ukljuciti.</li>
+      <li><strong>Ne navodite trackere u Privacy Policy</strong> &mdash; GDPR zahteva da navedete SVE primaoce podataka.</li>
+      <li><strong>Server-side tracking = "ne treba consent"</strong> &mdash; NETACNO. SST menja KO salje podatke, ne DA LI se prikupljaju.</li>
+    </ul>
+
+    <h2 id="tr9">9. Reference i resursi</h2>
+    <ul>
+      <li><a href="https://noyb.eu/en/101-complaints-eu-us-transfers-filed" target="_blank">NOYB &mdash; Schrems II Complaints</a></li>
+      <li><a href="https://www.cnil.fr/en/use-google-analytics-and-data-transfers-united-states-cnil-orders-website-manageroperator-comply" target="_blank">CNIL &mdash; Google Analytics Decision</a></li>
+      <li><a href="https://developers.google.com/tag-platform/security/guides/consent" target="_blank">Google &mdash; Consent Mode v2</a></li>
+      <li><a href="https://plausible.io/" target="_blank">Plausible Analytics</a></li>
+      <li><a href="https://matomo.org/" target="_blank">Matomo Analytics</a></li>
+      <li><a href="https://usefathom.com/" target="_blank">Fathom Analytics</a></li>
+      <li><a href="https://umami.is/" target="_blank">Umami &mdash; Open Source Analytics</a></li>
+      <li><a href="https://themarkup.org/blacklight" target="_blank">Blacklight &mdash; Tracker Scanner</a></li>
+      <li><a href="https://edpb.europa.eu/system/files/2023-02/edpb_recommendations_202001_supplementarymeasurestransferstools_en.pdf" target="_blank">EDPB &mdash; Transfer Recommendations</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Proverite trackere na vasem sajtu &rarr;</a>
+  </div>
+
+  <!-- ==================== ENGLISH ==================== -->
+  <div class="en">
+    <h1>Third-Party Trackers &mdash; Google Analytics, Facebook Pixel &amp; GDPR</h1>
+    <p class="subtitle">What they collect, Schrems II consequences, GDPR-compliant alternatives and server-side tracking</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">86%</div><div class="stat-label">Sites use Google Analytics</div></div>
+      <div class="stat-card"><div class="stat-num">2020</div><div class="stat-label">Schrems II ruling (CJEU)</div></div>
+      <div class="stat-card"><div class="stat-num">&euro;1.2B</div><div class="stat-label">Meta fine for data transfers</div></div>
+      <div class="stat-card"><div class="stat-num">0</div><div class="stat-label">Cookies in Plausible/Fathom</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#tr1e">What are third-party trackers</a></li>
+        <li><a href="#tr2e">Common trackers and data collected</a></li>
+        <li><a href="#tr3e">Schrems II and Google Analytics</a></li>
+        <li><a href="#tr4e">GDPR-compliant alternatives</a></li>
+        <li><a href="#tr5e">Google Consent Mode v2</a></li>
+        <li><a href="#tr6e">Server-side tracking</a></li>
+        <li><a href="#tr7e">Detecting trackers</a></li>
+        <li><a href="#tr8e">Common mistakes</a></li>
+        <li><a href="#tr9e">References</a></li>
+      </ol>
+    </div>
+
+    <h2 id="tr1e">1. What are third-party trackers</h2>
+    <p>Third-party trackers are scripts and cookies set by external companies on user devices. They collect behavioral, interest, and identity data — often across multiple sites.</p>
+    <div class="callout callout-danger"><strong>GDPR:</strong> Any tracker collecting personal data (IP, cookies, device ID) requires informed consent BEFORE loading.</div>
+
+    <h2 id="tr2e">2. Common trackers and what they collect</h2>
+    <table>
+      <tr><th>Tracker</th><th>Company</th><th>Collects</th><th>GDPR risk</th></tr>
+      <tr><td><strong>GA4</strong></td><td>Google</td><td>Pages, events, location, device, demographics</td><td>High (Schrems II)</td></tr>
+      <tr><td><strong>Meta Pixel</strong></td><td>Meta</td><td>Visits, conversions, search, add to cart</td><td>Very high</td></tr>
+      <tr><td><strong>Hotjar</strong></td><td>Hotjar (EU)</td><td>Session recording, heatmaps, clicks</td><td>Medium</td></tr>
+      <tr><td><strong>Clarity</strong></td><td>Microsoft</td><td>Session recording, heatmaps</td><td>Medium</td></tr>
+      <tr><td><strong>LinkedIn Insight</strong></td><td>LinkedIn</td><td>Visits, conversions, professional demographics</td><td>High</td></tr>
+    </table>
+
+    <h2 id="tr3e">3. Schrems II and Google Analytics</h2>
+    <p><strong>Schrems II</strong> (CJEU, July 2020) invalidated EU-US Privacy Shield. Multiple DPAs declared GA illegal. Google responded with EU-US Data Privacy Framework (2023) and server-side processing. Legal uncertainty remains.</p>
+
+    <h2 id="tr4e">4. GDPR-compliant alternatives</h2>
+    <table>
+      <tr><th>Alternative</th><th>Hosting</th><th>Price</th><th>Cookies</th><th>Open source</th></tr>
+      <tr><td><strong>Plausible</strong></td><td>EU (Germany)</td><td>From &euro;9/mo</td><td>None</td><td>Yes</td></tr>
+      <tr><td><strong>Matomo</strong></td><td>Self-hosted/EU</td><td>Free (self) / &euro;19+</td><td>Optional</td><td>Yes</td></tr>
+      <tr><td><strong>Fathom</strong></td><td>EU processing</td><td>From $14/mo</td><td>None</td><td>No</td></tr>
+      <tr><td><strong>Umami</strong></td><td>Self-hosted</td><td>Free</td><td>None</td><td>Yes</td></tr>
+    </table>
+    <div class="callout"><strong>Recommendation:</strong> For safest GDPR compliance: <strong>Plausible</strong> (EU, no cookies, open source) or <strong>Umami</strong> (self-hosted, full control, free).</div>
+
+    <h2 id="tr5e">5. Google Consent Mode v2</h2>
+    <p>Required since March 2024. Without it, Google won't process EU data. Details in our <a href="./blog-gdpr-cookies.html">Cookie Consent guide</a>.</p>
+
+    <h2 id="tr6e">6. Server-side tracking</h2>
+    <p>Data goes to YOUR server first, then your server forwards filtered data to third parties. Advantages: data control, anonymization, ad-blocker resistance. But does NOT eliminate consent requirement.</p>
+
+    <h2 id="tr7e">7. Detecting trackers on your site</h2>
+    <ul>
+      <li><strong><a href="./index.html">Web Security Scanner</a></strong> — auto-detects known trackers</li>
+      <li><strong>Chrome DevTools</strong> — Network tab, filter by tracker domains</li>
+      <li><strong><a href="https://themarkup.org/blacklight" target="_blank">Blacklight</a></strong> — scans for trackers and fingerprinting</li>
+      <li><strong>Ghostery / uBlock Origin</strong> — browser extensions</li>
+    </ul>
+
+    <h2 id="tr8e">8. Common mistakes</h2>
+    <ul>
+      <li><strong>Loading trackers before consent</strong> — #1 mistake</li>
+      <li><strong>"GA4 doesn't need consent"</strong> — wrong, still collects personal data</li>
+      <li><strong>Forgotten session recording</strong> — Hotjar/Clarity records EVERYTHING including sensitive form data</li>
+      <li><strong>Not listing trackers in Privacy Policy</strong> — GDPR requires listing all data recipients</li>
+      <li><strong>"Server-side = no consent needed"</strong> — FALSE, SST changes WHO sends, not WHETHER data is collected</li>
+    </ul>
+
+    <h2 id="tr9e">9. References and resources</h2>
+    <ul>
+      <li><a href="https://noyb.eu/en/101-complaints-eu-us-transfers-filed" target="_blank">NOYB — Schrems II Complaints</a></li>
+      <li><a href="https://www.cnil.fr/en/use-google-analytics-and-data-transfers-united-states-cnil-orders-website-manageroperator-comply" target="_blank">CNIL — GA Decision</a></li>
+      <li><a href="https://plausible.io/" target="_blank">Plausible Analytics</a></li>
+      <li><a href="https://matomo.org/" target="_blank">Matomo Analytics</a></li>
+      <li><a href="https://umami.is/" target="_blank">Umami</a></li>
+      <li><a href="https://themarkup.org/blacklight" target="_blank">Blacklight Scanner</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Check trackers on your site &rarr;</a>
+  </div>
+
+  <div class="nav-links">
+    <a href="./blog-gdpr.html"><span class="sr">GDPR vodic</span><span class="en">GDPR Guide</span></a>
+    <a href="./blog-gdpr-cookies.html"><span class="sr">Cookie Consent</span><span class="en">Cookie Consent</span></a>
+    <a href="./blog-gdpr-policy.html"><span class="sr">Privacy Policy</span><span class="en">Privacy Policy</span></a>
+    <a href="./blog-gdpr-rights.html"><span class="sr">Prava korisnika</span><span class="en">User Rights</span></a>
+    <a href="./blog-gdpr-fines.html"><span class="sr">GDPR Kazne</span><span class="en">GDPR Fines</span></a>
+    <a href="./privacy.html"><span class="sr">Politika privatnosti</span><span class="en">Privacy Policy</span></a>
+  </div>
+
+  </main>
+</div>
+<script src="./blog-common.js" defer></script>
+</body>
+</html>

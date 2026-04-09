@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prava korisnika po GDPR — Pristup, brisanje, prenosivost | Web Security Scanner</title>
+  <meta name="description" content="Kompletni vodic za 8 prava korisnika po GDPR-u: pristup, ispravka, brisanje (right to be forgotten), prenosivost, prigovor. Rokovi, DSAR proces, tehnicka implementacija.">
+  <meta name="keywords" content="GDPR prava, pravo na brisanje, pravo na pristup, data portability, DSAR, right to be forgotten, ZZPL">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <link rel="canonical" href="https://security-scanner-ruddy.vercel.app/blog-gdpr-rights.html">
+  <link rel="alternate" hreflang="sr" href="https://security-scanner-ruddy.vercel.app/blog-gdpr-rights.html">
+  <link rel="alternate" hreflang="en" href="https://security-scanner-ruddy.vercel.app/blog-gdpr-rights.html">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="8 prava korisnika po GDPR-u — pristup, brisanje, prenosivost">
+  <meta property="og:description" content="Sva GDPR prava objasnjena: rokovi, DSAR proces, tehnicka implementacija i izuzeci.">
+  <meta property="og:url" content="https://security-scanner-ruddy.vercel.app/blog-gdpr-rights.html">
+  <meta property="og:site_name" content="Web Security Scanner">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="8 prava korisnika po GDPR-u — pristup, brisanje, prenosivost">
+  <meta name="twitter:description" content="Sva GDPR prava objasnjena: rokovi, DSAR proces, tehnicka implementacija i izuzeci.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Prava korisnika po GDPR — Pristup, brisanje, prenosivost",
+    "author": {"@type": "Person", "name": "Toske", "url": "https://toske-programer.web.app"},
+    "publisher": {"@type": "Organization", "name": "Web Security Scanner"},
+    "datePublished": "2026-04-09",
+    "dateModified": "2026-04-09",
+    "description": "8 prava korisnika po GDPR-u: pristup, ispravka, brisanje, prenosivost, prigovor. Rokovi i implementacija.",
+    "mainEntityOfPage": {"@type": "WebPage", "@id": "https://security-scanner-ruddy.vercel.app/blog-gdpr-rights.html"}
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Kako da zatrazim brisanje svojih podataka?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Posaljite email ili popunite DSAR formu na sajtu kompanije sa zahtevom za brisanje podataka (GDPR clan 17). Navedite svoje ime i email koji ste koristili. Kompanija ima 30 dana da odgovori. Ako ne odgovore, mozete se zaliti Povereniku (Srbija) ili nadleznom DPA u EU."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Koliko treba da cekam na odgovor?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Kompanija mora odgovoriti u roku od 30 dana od prijema zahteva. Rok se moze produziti za dodatna 2 meseca (ukupno 90 dana) za slozene zahteve, ali vas moraju obavestiti o produzenju u prvih 30 dana sa objasnjenjam razloga."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Moze li firma da odbije moj zahtev za brisanje?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Da, u odredjenim slucajevima: 1) Zakonska obaveza cuvanja (poreske evidencije, medicinski podaci), 2) Javni interes (novinarstvo, istrazivanje), 3) Ostvarivanje pravnih zahteva (sudski postupak), 4) Sloboda izrazavanja. Ali firma MORA da objasni razlog odbijanja pisanim putem."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Da li GDPR prava vaze i u Srbiji?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Da. Srpski ZZPL (Zakon o zastiti podataka o licnosti, 2018) daje ista prava kao GDPR: pristup, ispravka, brisanje, prenosivost, prigovor. Nadlezni organ je Poverenik za informacije od javnog znacaja i zastitu podataka o licnosti. Rok za odgovor je takodje 30 dana."
+        }
+      }
+    ]
+  }
+  </script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+</head>
+<body>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr"><div class="timeline-title">Sadrzaj</div><ol id="timeline-sr"></ol></div>
+    <div class="en"><div class="timeline-title">Contents</div><ol id="timeline-en"></ol></div>
+  </aside>
+  <main class="blog-content">
+
+  <!-- ==================== SRPSKI ==================== -->
+  <div class="sr">
+    <h1>Prava korisnika po GDPR &mdash; Pristup, brisanje, prenosivost</h1>
+    <p class="subtitle">Kompletni vodic za 8 prava korisnika: objasnjenja, primeri, izuzeci, rokovi i tehnicka implementacija</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">8</div><div class="stat-label">Prava korisnika po GDPR-u</div></div>
+      <div class="stat-card"><div class="stat-num">30</div><div class="stat-label">Dana rok za odgovor</div></div>
+      <div class="stat-card"><div class="stat-num">67%</div><div class="stat-label">EU gradjana zna za GDPR prava</div></div>
+      <div class="stat-card"><div class="stat-num">Cl. 12-22</div><div class="stat-label">GDPR clanci o pravima</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Sadrzaj</h3>
+      <ol>
+        <li><a href="#r1">1. Pravo na informisanje</a></li>
+        <li><a href="#r2">2. Pravo na pristup (SAR)</a></li>
+        <li><a href="#r3">3. Pravo na ispravku</a></li>
+        <li><a href="#r4">4. Pravo na brisanje ("Right to be forgotten")</a></li>
+        <li><a href="#r5">5. Pravo na ogranicenje obrade</a></li>
+        <li><a href="#r6">6. Pravo na prenosivost podataka</a></li>
+        <li><a href="#r7">7. Pravo na prigovor</a></li>
+        <li><a href="#r8">8. Automatizovano odlucivanje i profilisanje</a></li>
+        <li><a href="#r9">Rokovi i DSAR proces</a></li>
+        <li><a href="#r10">Tehnicka implementacija</a></li>
+        <li><a href="#r11">Reference i resursi</a></li>
+      </ol>
+    </div>
+
+    <h2 id="r1">1. Pravo na informisanje (Cl. 13-14)</h2>
+    <p>Korisnici imaju pravo da znaju STA se prikuplja, ZASTO, KO obradjuje i KOLIKO DUGO se cuva. Ovo se ostvaruje kroz Privacy Policy. Detaljnije u nasem <a href="./blog-gdpr-policy.html">Privacy Policy vodicu</a>.</p>
+    <div class="callout"><strong>Implementacija:</strong> Jasna Privacy Policy na sajtu + informacija pri svakom prikupljanju podataka (forme, registracija, cookie consent).</div>
+
+    <h2 id="r2">2. Pravo na pristup — SAR (Cl. 15)</h2>
+    <p>Korisnik moze zatraziti <strong>kopiju svih podataka</strong> koje imate o njemu. Ovo se zove <strong>Subject Access Request (SAR)</strong> ili <strong>DSAR (Data Subject Access Request)</strong>.</p>
+    <ul>
+      <li><strong>Sta morate dati:</strong> Kopiju svih licnih podataka + svrhe obrade + primaoce + period cuvanja</li>
+      <li><strong>Format:</strong> Elektronski, u citljivom formatu (PDF, CSV, JSON)</li>
+      <li><strong>Cena:</strong> Besplatno za prvi zahtev. Za ponovljene/preterane zahteve: razumna naknada ili odbijanje</li>
+      <li><strong>Primer:</strong> "Zelim kopiju svih podataka koje imate o meni: email, IP logovi, analytics podaci, kupovine"</li>
+    </ul>
+    <pre><code>// Primer API endpoint-a za SAR
+// GET /api/user/data-export?email=user@example.com
+{
+  "user": {
+    "email": "user@example.com",
+    "name": "Marko Markovic",
+    "registered": "2025-03-15",
+    "ip_logs": ["185.12.34.56 — 2026-04-01", "185.12.34.56 — 2026-04-05"],
+    "orders": [{"id": 1234, "date": "2026-03-20", "amount": "2990 RSD"}],
+    "analytics_data": "Anonimizovano — ne mozemo povezati sa vama",
+    "cookies_consent": {"analytics": true, "marketing": false, "date": "2026-01-15"}
+  }
+}</code></pre>
+
+    <h2 id="r3">3. Pravo na ispravku (Cl. 16)</h2>
+    <p>Korisnik moze zatraziti <strong>ispravku netacnih podataka</strong> ili dopunu nepotpunih.</p>
+    <ul>
+      <li><strong>Primer:</strong> "Moje ime je pogresno upisano", "Promenio sam adresu"</li>
+      <li><strong>Rok:</strong> 30 dana, bez naplate</li>
+      <li><strong>Obaveza:</strong> Obavestiti sve primaoce kojima ste prosledili podatke o ispravci</li>
+    </ul>
+
+    <h2 id="r4">4. Pravo na brisanje &mdash; "Right to be forgotten" (Cl. 17)</h2>
+    <p>Najpoznatije GDPR pravo. Korisnik moze zatraziti <strong>potpuno brisanje svih svojih podataka</strong>.</p>
+    <h3>Kada MORATE obrisati</h3>
+    <ul>
+      <li>Podaci vise nisu potrebni za originalnu svrhu</li>
+      <li>Korisnik povuce saglasnost (i nema drugog pravnog osnova)</li>
+      <li>Korisnik uloze prigovor na obradu</li>
+      <li>Podaci su nezakonito obradjeni</li>
+      <li>Zakonska obaveza brisanja</li>
+    </ul>
+    <h3>Kada MOZETE odbiti</h3>
+    <ul>
+      <li><strong>Zakonska obaveza:</strong> Poreske evidencije (5-10 godina), medicinski podaci</li>
+      <li><strong>Javni interes:</strong> Arhiviranje, istrazivanje, statistika</li>
+      <li><strong>Pravni zahtevi:</strong> Ako su podaci potrebni za sudski postupak</li>
+      <li><strong>Sloboda izrazavanja:</strong> Novinarstvo, umetnost</li>
+    </ul>
+    <div class="callout callout-warn"><strong>Tehnicka implementacija:</strong> Koristite <strong>soft delete</strong> (oznacite kao obrisano ali sacuvajte za zakonske obaveze) ili <strong>hard delete</strong> + anonimizaciju za analytics podatke. NIKAD ne brisajte podatke koji su zakonski obavezni.</div>
+
+    <h2 id="r5">5. Pravo na ogranicenje obrade (Cl. 18)</h2>
+    <p>Korisnik moze zatraziti da <strong>prestanete da koristite podatke</strong> (ali da ih i dalje cuvate) u sledecim slucajevima:</p>
+    <ul>
+      <li>Osporava tacnost podataka (dok se ne verifikuje)</li>
+      <li>Obrada je nezakonita ali korisnik ne zeli brisanje</li>
+      <li>Vi vise ne trebate podatke ali korisnik ih treba za pravne zahteve</li>
+      <li>Korisnik je ulozio prigovor (dok se ne odluci)</li>
+    </ul>
+
+    <h2 id="r6">6. Pravo na prenosivost podataka (Cl. 20)</h2>
+    <p>Korisnik moze zatraziti da mu dostavite podatke u <strong>strukturiranom, masinski citljivom formatu</strong> (JSON, CSV, XML) i da ih prenesete drugom kontroloru.</p>
+    <ul>
+      <li><strong>Primenjuje se na:</strong> Podatke koje je korisnik sam dao + podatke nastale koriscenjem usluge</li>
+      <li><strong>NE primenjuje se na:</strong> Izvedene podatke (vasa analiza, scoring, profilisanje)</li>
+      <li><strong>Format:</strong> JSON, CSV ili XML &mdash; masinski citljiv, ne PDF</li>
+      <li><strong>Primer:</strong> Instagram "Download Your Data" &mdash; sve slike, komentari, poruke u ZIP-u</li>
+    </ul>
+    <pre><code>// Primer data export-a za prenosivost
+// Format: JSON (masinski citljiv)
+{
+  "format": "GDPR Data Portability Export",
+  "date": "2026-04-09",
+  "user": {
+    "name": "Marko Markovic",
+    "email": "marko@primer.rs"
+  },
+  "orders": [...],
+  "preferences": {...},
+  "content": [...]  // Korisnikov sadrzaj
+  // NE ukljucuje: vas interni scoring, ML predikcije
+}</code></pre>
+
+    <h2 id="r7">7. Pravo na prigovor (Cl. 21)</h2>
+    <p>Korisnik moze <strong>uloziti prigovor na obradu</strong> zasnovanu na legitimnom interesu ili javnom interesu.</p>
+    <ul>
+      <li><strong>Direktni marketing:</strong> Ako korisnik prigovori na marketing, MORATE odmah prestati. Bez izuzetaka.</li>
+      <li><strong>Legitimni interes:</strong> Morate dokazati da vasi interesi prevazilaze prava korisnika, inace morate prestati.</li>
+      <li><strong>Implementacija:</strong> "Unsubscribe" link u svakom marketing email-u, "Opt-out" opcija za analitiku.</li>
+    </ul>
+
+    <h2 id="r8">8. Automatizovano odlucivanje i profilisanje (Cl. 22)</h2>
+    <p>Korisnik ima pravo da <strong>ne bude podvrgnut odluci zasnovanoj iskljucivo na automatizovanoj obradi</strong> koja ga znacajno pogadja.</p>
+    <ul>
+      <li><strong>Primer:</strong> Automatsko odbijanje kredita, automatsko podesavanje cena na osnovu profila</li>
+      <li><strong>Prava korisnika:</strong> Zahtev za ljudsku intervenciju, objasnjenje odluke, osporavanje odluke</li>
+      <li><strong>Izuzeci:</strong> Neophodnost za ugovor, zakonska osnova, eksplicitna saglasnost</li>
+      <li><strong>AI implikacije:</strong> Algoritmi koji odlucuju o kreditima, zaposlenju, osiguranju moraju imati "human in the loop"</li>
+    </ul>
+
+    <h2 id="r9">9. Rokovi i DSAR proces</h2>
+    <table>
+      <tr><th>Aspekt</th><th>Detalj</th></tr>
+      <tr><td><strong>Rok za odgovor</strong></td><td>30 dana od prijema zahteva</td></tr>
+      <tr><td><strong>Produzenje</strong></td><td>+2 meseca za slozene zahteve (obavestiti korisnika u prvih 30 dana)</td></tr>
+      <tr><td><strong>Cena</strong></td><td>Besplatno. Naknada samo za ponovljene/preterane zahteve</td></tr>
+      <tr><td><strong>Identifikacija</strong></td><td>Morate verifikovati identitet podnosioca zahteva pre odgovora</td></tr>
+      <tr><td><strong>Format</strong></td><td>Elektronski ako je zahtev elektronski. Citljiv format.</td></tr>
+      <tr><td><strong>Odbijanje</strong></td><td>Morate objasniti razlog + pravo na zalbu DPA</td></tr>
+    </table>
+    <div class="callout"><strong>DSAR proces:</strong> 1) Primite zahtev &rarr; 2) Verifikujte identitet &rarr; 3) Pronadjite sve podatke &rarr; 4) Pripremite odgovor &rarr; 5) Posaljite u roku od 30 dana &rarr; 6) Logirajte zahtev i odgovor.</div>
+
+    <h2 id="r10">10. Tehnicka implementacija</h2>
+    <pre><code># Python primer: GDPR data export endpoint
+from fastapi import APIRouter
+from datetime import datetime
+
+@router.get("/api/gdpr/export/{user_id}")
+async def gdpr_export(user_id: str):
+    # Prikupi SVE podatke za korisnika
+    user = await db.users.find_one({"_id": user_id})
+    orders = await db.orders.find({"user_id": user_id}).to_list()
+    logs = await db.access_logs.find({"user_id": user_id}).to_list()
+
+    return {
+        "export_date": datetime.now().isoformat(),
+        "format": "GDPR Article 15/20 Data Export",
+        "personal_data": {
+            "name": user["name"],
+            "email": user["email"],
+            "registered": user["created_at"],
+        },
+        "activity": {
+            "orders": [sanitize_order(o) for o in orders],
+            "login_history": [{"date": l["date"], "ip": l["ip"]} for l in logs],
+        },
+        "consent_history": user.get("consent_log", []),
+    }
+
+# Soft delete za pravo na brisanje
+@router.delete("/api/gdpr/delete/{user_id}")
+async def gdpr_delete(user_id: str):
+    # Soft delete: sacuvaj za zakonske obaveze, oznaci kao obrisano
+    await db.users.update_one(
+        {"_id": user_id},
+        {"$set": {"deleted": True, "deleted_at": datetime.now(),
+                  "email": "DELETED", "name": "DELETED"}}
+    )
+    # Obrisi analytics podatke (hard delete)
+    await db.analytics.delete_many({"user_id": user_id})
+    return {"status": "deleted", "retained": "Legal obligation data retained per Art. 17(3)"}</code></pre>
+
+    <h2 id="r11">11. Reference i resursi</h2>
+    <ul>
+      <li><a href="https://gdpr-info.eu/chapter-3/" target="_blank">GDPR Poglavlje 3 &mdash; Prava korisnika (Cl. 12-23)</a></li>
+      <li><a href="https://ico.org.uk/for-organisations/guide-to-data-protection/guide-to-the-general-data-protection-regulation-gdpr/individual-rights/" target="_blank">ICO &mdash; Individual Rights Guide</a></li>
+      <li><a href="https://edpb.europa.eu/our-work-tools/general-guidance/guidelines-recommendations-best-practices_en" target="_blank">EDPB &mdash; Guidelines on Rights</a></li>
+      <li><a href="https://www.poverenik.rs/" target="_blank">Poverenik za informacije &mdash; Srbija</a></li>
+      <li><a href="https://www.paragraf.rs/propisi/zakon_o_zastiti_podataka_o_licnosti.html" target="_blank">ZZPL &mdash; Srpski zakon</a></li>
+      <li><a href="https://europa.eu/youreurope/citizens/consumers/data-protection/data-protection-gdpr/index_en.htm" target="_blank">Your Europe &mdash; GDPR Rights for Citizens</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Proverite GDPR uskladjenost vaseg sajta &rarr;</a>
+  </div>
+
+  <!-- ==================== ENGLISH ==================== -->
+  <div class="en">
+    <h1>GDPR User Rights &mdash; Access, Erasure, Portability</h1>
+    <p class="subtitle">Complete guide to 8 user rights: explanations, examples, exceptions, deadlines and implementation</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">8</div><div class="stat-label">User rights under GDPR</div></div>
+      <div class="stat-card"><div class="stat-num">30</div><div class="stat-label">Days response deadline</div></div>
+      <div class="stat-card"><div class="stat-num">67%</div><div class="stat-label">EU citizens aware of GDPR rights</div></div>
+      <div class="stat-card"><div class="stat-num">Art. 12-22</div><div class="stat-label">GDPR articles on rights</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#r1e">Right to be informed</a></li>
+        <li><a href="#r2e">Right of access (SAR)</a></li>
+        <li><a href="#r3e">Right to rectification</a></li>
+        <li><a href="#r4e">Right to erasure ("Right to be forgotten")</a></li>
+        <li><a href="#r5e">Right to restriction</a></li>
+        <li><a href="#r6e">Right to data portability</a></li>
+        <li><a href="#r7e">Right to object</a></li>
+        <li><a href="#r8e">Automated decision-making</a></li>
+        <li><a href="#r9e">Deadlines and DSAR process</a></li>
+        <li><a href="#r10e">Technical implementation</a></li>
+        <li><a href="#r11e">References</a></li>
+      </ol>
+    </div>
+
+    <h2 id="r1e">1. Right to be informed (Art. 13-14)</h2>
+    <p>Users must know WHAT is collected, WHY, by WHOM, and for HOW LONG. Implemented through Privacy Policy. More in our <a href="./blog-gdpr-policy.html">Privacy Policy guide</a>.</p>
+
+    <h2 id="r2e">2. Right of access — SAR (Art. 15)</h2>
+    <p>Users can request a <strong>copy of all their personal data</strong>. Called Subject Access Request (SAR/DSAR). Must provide: all personal data + purposes + recipients + retention period. Format: electronic, readable (PDF, CSV, JSON). Free for first request.</p>
+
+    <h2 id="r3e">3. Right to rectification (Art. 16)</h2>
+    <p>Users can request <strong>correction of inaccurate data</strong> or completion of incomplete data. 30-day deadline. Must notify all recipients of corrections.</p>
+
+    <h2 id="r4e">4. Right to erasure — "Right to be forgotten" (Art. 17)</h2>
+    <p>Users can request <strong>complete deletion</strong> of all their data.</p>
+    <p><strong>Must delete when:</strong> data no longer needed, consent withdrawn, objection raised, unlawful processing.</p>
+    <p><strong>Can refuse when:</strong> legal obligation (tax records), public interest, legal claims, freedom of expression.</p>
+    <div class="callout callout-warn"><strong>Implementation:</strong> Use <strong>soft delete</strong> (mark as deleted but retain for legal obligations) or <strong>hard delete</strong> + anonymization for analytics. NEVER delete legally required data.</div>
+
+    <h2 id="r5e">5. Right to restriction of processing (Art. 18)</h2>
+    <p>User can request you <strong>stop using data</strong> (but keep storing it) when: accuracy contested, processing unlawful but user doesn't want deletion, data needed for legal claims, objection pending.</p>
+
+    <h2 id="r6e">6. Right to data portability (Art. 20)</h2>
+    <p>User can request data in <strong>structured, machine-readable format</strong> (JSON, CSV, XML) and transfer to another controller. Applies to: user-provided data + usage-generated data. Does NOT apply to: derived data (your analysis, scoring).</p>
+
+    <h2 id="r7e">7. Right to object (Art. 21)</h2>
+    <p><strong>Direct marketing:</strong> if user objects, you MUST stop immediately. No exceptions. <strong>Legitimate interest:</strong> must prove your interests override user rights. Implement: unsubscribe links, opt-out options.</p>
+
+    <h2 id="r8e">8. Automated decision-making (Art. 22)</h2>
+    <p>Users have the right <strong>not to be subject to decisions based solely on automated processing</strong> that significantly affects them. Examples: automatic credit denial, automated pricing. Rights: request human intervention, explanation, contest decision.</p>
+
+    <h2 id="r9e">9. Deadlines and DSAR process</h2>
+    <table>
+      <tr><th>Aspect</th><th>Detail</th></tr>
+      <tr><td>Response deadline</td><td>30 days from receipt</td></tr>
+      <tr><td>Extension</td><td>+2 months for complex requests (notify in first 30 days)</td></tr>
+      <tr><td>Cost</td><td>Free. Fee only for repeated/excessive requests</td></tr>
+      <tr><td>Verification</td><td>Must verify requester identity before responding</td></tr>
+      <tr><td>Refusal</td><td>Must explain reason + right to complain to DPA</td></tr>
+    </table>
+
+    <h2 id="r10e">10. Technical implementation</h2>
+    <p>Key endpoints: <code>GET /api/gdpr/export/{user_id}</code> for data access/portability, <code>DELETE /api/gdpr/delete/{user_id}</code> for erasure (soft delete + hard delete analytics).</p>
+
+    <h2 id="r11e">11. References and resources</h2>
+    <ul>
+      <li><a href="https://gdpr-info.eu/chapter-3/" target="_blank">GDPR Chapter 3 — Rights (Art. 12-23)</a></li>
+      <li><a href="https://ico.org.uk/for-organisations/guide-to-data-protection/guide-to-the-general-data-protection-regulation-gdpr/individual-rights/" target="_blank">ICO — Individual Rights</a></li>
+      <li><a href="https://edpb.europa.eu/" target="_blank">EDPB Guidelines</a></li>
+      <li><a href="https://europa.eu/youreurope/citizens/consumers/data-protection/data-protection-gdpr/index_en.htm" target="_blank">Your Europe — GDPR Rights</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Check GDPR compliance &rarr;</a>
+  </div>
+
+  <div class="nav-links">
+    <a href="./blog-gdpr.html"><span class="sr">GDPR vodic</span><span class="en">GDPR Guide</span></a>
+    <a href="./blog-gdpr-cookies.html"><span class="sr">Cookie Consent</span><span class="en">Cookie Consent</span></a>
+    <a href="./blog-gdpr-policy.html"><span class="sr">Privacy Policy</span><span class="en">Privacy Policy</span></a>
+    <a href="./blog-gdpr-trackers.html"><span class="sr">Third-Party Trackeri</span><span class="en">Third-Party Trackers</span></a>
+    <a href="./blog-gdpr-fines.html"><span class="sr">GDPR Kazne</span><span class="en">GDPR Fines</span></a>
+    <a href="./privacy.html"><span class="sr">Politika privatnosti</span><span class="en">Privacy Policy</span></a>
+  </div>
+
+  </main>
+</div>
+<script src="./blog-common.js" defer></script>
+</body>
+</html>

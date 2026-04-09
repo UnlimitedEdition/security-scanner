@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GDPR Kazne — Najvece kazne i kako ih izbeci | Web Security Scanner</title>
+  <meta name="description" content="Kompletni vodic za GDPR kazne: Top 10 najvecih kazni (Meta 1.2B, Amazon 746M), struktura penala, 11 faktora za visinu kazne, srpski ZZPL, 10 koraka za izbegavanje.">
+  <meta name="keywords" content="GDPR kazne, GDPR fines, penali, compliance, zastita podataka, Meta, Amazon, Google, CNIL, ICO">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <link rel="canonical" href="https://security-scanner-ruddy.vercel.app/blog-gdpr-fines.html">
+  <link rel="alternate" hreflang="sr" href="https://security-scanner-ruddy.vercel.app/blog-gdpr-fines.html">
+  <link rel="alternate" hreflang="en" href="https://security-scanner-ruddy.vercel.app/blog-gdpr-fines.html">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="GDPR Kazne — Top 10 najvecih i kako ih izbeci">
+  <meta property="og:description" content="Meta 1.2B EUR, Amazon 746M, Google 150M. Struktura kazni, faktori i 10 koraka za izbegavanje.">
+  <meta property="og:url" content="https://security-scanner-ruddy.vercel.app/blog-gdpr-fines.html">
+  <meta property="og:site_name" content="Web Security Scanner">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="GDPR Kazne — Top 10 najvecih i kako ih izbeci">
+  <meta name="twitter:description" content="Meta 1.2B EUR, Amazon 746M, Google 150M. Struktura kazni, faktori i 10 koraka za izbegavanje.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "GDPR Kazne — Najvece kazne i kako ih izbeci",
+    "author": {"@type": "Person", "name": "Toske", "url": "https://toske-programer.web.app"},
+    "publisher": {"@type": "Organization", "name": "Web Security Scanner"},
+    "datePublished": "2026-04-09",
+    "dateModified": "2026-04-09",
+    "description": "Top 10 GDPR kazni, struktura penala, faktori za visinu, srpski ZZPL i 10 koraka za izbegavanje.",
+    "mainEntityOfPage": {"@type": "WebPage", "@id": "https://security-scanner-ruddy.vercel.app/blog-gdpr-fines.html"}
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Kolika je najveca GDPR kazna?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Najveca GDPR kazna je 1.2 milijarde EUR izrecena Meta (Ireland) u maju 2023. za transfer korisnickih podataka iz EU u SAD bez adekvatne pravne osnove posle Schrems II presude. Druga najveca je Amazon sa 746 miliona EUR (2021) za nelegalno targetiranje korisnika."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Da li male firme mogu biti kaznjene po GDPR-u?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Da. GDPR se primenjuje na SVE organizacije koje obradjuju licne podatke EU gradjana, bez obzira na velicinu. Male firme obicno dobijaju manje kazne (1,000-50,000 EUR) ali kazne POSTOJE. Najcesci razlozi: nedostatak cookie consent-a, nema Privacy Policy, nebezbedno cuvanje podataka."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Kako izbeci GDPR kazne?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "10 koraka: 1) Privacy Policy na sajtu, 2) Cookie consent banner, 3) HTTPS enkripcija, 4) Minimizacija podataka, 5) Evidencija obrade, 6) Odgovor na zahteve korisnika u roku, 7) Obavestavnje o krsenjima u 72h, 8) DPO ako je potreban, 9) Redovni auditi, 10) Obuka zaposlenih. Nas Web Security Scanner proverava tehnicke aspekte uskladjenosti."
+        }
+      }
+    ]
+  }
+  </script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+</head>
+<body>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr"><div class="timeline-title">Sadrzaj</div><ol id="timeline-sr"></ol></div>
+    <div class="en"><div class="timeline-title">Contents</div><ol id="timeline-en"></ol></div>
+  </aside>
+  <main class="blog-content">
+
+  <!-- ==================== SRPSKI ==================== -->
+  <div class="sr">
+    <h1>GDPR Kazne &mdash; Najvece kazne i kako ih izbeci</h1>
+    <p class="subtitle">Top 10 kazni, struktura penala, faktori za visinu i 10 konkretnih koraka za uskladjenost</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">&euro;4B+</div><div class="stat-label">Ukupno GDPR kazni od 2018.</div></div>
+      <div class="stat-card"><div class="stat-num">&euro;1.2B</div><div class="stat-label">Najveca kazna (Meta, 2023)</div></div>
+      <div class="stat-card"><div class="stat-num">4%</div><div class="stat-label">Max kazna od globalnog prometa</div></div>
+      <div class="stat-card"><div class="stat-num">2,000+</div><div class="stat-label">Izrecenih kazni od 2018.</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Sadrzaj</h3>
+      <ol>
+        <li><a href="#f1">Struktura kazni po GDPR-u</a></li>
+        <li><a href="#f2">Top 10 najvecih GDPR kazni</a></li>
+        <li><a href="#f3">11 faktora za visinu kazne</a></li>
+        <li><a href="#f4">Male firme i GDPR</a></li>
+        <li><a href="#f5">Srpski ZZPL — kazne u Srbiji</a></li>
+        <li><a href="#f6">Kako izbeci kazne — 10 koraka</a></li>
+        <li><a href="#f7">Najcesci razlozi za kazne</a></li>
+        <li><a href="#f8">Reference i resursi</a></li>
+      </ol>
+    </div>
+
+    <h2 id="f1">1. Struktura kazni po GDPR-u</h2>
+    <p>GDPR predvidja dva nivoa kazni:</p>
+    <table>
+      <tr><th>Nivo</th><th>Maksimum</th><th>Za krsenja</th></tr>
+      <tr><td><strong>Nizi</strong></td><td>&euro;10M ili 2% globalnog godisnjeg prometa (sta je vece)</td><td>Tehnicke/organizacione obaveze: evidencija obrade, DPO imenovanje, notifikacija o krsenju, certifikacija</td></tr>
+      <tr><td><strong>Visi</strong></td><td>&euro;20M ili 4% globalnog godisnjeg prometa (sta je vece)</td><td>Osnovni principi: saglasnost, prava korisnika, transfer podataka, krsenje osnova obrade</td></tr>
+    </table>
+    <div class="callout callout-danger"><strong>4% globalnog prometa:</strong> Za Meta to je 4% od ~$117B = ~$4.7B potencijalno. Izrecena kazna od $1.2B je "samo" ~1% prometa. Google sa $307B prometa moze teoretski dobiti kaznu od $12B.</div>
+
+    <h2 id="f2">2. Top 10 najvecih GDPR kazni</h2>
+    <table>
+      <tr><th>#</th><th>Kompanija</th><th>Kazna</th><th>Godina</th><th>Razlog</th><th>DPA</th></tr>
+      <tr><td>1</td><td><strong>Meta (Facebook)</strong></td><td>&euro;1.2B</td><td>2023</td><td>Transfer podataka u SAD bez pravne osnove posle Schrems II</td><td>DPC (Irska)</td></tr>
+      <tr><td>2</td><td><strong>Amazon</strong></td><td>&euro;746M</td><td>2021</td><td>Targetiranje korisnika bez validnog consent-a</td><td>CNPD (Luksemburg)</td></tr>
+      <tr><td>3</td><td><strong>TikTok</strong></td><td>&euro;345M</td><td>2023</td><td>Obrada podataka dece, nedovoljna transparentnost</td><td>DPC (Irska)</td></tr>
+      <tr><td>4</td><td><strong>WhatsApp</strong></td><td>&euro;225M</td><td>2021</td><td>Nedovoljna transparentnost o obradi podataka</td><td>DPC (Irska)</td></tr>
+      <tr><td>5</td><td><strong>Google (cookies)</strong></td><td>&euro;150M</td><td>2022</td><td>Cookie consent: tesko odbijanje, dark patterns</td><td>CNIL (Francuska)</td></tr>
+      <tr><td>6</td><td><strong>Google (transparency)</strong></td><td>&euro;50M</td><td>2019</td><td>Nedovoljna transparentnost, nevalidan consent</td><td>CNIL (Francuska)</td></tr>
+      <tr><td>7</td><td><strong>Criteo</strong></td><td>&euro;40M</td><td>2023</td><td>Nelegalno prikupljanje consent-a za tracking</td><td>CNIL (Francuska)</td></tr>
+      <tr><td>8</td><td><strong>H&amp;M</strong></td><td>&euro;35.3M</td><td>2020</td><td>Nadzor zaposlenih, prikupljanje privatnih podataka</td><td>HmbBfDI (Nemacka)</td></tr>
+      <tr><td>9</td><td><strong>British Airways</strong></td><td>&euro;22M</td><td>2020</td><td>Data breach — XSS napad, 380K kartica ukradeno</td><td>ICO (UK)</td></tr>
+      <tr><td>10</td><td><strong>Marriott</strong></td><td>&euro;20M</td><td>2020</td><td>Data breach — 339M gostiju, neotkriven 4 godine</td><td>ICO (UK)</td></tr>
+    </table>
+    <div class="callout"><strong>Trend:</strong> Kazne rastu svake godine. 2019: ukupno ~&euro;400M. 2022: ~&euro;2.5B. 2023: ~&euro;2B. Regulatorni organi sve agresivnije sprovode kontrole.</div>
+
+    <h2 id="f3">3. 11 faktora za visinu kazne (Cl. 83.2)</h2>
+    <p>GDPR definise 11 faktora koje DPA razmatra pri odredjivanju visine kazne:</p>
+    <table>
+      <tr><th>#</th><th>Faktor</th><th>Primer uticaja</th></tr>
+      <tr><td>1</td><td><strong>Priroda, tezina i trajanje krsenja</strong></td><td>Data breach koji traje 4 godine (Marriott) vs jednokratno</td></tr>
+      <tr><td>2</td><td><strong>Namerno ili nehajno</strong></td><td>Namerno ignorisanje GDPR = veca kazna</td></tr>
+      <tr><td>3</td><td><strong>Mere za ublazavanje stete</strong></td><td>Brza reakcija smanjuje kaznu</td></tr>
+      <tr><td>4</td><td><strong>Tehnicke i organizacione mere</strong></td><td>Da li ste imali razumnu zastitu pre incidenta</td></tr>
+      <tr><td>5</td><td><strong>Prethodni prekrsaji</strong></td><td>Ponovljeni prekrsaji = vece kazne</td></tr>
+      <tr><td>6</td><td><strong>Saradnja sa DPA</strong></td><td>Kooperativnost smanjuje kaznu</td></tr>
+      <tr><td>7</td><td><strong>Kategorije pogodjenh podataka</strong></td><td>Zdravstveni, finansijski = veca kazna</td></tr>
+      <tr><td>8</td><td><strong>Kako je DPA saznao</strong></td><td>Samoprijava vs otkrivanje od strane medija</td></tr>
+      <tr><td>9</td><td><strong>Uskladjenost sa prethodnim nalozima</strong></td><td>Da li ste postupili po ranijim upozorenjima</td></tr>
+      <tr><td>10</td><td><strong>Certifikacije</strong></td><td>Posedovanje ISO 27001 ili slicno moze pomoci</td></tr>
+      <tr><td>11</td><td><strong>Otezavajuce/olaksavajuce okolnosti</strong></td><td>Finansijska korist od krsenja = otezavajuce</td></tr>
+    </table>
+
+    <h2 id="f4">4. Male firme i GDPR</h2>
+    <p><strong>Da, male firme MOGU biti kaznjene.</strong> GDPR se primenjuje na SVE organizacije bez obzira na velicinu.</p>
+    <ul>
+      <li><strong>Tipicne kazne za male firme:</strong> &euro;1,000 &mdash; &euro;50,000</li>
+      <li><strong>Najcesci razlozi:</strong> Nema Privacy Policy, nema cookie consent, nebezbedno cuvanje podataka</li>
+      <li><strong>Primer:</strong> Rumunska firma kaznjena sa &euro;3,000 jer je slala marketing email-ove bez consent-a</li>
+      <li><strong>Primer:</strong> Grcki sajt kaznjen sa &euro;15,000 jer je imao Google Analytics bez cookie consent-a</li>
+    </ul>
+    <div class="callout callout-warn"><strong>Proporcionalne kazne:</strong> DPA ne daje &euro;20M kaznu malom sajtu sa &euro;5,000 prometa. Kazne su proporcionalne velicini i ozbiljnosti krsenja. Ali &euro;5,000-10,000 kazna moze unistiti mali biznis.</div>
+
+    <h2 id="f5">5. Srpski ZZPL &mdash; kazne u Srbiji</h2>
+    <ul>
+      <li><strong>Nadlezni organ:</strong> Poverenik za informacije od javnog znacaja i zastitu podataka o licnosti</li>
+      <li><strong>Kazne za pravna lica:</strong> Do 2,000,000 RSD (~&euro;17,000)</li>
+      <li><strong>Kazne za odgovorno lice:</strong> Do 200,000 RSD (~&euro;1,700)</li>
+      <li><strong>Kazne za preduzetnike:</strong> Do 500,000 RSD (~&euro;4,300)</li>
+      <li><strong>Razlika od GDPR:</strong> Srpske kazne su znacajno manje, ali princip je isti</li>
+      <li><strong>Trend:</strong> Poverenik sve aktivnije sprovodi kontrole — ocekujte rast kazni</li>
+    </ul>
+    <p>Ako vaseg sajt ima korisnike iz EU, primenjuje se GDPR sa punim kaznama (&euro;20M / 4% prometa) bez obzira sto ste iz Srbije.</p>
+
+    <h2 id="f6">6. Kako izbeci kazne &mdash; 10 konkretnih koraka</h2>
+    <ol>
+      <li><strong>Privacy Policy</strong> &mdash; Jasna, azurna, dostupna u footeru svake stranice. <a href="./blog-gdpr-policy.html">Vodic</a></li>
+      <li><strong>Cookie consent banner</strong> &mdash; Pre ucitavanja non-essential kolacica. <a href="./blog-gdpr-cookies.html">Vodic</a></li>
+      <li><strong>HTTPS enkripcija</strong> &mdash; Obavezan za zastitu podataka u prenosu. <a href="./blog-security-ssl.html">SSL vodic</a></li>
+      <li><strong>Minimizacija podataka</strong> &mdash; Prikupljajte SAMO ono sto vam treba. Ne trazite adresu ako nije neophodna.</li>
+      <li><strong>Evidencija obrade (ROPA)</strong> &mdash; Dokumentujte koje podatke prikupljate, zasto, kako dugo cuvate.</li>
+      <li><strong>Odgovor na zahteve</strong> &mdash; Implementirajte proces za DSAR (pristup, brisanje, prenosivost) sa rokom od 30 dana. <a href="./blog-gdpr-rights.html">Vodic</a></li>
+      <li><strong>Notifikacija o krsenju</strong> &mdash; Prijavite data breach DPA u roku od 72 sata. Obavestite pogodiene korisnike bez odlaganja.</li>
+      <li><strong>DPO (Data Protection Officer)</strong> &mdash; Obavezan za javni sektor i kompanije koje masovno obradjuju osetljive podatke.</li>
+      <li><strong>Redovni auditi</strong> &mdash; Koristite <a href="./index.html">Web Security Scanner</a> za tehnicku proveru + godisnji pravni audit.</li>
+      <li><strong>Obuka zaposlenih</strong> &mdash; Svi koji rade sa podacima moraju razumeti GDPR osnove.</li>
+    </ol>
+    <div class="callout"><strong>Najvazniji korak:</strong> Ako nemate nista od ovoga, pocnite sa #1 (Privacy Policy) i #2 (Cookie consent). Ova dva pokrivaju 80% najcescih krsenja za male sajtove.</div>
+
+    <h2 id="f7">7. Najcesci razlozi za kazne</h2>
+    <table>
+      <tr><th>Razlog</th><th>% kazni</th><th>Primer</th></tr>
+      <tr><td><strong>Nedovoljan pravni osnov</strong></td><td>~30%</td><td>Obrada bez consent-a ili legitimnog interesa</td></tr>
+      <tr><td><strong>Neuskladjenost sa principima</strong></td><td>~20%</td><td>Minimizacija, transparentnost, tacnost</td></tr>
+      <tr><td><strong>Nedovoljne tehnicke mere</strong></td><td>~18%</td><td>Data breach zbog slabe zastite</td></tr>
+      <tr><td><strong>Prava korisnika</strong></td><td>~15%</td><td>Neodgovaranje na zahteve u roku</td></tr>
+      <tr><td><strong>Transfer podataka</strong></td><td>~10%</td><td>Slanje podataka u SAD bez DPF/SCC</td></tr>
+      <tr><td><strong>Cookie consent</strong></td><td>~7%</td><td>Dark patterns, pre-checked, bez "Odbij"</td></tr>
+    </table>
+
+    <h2 id="f8">8. Reference i resursi</h2>
+    <ul>
+      <li><a href="https://www.enforcementtracker.com/" target="_blank">GDPR Enforcement Tracker &mdash; Sve kazne</a></li>
+      <li><a href="https://gdpr-info.eu/art-83-gdpr/" target="_blank">GDPR Clan 83 &mdash; Opsti uslovi za kazne</a></li>
+      <li><a href="https://edpb.europa.eu/news/news/2023/edpb-adopts-final-version-guidelines-calculation-fines_en" target="_blank">EDPB &mdash; Guidelines za kalkulaciju kazni</a></li>
+      <li><a href="https://www.cmslaw.com/gdpr-enforcement-tracker" target="_blank">CMS GDPR Portal &mdash; Kazne po zemljama</a></li>
+      <li><a href="https://www.poverenik.rs/" target="_blank">Poverenik za informacije &mdash; Srbija</a></li>
+      <li><a href="https://ico.org.uk/action-weve-taken/enforcement/" target="_blank">ICO &mdash; Enforcement Actions</a></li>
+      <li><a href="https://www.cnil.fr/en/sanctions" target="_blank">CNIL &mdash; Sanctions</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Proverite GDPR uskladjenost vaseg sajta &rarr;</a>
+  </div>
+
+  <!-- ==================== ENGLISH ==================== -->
+  <div class="en">
+    <h1>GDPR Fines &mdash; Largest Fines and How to Avoid Them</h1>
+    <p class="subtitle">Top 10 fines, penalty structure, factors and 10 concrete compliance steps</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">&euro;4B+</div><div class="stat-label">Total GDPR fines since 2018</div></div>
+      <div class="stat-card"><div class="stat-num">&euro;1.2B</div><div class="stat-label">Largest fine (Meta, 2023)</div></div>
+      <div class="stat-card"><div class="stat-num">4%</div><div class="stat-label">Max fine of global revenue</div></div>
+      <div class="stat-card"><div class="stat-num">2,000+</div><div class="stat-label">Fines issued since 2018</div></div>
+    </div>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ol>
+        <li><a href="#f1e">Fine structure</a></li>
+        <li><a href="#f2e">Top 10 largest fines</a></li>
+        <li><a href="#f3e">11 factors for fine amount</a></li>
+        <li><a href="#f4e">Small businesses and GDPR</a></li>
+        <li><a href="#f5e">Serbian ZZPL fines</a></li>
+        <li><a href="#f6e">How to avoid fines — 10 steps</a></li>
+        <li><a href="#f7e">Most common fine reasons</a></li>
+        <li><a href="#f8e">References</a></li>
+      </ol>
+    </div>
+
+    <h2 id="f1e">1. Fine structure</h2>
+    <table>
+      <tr><th>Tier</th><th>Maximum</th><th>For violations of</th></tr>
+      <tr><td><strong>Lower</strong></td><td>&euro;10M or 2% global revenue</td><td>Technical/organizational obligations</td></tr>
+      <tr><td><strong>Upper</strong></td><td>&euro;20M or 4% global revenue</td><td>Core principles, consent, user rights, transfers</td></tr>
+    </table>
+
+    <h2 id="f2e">2. Top 10 largest GDPR fines</h2>
+    <table>
+      <tr><th>#</th><th>Company</th><th>Fine</th><th>Year</th><th>Reason</th></tr>
+      <tr><td>1</td><td><strong>Meta</strong></td><td>&euro;1.2B</td><td>2023</td><td>Data transfers to US post-Schrems II</td></tr>
+      <tr><td>2</td><td><strong>Amazon</strong></td><td>&euro;746M</td><td>2021</td><td>Targeting without valid consent</td></tr>
+      <tr><td>3</td><td><strong>TikTok</strong></td><td>&euro;345M</td><td>2023</td><td>Children's data, transparency</td></tr>
+      <tr><td>4</td><td><strong>WhatsApp</strong></td><td>&euro;225M</td><td>2021</td><td>Insufficient transparency</td></tr>
+      <tr><td>5</td><td><strong>Google</strong></td><td>&euro;150M</td><td>2022</td><td>Cookie consent dark patterns</td></tr>
+      <tr><td>6</td><td><strong>Google</strong></td><td>&euro;50M</td><td>2019</td><td>Transparency, invalid consent</td></tr>
+      <tr><td>7</td><td><strong>Criteo</strong></td><td>&euro;40M</td><td>2023</td><td>Illegal consent collection</td></tr>
+      <tr><td>8</td><td><strong>H&amp;M</strong></td><td>&euro;35.3M</td><td>2020</td><td>Employee surveillance</td></tr>
+      <tr><td>9</td><td><strong>British Airways</strong></td><td>&euro;22M</td><td>2020</td><td>Data breach (XSS), 380K cards</td></tr>
+      <tr><td>10</td><td><strong>Marriott</strong></td><td>&euro;20M</td><td>2020</td><td>Data breach, 339M guests</td></tr>
+    </table>
+    <div class="callout"><strong>Trend:</strong> Fines grow yearly. 2019: ~&euro;400M total. 2022: ~&euro;2.5B. 2023: ~&euro;2B. Regulators enforce more aggressively each year.</div>
+
+    <h2 id="f3e">3. 11 factors for fine amount (Art. 83.2)</h2>
+    <p>Nature/gravity/duration, intentional vs negligent, mitigation measures, technical measures, previous infringements, cooperation with DPA, data categories, how DPA learned, compliance with previous orders, certifications, aggravating/mitigating circumstances.</p>
+
+    <h2 id="f4e">4. Small businesses and GDPR</h2>
+    <p><strong>Yes, small businesses CAN be fined.</strong> Typical fines: &euro;1,000-50,000. Common reasons: no Privacy Policy, no cookie consent, insecure data storage. Fines are proportional but can still devastate a small business.</p>
+    <div class="callout callout-warn"><strong>Proportional:</strong> DPA won't fine &euro;20M for a site with &euro;5,000 revenue. But &euro;5,000-10,000 can destroy a small business.</div>
+
+    <h2 id="f5e">5. Serbian ZZPL fines</h2>
+    <p>Commissioner for Information: fines up to 2M RSD (~&euro;17,000) for legal entities. Much lower than GDPR but same principles. If your site has EU users, GDPR's full fines apply regardless of your location.</p>
+
+    <h2 id="f6e">6. How to avoid fines — 10 steps</h2>
+    <ol>
+      <li><strong>Privacy Policy</strong> — clear, updated, footer link on every page</li>
+      <li><strong>Cookie consent</strong> — before loading non-essential cookies</li>
+      <li><strong>HTTPS encryption</strong> — mandatory for data in transit</li>
+      <li><strong>Data minimization</strong> — collect only what you need</li>
+      <li><strong>Records of processing (ROPA)</strong> — document what, why, how long</li>
+      <li><strong>Respond to requests</strong> — DSAR process within 30 days</li>
+      <li><strong>Breach notification</strong> — report to DPA within 72 hours</li>
+      <li><strong>DPO if required</strong> — public sector, massive sensitive data processing</li>
+      <li><strong>Regular audits</strong> — <a href="./index.html">Web Security Scanner</a> + annual legal audit</li>
+      <li><strong>Employee training</strong> — everyone handling data must understand GDPR basics</li>
+    </ol>
+    <div class="callout"><strong>Start here:</strong> If you have nothing, begin with #1 (Privacy Policy) and #2 (Cookie consent). These cover 80% of most common violations for small sites.</div>
+
+    <h2 id="f7e">7. Most common fine reasons</h2>
+    <table>
+      <tr><th>Reason</th><th>% of fines</th></tr>
+      <tr><td>Insufficient legal basis</td><td>~30%</td></tr>
+      <tr><td>Non-compliance with principles</td><td>~20%</td></tr>
+      <tr><td>Insufficient technical measures</td><td>~18%</td></tr>
+      <tr><td>User rights violations</td><td>~15%</td></tr>
+      <tr><td>Data transfers</td><td>~10%</td></tr>
+      <tr><td>Cookie consent</td><td>~7%</td></tr>
+    </table>
+
+    <h2 id="f8e">8. References and resources</h2>
+    <ul>
+      <li><a href="https://www.enforcementtracker.com/" target="_blank">GDPR Enforcement Tracker</a></li>
+      <li><a href="https://gdpr-info.eu/art-83-gdpr/" target="_blank">GDPR Article 83 — Fines</a></li>
+      <li><a href="https://edpb.europa.eu/" target="_blank">EDPB — Fine Calculation Guidelines</a></li>
+      <li><a href="https://ico.org.uk/action-weve-taken/enforcement/" target="_blank">ICO Enforcement</a></li>
+      <li><a href="https://www.cnil.fr/en/sanctions" target="_blank">CNIL Sanctions</a></li>
+    </ul>
+    <a href="./index.html" class="cta">Check your GDPR compliance &rarr;</a>
+  </div>
+
+  <div class="nav-links">
+    <a href="./blog-gdpr.html"><span class="sr">GDPR vodic</span><span class="en">GDPR Guide</span></a>
+    <a href="./blog-gdpr-cookies.html"><span class="sr">Cookie Consent</span><span class="en">Cookie Consent</span></a>
+    <a href="./blog-gdpr-policy.html"><span class="sr">Privacy Policy</span><span class="en">Privacy Policy</span></a>
+    <a href="./blog-gdpr-trackers.html"><span class="sr">Third-Party Trackeri</span><span class="en">Third-Party Trackers</span></a>
+    <a href="./blog-gdpr-rights.html"><span class="sr">Prava korisnika</span><span class="en">User Rights</span></a>
+    <a href="./privacy.html"><span class="sr">Politika privatnosti</span><span class="en">Privacy Policy</span></a>
+  </div>
+
+  </main>
+</div>
+<script src="./blog-common.js" defer></script>
+</body>
+</html>
