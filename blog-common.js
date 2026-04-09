@@ -113,6 +113,7 @@
   var h4Sec = el('h4');
   h4Sec.appendChild(srSpan('Bezbednost', 'Security'));
   colSec.appendChild(h4Sec);
+  colSec.appendChild(footerLinkBi('./blog-security.html', 'Vodic za bezbednost', 'Security Guide'));
   colSec.appendChild(footerLink('./blog-security-ssl.html', 'SSL/TLS'));
   colSec.appendChild(footerLink('./blog-security-headers.html', 'HTTP Headers'));
   colSec.appendChild(footerLink('./blog-security-xss.html', 'XSS'));
