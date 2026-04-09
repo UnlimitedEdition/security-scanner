@@ -1023,7 +1023,9 @@ function renderResults(data) {
   meta.className = "score-meta";
   var checksWord = currentLang === "en" ? "checks" : "provera";
   var issuesWord = currentLang === "en" ? "issues" : "problema";
-  meta.textContent = data.domain + " \u00B7 " + data.total_checks + " " + checksWord + " \u00B7 " + data.failed_checks + " " + issuesWord + " \u00B7 " + data.scan_time + "s";
+  var pagesWord = currentLang === "en" ? "pages" : "stranica";
+  var pagesInfo = data.pages_found > 1 ? " \u00B7 " + data.pages_found + " " + pagesWord : "";
+  meta.textContent = data.domain + " \u00B7 " + data.total_checks + " " + checksWord + " \u00B7 " + data.failed_checks + " " + issuesWord + pagesInfo + " \u00B7 " + data.scan_time + "s";
 
   // Set print header
   var printMeta = document.getElementById("printMeta");
@@ -1083,6 +1085,77 @@ function renderResults(data) {
 
   scoreCard.appendChild(actions);
   wrap.appendChild(scoreCard);
+
+  // Top Priorities
+  if (data.top_priorities && data.top_priorities.length > 0) {
+    var priSection = document.createElement("div");
+    priSection.className = "category-section";
+    priSection.style.borderColor = "var(--accent)";
+    priSection.style.marginBottom = "1.5rem";
+
+    var priHeader = document.createElement("div");
+    priHeader.className = "category-header";
+    priHeader.onclick = function() { toggleCat(this); };
+    var priTitle = document.createElement("div");
+    priTitle.className = "category-title";
+    priTitle.style.color = "var(--accent)";
+    priTitle.textContent = currentLang === "en" ? "\u2B50 Top 5 Priorities — Fix These First" : "\u2B50 Top 5 Prioriteta — Popravi Ovo Prvo";
+    var priChev = document.createElement("span");
+    priChev.className = "category-chevron open";
+    priChev.textContent = "\u25BC";
+    priHeader.appendChild(priTitle);
+    priHeader.appendChild(priChev);
+    priSection.appendChild(priHeader);
+
+    var priBody = document.createElement("div");
+    priBody.className = "category-body open";
+
+    data.top_priorities.forEach(function(pri) {
+      var item = document.createElement("div");
+      item.className = "check-item";
+
+      var rankDiv = document.createElement("div");
+      rankDiv.className = "check-icon";
+      rankDiv.style.cssText = "font-size:1.2rem;font-weight:900;color:var(--accent);min-width:28px;text-align:center";
+      rankDiv.textContent = "#" + pri.rank;
+      item.appendChild(rankDiv);
+
+      var content = document.createElement("div");
+      content.className = "check-content";
+
+      var titleDiv = document.createElement("div");
+      titleDiv.className = "check-title";
+      var titleSpan = document.createElement("span");
+      titleSpan.textContent = currentLang === "en" ? (pri.title_en || pri.title) : pri.title;
+      titleDiv.appendChild(titleSpan);
+      var sevBadge = document.createElement("span");
+      sevBadge.className = "sev-badge sev-" + pri.severity;
+      sevBadge.textContent = pri.severity;
+      titleDiv.appendChild(sevBadge);
+      var diffBadge = document.createElement("span");
+      diffBadge.style.cssText = "font-size:0.65rem;font-weight:600;padding:2px 7px;border-radius:4px;background:var(--surface2);color:var(--text-dim)";
+      diffBadge.textContent = currentLang === "en" ? pri.fix_difficulty_en : pri.fix_difficulty_sr;
+      titleDiv.appendChild(diffBadge);
+      content.appendChild(titleDiv);
+
+      var recText = currentLang === "en" ? (pri.recommendation_en || pri.recommendation) : pri.recommendation;
+      if (recText) {
+        var recDiv = document.createElement("div");
+        recDiv.className = "check-rec";
+        var recStrong = document.createElement("strong");
+        recStrong.textContent = currentLang === "en" ? "Fix: " : "Resenje: ";
+        recDiv.appendChild(recStrong);
+        recDiv.appendChild(document.createTextNode(recText));
+        content.appendChild(recDiv);
+      }
+
+      item.appendChild(content);
+      priBody.appendChild(item);
+    });
+
+    priSection.appendChild(priBody);
+    wrap.appendChild(priSection);
+  }
 
   // Errors
   if (data.errors && data.errors.length > 0) {

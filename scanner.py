@@ -29,6 +29,8 @@ from checks import admin_check, robots_check, ports_check, cors_check, extras_ch
 from checks import ct_check, subdomain_check, seo_check
 from checks import performance_check, gdpr_check, vuln_check
 from checks import js_check, api_check, accessibility_check, dependency_check
+from checks.crawler import crawl
+import risk_engine
 
 # Severity weights for scoring
 SEVERITY_WEIGHTS = {
@@ -453,6 +455,18 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
 
     score_data = compute_score(all_results)
 
+    # Risk priorities
+    top_priorities = risk_engine.get_top_priorities(all_results, count=5)
+
+    # Crawl for discovered pages (informational)
+    pages_found = 1
+    try:
+        if not bot_blocked and response_body:
+            discovered = crawl(base_url, session, response_body)
+            pages_found = len(discovered)
+    except Exception:
+        pass
+
     update("Završeno!", 100)
 
     scan_duration = round(time.time() - start_time, 2)
@@ -474,4 +488,6 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
         "errors": errors,
         "total_checks": len(all_results),
         "failed_checks": len([r for r in all_results if not r.get("passed")]),
+        "top_priorities": top_priorities,
+        "pages_found": pages_found,
     }
