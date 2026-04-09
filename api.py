@@ -136,6 +136,13 @@ def google_verify():
         return FileResponse(path, media_type="text/html")
 
 
+@app.get("/google6b954a0930cdbbcc.html")
+def google_verify2():
+    path = os.path.join(os.path.dirname(__file__), "google6b954a0930cdbbcc.html")
+    if os.path.exists(path):
+        return FileResponse(path, media_type="text/html")
+
+
 @app.get("/ads.txt")
 def ads_txt():
     path = os.path.join(os.path.dirname(__file__), "ads.txt")
