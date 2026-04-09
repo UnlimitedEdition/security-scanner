@@ -1172,7 +1172,7 @@ function renderResults(data) {
   wrap.scrollIntoView({ behavior: "smooth", block: "start" });
 
   // Render SEO results in separate tab
-  renderSeoTab(data);
+  renderTabResults("seoResultsWrap", data, ["SEO"], "SEO Analiza", "SEO Analysis");
   renderPerformanceTab(data);
   renderGdprTab(data);
 }
@@ -1294,18 +1294,82 @@ function renderTabResults(wrapId, data, categories, titleSr, titleEn) {
   var total = items.length;
   var pct = Math.round((passed / total) * 100);
 
+  // Grade based on percentage
+  var grade, gradeColor;
+  if (pct >= 90) { grade = "A"; gradeColor = "#22c55e"; }
+  else if (pct >= 75) { grade = "B"; gradeColor = "#84cc16"; }
+  else if (pct >= 60) { grade = "C"; gradeColor = "#eab308"; }
+  else if (pct >= 40) { grade = "D"; gradeColor = "#f97316"; }
+  else { grade = "F"; gradeColor = "#ef4444"; }
+
+  var circumference = 2 * Math.PI * 50;
+  var offset = circumference - (pct / 100) * circumference;
+
   var summary = document.createElement("div");
   summary.className = "score-card";
   summary.style.marginBottom = "1.5rem";
+
+  // Score ring
+  var ringWrap = document.createElement("div");
+  ringWrap.className = "score-ring-wrap";
+  var svgNS = "http://www.w3.org/2000/svg";
+  var svg = document.createElementNS(svgNS, "svg");
+  svg.setAttribute("width", "120"); svg.setAttribute("height", "120"); svg.setAttribute("viewBox", "0 0 120 120");
+  var bgC = document.createElementNS(svgNS, "circle");
+  bgC.setAttribute("class", "score-ring-bg"); bgC.setAttribute("cx", "60"); bgC.setAttribute("cy", "60"); bgC.setAttribute("r", "50");
+  svg.appendChild(bgC);
+  var fillC = document.createElementNS(svgNS, "circle");
+  fillC.setAttribute("class", "score-ring-fill"); fillC.setAttribute("cx", "60"); fillC.setAttribute("cy", "60"); fillC.setAttribute("r", "50");
+  fillC.setAttribute("stroke", gradeColor);
+  fillC.setAttribute("stroke-dasharray", String(circumference));
+  fillC.setAttribute("stroke-dashoffset", String(circumference));
+  svg.appendChild(fillC);
+  ringWrap.appendChild(svg);
+  var ringText = document.createElement("div");
+  ringText.className = "score-ring-text";
+  var gradeEl = document.createElement("span");
+  gradeEl.className = "score-ring-grade"; gradeEl.style.color = gradeColor; gradeEl.textContent = grade;
+  var numEl = document.createElement("span");
+  numEl.className = "score-ring-num"; numEl.textContent = pct + "%";
+  ringText.appendChild(gradeEl); ringText.appendChild(numEl);
+  ringWrap.appendChild(ringText);
+  summary.appendChild(ringWrap);
+
+  requestAnimationFrame(function() { setTimeout(function() { fillC.setAttribute("stroke-dashoffset", String(offset)); }, 50); });
+
+  // Details
   var summaryText = document.createElement("div");
   summaryText.className = "score-details";
   var tabTitle = document.createElement("div");
-  tabTitle.style.cssText = "font-size:1.3rem;font-weight:800;margin-bottom:0.5rem";
-  tabTitle.textContent = (currentLang === "en" ? titleEn : titleSr) + " \u2014 " + pct + "%";
+  tabTitle.style.cssText = "font-size:1.2rem;font-weight:700;margin-bottom:0.5rem";
+  tabTitle.textContent = currentLang === "en" ? titleEn : titleSr;
   summaryText.appendChild(tabTitle);
+
+  // Count badges
+  var countDiv = document.createElement("div");
+  countDiv.className = "score-counts";
+  var sevCounts = { high: 0, medium: 0, low: 0 };
+  items.forEach(function(i) { if (!i.passed && sevCounts[i.severity.toLowerCase()] !== undefined) sevCounts[i.severity.toLowerCase()]++; });
+  var lvls = [
+    { key: "high", cls: "high", sr: "Visoko", en: "High" },
+    { key: "medium", cls: "medium", sr: "Srednje", en: "Medium" },
+    { key: "low", cls: "low", sr: "Nisko", en: "Low" }
+  ];
+  lvls.forEach(function(lv) {
+    if (sevCounts[lv.key]) {
+      var b = document.createElement("span");
+      b.className = "count-badge " + lv.cls;
+      b.textContent = sevCounts[lv.key] + " " + (currentLang === "en" ? lv.en : lv.sr);
+      countDiv.appendChild(b);
+    }
+  });
+  summaryText.appendChild(countDiv);
+
   var tabMeta = document.createElement("div");
   tabMeta.className = "score-meta";
-  tabMeta.textContent = passed + "/" + total + " " + (currentLang === "en" ? "checks passed" : "provera proslo") + " \u00B7 " + failed + " " + (currentLang === "en" ? "issues" : "problema");
+  var checksW = currentLang === "en" ? "checks" : "provera";
+  var issuesW = currentLang === "en" ? "issues" : "problema";
+  tabMeta.textContent = data.domain + " \u00B7 " + total + " " + checksW + " \u00B7 " + failed + " " + issuesW;
   summaryText.appendChild(tabMeta);
   summary.appendChild(summaryText);
   wrap.appendChild(summary);
