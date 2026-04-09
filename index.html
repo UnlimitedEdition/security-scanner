@@ -183,13 +183,19 @@
 
     /* FEATURES */
     .features-section {
-      max-width: 900px; margin: -1rem auto 1.5rem;
+      max-width: 900px; margin: 1rem auto 2rem;
       padding: 0 1rem;
     }
     .features-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(4, 1fr);
       gap: 1rem;
+    }
+    @media (max-width: 800px) {
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 500px) {
+      .features-grid { grid-template-columns: 1fr; }
     }
     .feature-card {
       background: var(--surface);
@@ -617,6 +623,31 @@
   <p id="heroDesc" data-sr="Jedini besplatni alat koji proverava bezbednost, SEO, performanse i GDPR — sve na jednom mestu" data-en="The only free tool that checks security, SEO, performance and GDPR — all in one place">Jedini besplatni alat koji proverava bezbednost, SEO, performanse i GDPR — sve na jednom mestu</p>
 </section>
 
+<!-- SCAN BOX -->
+<div class="scan-wrap">
+  <div class="scan-box">
+    <div class="scan-row">
+      <input class="scan-input" type="text" id="urlInput"
+        placeholder="vasajt.rs ili https://example.com" data-placeholder-sr="vasajt.rs ili https://example.com" data-placeholder-en="yoursite.com or https://example.com"
+        autocomplete="off" autocorrect="off" spellcheck="false" />
+      <button class="scan-btn" id="scanBtn" onclick="startScan()" data-sr="Skeniraj sajt" data-en="Scan site">Skeniraj sajt</button>
+    </div>
+    <div class="scan-note" id="scanNote" data-sr="Samo pasivno citanje javnih informacija — ne menjamo vas sajt" data-en="Passive reading of public information only — we do not modify your site">
+      Samo pasivno citanje javnih informacija — ne menjamo vas sajt
+    </div>
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-modules" id="progressModules"></div>
+      <div class="progress-label">
+        <span id="progressStep">Inicijalizacija...</span>
+        <span id="progressPct">0%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressBar"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- FEATURES LIST -->
 <div class="features-section" id="featuresSection">
   <div class="features-grid">
@@ -671,31 +702,6 @@
         <li data-sr="Forme i enkripcija podataka" data-en="Forms & data encryption">Forme i enkripcija podataka</li>
         <li data-sr="Uslovi koriscenja (ToS)" data-en="Terms of Service (ToS)">Uslovi koriscenja (ToS)</li>
       </ul>
-    </div>
-  </div>
-</div>
-
-<!-- SCAN BOX -->
-<div class="scan-wrap">
-  <div class="scan-box">
-    <div class="scan-row">
-      <input class="scan-input" type="text" id="urlInput"
-        placeholder="vasajt.rs ili https://example.com" data-placeholder-sr="vasajt.rs ili https://example.com" data-placeholder-en="yoursite.com or https://example.com"
-        autocomplete="off" autocorrect="off" spellcheck="false" />
-      <button class="scan-btn" id="scanBtn" onclick="startScan()" data-sr="Skeniraj sajt" data-en="Scan site">Skeniraj sajt</button>
-    </div>
-    <div class="scan-note" id="scanNote" data-sr="Samo pasivno citanje javnih informacija — ne menjamo vas sajt" data-en="Passive reading of public information only — we do not modify your site">
-      Samo pasivno citanje javnih informacija — ne menjamo vas sajt
-    </div>
-    <div class="progress-wrap" id="progressWrap">
-      <div class="progress-modules" id="progressModules"></div>
-      <div class="progress-label">
-        <span id="progressStep">Inicijalizacija...</span>
-        <span id="progressPct">0%</span>
-      </div>
-      <div class="progress-track">
-        <div class="progress-fill" id="progressBar"></div>
-      </div>
     </div>
   </div>
 </div>
