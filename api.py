@@ -163,6 +163,7 @@ class ScanRequest(BaseModel):
 
 
 @app.get("/")
+@app.get("/index.html")
 def root():
     index_path = os.path.join(os.path.dirname(__file__), "index.html")
     if os.path.exists(index_path):
