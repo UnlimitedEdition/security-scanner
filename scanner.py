@@ -245,6 +245,28 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
         base_url = f"{_parsed_final.scheme}://{_parsed_final.netloc}"
 
         # Detect bot protection / challenge pages
+        # Special case: Vercel Security Checkpoint — try fetching without some headers
+        if "vercel security checkpoint" in response_body.lower():
+            try:
+                # Retry with minimal headers — sometimes bypasses Vercel challenge
+                retry_session = requests.Session()
+                retry_session.verify = session.verify
+                retry_session.headers.update({
+                    "User-Agent": USER_AGENT,
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                    "Accept-Language": "en-US,en;q=0.5",
+                })
+                retry_resp = retry_session.get(base_url, timeout=15, allow_redirects=True)
+                if retry_resp.status_code == 200 and "vercel security checkpoint" not in retry_resp.text.lower() and len(retry_resp.text) > 2000:
+                    main_response = retry_resp
+                    response_headers = dict(retry_resp.headers)
+                    response_body = retry_resp.text[:50000]
+                    response_time_ms = retry_resp.elapsed.total_seconds() * 1000
+                    page_size_bytes = len(retry_resp.content)
+                    session = retry_session  # Use this session for all future requests
+            except Exception:
+                pass
+
         bot_blocked = _detect_bot_protection(response_body, response_headers)
         if bot_blocked:
             # If page has real content despite bot detection, keep it (false positive)
