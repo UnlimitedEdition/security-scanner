@@ -160,7 +160,13 @@ def security_txt():
 @app.post("/scan")
 def start_scan(req: ScanRequest, request: Request):
     """Start a new scan. Returns scan_id immediately."""
-    client_ip = request.client.host if request.client else "unknown"
+    # Get real IP from proxy headers (Vercel/Cloudflare/HF forward real IP)
+    client_ip = (
+        request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+        or request.headers.get("x-real-ip", "")
+        or request.headers.get("cf-connecting-ip", "")
+        or (request.client.host if request.client else "unknown")
+    )
     if not _check_rate_limit(client_ip):
         raise HTTPException(
             status_code=429,
