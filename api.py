@@ -129,6 +129,13 @@ def privacy():
         return FileResponse(path, media_type="text/html")
 
 
+@app.get("/google739403949172c6ee.html")
+def google_verify():
+    path = os.path.join(os.path.dirname(__file__), "google739403949172c6ee.html")
+    if os.path.exists(path):
+        return FileResponse(path, media_type="text/html")
+
+
 @app.get("/ads.txt")
 def ads_txt():
     path = os.path.join(os.path.dirname(__file__), "ads.txt")
