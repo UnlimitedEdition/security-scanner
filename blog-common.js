@@ -168,6 +168,20 @@
   var fbP = el('p');
   fbP.appendChild(document.createTextNode('Web Security Scanner \u00A9 2026 \u2014 '));
   fbP.appendChild(el('a', { href: 'https://toske-programer.web.app' }, ['<Toske/>']));
+  fbP.appendChild(document.createTextNode(' \u00B7 '));
+  // Report abuse — on index.html (where the panel exists) opens the inline
+  // panel; on blog pages it falls back to navigating to index with a hash.
+  var abuseLink = el('a', {
+    href: './index.html#abuse',
+    onclick: function(ev) {
+      if (typeof window.openAbusePanel === 'function') {
+        ev.preventDefault();
+        window.openAbusePanel('');
+      }
+    }
+  });
+  abuseLink.appendChild(srSpan('Prijavi zloupotrebu', 'Report abuse'));
+  fbP.appendChild(abuseLink);
   footerBottom.appendChild(fbP);
   var fbCta = el('a', { href: './index.html', className: 'footer-cta' });
   fbCta.appendChild(srSpan('Skeniraj svoj sajt \u2192', 'Scan your site \u2192'));

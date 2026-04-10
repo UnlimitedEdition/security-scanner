@@ -320,9 +320,14 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
             if has_real_content:
                 bot_blocked = False  # False positive — real page with some challenge-like string
             else:
-                errors.append("Bot zaštita detektovana — sajt prikazuje challenge stranicu umesto pravog sadržaja. "
-                              "Rezultati za HTTP headere i SEO mogu biti netačni. "
-                              "Pokušajte skeniranje sa localhost (start.bat).")
+                errors.append(
+                    "Bot zaštita detektovana — sajt prikazuje challenge stranicu "
+                    "(npr. Cloudflare, DataDome, PerimeterX). Rezultati za HTTP "
+                    "headere i SEO mogu biti nepouzdani. / "
+                    "Bot protection detected — the site is showing a challenge "
+                    "page (e.g. Cloudflare, DataDome, PerimeterX). HTTP header "
+                    "and SEO results may be unreliable."
+                )
                 # Keep headers for security checks, only clear body
                 response_body = ""
                 response_time_ms = 0
@@ -361,9 +366,27 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
     except Exception as e:
         errors.append(f"Greška pri učitavanju: {str(e)[:200]}")
 
-    # Debug: log what we got
+    # If we got an empty body despite no exception, give the user a
+    # neutral hint without leaking internal flags. The operator can still
+    # diagnose through HF Space logs (status code + bot_blocked logged below)
+    # and through the lower result count in the audit_log entry.
     if not response_body:
-        errors.append(f"Upozorenje: prazan response body (status={main_response.status_code if main_response else 'N/A'}, bot_blocked={bot_blocked})")
+        # Only add a user-facing hint if we haven't already told them about
+        # bot protection above — no point duplicating the message.
+        if not bot_blocked:
+            errors.append(
+                "Sadržaj sajta nije mogao biti učitan. Neki rezultati "
+                "mogu biti nedostupni. / Site content could not be loaded. "
+                "Some results may be unavailable."
+            )
+        # Operator-facing diagnostic — goes to stderr/HF logs, not user
+        import logging as _logging
+        _logging.getLogger(__name__).warning(
+            "empty_response_body status=%s bot_blocked=%s url=%s",
+            main_response.status_code if main_response else "N/A",
+            bot_blocked,
+            base_url,
+        )
 
     # --- Crawl site pages ---
     # This block is structurally different from the regular checks (it writes

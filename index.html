@@ -600,6 +600,150 @@
       margin: 0.8rem auto;
     }
 
+    /* ================================================================
+       CONSENT CHECKBOX (below scan input)
+       ================================================================ */
+    .consent-row {
+      display: flex; align-items: flex-start; gap: 0.55rem;
+      margin-top: 0.7rem; font-size: 0.78rem; color: var(--text-dim);
+      max-width: 100%; text-align: left;
+    }
+    .consent-row input[type="checkbox"] {
+      flex-shrink: 0; width: 1.05rem; height: 1.05rem; margin-top: 0.1rem;
+      cursor: pointer; accent-color: var(--accent);
+    }
+    .consent-row label { cursor: pointer; line-height: 1.4; }
+    .consent-row a { color: var(--accent); }
+
+    /* ================================================================
+       REDACTED NOTICE BANNER (in results, when _redacted=true)
+       ================================================================ */
+    .redacted-banner {
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.08), rgba(251, 191, 36, 0.02));
+      border: 1px solid rgba(251, 191, 36, 0.35);
+      border-left: 4px solid #fbbf24;
+      border-radius: 10px;
+      padding: 1rem 1.2rem;
+      margin-bottom: 1.2rem;
+      display: flex; align-items: flex-start; gap: 0.9rem;
+    }
+    .redacted-icon { font-size: 1.5rem; flex-shrink: 0; line-height: 1; }
+    .redacted-body { flex: 1; min-width: 0; }
+    .redacted-title {
+      font-weight: 700; color: #fbbf24; margin-bottom: 0.3rem; font-size: 0.95rem;
+    }
+    .redacted-text {
+      font-size: 0.82rem; color: var(--text-dim); line-height: 1.5;
+    }
+    .redacted-cta {
+      margin-top: 0.8rem;
+      background: #fbbf24; color: #0a0c15;
+      border: none; padding: 0.55rem 1.1rem;
+      border-radius: 7px; font-weight: 700; cursor: pointer;
+      font-size: 0.82rem; font-family: inherit;
+    }
+    .redacted-cta:hover { background: #facc15; }
+
+    /* ================================================================
+       VERIFY OWNERSHIP PANEL (inline, collapsible)
+       ================================================================ */
+    .verify-panel, .abuse-panel {
+      display: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.4rem 1.5rem;
+      margin: 1.2rem 0;
+    }
+    .verify-panel.open, .abuse-panel.open { display: block; }
+    .verify-panel h3, .abuse-panel h3 {
+      margin: 0 0 0.8rem 0; font-size: 1.05rem; color: var(--text);
+    }
+    .verify-methods {
+      display: flex; gap: 0.6rem; margin: 0.9rem 0;
+      flex-wrap: wrap;
+    }
+    .verify-method-btn {
+      flex: 1 1 140px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.6rem 0.8rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: inherit; font-size: 0.82rem;
+      text-align: center;
+    }
+    .verify-method-btn.active {
+      border-color: var(--accent);
+      background: rgba(100, 139, 255, 0.08);
+      color: var(--accent);
+    }
+    .verify-instructions {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 8px; padding: 0.9rem 1rem;
+      font-size: 0.78rem; color: var(--text-dim);
+      margin: 0.9rem 0; display: none;
+    }
+    .verify-instructions.visible { display: block; }
+    .verify-instructions code, .verify-instructions pre {
+      background: var(--surface2); color: var(--text);
+      padding: 0.3rem 0.5rem; border-radius: 4px;
+      font-size: 0.75rem; overflow-x: auto;
+      display: inline-block; max-width: 100%; word-break: break-all;
+    }
+    .verify-instructions pre {
+      display: block; white-space: pre-wrap; padding: 0.6rem 0.8rem;
+      margin: 0.4rem 0;
+    }
+    .verify-actions, .abuse-actions {
+      display: flex; gap: 0.6rem; margin-top: 0.9rem; flex-wrap: wrap;
+    }
+    .verify-btn, .abuse-btn {
+      background: var(--accent); color: #fff; border: none;
+      padding: 0.55rem 1rem; border-radius: 7px; cursor: pointer;
+      font-weight: 600; font-size: 0.82rem; font-family: inherit;
+    }
+    .verify-btn.secondary, .abuse-btn.secondary {
+      background: var(--surface2); color: var(--text-dim);
+    }
+    .verify-btn:disabled, .abuse-btn:disabled {
+      opacity: 0.5; cursor: not-allowed;
+    }
+    .verify-result, .abuse-result {
+      margin-top: 0.9rem; padding: 0.7rem 0.9rem;
+      border-radius: 7px; font-size: 0.82rem;
+      display: none;
+    }
+    .verify-result.visible, .abuse-result.visible { display: block; }
+    .verify-result.success, .abuse-result.success {
+      background: rgba(34, 197, 94, 0.1); color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+    .verify-result.error, .abuse-result.error {
+      background: rgba(239, 68, 68, 0.1); color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    /* ================================================================
+       ABUSE FORM FIELDS
+       ================================================================ */
+    .abuse-panel label {
+      display: block; margin: 0.6rem 0 0.25rem;
+      font-size: 0.78rem; color: var(--text-dim);
+    }
+    .abuse-panel input[type="text"],
+    .abuse-panel input[type="email"],
+    .abuse-panel textarea {
+      width: 100%;
+      background: var(--bg); border: 1px solid var(--border);
+      color: var(--text); padding: 0.55rem 0.8rem;
+      border-radius: 7px; font-family: inherit; font-size: 0.85rem;
+    }
+    .abuse-panel textarea {
+      min-height: 90px; resize: vertical; line-height: 1.4;
+    }
+
     /* PRINT HEADER (hidden on screen, visible in print) */
     .print-header {
       display: none;
@@ -695,6 +839,14 @@
     </div>
     <div class="scan-note" id="scanNote" data-sr="Samo pasivno citanje javnih informacija — ne menjamo vas sajt" data-en="Passive reading of public information only — we do not modify your site">
       Samo pasivno citanje javnih informacija — ne menjamo vas sajt
+    </div>
+    <div class="consent-row">
+      <input type="checkbox" id="consentCheckbox" />
+      <label for="consentCheckbox"
+             data-sr="Potvrdujem da imam dozvolu da skeniram ovaj sajt (svoj sajt, klijentov, ili javno dostupan sajt u svrhu edukacije). Razumem da se svaki scan evidentira u audit log."
+             data-en="I confirm I have permission to scan this site (my own, a client's, or a publicly accessible site for educational purposes). I understand every scan is recorded in the audit log.">
+        Potvrdujem da imam dozvolu da skeniram ovaj sajt (svoj sajt, klijentov, ili javno dostupan sajt u svrhu edukacije). Razumem da se svaki scan evidentira u audit log.
+      </label>
     </div>
     <div class="progress-wrap" id="progressWrap" role="status" aria-live="polite">
       <div class="progress-modules" id="progressModules"></div>
@@ -852,6 +1004,61 @@
   <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
 </div>
 
+<!-- VERIFY OWNERSHIP PANEL (shown when user clicks "Verify ownership" CTA in redacted results) -->
+<div class="verify-panel" id="verifyPanel">
+  <h3 data-sr="Verifikuj vlasnistvo domena" data-en="Verify domain ownership">Verifikuj vlasnistvo domena</h3>
+  <p style="font-size:0.82rem;color:var(--text-dim);margin:0 0 0.4rem"
+     data-sr="Da biste videli specificne detalje o izlozenim fajlovima, admin stranicama i ranjivostima, dokazite da ste vlasnik domena. Izaberite jednu od 3 metode:"
+     data-en="To see specific details about exposed files, admin pages, and vulnerabilities, prove you own the domain. Pick one of 3 methods:">
+    Da biste videli specificne detalje o izlozenim fajlovima, admin stranicama i ranjivostima, dokazite da ste vlasnik domena. Izaberite jednu od 3 metode:
+  </p>
+  <div class="verify-methods">
+    <button class="verify-method-btn" data-method="meta" onclick="selectVerifyMethod('meta')">
+      <strong data-sr="Meta tag" data-en="Meta tag">Meta tag</strong><br>
+      <small data-sr="Dodaj HTML tag na pocetnu stranu" data-en="Add HTML tag to homepage">Dodaj HTML tag na pocetnu stranu</small>
+    </button>
+    <button class="verify-method-btn" data-method="file" onclick="selectVerifyMethod('file')">
+      <strong data-sr="Fajl" data-en="File">Fajl</strong><br>
+      <small data-sr="Postavi fajl u .well-known/" data-en="Upload file to .well-known/">Postavi fajl u .well-known/</small>
+    </button>
+    <button class="verify-method-btn" data-method="dns" onclick="selectVerifyMethod('dns')">
+      <strong data-sr="DNS TXT" data-en="DNS TXT">DNS TXT</strong><br>
+      <small data-sr="Kreiraj TXT zapis (najjace)" data-en="Create TXT record (strongest)">Kreiraj TXT zapis (najjace)</small>
+    </button>
+  </div>
+  <div class="verify-instructions" id="verifyInstructions"></div>
+  <div class="verify-actions">
+    <button class="verify-btn" id="verifyCheckBtn" onclick="checkVerification()" disabled
+            data-sr="Proveri verifikaciju" data-en="Check verification">Proveri verifikaciju</button>
+    <button class="verify-btn secondary" onclick="closeVerifyPanel()"
+            data-sr="Zatvori" data-en="Close">Zatvori</button>
+  </div>
+  <div class="verify-result" id="verifyResult"></div>
+</div>
+
+<!-- ABUSE REPORT PANEL (opened from footer link) -->
+<div class="abuse-panel" id="abusePanel">
+  <h3 data-sr="Prijavi zloupotrebu" data-en="Report abuse">Prijavi zloupotrebu</h3>
+  <p style="font-size:0.82rem;color:var(--text-dim);margin:0 0 0.4rem"
+     data-sr="Ako je neko koristio nas scanner da skenira vas sajt bez dozvole, popunite formular ispod. Pregledacemo u roku od 72h. Ako potvrdimo zloupotrebu, dodajemo vas domen na listu blokade."
+     data-en="If someone used our scanner to scan your site without permission, fill out the form below. We'll review within 72h. If confirmed, we add your domain to the block list.">
+    Ako je neko koristio nas scanner da skenira vas sajt bez dozvole, popunite formular ispod. Pregledacemo u roku od 72h. Ako potvrdimo zloupotrebu, dodajemo vas domen na listu blokade.
+  </p>
+  <label for="abuseDomain" data-sr="Domen koji zelite da prijavite" data-en="Domain you want to report">Domen koji zelite da prijavite</label>
+  <input type="text" id="abuseDomain" placeholder="mycompany.com" />
+  <label for="abuseEmail" data-sr="Vas email (opciono, za kontakt)" data-en="Your email (optional, for contact)">Vas email (opciono, za kontakt)</label>
+  <input type="email" id="abuseEmail" placeholder="admin@mycompany.com" />
+  <label for="abuseDescription" data-sr="Opis problema (min 10 karaktera)" data-en="Problem description (min 10 characters)">Opis problema (min 10 karaktera)</label>
+  <textarea id="abuseDescription" placeholder="Neko skenira moj sajt uzastopno, molim vas obustavite..."></textarea>
+  <div class="abuse-actions">
+    <button class="abuse-btn" id="abuseSubmitBtn" onclick="submitAbuseReport()"
+            data-sr="Posalji prijavu" data-en="Submit report">Posalji prijavu</button>
+    <button class="abuse-btn secondary" onclick="closeAbusePanel()"
+            data-sr="Zatvori" data-en="Close">Zatvori</button>
+  </div>
+  <div class="abuse-result" id="abuseResult"></div>
+</div>
+
 </main>
 </div><!-- /.page-content -->
 
@@ -927,6 +1134,17 @@ async function startScan() {
   var url = document.getElementById("urlInput").value.trim();
   if (!url) { alert("Unesite URL sajta."); return; }
 
+  // Require explicit consent before every scan (logged in audit_log + scans.consent_version)
+  var consentCheckbox = document.getElementById("consentCheckbox");
+  if (!consentCheckbox || !consentCheckbox.checked) {
+    var consentMsg = currentLang === "en"
+      ? "You must confirm you have permission to scan this site before starting."
+      : "Morate potvrditi da imate dozvolu da skenirate sajt pre pokretanja.";
+    alert(consentMsg);
+    if (consentCheckbox) consentCheckbox.focus();
+    return;
+  }
+
   var btn = document.getElementById("scanBtn");
   btn.disabled = true;
   btn.textContent = "Skeniranje...";
@@ -953,7 +1171,11 @@ async function startScan() {
     var resp = await fetch(API_BASE + "/scan", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url: url })
+      body: JSON.stringify({
+        url: url,
+        consent_accepted: true,
+        consent_version: "2026-04-10-v1"
+      })
     });
     if (!resp.ok) { var e = await resp.json(); throw new Error(e.detail || "API greska"); }
     var data = await resp.json();
@@ -1032,6 +1254,40 @@ function renderResults(data) {
   var wrap = document.getElementById("resultsWrap");
   wrap.style.display = "block";
   while (wrap.firstChild) wrap.removeChild(wrap.firstChild);
+
+  // Redacted notice — shown at the top when result is gated by ownership check
+  if (data._redacted && (data._redacted_count || 0) > 0) {
+    var banner = document.createElement("div");
+    banner.className = "redacted-banner";
+
+    var icon = document.createElement("div");
+    icon.className = "redacted-icon";
+    icon.textContent = "\uD83D\uDD12"; // lock emoji
+    banner.appendChild(icon);
+
+    var body = document.createElement("div");
+    body.className = "redacted-body";
+    var title = document.createElement("div");
+    title.className = "redacted-title";
+    title.textContent = currentLang === "en"
+      ? data._redacted_count + " sensitive findings hidden"
+      : data._redacted_count + " osetljivih pronalazaka je sakriveno";
+    body.appendChild(title);
+    var text = document.createElement("div");
+    text.className = "redacted-text";
+    text.textContent = currentLang === "en"
+      ? "Verify ownership of " + (data.domain || "this domain") + " to unlock specific file paths, admin URLs, vulnerabilities, and API endpoints. Hardening findings (headers, SEO, accessibility) are already visible below."
+      : "Verifikujte vlasnistvo domena " + (data.domain || "") + " da otkljucate tacne putanje fajlova, admin URL-ove, ranjivosti i API endpoint-e. Osnovni pronalazci (header-i, SEO, pristupacnost) su vec vidljivi ispod.";
+    body.appendChild(text);
+    var cta = document.createElement("button");
+    cta.className = "redacted-cta";
+    cta.textContent = currentLang === "en" ? "Verify ownership" : "Verifikuj vlasnistvo";
+    cta.onclick = function() { openVerifyPanel(data.domain); };
+    body.appendChild(cta);
+
+    banner.appendChild(body);
+    wrap.appendChild(banner);
+  }
 
   var s = data.score;
   var circumference = 2 * Math.PI * 50;
@@ -1725,6 +1981,225 @@ function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
 document.getElementById("urlInput").addEventListener("keydown", function(e) {
   if (e.key === "Enter") startScan();
 });
+
+// Auto-open abuse panel if landed with #abuse hash (from footer link on other pages)
+if (location.hash === "#abuse") {
+  setTimeout(function() { openAbusePanel(""); }, 200);
+}
+
+// ====================================================================
+// VERIFY OWNERSHIP FLOW
+// ====================================================================
+var currentVerifyToken = null;
+var currentVerifyMethod = null;
+var currentVerifyDomain = null;
+
+function openVerifyPanel(domain) {
+  currentVerifyDomain = domain || "";
+  currentVerifyToken = null;
+  currentVerifyMethod = null;
+  document.getElementById("verifyPanel").classList.add("open");
+  document.getElementById("verifyInstructions").classList.remove("visible");
+  var instr = document.getElementById("verifyInstructions");
+  while (instr.firstChild) instr.removeChild(instr.firstChild);
+  document.getElementById("verifyResult").className = "verify-result";
+  document.getElementById("verifyResult").textContent = "";
+  document.getElementById("verifyCheckBtn").disabled = true;
+  document.querySelectorAll(".verify-method-btn").forEach(function(b) {
+    b.classList.remove("active");
+  });
+  document.getElementById("verifyPanel").scrollIntoView({behavior: "smooth", block: "center"});
+}
+
+function closeVerifyPanel() {
+  document.getElementById("verifyPanel").classList.remove("open");
+}
+
+async function selectVerifyMethod(method) {
+  currentVerifyMethod = method;
+  document.querySelectorAll(".verify-method-btn").forEach(function(b) {
+    b.classList.toggle("active", b.getAttribute("data-method") === method);
+  });
+  var instrEl = document.getElementById("verifyInstructions");
+  while (instrEl.firstChild) instrEl.removeChild(instrEl.firstChild);
+  instrEl.textContent = currentLang === "en" ? "Requesting challenge..." : "Trazim challenge...";
+  instrEl.classList.add("visible");
+
+  try {
+    var resp = await fetch(API_BASE + "/verify/request", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ domain: currentVerifyDomain, method: method })
+    });
+    if (!resp.ok) {
+      var err = await resp.json();
+      throw new Error(typeof err.detail === "string" ? err.detail : "API error");
+    }
+    var data = await resp.json();
+    currentVerifyToken = data.token;
+    renderVerifyInstructions(data.instructions);
+    document.getElementById("verifyCheckBtn").disabled = false;
+  } catch (e) {
+    while (instrEl.firstChild) instrEl.removeChild(instrEl.firstChild);
+    instrEl.textContent = (currentLang === "en" ? "Error: " : "Greska: ") + e.message;
+    document.getElementById("verifyCheckBtn").disabled = true;
+  }
+}
+
+function _verifyAppendKV(parent, keyLabel, value) {
+  // Appends a new line: <strong>Label: </strong> <code>value</code>
+  var line = document.createElement("div");
+  line.style.cssText = "margin-top:0.4rem";
+  var strong = document.createElement("strong");
+  strong.textContent = keyLabel + " ";
+  line.appendChild(strong);
+  var code = document.createElement("code");
+  code.textContent = value;
+  line.appendChild(code);
+  parent.appendChild(line);
+}
+
+function renderVerifyInstructions(instr) {
+  var wrap = document.getElementById("verifyInstructions");
+  while (wrap.firstChild) wrap.removeChild(wrap.firstChild);
+
+  var title = document.createElement("div");
+  title.style.cssText = "font-weight:700;color:var(--text);margin-bottom:0.5rem;font-size:0.88rem";
+  title.textContent = instr.title || "Instructions";
+  wrap.appendChild(title);
+
+  (instr.steps || []).forEach(function(step, i) {
+    var stepEl = document.createElement("div");
+    stepEl.style.cssText = "margin:0.3rem 0";
+    stepEl.textContent = (i + 1) + ". " + step;
+    wrap.appendChild(stepEl);
+  });
+
+  // Method-specific payload display — all via textContent, no innerHTML
+  if (instr.snippet) {
+    var pre = document.createElement("pre");
+    pre.textContent = instr.snippet;
+    wrap.appendChild(pre);
+  }
+  if (instr.file_path) {
+    _verifyAppendKV(wrap, "Path:", instr.file_path);
+    _verifyAppendKV(wrap, "Content:", instr.file_content);
+  }
+  if (instr.dns_name) {
+    _verifyAppendKV(wrap, "Name:", instr.dns_name);
+    _verifyAppendKV(wrap, "Type:", instr.dns_type);
+    _verifyAppendKV(wrap, "Value:", instr.dns_value);
+  }
+}
+
+async function checkVerification() {
+  if (!currentVerifyToken) return;
+  var btn = document.getElementById("verifyCheckBtn");
+  var resultEl = document.getElementById("verifyResult");
+  btn.disabled = true;
+  btn.textContent = currentLang === "en" ? "Checking..." : "Proveram...";
+  resultEl.className = "verify-result";
+  resultEl.textContent = "";
+
+  try {
+    var resp = await fetch(API_BASE + "/verify/check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: currentVerifyToken })
+    });
+    var data = await resp.json();
+    if (!resp.ok) {
+      throw new Error(typeof data.detail === "string" ? data.detail : "API error");
+    }
+    if (data.verified) {
+      resultEl.className = "verify-result success visible";
+      resultEl.textContent = currentLang === "en"
+        ? "Verified! You're authorized to see full results for " + data.domain + " for 30 days. Re-scan to unlock."
+        : "Verifikovano! Mozete videti kompletne rezultate za " + data.domain + " 30 dana. Pokrenite novi scan da biste videli.";
+    } else {
+      resultEl.className = "verify-result error visible";
+      var msg = (currentLang === "en" ? "Not verified: " : "Neuspesno: ") + (data.reason || "unknown");
+      if (typeof data.attempts_remaining === "number") {
+        msg += currentLang === "en"
+          ? " (" + data.attempts_remaining + " attempts remaining)"
+          : " (" + data.attempts_remaining + " pokusaja preostalo)";
+      }
+      resultEl.textContent = msg;
+    }
+  } catch (e) {
+    resultEl.className = "verify-result error visible";
+    resultEl.textContent = (currentLang === "en" ? "Error: " : "Greska: ") + e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = currentLang === "en" ? "Check verification" : "Proveri verifikaciju";
+  }
+}
+
+// ====================================================================
+// ABUSE REPORT FLOW
+// ====================================================================
+function openAbusePanel(prefillDomain) {
+  document.getElementById("abusePanel").classList.add("open");
+  if (prefillDomain) {
+    document.getElementById("abuseDomain").value = prefillDomain;
+  }
+  document.getElementById("abuseResult").className = "abuse-result";
+  document.getElementById("abuseResult").textContent = "";
+  document.getElementById("abusePanel").scrollIntoView({behavior: "smooth", block: "center"});
+}
+
+function closeAbusePanel() {
+  document.getElementById("abusePanel").classList.remove("open");
+}
+
+async function submitAbuseReport() {
+  var domain = document.getElementById("abuseDomain").value.trim();
+  var email = document.getElementById("abuseEmail").value.trim();
+  var description = document.getElementById("abuseDescription").value.trim();
+  var resultEl = document.getElementById("abuseResult");
+  var btn = document.getElementById("abuseSubmitBtn");
+
+  if (!domain) { alert(currentLang === "en" ? "Domain is required." : "Domen je obavezan."); return; }
+  if (description.length < 10) {
+    alert(currentLang === "en" ? "Description must be at least 10 characters." : "Opis mora imati bar 10 karaktera.");
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = currentLang === "en" ? "Sending..." : "Slanje...";
+  resultEl.className = "abuse-result";
+  resultEl.textContent = "";
+
+  try {
+    var body = { reported_domain: domain, description: description };
+    if (email) body.reporter_email = email;
+
+    var resp = await fetch(API_BASE + "/abuse-report", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+    var data = await resp.json();
+    if (!resp.ok) {
+      throw new Error(typeof data.detail === "string" ? data.detail : "Validation error");
+    }
+    resultEl.className = "abuse-result success visible";
+    resultEl.textContent = currentLang === "en"
+      ? "Report submitted. Reference #" + (data.report_id || "?") + ". We'll review within 72 hours."
+      : "Prijava primljena. Broj prijave #" + (data.report_id || "?") + ". Pregledacemo u roku od 72 sata.";
+    setTimeout(function() {
+      document.getElementById("abuseDomain").value = "";
+      document.getElementById("abuseEmail").value = "";
+      document.getElementById("abuseDescription").value = "";
+    }, 3000);
+  } catch (e) {
+    resultEl.className = "abuse-result error visible";
+    resultEl.textContent = (currentLang === "en" ? "Error: " : "Greska: ") + e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = currentLang === "en" ? "Submit report" : "Posalji prijavu";
+  }
+}
 </script>
 
 </body>
