@@ -74,26 +74,42 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         response = await call_next(request)
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        # CSP: use WILDCARD host patterns for the Google advertising stack
+        # rather than listing individual subdomains. AdSense uses many
+        # subdomains (pagead2, tpc, ep1, ep2, googleads, securepubads,
+        # stats, pubads, etc.) and maintaining an explicit list is a
+        # losing game — every few months Google adds a new one and we
+        # get CSP violations in user devtools.
+        #
+        # The wildcards cover:
+        #   *.googlesyndication.com    — pagead2, tpc, securepubads, etc.
+        #   *.g.doubleclick.net        — googleads, stats, pubads, securepubads
+        #   *.adtrafficquality.google  — ep1, ep2 (ad quality sandbox)
+        #
+        # Non-ad Google endpoints (fonts, analytics, tag services) stay
+        # explicit so we can see exactly which capabilities we allow.
+        #
+        # script-src MUST include *.adtrafficquality.google because
+        # AdSense loads sodar2.js from ep2.adtrafficquality.google for
+        # quality verification; without it, the ad request returns 403.
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' https://fonts.googleapis.com "
-            "https://pagead2.googlesyndication.com https://www.googletagservices.com "
-            "https://adservice.google.com https://tpc.googlesyndication.com "
-            "https://fundingchoicesmessages.google.com https://www.gstatic.com; "
+            "script-src 'self' 'unsafe-inline' "
+            "https://fonts.googleapis.com https://www.gstatic.com "
+            "https://*.googlesyndication.com https://*.g.doubleclick.net "
+            "https://*.adtrafficquality.google "
+            "https://www.googletagservices.com https://www.googletagmanager.com "
+            "https://adservice.google.com https://fundingchoicesmessages.google.com; "
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
             "font-src https://fonts.gstatic.com; "
             "img-src 'self' data: https:; "
-            # connect-src must include Google AdSense telemetry/quality endpoints
-            # (ep1/ep2.adtrafficquality.google, googleads.g.doubleclick.net) because
-            # AdSense fires beacon requests to these on every ad impression and
-            # the blocked requests show up in user devtools as CSP violations.
             "connect-src 'self' https://unlimitededition-web-security-scanner.hf.space "
-            "https://pagead2.googlesyndication.com "
-            "https://ep1.adtrafficquality.google https://ep2.adtrafficquality.google "
-            "https://googleads.g.doubleclick.net https://www.google.com "
-            "https://csi.gstatic.com; "
-            "frame-src https://googleads.g.doubleclick.net https://tpc.googlesyndication.com "
-            "https://www.google.com https://ep2.adtrafficquality.google; "
+            "https://*.googlesyndication.com https://*.g.doubleclick.net "
+            "https://*.adtrafficquality.google "
+            "https://www.google.com https://www.googletagservices.com "
+            "https://www.googletagmanager.com https://csi.gstatic.com; "
+            "frame-src https://*.googlesyndication.com https://*.g.doubleclick.net "
+            "https://*.adtrafficquality.google https://www.google.com; "
             "frame-ancestors 'self' https://huggingface.co https://*.hf.space"
         )
         response.headers["X-Frame-Options"] = "ALLOW-FROM https://huggingface.co"
