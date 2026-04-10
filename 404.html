@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 — Stranica nije pronadjena / Page not found — Web Security Scanner</title>
+  <meta name="description" content="404 — stranica koju trazite ne postoji ili je premestena.">
+  <meta name="robots" content="noindex, follow">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .error-main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 1.5rem 4rem;
+    }
+    .error-card {
+      max-width: 640px;
+      width: 100%;
+      text-align: center;
+    }
+    .error-code {
+      font-size: clamp(6rem, 18vw, 11rem);
+      font-weight: 900;
+      line-height: 0.9;
+      background: linear-gradient(135deg, #a78bfa 0%, #ef4444 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.04em;
+    }
+    .error-title {
+      font-size: clamp(1.4rem, 3.5vw, 2rem);
+      font-weight: 800;
+      color: #e8eaf6;
+      margin-bottom: 1rem;
+    }
+    .error-message {
+      color: #9ca3af;
+      font-size: 1rem;
+      line-height: 1.7;
+      max-width: 500px;
+      margin: 0 auto 2.5rem;
+    }
+    .error-actions {
+      display: flex;
+      gap: 0.8rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 3rem;
+    }
+    .error-btn {
+      display: inline-block;
+      padding: 0.9rem 1.8rem;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      text-decoration: none;
+      transition: all 0.15s;
+      border: 1px solid transparent;
+    }
+    .error-btn.primary {
+      background: #a78bfa;
+      color: #0a0c15;
+      border-color: #a78bfa;
+    }
+    .error-btn.primary:hover {
+      background: #c4b5fd;
+      border-color: #c4b5fd;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(167, 139, 250, 0.25);
+    }
+    .error-btn.secondary {
+      background: #11142a;
+      color: #e8eaf6;
+      border-color: #252a4a;
+    }
+    .error-btn.secondary:hover {
+      background: #1a1e38;
+      border-color: #a78bfa;
+      transform: translateY(-2px);
+    }
+
+    .error-suggestions {
+      max-width: 580px;
+      margin: 0 auto;
+      background: #11142a;
+      border: 1px solid #252a4a;
+      border-radius: 12px;
+      padding: 1.5rem 1.75rem;
+      text-align: left;
+    }
+    .error-suggestions h3 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #a78bfa;
+      margin-bottom: 1rem;
+      font-weight: 700;
+    }
+    .error-suggestions ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .error-suggestions li {
+      padding: 0.6rem 0;
+      border-top: 1px solid #1a1e38;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      font-size: 0.9rem;
+    }
+    .error-suggestions li:first-child {
+      border-top: none;
+    }
+    .error-suggestions li a {
+      color: #a78bfa;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .error-suggestions li a:hover {
+      color: #c4b5fd;
+      text-decoration: underline;
+    }
+    .error-suggestions li .label {
+      color: #9ca3af;
+      font-size: 0.82rem;
+    }
+    .error-meta {
+      margin-top: 2rem;
+      color: #6b7280;
+      font-size: 0.78rem;
+      font-family: monospace;
+    }
+    .error-meta a { color: #7b83a6; }
+  </style>
+</head>
+<body>
+
+<main class="error-main">
+  <div class="error-card">
+
+    <div class="error-code">404</div>
+
+    <h1 class="error-title">
+      <span class="sr">Stranica nije pronadjena</span>
+      <span class="en">Page not found</span>
+    </h1>
+
+    <p class="error-message">
+      <span class="sr">Stranica koju trazite ne postoji, premestena je, ili je link neispravan. Ako ste dosli ovde preko spoljasnjeg linka, mozda je neko podelio zastarelu adresu. U svakom slucaju — evo par brzih puteva.</span>
+      <span class="en">The page you are looking for does not exist, has been moved, or the link is broken. If you arrived here from an external link, someone may have shared an outdated URL. Either way — here are a few quick paths forward.</span>
+    </p>
+
+    <div class="error-actions">
+      <a href="./index.html" class="error-btn primary">
+        <span class="sr">Pokreni skener</span>
+        <span class="en">Run the scanner</span>
+      </a>
+      <a href="./pricing.html" class="error-btn secondary">
+        <span class="sr">Cenovnik Pro</span>
+        <span class="en">Pro pricing</span>
+      </a>
+    </div>
+
+    <div class="error-suggestions">
+      <h3>
+        <span class="sr">Mozda ste trazili</span>
+        <span class="en">You might be looking for</span>
+      </h3>
+      <ul>
+        <li>
+          <a href="./index.html">/</a>
+          <span class="label">
+            <span class="sr">Besplatni security scanner</span>
+            <span class="en">Free security scanner</span>
+          </span>
+        </li>
+        <li>
+          <a href="./pricing.html">/pricing</a>
+          <span class="label">
+            <span class="sr">Pro plan i cenovnik</span>
+            <span class="en">Pro plan and pricing</span>
+          </span>
+        </li>
+        <li>
+          <a href="./blog-security.html">/blog-security</a>
+          <span class="label">
+            <span class="sr">Security vodic (8 clanaka)</span>
+            <span class="en">Security guide (8 articles)</span>
+          </span>
+        </li>
+        <li>
+          <a href="./blog-gdpr.html">/blog-gdpr</a>
+          <span class="label">
+            <span class="sr">GDPR vodic (5 clanaka)</span>
+            <span class="en">GDPR guide (5 articles)</span>
+          </span>
+        </li>
+        <li>
+          <a href="./terms.html">/terms</a>
+          <span class="label">
+            <span class="sr">Uslovi koriscenja</span>
+            <span class="en">Terms of Service</span>
+          </span>
+        </li>
+        <li>
+          <a href="./privacy.html">/privacy</a>
+          <span class="label">
+            <span class="sr">Politika privatnosti</span>
+            <span class="en">Privacy Policy</span>
+          </span>
+        </li>
+        <li>
+          <a href="./abuse-report.html">/abuse-report</a>
+          <span class="label">
+            <span class="sr">Prijavi zloupotrebu skeniranjem</span>
+            <span class="en">Report scan abuse</span>
+          </span>
+        </li>
+      </ul>
+    </div>
+
+    <p class="error-meta">
+      <span class="sr">Ako mislite da ovo nije 404 greska, prijavite problem preko</span>
+      <span class="en">If you think this is not a 404 error, please report it via</span>
+      <a href="https://github.com/UnlimitedEdition/security-scanner/issues" target="_blank" rel="noopener">GitHub Issues</a>.
+    </p>
+
+  </div>
+</main>
+
+<script src="./blog-common.js" defer></script>
+<script>
+  // Language restore — blog-common.js handles the toggle, we just make sure
+  // the initial language respects any previously-stored preference so users
+  // landing on 404 in English don't see Serbian first.
+  (function() {
+    try {
+      var lang = localStorage.getItem('wss-lang') || 'sr';
+      if (lang === 'en') document.body.classList.add('lang-en');
+    } catch (e) { /* localStorage may be disabled */ }
+  })();
+</script>
+
+</body>
+</html>

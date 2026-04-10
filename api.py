@@ -369,6 +369,37 @@ def pricing_page():
         return FileResponse(path, media_type="text/html")
 
 
+@app.api_route("/404.html", methods=["GET", "HEAD"])
+def not_found_page():
+    """Explicit route for the branded 404 page (also served by the exception
+    handler below for any unknown route requested with an HTML Accept header)."""
+    path = os.path.join(os.path.dirname(__file__), "404.html")
+    if os.path.exists(path):
+        return FileResponse(path, media_type="text/html", status_code=404)
+
+
+@app.exception_handler(404)
+async def custom_404_handler(request: Request, exc):
+    """
+    Return the branded 404.html for browser requests, JSON for API clients.
+
+    The Accept header is the signal: if the caller wants HTML (browser
+    navigation, search engine crawler), we serve the styled error page.
+    API clients (curl, monitoring, the frontend's fetch() calls) get the
+    default JSON shape with a 'detail' field — same as before this
+    handler existed, so we don't break any existing code path.
+    """
+    accept = (request.headers.get("accept") or "").lower()
+    if "text/html" in accept:
+        path = os.path.join(os.path.dirname(__file__), "404.html")
+        if os.path.exists(path):
+            return FileResponse(path, media_type="text/html", status_code=404)
+    return JSONResponse(
+        status_code=404,
+        content={"detail": getattr(exc, "detail", "Not found")},
+    )
+
+
 @app.api_route("/blog-common.css", methods=["GET", "HEAD"])
 def blog_common_css():
     path = os.path.join(os.path.dirname(__file__), "blog-common.css")
