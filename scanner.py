@@ -192,10 +192,22 @@ def compute_score(results: List[Dict]) -> Dict[str, Any]:
     }
 
 
-def scan(url: str, progress_callback=None) -> Dict[str, Any]:
+def scan(url: str, progress_callback=None, max_pages: int = 1) -> Dict[str, Any]:
     """
     Run all security checks on the given URL.
     Returns a dict with all results and the final score.
+
+    Args:
+        url: Target URL to scan.
+        progress_callback: Optional fn(step, pct) for incremental progress.
+        max_pages: Upper bound on pages to scan. Free tier passes 1
+            (homepage only, current behaviour). Pro tier passes up to 10.
+            When max_pages > 1 and the crawler discovers additional
+            same-origin pages, a subset of page-level checks (headers,
+            disclosure, vuln, js, seo) is re-run on each additional
+            page with a 0.5s target-side rate limit and per-iteration
+            deadline check. Findings from non-homepage pages carry a
+            'page_url' field so the UI and PDF can group by URL.
     """
     start_time = time.time()
     deadline = start_time + SCAN_DEADLINE_SECONDS
@@ -393,11 +405,17 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
     # --- Crawl site pages ---
     # This block is structurally different from the regular checks (it writes
     # into pages_found, not all_results), so it stays outside run_check().
+    # The `discovered` list is preserved in outer scope so the multi-page
+    # Pro loop at the bottom can re-use it without re-crawling.
     pages_found = 1
+    discovered: List[str] = [base_url]
     if not _deadline_exceeded() and not bot_blocked and response_body:
         update("Otkrivam stranice sajta...", 5)
         try:
-            discovered = crawl(base_url, session, response_body)
+            # Crawl up to max_pages so Pro users with max_pages=10 get
+            # 10 URLs discovered, free users still get 1 (homepage only
+            # in results but crawler still reports pages_found for UI).
+            discovered = crawl(base_url, session, response_body, limit=max(max_pages, 1))
             pages_found = len(discovered)
         except Exception:
             pass
@@ -462,6 +480,88 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
               lambda: ct_check.run(domain))
     run_check("Skeniram subdomene...", 98, "Subdomain",
               lambda: subdomain_check.run(domain))
+
+    # ─────────────────────────────────────────────────────────────────
+    # Multi-page pass (Pro plan only — max_pages > 1)
+    # ─────────────────────────────────────────────────────────────────
+    # For each additional page discovered by the crawler, re-run the
+    # subset of checks that are content-dependent (headers, disclosure,
+    # vuln patterns, JS, SEO). Domain-level checks (SSL, DNS, Files,
+    # CMS detection, Ports, WHOIS, etc.) already ran once above and do
+    # not need to be repeated per page — they would return identical
+    # results and waste both our deadline and the target's bandwidth.
+    #
+    # Target-side rate limit: 0.5s sleep between pages. At max_pages=10
+    # this adds ~5s of wall-clock overhead, well within our 180s scan
+    # deadline budget. Respecting target sites is part of passive
+    # scanning — we don't DoS anyone.
+    #
+    # Each finding gets tagged with 'page_url' so the frontend and the
+    # PDF report can group per-page results visibly. Homepage findings
+    # keep no 'page_url' (they represent the whole domain or homepage).
+    if max_pages > 1 and len(discovered) > 1 and not _deadline_exceeded():
+        # Skip the homepage (index 0 = base_url, already scanned above)
+        extra_pages = discovered[1:max_pages]
+        total_extra = len(extra_pages)
+        for i, page_url in enumerate(extra_pages, start=1):
+            if _deadline_exceeded():
+                if not scan_truncated:
+                    scan_truncated = True
+                    errors.append(
+                        f"Scan prekoracio vremenski limit od {SCAN_DEADLINE_SECONDS}s — "
+                        f"multi-page pass prekinut posle {i-1}/{total_extra} stranica."
+                    )
+                break
+
+            # Target-side rate limit — be gentle to the scanned site.
+            # Not applied on the first iteration because the homepage
+            # fetch above already put some delay between now and the
+            # first extra page.
+            if i > 1:
+                time.sleep(0.5)
+
+            # Update UI progress — share the 98-99 range across all
+            # extra pages so the score-calculation step still lands at
+            # 99, then 100 at the very end.
+            step_label = f"Pro: skeniram stranicu {i}/{total_extra}"
+            update(step_label, 98)
+
+            try:
+                page_resp = safe_get(session, page_url, timeout=10)
+                page_body = page_resp.text[:50000] if page_resp.text else ""
+                page_headers = dict(page_resp.headers)
+            except UnsafeTargetError:
+                errors.append(f"Page {page_url} blocked by SSRF guard")
+                continue
+            except Exception as e:
+                errors.append(f"Page {page_url} fetch failed: {str(e)[:80]}")
+                continue
+
+            # Run the page-level check subset. Any crash here does not
+            # stop the rest of the multi-page loop — matches the
+            # single-page run_check() behaviour.
+            page_level_checks = [
+                ("Headers",    lambda: headers_check.run(page_headers)),
+                ("Disclosure", lambda: disclosure_check.run(page_headers, page_body)),
+                ("Vuln",       lambda: vuln_check.run(page_url, page_body, page_headers, session)),
+                ("JS",         lambda: js_check.run(page_url, page_body, session)),
+                ("SEO",        lambda: seo_check.run(page_url, page_body, page_headers, session)),
+            ]
+            for check_name, check_fn in page_level_checks:
+                if _deadline_exceeded():
+                    break
+                try:
+                    page_results = check_fn() or []
+                    # Tag each result with the page URL so the UI can
+                    # group findings per page.
+                    for r in page_results:
+                        if isinstance(r, dict):
+                            r["page_url"] = page_url
+                    all_results.extend(page_results)
+                except Exception as e:
+                    errors.append(
+                        f"{check_name} check on {page_url}: {str(e)[:60]}"
+                    )
 
     update("Izračunavam ocenu...", 99)
 

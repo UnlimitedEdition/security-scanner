@@ -70,11 +70,21 @@ def _extract_links(html, base_url, target_domain):
     return links
 
 
-def crawl(base_url, session, response_body=""):
+def crawl(base_url, session, response_body="", limit=MAX_URLS):
     """
     Crawl the site starting from base_url.
     Returns list of discovered URLs (including base_url).
+
+    The `limit` parameter caps the number of returned URLs. Callers use
+    it to match the Pro plan page budget: free tier asks for 1 (homepage
+    only, so the crawl is still done for 'pages_found' telemetry), and
+    Pro tier asks for up to 10. The hard upper bound is MAX_URLS (20)
+    regardless of what the caller requests, so a misconfigured caller
+    cannot trigger unbounded crawling.
     """
+    # Cap at MAX_URLS even if caller asks for more
+    effective_limit = min(max(1, int(limit or 1)), MAX_URLS)
+
     parsed = urlparse(base_url)
     target_domain = parsed.netloc
     base_clean = f"{parsed.scheme}://{parsed.netloc}{parsed.path}".rstrip("/")
@@ -87,13 +97,13 @@ def crawl(base_url, session, response_body=""):
     if response_body:
         homepage_links = _extract_links(response_body, base_url, target_domain)
         for link in homepage_links:
-            if link not in visited and len(visited) + len(to_visit) < MAX_URLS:
+            if link not in visited and len(visited) + len(to_visit) < effective_limit:
                 to_visit.append((link, 1))
 
     # BFS crawl
     results = [base_clean]
 
-    while to_visit and len(results) < MAX_URLS:
+    while to_visit and len(results) < effective_limit:
         url, depth = to_visit.pop(0)
         if url in visited:
             continue
@@ -116,7 +126,7 @@ def crawl(base_url, session, response_body=""):
             if depth < MAX_DEPTH:
                 page_links = _extract_links(resp.text[:30000], url, target_domain)
                 for link in page_links:
-                    if link not in visited and len(to_visit) < MAX_URLS * 2:
+                    if link not in visited and len(to_visit) < effective_limit * 2:
                         to_visit.append((link, depth + 1))
 
         except UnsafeTargetError:
@@ -126,4 +136,4 @@ def crawl(base_url, session, response_body=""):
         except Exception:
             continue
 
-    return results[:MAX_URLS]
+    return results[:effective_limit]

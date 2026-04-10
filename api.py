@@ -200,11 +200,22 @@ def _make_progress_cb(scan_id: str):
     return cb
 
 
-def _run_scan_inline(scan_id: str, url: str, client_ip: str, user_agent: Optional[str]):
+def _run_scan_inline(
+    scan_id: str,
+    url: str,
+    client_ip: str,
+    user_agent: Optional[str],
+    max_pages: int = 1,
+):
     """
     Executes a single scan. Shared between the "start immediately" path
     in /scan and the "pull from queue" path in _process_queue, so both
     share identical DB + audit-log semantics.
+
+    max_pages controls the Pro multi-page pass in scanner.scan():
+      - 1 (default): free tier behaviour, homepage only
+      - up to 10: Pro tier, scanner.py will loop page-level checks on
+        each additional page discovered by the crawler
     """
     # Transition to running (both in-memory and DB)
     scans[scan_id]["status"] = "running"
@@ -220,7 +231,7 @@ def _run_scan_inline(scan_id: str, url: str, client_ip: str, user_agent: Optiona
 
     progress_cb = _make_progress_cb(scan_id)
     try:
-        result = scanner.scan(url, progress_callback=progress_cb)
+        result = scanner.scan(url, progress_callback=progress_cb, max_pages=max_pages)
         scans[scan_id]["status"] = "completed"
         scans[scan_id]["progress"] = 100
         scans[scan_id]["result"] = result
@@ -280,7 +291,13 @@ def _process_queue():
 
     thread = threading.Thread(
         target=_run_scan_inline,
-        args=(scan_id, scan["url"], scan.get("client_ip", "unknown"), scan.get("user_agent")),
+        args=(
+            scan_id,
+            scan["url"],
+            scan.get("client_ip", "unknown"),
+            scan.get("user_agent"),
+            int(scan.get("max_pages") or 1),
+        ),
         daemon=True,
     )
     thread.start()
@@ -999,6 +1016,13 @@ def start_scan(req: ScanRequest, request: Request):
     # Determine queue position
     queue_position = len(_scan_queue) + (1 if _active_scan["id"] else 0)
 
+    # Pro plan page budget: Pro subscribers scan up to 10 pages per
+    # request, free tier scans only the homepage. If the request body
+    # includes a `selected_pages` list, the scanner will honour it; if
+    # it does not, scanner.scan() falls back to auto-picking the first
+    # N pages discovered by the crawler.
+    max_pages = 10 if pro_sub else 1
+
     scans[scan_id] = {
         "id": scan_id,
         "url": req.url,
@@ -1014,6 +1038,9 @@ def start_scan(req: ScanRequest, request: Request):
         # later and still have the full context for audit logging.
         "client_ip": client_ip,
         "user_agent": user_agent,
+        # Pro plan state — read by _run_scan_inline and _process_queue
+        "max_pages": max_pages,
+        "is_pro": bool(pro_sub),
     }
 
     # Persist the scan + log the request. Both are best-effort — DB
@@ -1052,7 +1079,7 @@ def start_scan(req: ScanRequest, request: Request):
         scans[scan_id]["step"] = "Pokretanje skeniranja..."
         thread = threading.Thread(
             target=_run_scan_inline,
-            args=(scan_id, req.url, client_ip, user_agent),
+            args=(scan_id, req.url, client_ip, user_agent, max_pages),
             daemon=True,
         )
         thread.start()
