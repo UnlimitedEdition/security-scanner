@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Politika privatnosti / Privacy Policy — Web Security Scanner</title>
+  <meta name="description" content="Politika privatnosti: sta konkretno cuvamo u bazi, kako se hashuju PII podaci, retention period, i kako ostvarujete svoja GDPR prava.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./blog-common.css">
@@ -19,119 +20,245 @@
   <!-- SERBIAN -->
   <div class="sr">
     <h1>Politika privatnosti</h1>
-    <p class="subtitle">Poslednje azuriranje: 9. april 2026.</p>
+    <p class="subtitle">Verzija 2026-04-10-v1 &middot; Poslednje azuriranje: 10. april 2026.</p>
 
     <h2 id="pp1">1. Ko smo mi</h2>
-    <p>Web Security Scanner je besplatan online alat za pasivnu analizu bezbednosti veb sajtova. Operater sajta je <a href="https://toske-programer.web.app" target="_blank" rel="noopener">Toske-Programer</a>.</p>
+    <p>Web Security Scanner je besplatan online alat za pasivnu analizu bezbednosti veb sajtova. Operater sajta je <a href="https://toske-programer.web.app" target="_blank" rel="noopener">Toske-Programer</a>. Ova politika privatnosti objasnjava detaljno sta konkretno radimo sa vasim podacima, koliko dugo ih cuvamo, i kako ostvarujete svoja prava.</p>
 
-    <h2 id="pp2">2. Koje podatke prikupljamo</h2>
-    <p>Nas servis prikuplja minimalne podatke:</p>
+    <h2 id="pp2">2. Sta tacno cuvamo u bazi</h2>
+    <p>Za razliku od ranijih verzija ovog servisa koje su podatke drzale samo u memoriji, aktuelna verzija cuva svaki scan u nasoj <strong>persistent bazi podataka</strong> (PostgreSQL preko Supabase-a) zbog audit traga, zastite od zloupotrebe, i omogucavanja korisniku da kasnije pregleda svoje skeniranje. Konkretni podaci koje cuvamo:</p>
     <ul>
-      <li><strong>URL koji skenirate</strong> — koristi se iskljucivo za izvrsavanje analize i brise se iz memorije nakon zavrsetka</li>
-      <li><strong>IP adresa</strong> — koristi se samo za rate limiting (ogranicenje broja zahteva) i ne cuva se trajno</li>
-      <li><strong>Kolacici (cookies)</strong> — koristimo Google AdSense koji moze postavljati kolacice za personalizaciju reklama</li>
+      <li><strong>URL koji skenirate</strong> i <strong>normalizovani domen</strong></li>
+      <li><strong>Ceo rezultat skeniranja</strong> (JSONB polje: grade, score, counts, lista pronalazaka, kategorije)</li>
+      <li><strong>Hash IP adrese</strong> (SHA-256 sa server-side salt-om) — NE raw IP</li>
+      <li><strong>Hash User-Agent stringa</strong> (SHA-256 sa istim salt-om) — NE raw UA</li>
+      <li><strong>Opcioni session_id</strong> (browser session iz frontend-a, UUID, nikad personalno)</li>
+      <li><strong>Opcioni fingerprint_hash</strong> (canvas/WebGL fingerprint ako ga frontend proslijedi)</li>
+      <li><strong>Verzija pristanka</strong> (<code>consent_version</code>) i flag da ste eksplicitno prihvatili Uslove koriscenja</li>
+      <li><strong>Vremenski pecati</strong> (kreiranje, zavrsetak)</li>
     </ul>
-    <p>Ne prikupljamo imena, email adrese, lozinke niti bilo kakve licne podatke korisnika.</p>
+    <p>Svaki scan dodatno generise <strong>3 do 10 zapisa</strong> u <code>audit_log</code> tabeli (jedan po dogadjaju: scan_request, scan_start, scan_complete, scan_blocked_*, scan_error). Audit_log cuva istu pseudonimizovanu identitetsku informaciju plus context u details JSONB polju.</p>
+    <p><strong>Ono sto NE cuvamo:</strong> imena, email adrese (osim ako ih ne ukljucite dobrovoljno u abuse report), lozinke, sadrzaj skeniranog sajta osim metadata-e (header-i, score), raw IP adrese, raw User-Agent stringove, istoriju bilo cega povezano sa vasom identitetskom iz spoljnih izvora.</p>
 
-    <h2 id="pp3">3. Kako koristimo podatke</h2>
+    <h2 id="pp3">3. Pseudonimizacija PII (kako funkcionise hashovanje)</h2>
+    <p>Umesto da cuvamo vasu IP adresu i User-Agent u izvornom obliku, propuzamo ih kroz SHA-256 hash funkciju sa <strong>tajnim server-side salt-om</strong> koji postoji samo u nasem deployment env-u i nikad ne ide u bazu:</p>
+    <p style="margin-left:1.2rem"><code>ip_hash = SHA-256(vasa_ip + ":" + server_salt)</code></p>
+    <p>Ovo se po GDPR Art. 4(5) kvalifikuje kao <strong>pseudonimizacija</strong>. Efekti:</p>
+    <ul>
+      <li>Ako napadac ikad exfiltrira nasu bazu, <strong>dobija samo hash-eve, ne IP adrese</strong>. Bez salt-a hashovi se ne mogu brute-force-ovati (salt nam je 256-bitni random string)</li>
+      <li>Mi i dalje mozemo da koreliramo vase skeniranje ("koliko ste scan-ova uradili sa ove IP") jer isti IP uvek daje isti hash</li>
+      <li>Ne mozemo da enumeriramo sve IP adrese koje su ikad koristile servis (jer hash je jednosmeran). Ovo je <strong>namerno ograniceno</strong> da bismo zastitili vas anonimitet</li>
+      <li>Kad trazite GDPR brisanje, moracete nam dostaviti vasu IP adresu i priblizno vreme — mi onda racunamo hash i brisemo podudarajuce redove. Bez tih informacija ne mozemo pouzdano da identifikujemo "vase" redove (videti sekciju 8)</li>
+    </ul>
+
+    <h2 id="pp4">4. Kako koristimo podatke</h2>
     <ul>
       <li>Izvrsavanje bezbednosne analize URL-a koji ste uneli</li>
-      <li>Zastita od zloupotrebe servisa (rate limiting)</li>
+      <li>Cuvanje rezultata skeniranja tako da ga mozete pregledati kasnije (bez verifikacije vlasnistva, vidite samo osnovne statistike; sa verifikovanim vlasnistvom — pun sadrzaj)</li>
+      <li>Rate limiting — zastita od zloupotrebe servisa (5 scan-ova po 30 minuta po IP hash-u)</li>
+      <li>Audit trail za forenzicki odgovor na eventualne zloupotrebe</li>
+      <li>Omogucavanje vlasniku skeniranog sajta da podnese abuse report i dokaze koji scan-ovi su ga ticali</li>
       <li>Prikazivanje reklama putem Google AdSense</li>
     </ul>
+    <p>Pravna osnova obrade (GDPR Art. 6): <strong>legitimni interes</strong> za forenzicki audit i zastitu servisa, plus <strong>saglasnost</strong> koju dajete na svakom scan-u kroz checkbox pre pokretanja analize.</p>
 
-    <h2 id="pp4">4. Kolacici i oglasavanje</h2>
-    <p>Koristimo Google AdSense za prikazivanje oglasa. Google i njegovi partneri mogu koristiti kolacice za personalizaciju oglasa na osnovu poseta ovom i drugim sajtovima. Vise informacija na <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener">Google Ads politika</a>.</p>
-    <p>Mozete upravljati podesavanjima personalizacije oglasa na <a href="https://adssettings.google.com" target="_blank" rel="noopener">Google Ads podesavanja</a>.</p>
-
-    <h2 id="pp5">5. Trece strane</h2>
-    <p>Koristimo sledece servise trecih strana:</p>
+    <h2 id="pp5">5. Retention — koliko dugo cuvamo podatke</h2>
+    <p>Svaka tabela u nasoj bazi ima sopstveni retention period, automatizovan kroz dnevne pg_cron zadatke:</p>
     <ul>
-      <li><strong>Google AdSense</strong> — prikazivanje oglasa</li>
-      <li><strong>Google Fonts</strong> — ucitavanje fontova</li>
-      <li><strong>Vercel</strong> — hosting frontend-a</li>
-      <li><strong>Hugging Face Spaces</strong> — hosting backend API-ja</li>
+      <li><strong>scans</strong> (rezultati skeniranja): cuvaju se dok korisnik ne trazi brisanje ili dok vi, kao operater, ne pokrenete veci cleanup. Nema automatskog brisanja.</li>
+      <li><strong>audit_log</strong> (forenzicki trag): <strong>90 dana</strong> za redovne zapise, zatim automatsko brisanje. Flagovani redovi (povezani sa abuse report-om) se <strong>cuvaju zauvek</strong> kao pravni dokaz.</li>
+      <li><strong>verified_domains</strong> (grantovi za punu vidljivost): <strong>30 dana</strong> po kombinaciji (domen, IP hash), zatim istice.</li>
+      <li><strong>verification_tokens</strong> (pending challenge-i): <strong>1 sat</strong> za pending, zatim istice automatski.</li>
+      <li><strong>rate_limits</strong>: rolling prozor, cisti se automatski kad prodje vremenski interval.</li>
+      <li><strong>abuse_reports</strong>: zauvek, kao pravni trag, osim ako reporter ne povuce prijavu.</li>
+      <li><strong>Backup-ovi</strong>: dnevni enkriptovani backup se cuva na Cloudflare R2 <strong>90 dana</strong> po R2 lifecycle pravilu. Metadata o backup-ima se cuva 180 dana.</li>
     </ul>
 
     <h2 id="pp6">6. Bezbednost podataka</h2>
-    <p>Svi podaci se prenose putem HTTPS enkripcije. Ne cuvamo rezultate skeniranja trajno — brisu se iz memorije servera nakon kratkog perioda.</p>
-
-    <h2 id="pp7">7. Vasa prava (GDPR)</h2>
-    <p>Ako se nalazite u Evropskom ekonomskom prostoru, imate pravo da:</p>
+    <p>Ova sekcija opisuje konkretne mere zastite koje primenjujemo:</p>
     <ul>
-      <li>Zatrazite informacije o podacima koje imamo o vama</li>
-      <li>Zatrazite brisanje vasih podataka</li>
-      <li>Povucete saglasnost za kolacice</li>
-      <li>Uputite zalbu nadleznom organu za zastitu podataka</li>
+      <li><strong>Transport</strong>: svi podaci se prenose kroz HTTPS (TLS 1.2+) koji obezbedjuje Cloudflare i HF Spaces</li>
+      <li><strong>Enkripcija u mirovanju</strong>: Supabase obezbedjuje AES-256 enkripciju na nivou diska za celu bazu</li>
+      <li><strong>Row-Level Security</strong>: svaka tabela ima RLS ukljucen sa default-deny politikom. Public anon kljuc <strong>ne vidi nista</strong> — sve citanje i pisanje ide preko service_role kljuca koji je samo na backend-u</li>
+      <li><strong>Append-only audit_log</strong>: <code>UPDATE</code> i <code>DELETE</code> su revocirani cak i za service_role. Audit istoriju je namerno nemoguce prepisati iz aplikacije — zahteva eksplicitnu migraciju baze</li>
+      <li><strong>Pseudonimizacija PII</strong>: sve licne informacije (IP, UA) su hashovane sa server-side salt-om pre upisa (videti sekciju 3)</li>
+      <li><strong>Backup enkripcija</strong>: dnevni backup-ovi su AES-256-GCM enkriptovani pre upload-a na Cloudflare R2. Kljuc za dekripciju postoji samo u nasem password manager-u i Supabase Vault-u</li>
+      <li><strong>Offsite storage</strong>: backup-ovi su na R2 (Cloudflare), odvojenom provajderu od primarne baze — data loss zbog Supabase incident-a ne brise backup-e</li>
+      <li><strong>Tested recovery</strong>: kvartalno testiramo restore backup-a na izolovani staging projekat da bismo dokazali da backup-ovi rade (a ne samo da se prave)</li>
     </ul>
 
-    <h2 id="pp8">8. Deca</h2>
-    <p>Ovaj servis nije namenjen osobama mladjim od 16 godina. Ne prikupljamo svesno podatke od maloletnika.</p>
+    <h2 id="pp7">7. Kolacici, oglasavanje, i trece strane</h2>
+    <p>Koristimo Google AdSense za prikazivanje oglasa. Google i njegovi partneri mogu koristiti kolacice za personalizaciju oglasa na osnovu poseta ovom i drugim sajtovima. Vise informacija na <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener">Google Ads politika</a>. Mozete upravljati podesavanjima na <a href="https://adssettings.google.com" target="_blank" rel="noopener">Google Ads podesavanja</a>.</p>
+    <p>Koristimo sledece servise trecih strana:</p>
+    <ul>
+      <li><strong>Supabase</strong> (EU region) — primarna PostgreSQL baza + Edge Functions + Vault</li>
+      <li><strong>Cloudflare R2</strong> — offsite backup storage (enkriptovano)</li>
+      <li><strong>Hugging Face Spaces</strong> — backend API hosting</li>
+      <li><strong>Vercel</strong> — frontend hosting</li>
+      <li><strong>Google AdSense</strong> — prikazivanje oglasa</li>
+      <li><strong>Google Fonts</strong> — ucitavanje fontova</li>
+    </ul>
+    <p>Svi provajderi su odabrani tako da primarno cuvaju podatke u EU/EEA regionu. Ako imate specificna pitanja o prenosu podataka, kontaktirajte nas.</p>
 
-    <h2 id="pp9">9. Promene politike</h2>
-    <p>Zadrzavamo pravo da azuriramo ovu politiku privatnosti. Promene stupaju na snagu odmah po objavljivanju na ovoj stranici.</p>
+    <h2 id="pp8">8. Vasa prava pod GDPR-om</h2>
+    <p>Ako se nalazite u Evropskom ekonomskom prostoru, imate sledeca prava:</p>
+    <ul>
+      <li><strong>Art. 15 — pravo pristupa</strong>: da zatrazite kopiju podataka koje imamo o vama</li>
+      <li><strong>Art. 16 — pravo na ispravku</strong>: netacnih podataka</li>
+      <li><strong>Art. 17 — pravo na brisanje</strong>: &quot;pravo da se bude zaboravljen&quot;</li>
+      <li><strong>Art. 18 — pravo na ogranicavanje obrade</strong></li>
+      <li><strong>Art. 20 — pravo na prenosivost podataka</strong></li>
+      <li><strong>Art. 21 — pravo na prigovor</strong> protiv obrade na osnovu legitimnog interesa</li>
+      <li><strong>Pravo da podnesete zalbu</strong> nadleznom organu za zastitu podataka u vasoj zemlji</li>
+    </ul>
+    <p><strong>Kako da ostvarite svoja prava:</strong> posto cuvamo samo pseudonimizovane (hash-ovane) identifikatore, bez vase pomoci ne mozemo da identifikujemo &quot;vase&quot; redove u bazi. Da biste poslali zahtev, kontaktirajte nas i navedite:</p>
+    <ul>
+      <li>IP adresu koju ste koristili u trenutku skeniranja</li>
+      <li>Priblizno vreme (dan i sat)</li>
+      <li>Eventualno domen koji ste skenirali ako znate</li>
+    </ul>
+    <p>Uz te informacije mozemo da izracunamo vas hash i pronadjemo podudarajuce redove u <code>scans</code> i <code>audit_log</code> tabelama. Brisanje se vrsi u roku od 30 dana od prijema zahteva (GDPR Art. 12). <strong>Napomena o audit_log-u:</strong> audit log je namerno append-only i cuva se 90 dana kao forenzicki trag pod pravnom osnovom legitimnog interesa (GDPR Art. 6(1)(f) — dokumentovanje potencijalnih sigurnosnih incidenata). Vasi zapisi se nece fizicki obrisati iz audit_log-a, ali ce se markirati kao &quot;izuzeti od operativne statistike&quot; i ionako ce biti automatski obrisani nakon 90 dana ako nisu flagovani.</p>
 
-    <h2 id="pp10">10. Kontakt</h2>
-    <p>Za sva pitanja u vezi sa privatnoscu, kontaktirajte nas putem sajta <a href="https://toske-programer.web.app" target="_blank" rel="noopener">toske-programer.web.app</a>.</p>
+    <h2 id="pp9">9. Prava vlasnika skeniranog sajta (abuse report)</h2>
+    <p>Ako ste vlasnik domena koji je neko skenirao preko naseg servisa bez vase dozvole, mozete podneti prijavu preko link-a &quot;Prijavi zloupotrebu&quot; u footer-u ili direktno na <a href="./index.html#abuse">./index.html#abuse</a>. Pregledamo svaku prijavu u roku od 72 sata. Ako potvrdimo zloupotrebu:</p>
+    <ul>
+      <li>Dodajemo vas domen na listu blokade — svi buduci scan-ovi tog domena vracaju HTTP 403</li>
+      <li>Povezani <code>audit_log</code> redovi se flaguju kao pravni dokaz i cuvaju zauvek (umesto 90 dana)</li>
+      <li>Ako ste ostavili email, obavestavamo vas o ishodu</li>
+    </ul>
+    <p>Za vise detalja o tome kako funkcionisu uslovi koriscenja i ownership verifikacija, pogledajte <a href="./terms.html">Uslove koriscenja</a>.</p>
+
+    <h2 id="pp10">10. Izmene politike, deca, i kontakt</h2>
+    <p><strong>Izmene politike:</strong> Zadrzavamo pravo da azuriramo ovu politiku. Verzija politike se bamp-uje kroz <code>consent_version</code> polje i svaki novi scan ce traziti od vas da potvrdite novu verziju. Vase prethodne saglasnosti ostaju vazece u audit_log-u ali se ne primenjuju retroaktivno na nove odredbe.</p>
+    <p><strong>Deca:</strong> Ovaj servis nije namenjen osobama mladjim od 16 godina. Ne prikupljamo svesno podatke od maloletnika. Ako saznamo da je maloletnik nevoljno dostavio podatke, brisemo ih.</p>
+    <p><strong>Kontakt:</strong> Za sva pitanja u vezi sa privatnoscu, kontaktirajte nas:</p>
+    <ul>
+      <li>Veb stranica: <a href="https://toske-programer.web.app" target="_blank" rel="noopener">toske-programer.web.app</a></li>
+      <li>Abuse prijave: kroz footer link &quot;Prijavi zloupotrebu&quot; ili <a href="./index.html#abuse">./index.html#abuse</a></li>
+      <li>Rok za odgovor: 30 dana od prijema zahteva (GDPR Art. 12)</li>
+    </ul>
   </div>
 
   <!-- ENGLISH -->
   <div class="en">
     <h1>Privacy Policy</h1>
-    <p class="subtitle">Last updated: April 9, 2026.</p>
+    <p class="subtitle">Version 2026-04-10-v1 &middot; Last updated: April 10, 2026</p>
 
     <h2 id="pp1e">1. Who we are</h2>
-    <p>Web Security Scanner is a free online tool for passive security analysis of websites. The site operator is <a href="https://toske-programer.web.app" target="_blank" rel="noopener">Toske-Programer</a>.</p>
+    <p>Web Security Scanner is a free online tool for passive security analysis of websites. The site operator is <a href="https://toske-programer.web.app" target="_blank" rel="noopener">Toske-Programer</a>. This privacy policy explains in detail what we do with your data, how long we keep it, and how to exercise your rights.</p>
 
-    <h2 id="pp2e">2. What data we collect</h2>
-    <p>Our service collects minimal data:</p>
+    <h2 id="pp2e">2. What we actually store in our database</h2>
+    <p>Unlike earlier versions of this service that kept data only in memory, the current version stores every scan in our <strong>persistent database</strong> (PostgreSQL via Supabase) for audit trail, abuse protection, and letting users review their own scans later. The specific data we store:</p>
     <ul>
-      <li><strong>URL you scan</strong> — used exclusively for performing the analysis and deleted from memory after completion</li>
-      <li><strong>IP address</strong> — used only for rate limiting and not stored permanently</li>
-      <li><strong>Cookies</strong> — we use Google AdSense which may set cookies for ad personalization</li>
+      <li><strong>The URL you scan</strong> and the <strong>normalized domain</strong></li>
+      <li><strong>The full scan result</strong> (JSONB field: grade, score, counts, list of findings, categories)</li>
+      <li><strong>Hash of your IP address</strong> (SHA-256 with a server-side salt) — NOT the raw IP</li>
+      <li><strong>Hash of your User-Agent</strong> (SHA-256 with the same salt) — NOT the raw UA</li>
+      <li><strong>Optional session_id</strong> (browser session from frontend, UUID, never personal)</li>
+      <li><strong>Optional fingerprint_hash</strong> (canvas/WebGL fingerprint if the frontend passes it)</li>
+      <li><strong>Consent version</strong> (<code>consent_version</code>) and a flag that you explicitly accepted the Terms of Service</li>
+      <li><strong>Timestamps</strong> (creation, completion)</li>
     </ul>
-    <p>We do not collect names, email addresses, passwords, or any personal user data.</p>
+    <p>Each scan additionally generates <strong>3 to 10 entries</strong> in the <code>audit_log</code> table (one per event: scan_request, scan_start, scan_complete, scan_blocked_*, scan_error). The audit_log stores the same pseudonymized identity information plus context in a details JSONB field.</p>
+    <p><strong>What we do NOT store:</strong> names, email addresses (unless you voluntarily include one in an abuse report), passwords, contents of the scanned site beyond metadata (headers, score), raw IP addresses, raw User-Agent strings, or any history tied to your identity from external sources.</p>
 
-    <h2 id="pp3e">3. How we use data</h2>
+    <h2 id="pp3e">3. PII pseudonymization (how the hashing works)</h2>
+    <p>Instead of storing your IP address and User-Agent in their original form, we pass them through a SHA-256 hash function with a <strong>secret server-side salt</strong> that lives only in our deployment environment and is never written to the database:</p>
+    <p style="margin-left:1.2rem"><code>ip_hash = SHA-256(your_ip + ":" + server_salt)</code></p>
+    <p>Under GDPR Art. 4(5) this qualifies as <strong>pseudonymization</strong>. The effects:</p>
+    <ul>
+      <li>If an attacker ever exfiltrates our database, <strong>they get hashes, not IP addresses</strong>. Without the salt, the hashes cannot be brute-forced (the salt is a 256-bit random string)</li>
+      <li>We can still correlate your scans ("how many scans from this IP") because the same IP always produces the same hash</li>
+      <li>We cannot enumerate all IP addresses that have ever used the service (hashing is one-way). This is a <strong>deliberate limitation</strong> to protect your anonymity</li>
+      <li>When you request GDPR erasure, you will need to provide us with your IP and an approximate time — we then compute the hash and delete the matching rows. Without that information we cannot reliably identify "your" rows (see section 8)</li>
+    </ul>
+
+    <h2 id="pp4e">4. How we use data</h2>
     <ul>
       <li>Performing security analysis of the URL you entered</li>
-      <li>Protection against service abuse (rate limiting)</li>
+      <li>Storing scan results so you can review them later (without ownership verification you only see basic statistics; with verified ownership you see the full content)</li>
+      <li>Rate limiting — protecting the service from abuse (5 scans per 30 minutes per IP hash)</li>
+      <li>Audit trail for forensic response to potential abuse</li>
+      <li>Letting the owner of a scanned site file an abuse report and prove which scans affected them</li>
       <li>Displaying ads via Google AdSense</li>
     </ul>
+    <p>Legal basis for processing (GDPR Art. 6): <strong>legitimate interest</strong> in forensic audit and service protection, plus the <strong>consent</strong> you give on every scan through the checkbox before starting the analysis.</p>
 
-    <h2 id="pp4e">4. Cookies and advertising</h2>
-    <p>We use Google AdSense to display ads. Google and its partners may use cookies to personalize ads based on visits to this and other websites. More information at <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener">Google Ads Policy</a>.</p>
-    <p>You can manage ad personalization settings at <a href="https://adssettings.google.com" target="_blank" rel="noopener">Google Ads Settings</a>.</p>
-
-    <h2 id="pp5e">5. Third parties</h2>
-    <p>We use the following third-party services:</p>
+    <h2 id="pp5e">5. Retention — how long we keep what</h2>
+    <p>Each table in our database has its own retention period, automated via daily pg_cron jobs:</p>
     <ul>
-      <li><strong>Google AdSense</strong> — ad display</li>
-      <li><strong>Google Fonts</strong> — font loading</li>
-      <li><strong>Vercel</strong> — frontend hosting</li>
-      <li><strong>Hugging Face Spaces</strong> — backend API hosting</li>
+      <li><strong>scans</strong> (scan results): retained until the user requests deletion or until a bulk cleanup is initiated by the operator. No automatic deletion.</li>
+      <li><strong>audit_log</strong> (forensic trail): <strong>90 days</strong> for regular entries, then automatic deletion. Flagged entries (linked to an abuse report) are <strong>kept indefinitely</strong> as legal evidence.</li>
+      <li><strong>verified_domains</strong> (full-visibility grants): <strong>30 days</strong> per (domain, IP hash) combination, then expires.</li>
+      <li><strong>verification_tokens</strong> (pending challenges): <strong>1 hour</strong> for pending, then expires automatically.</li>
+      <li><strong>rate_limits</strong>: rolling window, auto-pruned when the interval passes.</li>
+      <li><strong>abuse_reports</strong>: indefinitely, as legal evidence, unless the reporter withdraws the report.</li>
+      <li><strong>Backups</strong>: daily encrypted backups are stored on Cloudflare R2 for <strong>90 days</strong> per the R2 lifecycle rule. Backup metadata is kept 180 days.</li>
     </ul>
 
     <h2 id="pp6e">6. Data security</h2>
-    <p>All data is transmitted via HTTPS encryption. We do not store scan results permanently — they are deleted from server memory after a short period.</p>
-
-    <h2 id="pp7e">7. Your rights (GDPR)</h2>
-    <p>If you are located in the European Economic Area, you have the right to:</p>
+    <p>This section describes the concrete protections we apply:</p>
     <ul>
-      <li>Request information about data we hold about you</li>
-      <li>Request deletion of your data</li>
-      <li>Withdraw consent for cookies</li>
-      <li>File a complaint with the relevant data protection authority</li>
+      <li><strong>Transport</strong>: all data travels over HTTPS (TLS 1.2+) provided by Cloudflare and HF Spaces</li>
+      <li><strong>Encryption at rest</strong>: Supabase provides AES-256 disk-level encryption for the entire database</li>
+      <li><strong>Row-Level Security</strong>: every table has RLS enabled with a default-deny policy. The public anon key <strong>sees nothing</strong> — all reads and writes go through the service_role key which is backend-only</li>
+      <li><strong>Append-only audit_log</strong>: <code>UPDATE</code> and <code>DELETE</code> are revoked even for service_role. The audit history is intentionally impossible to rewrite from the application — it requires an explicit database migration</li>
+      <li><strong>PII pseudonymization</strong>: all personal information (IP, UA) is hashed with a server-side salt before being written (see section 3)</li>
+      <li><strong>Backup encryption</strong>: daily backups are AES-256-GCM encrypted before upload to Cloudflare R2. The decryption key exists only in our password manager and Supabase Vault</li>
+      <li><strong>Offsite storage</strong>: backups are on R2 (Cloudflare), a separate provider from the primary database — data loss due to a Supabase incident does not wipe out the backups</li>
+      <li><strong>Tested recovery</strong>: we test restore from backup on an isolated staging project quarterly to prove the backups actually work (not just that they are being created)</li>
     </ul>
 
-    <h2 id="pp8e">8. Children</h2>
-    <p>This service is not intended for persons under the age of 16. We do not knowingly collect data from minors.</p>
+    <h2 id="pp7e">7. Cookies, advertising, and third parties</h2>
+    <p>We use Google AdSense to display ads. Google and its partners may use cookies to personalize ads based on visits to this and other websites. More information at <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener">Google Ads Policy</a>. You can manage ad personalization at <a href="https://adssettings.google.com" target="_blank" rel="noopener">Google Ads Settings</a>.</p>
+    <p>We use the following third-party services:</p>
+    <ul>
+      <li><strong>Supabase</strong> (EU region) — primary PostgreSQL database + Edge Functions + Vault</li>
+      <li><strong>Cloudflare R2</strong> — offsite backup storage (encrypted)</li>
+      <li><strong>Hugging Face Spaces</strong> — backend API hosting</li>
+      <li><strong>Vercel</strong> — frontend hosting</li>
+      <li><strong>Google AdSense</strong> — ad display</li>
+      <li><strong>Google Fonts</strong> — font loading</li>
+    </ul>
+    <p>All providers are chosen to primarily store data in the EU/EEA region. If you have specific questions about data transfers, contact us.</p>
 
-    <h2 id="pp9e">9. Policy changes</h2>
-    <p>We reserve the right to update this privacy policy. Changes take effect immediately upon publication on this page.</p>
+    <h2 id="pp8e">8. Your rights under GDPR</h2>
+    <p>If you are located in the European Economic Area, you have the following rights:</p>
+    <ul>
+      <li><strong>Art. 15 — right of access</strong>: to request a copy of the data we hold about you</li>
+      <li><strong>Art. 16 — right to rectification</strong> of inaccurate data</li>
+      <li><strong>Art. 17 — right to erasure</strong>: the &quot;right to be forgotten&quot;</li>
+      <li><strong>Art. 18 — right to restriction of processing</strong></li>
+      <li><strong>Art. 20 — right to data portability</strong></li>
+      <li><strong>Art. 21 — right to object</strong> to processing based on legitimate interest</li>
+      <li><strong>Right to file a complaint</strong> with the data protection authority in your country</li>
+    </ul>
+    <p><strong>How to exercise your rights:</strong> because we store only pseudonymized (hashed) identifiers, we cannot identify &quot;your&quot; rows in the database without your help. To submit a request, contact us and provide:</p>
+    <ul>
+      <li>The IP address you used at the time of scanning</li>
+      <li>An approximate time (day and hour)</li>
+      <li>Optionally, the domain you scanned, if you remember</li>
+    </ul>
+    <p>With that information we can compute your hash and find matching rows in the <code>scans</code> and <code>audit_log</code> tables. Deletion is performed within 30 days of receiving the request (GDPR Art. 12). <strong>Note about audit_log:</strong> the audit log is intentionally append-only and retained for 90 days as a forensic trail under the legal basis of legitimate interest (GDPR Art. 6(1)(f) — documenting potential security incidents). Your entries will not be physically deleted from audit_log but will be marked as &quot;excluded from operational statistics&quot; and will in any case be automatically pruned after 90 days unless flagged.</p>
 
-    <h2 id="pp10e">10. Contact</h2>
-    <p>For any privacy-related questions, contact us via <a href="https://toske-programer.web.app" target="_blank" rel="noopener">toske-programer.web.app</a>.</p>
+    <h2 id="pp9e">9. Rights of scanned site owners (abuse report)</h2>
+    <p>If you are the owner of a domain that someone has scanned through our service without your permission, you can file a report via the &quot;Report abuse&quot; link in the footer or directly at <a href="./index.html#abuse">./index.html#abuse</a>. We review every report within 72 hours. If we confirm abuse:</p>
+    <ul>
+      <li>We add your domain to the block list — all future scans of that domain will be refused with HTTP 403</li>
+      <li>Related <code>audit_log</code> entries are flagged as legal evidence and retained indefinitely (instead of 90 days)</li>
+      <li>If you left an email, we notify you of the outcome</li>
+    </ul>
+    <p>For more details on how the terms of service and ownership verification work, see the <a href="./terms.html">Terms of Service</a>.</p>
+
+    <h2 id="pp10e">10. Policy changes, children, and contact</h2>
+    <p><strong>Policy changes:</strong> we reserve the right to update this policy. The policy version is bumped through the <code>consent_version</code> field and every new scan will ask you to confirm the new version. Your prior consents remain valid in the audit_log but do not retroactively apply to new terms.</p>
+    <p><strong>Children:</strong> this service is not intended for persons under 16 years of age. We do not knowingly collect data from minors. If we learn that a minor has involuntarily submitted data, we delete it.</p>
+    <p><strong>Contact:</strong> for any privacy-related questions, contact us:</p>
+    <ul>
+      <li>Website: <a href="https://toske-programer.web.app" target="_blank" rel="noopener">toske-programer.web.app</a></li>
+      <li>Abuse reports: via the &quot;Report abuse&quot; footer link or <a href="./index.html#abuse">./index.html#abuse</a></li>
+      <li>Response time: within 30 days of receiving the request (GDPR Art. 12)</li>
+    </ul>
   </div>
 
   </main>
