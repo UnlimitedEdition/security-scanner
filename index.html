@@ -955,7 +955,11 @@
   </div>
 </div>
 
-<!-- AD SLOT (during scan - large display/video) -->
+<!-- AD SLOT (during scan - large display/video).
+     NO inline push() here — we trigger it from JS only when the slot
+     becomes .visible, otherwise Google errors with
+     "adsbygoogle.push() error: No slot size for availableWidth=0"
+     because the container is display:none at HTML parse time. -->
 <div class="ad-slot" id="adSlotTop">
   <ins class="adsbygoogle"
     style="display:block"
@@ -963,7 +967,6 @@
     data-ad-slot="auto"
     data-ad-format="auto"
     data-full-width-responsive="true"></ins>
-  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
 </div>
 
 <!-- TAB: SECURITY -->
@@ -993,7 +996,8 @@
   <div class="results-wrap" id="gdprResultsWrap"></div>
 </div>
 
-<!-- AD SLOT (after results - banner above footer) -->
+<!-- AD SLOT (after results - banner above footer). Same reason as adSlotTop:
+     no inline push(), we call it from JS when the slot becomes visible. -->
 <div class="ad-slot" id="adSlotBottom">
   <ins class="adsbygoogle"
     style="display:block"
@@ -1001,7 +1005,6 @@
     data-ad-slot="auto"
     data-ad-format="horizontal"
     data-full-width-responsive="true"></ins>
-  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
 </div>
 
 <!-- VERIFY OWNERSHIP PANEL (shown when user clicks "Verify ownership" CTA in redacted results) -->
@@ -1123,6 +1126,26 @@ function isAdBlocked() {
   return false;
 }
 
+// Lazy ad loader — calls adsbygoogle.push({}) only when the slot is
+// actually visible. Calling it earlier (e.g. inline in HTML) fails with
+// "No slot size for availableWidth=0" because the slot is display:none
+// until the scan starts. requestAnimationFrame ensures the browser has
+// laid out the element before we report its size to Google's script.
+function _loadAdSlot(slotId) {
+  var slot = document.getElementById(slotId);
+  if (!slot || slot.dataset.adLoaded === "1") return;
+  // Mark as loaded BEFORE push so concurrent calls don't double-trigger
+  slot.dataset.adLoaded = "1";
+  requestAnimationFrame(function() {
+    try {
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
+    } catch (e) {
+      // AdSense not loaded or blocked — startScan() already shows the
+      // user-facing alert via isAdBlocked(), so we silently swallow here.
+    }
+  });
+}
+
 async function startScan() {
   if (isAdBlocked()) {
     var msg = currentLang === "en"
@@ -1153,6 +1176,7 @@ async function startScan() {
   document.getElementById("resultsWrap").style.display = "none";
   document.getElementById("resultTabs").classList.add("visible");
   document.getElementById("adSlotTop").classList.add("visible");
+  _loadAdSlot("adSlotTop");
   document.getElementById("adSlotBottom").classList.remove("visible");
 
   var modWrap = document.getElementById("progressModules");
@@ -1217,6 +1241,7 @@ async function pollScan(scanId) {
       document.getElementById("progressWrap").style.display = "none";
       document.getElementById("adSlotTop").classList.remove("visible");
       document.getElementById("adSlotBottom").classList.add("visible");
+      _loadAdSlot("adSlotBottom");
       // Show active tab's results
       var activeTab = document.querySelector(".result-tab.active");
       if (activeTab) switchTab(activeTab.dataset.tab);
