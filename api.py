@@ -319,8 +319,8 @@ class ScanRequest(BaseModel):
         return v
 
 
-@app.get("/")
-@app.get("/index.html")
+@app.api_route("/", methods=["GET", "HEAD"])
+@app.api_route("/index.html", methods=["GET", "HEAD"])
 def root():
     index_path = os.path.join(os.path.dirname(__file__), "index.html")
     if os.path.exists(index_path):
@@ -328,21 +328,21 @@ def root():
     return {"status": "ok", "service": "Web Security Scanner"}
 
 
-@app.get("/privacy.html")
+@app.api_route("/privacy.html", methods=["GET", "HEAD"])
 def privacy():
     path = os.path.join(os.path.dirname(__file__), "privacy.html")
     if os.path.exists(path):
         return FileResponse(path, media_type="text/html")
 
 
-@app.get("/terms.html")
+@app.api_route("/terms.html", methods=["GET", "HEAD"])
 def terms():
     path = os.path.join(os.path.dirname(__file__), "terms.html")
     if os.path.exists(path):
         return FileResponse(path, media_type="text/html")
 
 
-@app.get("/abuse-report.html")
+@app.api_route("/abuse-report.html", methods=["GET", "HEAD"])
 def abuse_report_page():
     """Dedicated abuse-report page (form + FAQ + process explanation)."""
     path = os.path.join(os.path.dirname(__file__), "abuse-report.html")
@@ -350,7 +350,7 @@ def abuse_report_page():
         return FileResponse(path, media_type="text/html")
 
 
-@app.get("/blog-common.css")
+@app.api_route("/blog-common.css", methods=["GET", "HEAD"])
 def blog_common_css():
     path = os.path.join(os.path.dirname(__file__), "blog-common.css")
     if os.path.exists(path):
@@ -358,7 +358,7 @@ def blog_common_css():
     raise HTTPException(status_code=404, detail="File not found")
 
 
-@app.get("/blog-common.js")
+@app.api_route("/blog-common.js", methods=["GET", "HEAD"])
 def blog_common_js():
     path = os.path.join(os.path.dirname(__file__), "blog-common.js")
     if os.path.exists(path):
@@ -366,7 +366,7 @@ def blog_common_js():
     raise HTTPException(status_code=404, detail="File not found")
 
 
-@app.get("/blog-{page}.html")
+@app.api_route("/blog-{page}.html", methods=["GET", "HEAD"])
 def blog_page(page: str):
     path = os.path.join(os.path.dirname(__file__), f"blog-{page}.html")
     if os.path.exists(path):
@@ -374,42 +374,51 @@ def blog_page(page: str):
     raise HTTPException(status_code=404, detail="Page not found")
 
 
-@app.get("/google739403949172c6ee.html")
+# NOTE: these static-file routes use api_route(methods=["GET","HEAD"])
+# instead of @app.get(...) because Google's AdSense crawler (and
+# other web crawlers like Googlebot, Search Console verifier, Bing,
+# etc.) do a HEAD request BEFORE a GET to check file existence and
+# size. FastAPI's @app.get decorator only binds GET, so HEAD returned
+# 405 Method Not Allowed — the crawler interprets that as "file does
+# not exist" and refuses to validate ads.txt / robots.txt / the
+# verification files. That was blocking multiple integrations silently.
+
+@app.api_route("/google739403949172c6ee.html", methods=["GET", "HEAD"])
 def google_verify():
     path = os.path.join(os.path.dirname(__file__), "google739403949172c6ee.html")
     if os.path.exists(path):
         return FileResponse(path, media_type="text/html")
 
 
-@app.get("/google6b954a0930cdbbcc.html")
+@app.api_route("/google6b954a0930cdbbcc.html", methods=["GET", "HEAD"])
 def google_verify2():
     path = os.path.join(os.path.dirname(__file__), "google6b954a0930cdbbcc.html")
     if os.path.exists(path):
         return FileResponse(path, media_type="text/html")
 
 
-@app.get("/ads.txt")
+@app.api_route("/ads.txt", methods=["GET", "HEAD"])
 def ads_txt():
     path = os.path.join(os.path.dirname(__file__), "ads.txt")
     if os.path.exists(path):
         return FileResponse(path, media_type="text/plain")
 
 
-@app.get("/robots.txt")
+@app.api_route("/robots.txt", methods=["GET", "HEAD"])
 def robots():
     path = os.path.join(os.path.dirname(__file__), "robots.txt")
     if os.path.exists(path):
         return FileResponse(path, media_type="text/plain")
 
 
-@app.get("/sitemap.xml")
+@app.api_route("/sitemap.xml", methods=["GET", "HEAD"])
 def sitemap():
     path = os.path.join(os.path.dirname(__file__), "sitemap.xml")
     if os.path.exists(path):
         return FileResponse(path, media_type="application/xml")
 
 
-@app.get("/.well-known/security.txt")
+@app.api_route("/.well-known/security.txt", methods=["GET", "HEAD"])
 def security_txt():
     path = os.path.join(os.path.dirname(__file__), ".well-known", "security.txt")
     if os.path.exists(path):
