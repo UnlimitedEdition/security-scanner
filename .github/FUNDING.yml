@@ -1,0 +1,55 @@
+# GitHub Sponsors + third-party funding configuration
+# Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository
+#
+# This file makes the "Sponsor" button appear on the repo page.
+# Each key below is a supported funding platform. Uncomment and fill
+# in your handle ONCE you have actually registered on that platform.
+# Leaving all fields commented out results in no Sponsor button.
+#
+# Order matters — platforms listed first appear first in the popup.
+
+# ------------------------------------------------------------------
+# GitHub Sponsors — best integration, 0% platform fee, but requires
+# application + approval (Serbia is supported since 2022).
+# Apply: https://github.com/sponsors
+# ------------------------------------------------------------------
+# github: UnlimitedEdition
+
+# ------------------------------------------------------------------
+# Ko-fi — easiest, no approval, instant setup, works in Serbia.
+# Accepts PayPal + Stripe. Good for one-off "buy me a coffee" tips.
+# Signup: https://ko-fi.com/
+# ------------------------------------------------------------------
+# ko_fi: your-kofi-username
+
+# ------------------------------------------------------------------
+# Patreon — recurring monthly subscriptions. Best for consistent
+# income if you publish regular content (blog articles, tutorials).
+# ------------------------------------------------------------------
+# patreon: your-patreon-username
+
+# ------------------------------------------------------------------
+# Open Collective — transparent funding, fiscal sponsor handles tax.
+# Good for non-profit / community projects. Overhead fees.
+# ------------------------------------------------------------------
+# open_collective: web-security-scanner
+
+# ------------------------------------------------------------------
+# Liberapay — EU-based, non-profit, recurring donations. Simpler
+# than Patreon for small amounts, less fee overhead.
+# ------------------------------------------------------------------
+# liberapay: your-liberapay-username
+
+# ------------------------------------------------------------------
+# Buy Me a Coffee — similar to Ko-fi, slightly different UX.
+# ------------------------------------------------------------------
+# buy_me_a_coffee: your-bmc-username
+
+# ------------------------------------------------------------------
+# Custom URLs — fallback for anything not in the list above.
+# Up to 4 URLs. Use for Stripe payment links, your own donation page,
+# or a "Pro plan" signup page on the scanner itself.
+# ------------------------------------------------------------------
+# custom:
+#   - https://security-scanner-ruddy.vercel.app/pro
+#   - https://paypal.me/your-paypal
