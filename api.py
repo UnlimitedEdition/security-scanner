@@ -361,6 +361,14 @@ def refund_policy_page():
         return FileResponse(path, media_type="text/html")
 
 
+@app.api_route("/pricing.html", methods=["GET", "HEAD"])
+def pricing_page():
+    """Dedicated pricing page (Pro plan feature comparison, buy buttons, FAQ)."""
+    path = os.path.join(os.path.dirname(__file__), "pricing.html")
+    if os.path.exists(path):
+        return FileResponse(path, media_type="text/html")
+
+
 @app.api_route("/blog-common.css", methods=["GET", "HEAD"])
 def blog_common_css():
     path = os.path.join(os.path.dirname(__file__), "blog-common.css")

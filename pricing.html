@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cenovnik / Pricing — Web Security Scanner Pro</title>
+  <meta name="description" content="Web Security Scanner Pro — neograniceni skenovi, multi-page crawl, PDF izvestaji. $9/mes ili $79/god. 7 dana besplatan trial.">
+  <meta property="og:title" content="Web Security Scanner Pro — Pricing">
+  <meta property="og:description" content="Unlimited scans, multi-page crawl, PDF reports. $9/mo or $79/yr. 7-day free trial.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a78bfa' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+  <style>
+    .pricing-hero {
+      text-align: center; padding: 4rem 1.5rem 2rem;
+      max-width: 780px; margin: 0 auto;
+    }
+    .pricing-hero h1 { font-size: 2.4rem; margin-bottom: 1rem; line-height: 1.2; }
+    .pricing-hero p { color: #9ca3af; font-size: 1.1rem; }
+    .pricing-hero .badge {
+      display: inline-block; background: #1a1e38; color: #a78bfa;
+      padding: 0.3rem 0.9rem; border-radius: 999px;
+      font-size: 0.75rem; font-weight: 600;
+      letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 1.2rem;
+    }
+    .plans-grid {
+      max-width: 1100px; margin: 2rem auto; padding: 0 1.5rem;
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;
+    }
+    @media (max-width: 880px) { .plans-grid { grid-template-columns: 1fr; } }
+    .plan-card {
+      background: #11142a; border: 1px solid #252a4a; border-radius: 14px;
+      padding: 2rem 1.75rem; display: flex; flex-direction: column; position: relative;
+    }
+    .plan-card.featured {
+      border-color: #a78bfa;
+      box-shadow: 0 0 0 1px #a78bfa, 0 10px 40px rgba(167,139,250,0.15);
+      transform: translateY(-8px);
+    }
+    @media (max-width: 880px) { .plan-card.featured { transform: none; } }
+    .plan-card .tag {
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      background: #a78bfa; color: #0a0c15;
+      font-size: 0.7rem; font-weight: 700;
+      padding: 0.3rem 0.8rem; border-radius: 999px; letter-spacing: 0.05em;
+    }
+    .plan-card h3 { font-size: 1.3rem; margin-bottom: 0.3rem; }
+    .plan-card .plan-subtitle { color: #7b83a6; font-size: 0.85rem; margin-bottom: 1.2rem; }
+    .plan-card .price {
+      font-size: 2.6rem; font-weight: 800; color: #e8eaf6; line-height: 1; margin-bottom: 0.25rem;
+    }
+    .plan-card .price small { font-size: 0.9rem; color: #7b83a6; font-weight: 400; }
+    .plan-card .savings { color: #4ade80; font-size: 0.8rem; margin-bottom: 1.5rem; font-weight: 600; min-height: 1em; }
+    .plan-card ul { list-style: none; padding: 0; margin: 1.5rem 0; flex: 1; }
+    .plan-card ul li {
+      padding: 0.5rem 0; padding-left: 1.5rem; position: relative;
+      color: #cbd5e1; font-size: 0.9rem;
+    }
+    .plan-card ul li::before { content: "OK"; position: absolute; left: 0; color: #4ade80; font-weight: 700; font-size: 0.7rem; }
+    .plan-card ul li.disabled { color: #4b5563; text-decoration: line-through; }
+    .plan-card ul li.disabled::before { content: "NO"; color: #4b5563; }
+    .plan-cta {
+      display: block; width: 100%;
+      padding: 0.9rem 1.5rem; border-radius: 10px;
+      border: 1px solid #252a4a; background: #1a1e38;
+      color: #e8eaf6; font-weight: 700; font-size: 0.95rem;
+      cursor: pointer; text-decoration: none; text-align: center;
+      transition: all 0.15s; font-family: inherit;
+    }
+    .plan-cta:hover { background: #252a4a; }
+    .plan-cta.primary { background: #a78bfa; color: #0a0c15; border-color: #a78bfa; }
+    .plan-cta.primary:hover { background: #c4b5fd; border-color: #c4b5fd; }
+    .plan-cta[disabled] { opacity: 0.6; cursor: wait; }
+    .plan-cta[data-loading="1"] { position: relative; color: transparent; }
+    .plan-cta[data-loading="1"]::after {
+      content: "Loading..."; position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      color: #0a0c15; font-weight: 700;
+    }
+
+    .trial-note {
+      max-width: 780px; margin: 2rem auto; padding: 1.2rem 1.5rem;
+      background: #1a1e38; border-left: 3px solid #a78bfa; border-radius: 8px;
+      color: #cbd5e1; font-size: 0.9rem;
+    }
+
+    .faq-section { max-width: 780px; margin: 4rem auto; padding: 0 1.5rem; }
+    .faq-section h2 { font-size: 1.8rem; margin-bottom: 1.5rem; text-align: center; }
+    .faq-section details {
+      background: #11142a; border: 1px solid #252a4a; border-radius: 10px;
+      margin-bottom: 0.8rem; padding: 1rem 1.3rem;
+    }
+    .faq-section details[open] { border-color: #a78bfa; }
+    .faq-section summary {
+      cursor: pointer; font-weight: 600; color: #e8eaf6; font-size: 0.95rem; list-style: none;
+    }
+    .faq-section summary::-webkit-details-marker { display: none; }
+    .faq-section summary::before { content: "+ "; color: #a78bfa; font-weight: 800; }
+    .faq-section details[open] summary::before { content: "- "; }
+    .faq-section details p { margin-top: 0.9rem; color: #9ca3af; font-size: 0.9rem; line-height: 1.7; }
+
+    .activate-section {
+      max-width: 780px; margin: 3rem auto; padding: 2rem 1.5rem;
+      text-align: center; border-top: 1px solid #252a4a;
+    }
+    .activate-section h3 { font-size: 1.2rem; margin-bottom: 0.6rem; }
+    .activate-section p { color: #9ca3af; font-size: 0.9rem; margin-bottom: 1rem; }
+    .activate-form {
+      display: flex; gap: 0.6rem; max-width: 500px; margin: 0 auto;
+      flex-wrap: wrap; justify-content: center;
+    }
+    .activate-form input {
+      flex: 1; min-width: 220px; padding: 0.8rem 1rem;
+      background: #0a0c15; border: 1px solid #252a4a; border-radius: 8px;
+      color: #e8eaf6; font-family: monospace; font-size: 0.95rem;
+    }
+    .activate-form input:focus { outline: none; border-color: #a78bfa; }
+    .activate-form button {
+      padding: 0.8rem 1.5rem; border-radius: 8px; border: 1px solid #a78bfa;
+      background: #a78bfa; color: #0a0c15; font-weight: 700; cursor: pointer;
+      font-family: inherit;
+    }
+    .activate-form button:hover { background: #c4b5fd; }
+    .activate-form button[disabled] { opacity: 0.6; cursor: wait; }
+    .activate-result { margin-top: 1rem; font-size: 0.9rem; min-height: 1.2em; }
+    .activate-result.ok { color: #4ade80; }
+    .activate-result.err { color: #f87171; }
+
+    .pro-active-banner {
+      max-width: 780px; margin: 2rem auto; padding: 1.5rem;
+      background: linear-gradient(135deg, #1a1e38, #2a1f4d);
+      border: 1px solid #a78bfa; border-radius: 12px; text-align: center;
+    }
+    .pro-active-banner h3 { color: #c4b5fd; margin-bottom: 0.5rem; }
+    .pro-active-banner p { color: #cbd5e1; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+
+<main class="blog-content" style="max-width:1200px;padding-top:1rem;">
+
+  <section class="pricing-hero">
+    <span class="badge">
+      <span class="sr">Pro pretplata</span>
+      <span class="en">Pro subscription</span>
+    </span>
+    <h1>
+      <span class="sr">Cenovnik - jednostavan, fer, bez skrivenih troskova</span>
+      <span class="en">Pricing - simple, fair, no hidden costs</span>
+    </h1>
+    <p>
+      <span class="sr">Besplatni tier je i dalje potpuno besplatan i ostace takav. Pro plan postoji za ljude koji zele vise - multi-page skeniranje, PDF izvestaje, bez rate limit-a.</span>
+      <span class="en">The free tier remains fully free and always will. Pro exists for people who want more - multi-page scanning, PDF reports, no rate limits.</span>
+    </p>
+  </section>
+
+  <div id="proActiveBanner" class="pro-active-banner" style="display:none;">
+    <h3>
+      <span class="sr">Vi ste vec Pro korisnik</span>
+      <span class="en">You are already a Pro member</span>
+    </h3>
+    <p id="proActiveDetails"></p>
+    <p style="margin-top:1rem;">
+      <a href="./index.html" class="plan-cta" style="display:inline-block;width:auto;padding:0.6rem 1.5rem;">
+        <span class="sr">Nazad na skener</span>
+        <span class="en">Back to scanner</span>
+      </a>
+    </p>
+  </div>
+
+  <section class="plans-grid" id="plansGrid">
+
+    <div class="plan-card">
+      <h3>Free</h3>
+      <p class="plan-subtitle">
+        <span class="sr">Za pojedince koji testiraju sopstveni sajt</span>
+        <span class="en">For individuals testing their own site</span>
+      </p>
+      <div class="price">$0 <small>/forever</small></div>
+      <div class="savings">&nbsp;</div>
+      <ul>
+        <li><span class="sr">110+ bezbednosnih provera</span><span class="en">110+ security checks</span></li>
+        <li><span class="sr">Single-page scan (pocetna strana)</span><span class="en">Single-page scan (homepage)</span></li>
+        <li><span class="sr">5 skenova / 30 min</span><span class="en">5 scans / 30 min</span></li>
+        <li><span class="sr">Ownership verifikacija</span><span class="en">Ownership verification</span></li>
+        <li class="disabled"><span class="sr">Multi-page crawl</span><span class="en">Multi-page crawl</span></li>
+        <li class="disabled"><span class="sr">PDF izvestaji</span><span class="en">PDF reports</span></li>
+        <li class="disabled"><span class="sr">Scan istorija</span><span class="en">Scan history</span></li>
+      </ul>
+      <a href="./index.html" class="plan-cta">
+        <span class="sr">Pokreni besplatno</span>
+        <span class="en">Start free</span>
+      </a>
+    </div>
+
+    <div class="plan-card">
+      <h3>Pro Monthly</h3>
+      <p class="plan-subtitle">
+        <span class="sr">Za freelance-ere i agencije</span>
+        <span class="en">For freelancers and agencies</span>
+      </p>
+      <div class="price">$9 <small>/mo USD</small></div>
+      <div class="savings">&nbsp;</div>
+      <ul>
+        <li><strong><span class="sr">Sve iz Free plana</span><span class="en">Everything in Free</span></strong></li>
+        <li><span class="sr">Neograniceni skenovi (bez rate limit-a)</span><span class="en">Unlimited scans (no rate limit)</span></li>
+        <li><span class="sr">Multi-page scan (do 10 stranica)</span><span class="en">Multi-page scan (up to 10 pages)</span></li>
+        <li><span class="sr">PDF izvestaji (branded)</span><span class="en">PDF reports (branded)</span></li>
+        <li><span class="sr">30-dnevna scan istorija</span><span class="en">30-day scan history</span></li>
+        <li><span class="sr">7 dana besplatan trial</span><span class="en">7-day free trial</span></li>
+      </ul>
+      <button class="plan-cta primary" data-plan="pro_monthly">
+        <span class="sr">Zapocni trial</span>
+        <span class="en">Start trial</span>
+      </button>
+    </div>
+
+    <div class="plan-card featured">
+      <div class="tag">
+        <span class="sr">USTEDI 27%</span><span class="en">SAVE 27%</span>
+      </div>
+      <h3>Pro Yearly</h3>
+      <p class="plan-subtitle">
+        <span class="sr">Za posvecene korisnike</span>
+        <span class="en">For committed users</span>
+      </p>
+      <div class="price">$79 <small>/yr USD</small></div>
+      <div class="savings">
+        <span class="sr">Ustedi $29 u poredjenju sa mesecnim planom</span>
+        <span class="en">Save $29 vs monthly plan</span>
+      </div>
+      <ul>
+        <li><strong><span class="sr">Sve iz Pro Monthly plana</span><span class="en">Everything in Pro Monthly</span></strong></li>
+        <li><span class="sr">27% popust</span><span class="en">27% discount</span></li>
+        <li><span class="sr">Jedna naplata godisnje</span><span class="en">Billed once per year</span></li>
+        <li><span class="sr">30-dnevna garancija refund-a</span><span class="en">30-day refund guarantee</span></li>
+        <li><span class="sr">7 dana besplatan trial</span><span class="en">7-day free trial</span></li>
+      </ul>
+      <button class="plan-cta primary" data-plan="pro_yearly">
+        <span class="sr">Zapocni trial</span>
+        <span class="en">Start trial</span>
+      </button>
+    </div>
+  </section>
+
+  <div class="trial-note">
+    <strong>
+      <span class="sr">Napomena o trial-u:</span>
+      <span class="en">About the trial:</span>
+    </strong>
+    <span class="sr">
+      Trial traje 7 dana i zahteva karticu pri pocetku. Ne naplacujemo nista dok trial ne istekne. Mozete otkazati bilo kada tokom trial-a kroz Lemon Squeezy portal i nece biti naplaceno. Ako trial istekne bez otkazivanja, automatski se pretvara u placeni plan.
+    </span>
+    <span class="en">
+      The trial lasts 7 days and requires a card at signup. We do not charge anything until the trial ends. You can cancel anytime during the trial via the Lemon Squeezy portal and will not be charged. If the trial expires without cancellation, it automatically converts to the paid plan.
+    </span>
+  </div>
+
+  <section class="activate-section">
+    <h3>
+      <span class="sr">Vec imate license key?</span>
+      <span class="en">Already have a license key?</span>
+    </h3>
+    <p>
+      <span class="sr">Unesite kljuc koji ste dobili email-om posle kupovine da biste otkljucali Pro funkcije.</span>
+      <span class="en">Enter the key you received by email after purchase to unlock Pro features.</span>
+    </p>
+    <div class="activate-form">
+      <input id="licenseKeyInput" type="text" placeholder="XXXX-XXXX-XXXX-XXXX" autocomplete="off" spellcheck="false">
+      <button id="activateBtn" type="button">
+        <span class="sr">Aktiviraj</span>
+        <span class="en">Activate</span>
+      </button>
+    </div>
+    <div id="activateResult" class="activate-result"></div>
+  </section>
+
+  <section class="faq-section">
+    <h2>
+      <span class="sr">Cesta pitanja</span>
+      <span class="en">Frequently asked questions</span>
+    </h2>
+
+    <details>
+      <summary>
+        <span class="sr">Ko obradjuje moj novac?</span>
+        <span class="en">Who processes my payment?</span>
+      </summary>
+      <p>
+        <span class="sr">Placanje obradjuje <strong>Lemon Squeezy</strong> kao Merchant of Record. To znaci da je transakcija formalno izmedju vas i Lemon Squeezy-ja, oni izdaju racune koji su EU VAT compliant, i hendluju sve poreze u 100+ zemalja. Vasu karticu nikad ne vidimo. Detalji u <a href="./privacy.html#pp7">Politici privatnosti, sekcija 7</a>.</span>
+        <span class="en">Payments are processed by <strong>Lemon Squeezy</strong> as the Merchant of Record. The transaction is legally between you and Lemon Squeezy, they issue EU VAT compliant invoices, and handle all taxes in 100+ countries. We never see your card. Details in the <a href="./privacy.html#pp7e">Privacy Policy, section 7</a>.</span>
+      </p>
+    </details>
+
+    <details>
+      <summary>
+        <span class="sr">Mogu li da otkazem bilo kad?</span>
+        <span class="en">Can I cancel anytime?</span>
+      </summary>
+      <p>
+        <span class="sr">Da. Otkazivanje ide kroz Lemon Squeezy customer portal (link dobijate u svakom email-u sa potvrdom). Posle otkazivanja, Pro funkcije ostaju aktivne do kraja trenutnog placenog perioda. Nema dodatnih naplata. Detalji u <a href="./terms.html#tos12">Uslovima koriscenja, sekcija 12</a>.</span>
+        <span class="en">Yes. Cancellation is done through the Lemon Squeezy customer portal (the link is in every confirmation email). After cancellation, Pro features remain active until the end of the current paid period. No additional charges. Details in <a href="./terms.html#tos12e">Terms of Service, section 12</a>.</span>
+      </p>
+    </details>
+
+    <details>
+      <summary>
+        <span class="sr">Sta ako mi se ne svidja posle kupovine?</span>
+        <span class="en">What if I do not like it after purchase?</span>
+      </summary>
+      <p>
+        <span class="sr">Imate pun refund - <strong>14 dana za mesecni plan</strong>, <strong>30 dana za godisnji</strong>, bez pitanja. Posle toga zahtev se razmatra od slucaja do slucaja. Detalji u <a href="./refund-policy.html">Politici refundacije</a>.</span>
+        <span class="en">You get a full refund - <strong>14 days for monthly plans</strong>, <strong>30 days for yearly plans</strong>, no questions asked. After those windows, requests are considered case by case. Details in the <a href="./refund-policy.html">Refund Policy</a>.</span>
+      </p>
+    </details>
+
+    <details>
+      <summary>
+        <span class="sr">Da li trial zahteva karticu?</span>
+        <span class="en">Does the trial require a card?</span>
+      </summary>
+      <p>
+        <span class="sr">Da. Ovo je industrijski standard i sprecava zloupotrebu. Ali <strong>necemo naplatiti nista</strong> dok trial ne istekne. Mozete otkazati 1 minut pre isteka trial-a i necete biti naplaceni.</span>
+        <span class="en">Yes. This is the industry standard and prevents abuse. But <strong>we will not charge anything</strong> until the trial ends. You can cancel 1 minute before the trial expires and will not be charged.</span>
+      </p>
+    </details>
+
+    <details>
+      <summary>
+        <span class="sr">Kako dobijem license key?</span>
+        <span class="en">How do I get the license key?</span>
+      </summary>
+      <p>
+        <span class="sr">Posle uspesne kupovine, Lemon Squeezy automatski salje email sa vasim license key-em na adresu koju ste koristili pri checkout-u. Key je u formatu <code>XXXX-XXXX-XXXX-XXXX</code>. Ako ga izgubite, mozete ga ponovo videti u Lemon Squeezy customer portal-u (link je u istom email-u).</span>
+        <span class="en">After a successful purchase, Lemon Squeezy automatically sends an email with your license key. The key is in the format <code>XXXX-XXXX-XXXX-XXXX</code>. If you lose it, you can see it again in the Lemon Squeezy customer portal (link in the same email).</span>
+      </p>
+    </details>
+
+    <details>
+      <summary>
+        <span class="sr">Mogu li da koristim key na vise uredjaja?</span>
+        <span class="en">Can I use the key on multiple devices?</span>
+      </summary>
+      <p>
+        <span class="sr">Da. Pro license key nema ogranicen broj aktivacija - mozete ga koristiti na desktop-u, laptopu, i telefonu istovremeno. Samo ne delite ga javno ili sa drugim licima - to krsi fair use klauzulu u <a href="./terms.html#tos14">Uslovima koriscenja, sekcija 14</a>.</span>
+        <span class="en">Yes. Pro license keys have no activation limit - you can use one on desktop, laptop, and phone at the same time. Just do not share it publicly or with other people - that violates the fair use clause in the <a href="./terms.html#tos14e">Terms of Service, section 14</a>.</span>
+      </p>
+    </details>
+
+    <details>
+      <summary>
+        <span class="sr">Sta ako samo zelim da podrzim projekat, bez Pro-a?</span>
+        <span class="en">What if I just want to support the project without Pro?</span>
+      </summary>
+      <p>
+        <span class="sr">Hvala! Mozete donirati na <a href="https://ko-fi.com/UnlimitedEdition" target="_blank" rel="noopener">Ko-fi.com/UnlimitedEdition</a>. Tamo idu jednokratne donacije i mesecne pretplate, bez dobijanja Pro funkcija. Ovo je cisti &quot;buy me a coffee&quot; kanal za ljude koji zele da pomognu, a besplatni scanner im je vec dovoljan.</span>
+        <span class="en">Thank you! You can donate at <a href="https://ko-fi.com/UnlimitedEdition" target="_blank" rel="noopener">Ko-fi.com/UnlimitedEdition</a>. Both one-off donations and monthly subscriptions go there, without unlocking Pro features. This is a pure &quot;buy me a coffee&quot; channel for people who want to help and find the free scanner already sufficient.</span>
+      </p>
+    </details>
+
+    <details>
+      <summary>
+        <span class="sr">Gde mogu da vidim pune Uslove koriscenja za Pro?</span>
+        <span class="en">Where can I see the full Terms of Service for Pro?</span>
+      </summary>
+      <p>
+        <span class="sr">Sekcije 11-14 u <a href="./terms.html">Uslovima koriscenja</a> pokrivaju placene planove, automatsko obnavljanje, refundacije, i fair use klauzulu.</span>
+        <span class="en">Sections 11-14 in the <a href="./terms.html">Terms of Service</a> cover paid plans, automatic renewal, refunds, and the fair use clause.</span>
+      </p>
+    </details>
+  </section>
+
+</main>
+
+<script src="./blog-common.js" defer></script>
+<script>
+  (function() {
+    var API_BASE = 'https://unlimitededition-web-security-scanner.hf.space';
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      API_BASE = window.location.origin;
+    }
+
+    function setBtnLoading(btn, on) {
+      if (on) {
+        btn.setAttribute('disabled', 'disabled');
+        btn.setAttribute('data-loading', '1');
+      } else {
+        btn.removeAttribute('disabled');
+        btn.removeAttribute('data-loading');
+      }
+    }
+
+    function isEn() { return document.body.classList.contains('lang-en'); }
+
+    // Check existing subscription on page load
+    function checkExistingSubscription() {
+      var licenseKey = '';
+      try { licenseKey = localStorage.getItem('wss-license-key') || ''; } catch (e) {}
+      if (!licenseKey) return;
+
+      fetch(API_BASE + '/api/subscription/me', {
+        headers: { 'X-License-Key': licenseKey }
+      })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data && data.active) {
+            document.getElementById('plansGrid').style.display = 'none';
+            var banner = document.getElementById('proActiveBanner');
+            banner.style.display = 'block';
+            var details = document.getElementById('proActiveDetails');
+            var planLabel = data.plan === 'pro_yearly' ? 'Pro Yearly' : 'Pro Monthly';
+            var endDate = data.current_period_end ? new Date(data.current_period_end).toLocaleDateString() : '-';
+            details.textContent = planLabel + ' | ' + (data.status || 'active') + ' | renews ' + endDate;
+          }
+        })
+        .catch(function() {});
+    }
+
+    function buyPlan(plan, btn) {
+      setBtnLoading(btn, true);
+      fetch(API_BASE + '/api/checkout/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: plan })
+      })
+        .then(function(r) {
+          if (!r.ok) { return r.text().then(function(t) { throw new Error('HTTP ' + r.status + ': ' + t); }); }
+          return r.json();
+        })
+        .then(function(data) {
+          if (data && data.checkout_url) {
+            window.location.href = data.checkout_url;
+          } else {
+            throw new Error('No checkout URL returned');
+          }
+        })
+        .catch(function(err) {
+          setBtnLoading(btn, false);
+          var msg = isEn()
+            ? 'Checkout error: ' + err.message + '\n\nThe Pro plan may not be fully configured yet. Please try again later.'
+            : 'Greska pri checkout-u: ' + err.message + '\n\nPro plan mozda jos nije potpuno konfigurisan. Pokusajte kasnije.';
+          alert(msg);
+        });
+    }
+
+    function activatePro() {
+      var input = document.getElementById('licenseKeyInput');
+      var btn = document.getElementById('activateBtn');
+      var result = document.getElementById('activateResult');
+      var key = (input.value || '').trim();
+
+      if (!key) {
+        result.className = 'activate-result err';
+        result.textContent = isEn() ? 'Please enter a license key.' : 'Unesite license key.';
+        return;
+      }
+
+      result.className = 'activate-result';
+      result.textContent = isEn() ? 'Checking...' : 'Proveravam...';
+      setBtnLoading(btn, true);
+
+      fetch(API_BASE + '/api/auth/license', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ license_key: key })
+      })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          setBtnLoading(btn, false);
+          if (data && data.active) {
+            try { localStorage.setItem('wss-license-key', key); } catch (e) {}
+            result.className = 'activate-result ok';
+            result.textContent = isEn() ? 'Activated! Redirecting...' : 'Aktivirano! Preusmeravam...';
+            setTimeout(function() { window.location.href = './index.html'; }, 900);
+          } else {
+            result.className = 'activate-result err';
+            result.textContent = isEn()
+              ? 'Key not recognized or expired. Check and try again.'
+              : 'Kljuc nije prepoznat ili je istekao. Proverite i pokusajte ponovo.';
+          }
+        })
+        .catch(function(err) {
+          setBtnLoading(btn, false);
+          result.className = 'activate-result err';
+          result.textContent = 'Network error: ' + err.message;
+        });
+    }
+
+    // Wire up event listeners when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+      checkExistingSubscription();
+
+      // Plan buy buttons
+      var planButtons = document.querySelectorAll('button[data-plan]');
+      for (var i = 0; i < planButtons.length; i++) {
+        (function(btn) {
+          btn.addEventListener('click', function() {
+            buyPlan(btn.getAttribute('data-plan'), btn);
+          });
+        })(planButtons[i]);
+      }
+
+      // Activate button
+      var activateBtn = document.getElementById('activateBtn');
+      if (activateBtn) {
+        activateBtn.addEventListener('click', activatePro);
+      }
+
+      // Enter key on license input triggers activate
+      var input = document.getElementById('licenseKeyInput');
+      if (input) {
+        input.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') activatePro();
+        });
+      }
+    });
+  })();
+</script>
+
+</body>
+</html>
