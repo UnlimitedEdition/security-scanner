@@ -45,6 +45,7 @@ import re
 import scanner
 import db
 import verification
+import subscription
 import secrets as _secrets
 from security_utils import is_safe_target
 
@@ -1053,6 +1054,240 @@ def get_scan(scan_id: str, request: Request):
     }
 
 
+# ─────────────────────────────────────────────────────────────────────────
+# Pro plan — license key auth + subscription status
+# ─────────────────────────────────────────────────────────────────────────
+def _subscription_public(row: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    Project a subscriptions row into the shape the frontend consumes.
+    Deliberately omits lemon_* identifiers and the raw license_key — the
+    frontend already has the key (it just sent it), no reason to echo
+    back anything that isn't operationally useful.
+    """
+    if not row or not subscription.is_active(row):
+        return {
+            "active": False,
+            "plan": "free",
+            "features": {
+                "unlimited_scans": False,
+                "multi_page_scan": False,
+                "max_pages": 1,
+                "pdf_export": False,
+                "scan_history_days": 0,
+            },
+        }
+    plan = row.get("plan_name") or "pro_monthly"
+    return {
+        "active": True,
+        "plan": plan,                              # 'pro_monthly' | 'pro_yearly'
+        "status": row.get("status"),               # 'active' | 'on_trial' | 'cancelled'
+        "email": row.get("email"),
+        "current_period_end": row.get("current_period_end"),
+        "trial_ends_at": row.get("trial_ends_at"),
+        "features": {
+            "unlimited_scans": True,
+            "multi_page_scan": True,
+            "max_pages": 10,
+            "pdf_export": True,
+            "scan_history_days": 30,
+        },
+    }
+
+
+class LicenseActivateRequest(BaseModel):
+    license_key: str
+
+    @field_validator("license_key")
+    @classmethod
+    def _strip(cls, v: str) -> str:
+        v = (v or "").strip()
+        if not v or len(v) > 128:
+            raise ValueError("Invalid license key")
+        return v
+
+
+@app.post("/api/auth/license")
+def api_auth_license(req: LicenseActivateRequest, request: Request):
+    """
+    Validate a license key and return the Pro subscription status.
+
+    The frontend calls this once when the user pastes a key into the
+    "Activate Pro" modal. On success, the frontend stores the key in
+    localStorage and sends it as X-License-Key on subsequent calls.
+
+    We do not set a cookie — license key is the bearer token and lives
+    in localStorage. That keeps the auth model stateless and avoids
+    CSRF considerations.
+    """
+    row = subscription.get_active_by_license_key(req.license_key)
+    if not row:
+        # Fail in 200 with active=false rather than 401, so the frontend
+        # can show a friendly "key not recognized" message without a
+        # generic HTTP error being swallowed by the browser.
+        return _subscription_public(None)
+    return _subscription_public(row)
+
+
+@app.get("/api/subscription/me")
+def api_subscription_me(request: Request):
+    """
+    Return the Pro subscription status for the current caller.
+
+    Authentication: X-License-Key header. If missing or invalid, returns
+    the 'free' shape — never raises 401, because unauthenticated callers
+    are perfectly valid (they are free-tier users).
+    """
+    license_key = (request.headers.get("x-license-key") or "").strip()
+    if not license_key:
+        return _subscription_public(None)
+    row = subscription.get_active_by_license_key(license_key)
+    return _subscription_public(row)
+
+
+class CheckoutCreateRequest(BaseModel):
+    plan: str                              # 'pro_monthly' | 'pro_yearly'
+    email: Optional[str] = None
+
+    @field_validator("plan")
+    @classmethod
+    def _validate_plan(cls, v: str) -> str:
+        v = (v or "").strip().lower()
+        if v not in ("pro_monthly", "pro_yearly"):
+            raise ValueError("plan must be pro_monthly or pro_yearly")
+        return v
+
+    @field_validator("email")
+    @classmethod
+    def _validate_email(cls, v: Optional[str]) -> Optional[str]:
+        if not v:
+            return None
+        v = v.strip().lower()
+        if len(v) > 254 or "@" not in v or "." not in v:
+            raise ValueError("invalid email")
+        return v
+
+
+# Pre-built checkout URLs from the Lemon Squeezy dashboard. These are
+# "Buy URLs" that each variant exposes; no API call is needed to use
+# them. Set as env vars after creating the variants.
+_LEMON_BUY_URL_MONTHLY = os.environ.get("LEMON_BUY_URL_MONTHLY", "").strip()
+_LEMON_BUY_URL_YEARLY = os.environ.get("LEMON_BUY_URL_YEARLY", "").strip()
+
+
+@app.post("/api/checkout/create")
+def api_checkout_create(req: CheckoutCreateRequest, request: Request):
+    """
+    Return a Lemon Squeezy checkout URL for the requested plan.
+
+    V1 implementation: uses pre-configured "Buy URLs" from env vars and
+    appends the customer email as a query param. No Lemon Squeezy API
+    call needed, so this endpoint works even if LEMON_API_KEY is unset.
+
+    The frontend redirects window.location.href to this URL.
+    """
+    base = _LEMON_BUY_URL_MONTHLY if req.plan == "pro_monthly" else _LEMON_BUY_URL_YEARLY
+    if not base:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                f"Checkout not configured for plan={req.plan}. "
+                f"Set LEMON_BUY_URL_MONTHLY / LEMON_BUY_URL_YEARLY env vars."
+            ),
+        )
+
+    # Append email pre-fill if provided. Lemon Squeezy's buy URL schema
+    # uses checkout[email] as a reserved param for prefilling the email
+    # field on the hosted checkout page.
+    from urllib.parse import urlencode, urlparse, urlunparse, parse_qsl
+    parsed = urlparse(base)
+    existing_params = dict(parse_qsl(parsed.query))
+    if req.email:
+        existing_params["checkout[email]"] = req.email
+    # Optional: pass the scanner's session as custom_data so the webhook
+    # can tie the purchase back to an anonymous scan session later.
+    session_id = request.headers.get("x-session-id")
+    if session_id:
+        existing_params["checkout[custom][session_id]"] = session_id[:64]
+
+    checkout_url = urlunparse(parsed._replace(query=urlencode(existing_params)))
+    return {"checkout_url": checkout_url, "plan": req.plan}
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# Lemon Squeezy webhook receiver (Pro plan subscription events)
+# ─────────────────────────────────────────────────────────────────────────
+@app.post("/webhooks/lemon")
+async def lemon_webhook(request: Request):
+    """
+    Receive a Lemon Squeezy webhook for Pro plan subscription lifecycle.
+
+    The full idempotent processing pipeline lives in subscription.py;
+    this endpoint is a thin adapter: read raw body, verify HMAC signature,
+    parse JSON, dispatch, translate result to HTTP status.
+
+    Important notes on HTTP contract:
+      - 200 for ok/skipped/ignored — Lemon Squeezy marks as delivered
+      - 401 for bad signature — caller is not Lemon, do NOT retry
+      - 500 for processing errors — Lemon Squeezy retries up to 3 times
+
+    Dedup strategy:
+      Lemon Squeezy does not send a unique event ID header, so we derive
+      one from SHA-256 of the raw body. Retries of the same event carry
+      the same body, so the same hash, so the UNIQUE constraint on
+      lemon_webhook_events.lemon_event_id fires on the second insert
+      and process_webhook_event returns 'skipped'.
+    """
+    # Read the body as raw bytes BEFORE parsing JSON — HMAC is computed
+    # over the exact bytes Lemon sent, any whitespace difference would
+    # break the signature check.
+    raw_body = await request.body()
+
+    # Verify signature. Fail closed: missing or bad signature → 401.
+    signature = request.headers.get("x-signature", "")
+    if not subscription.verify_webhook_signature(raw_body, signature):
+        # Log the attempt but do not echo the signature or body in the
+        # response — don't help a probe narrow down what's missing.
+        import logging as _log
+        _log.getLogger(__name__).warning(
+            "lemon_webhook: signature verification failed "
+            "(event=%s, ip=%s)",
+            request.headers.get("x-event-name", "<none>"),
+            _client_ip(request),
+        )
+        raise HTTPException(status_code=401, detail="Invalid signature")
+
+    # Parse JSON now that we know it's a legitimate request
+    try:
+        import json as _json
+        payload = _json.loads(raw_body.decode("utf-8"))
+    except (UnicodeDecodeError, ValueError) as e:
+        raise HTTPException(status_code=400, detail=f"Invalid JSON: {e}")
+
+    event_name = request.headers.get("x-event-name") or (
+        (payload.get("meta") or {}).get("event_name") or "unknown"
+    )
+
+    # Derive a stable event ID for dedup: SHA-256 of the raw body.
+    # Lemon retries reuse the exact same body, so retries hit the dedup.
+    import hashlib as _hashlib
+    event_id = _hashlib.sha256(raw_body).hexdigest()
+
+    result, error_msg = subscription.process_webhook_event(
+        event_id=event_id,
+        event_name=event_name,
+        payload=payload,
+    )
+
+    if result in ("ok", "skipped", "ignored"):
+        return {"received": True, "result": result}
+
+    # result == 'error' — return 500 so Lemon Squeezy retries
+    raise HTTPException(
+        status_code=500,
+        detail=f"Webhook processing failed: {error_msg or 'unknown error'}",
+    )
+
+
 @app.get("/health")
 def health():
     return {
@@ -1061,4 +1296,5 @@ def health():
         "queue_length": len(_scan_queue),
         "active_scan": _active_scan["id"] is not None,
         "db": db.health_check(),
+        "lemon": subscription.health_check(),
     }
