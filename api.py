@@ -1569,6 +1569,37 @@ def api_auth_license(req: LicenseActivateRequest, request: Request):
     return _subscription_public(row)
 
 
+@app.get("/api/status")
+def api_status():
+    """
+    Public status endpoint — lets the frontend know whether Pro
+    checkout is live or still in a 'coming soon' state.
+
+    'pro_available' is true only when BOTH Lemon Squeezy buy URLs
+    are configured as environment variables. Before launch day,
+    those env vars are empty and the pricing page renders a 'Coming
+    Soon' badge on the buy buttons instead of letting visitors
+    click into a 503 error.
+
+    The same env vars are also checked at /api/checkout/create —
+    this endpoint exists purely so the frontend can change the
+    rendered state without making a failed checkout call first.
+
+    Auto-flip on launch day: the operator sets LEMON_BUY_URL_MONTHLY
+    and LEMON_BUY_URL_YEARLY in HF Space Variables, factory reboots
+    the Space, and this endpoint immediately starts reporting
+    pro_available=true. No code change, no redeploy, no new commit.
+    """
+    buy_monthly = os.environ.get("LEMON_BUY_URL_MONTHLY", "").strip()
+    buy_yearly = os.environ.get("LEMON_BUY_URL_YEARLY", "").strip()
+    pro_available = bool(buy_monthly and buy_yearly)
+    return {
+        "pro_available": pro_available,
+        "reason": None if pro_available else "pro_launch_pending",
+        "scanner": "operational",
+    }
+
+
 @app.get("/api/subscription/me")
 def api_subscription_me(request: Request):
     """

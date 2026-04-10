@@ -78,6 +78,36 @@
       display: flex; align-items: center; justify-content: center;
       color: #0a0c15; font-weight: 700;
     }
+    /* Coming Soon state for buy buttons — applied by JS when
+       /api/status reports pro_available=false */
+    .plan-cta.coming-soon {
+      background: #252a4a !important;
+      color: #7b83a6 !important;
+      border-color: #252a4a !important;
+      cursor: not-allowed !important;
+      opacity: 0.9 !important;
+    }
+    .plan-cta.coming-soon:hover {
+      background: #252a4a !important;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    .launch-banner {
+      max-width: 780px;
+      margin: 1rem auto 2rem;
+      padding: 1rem 1.5rem;
+      background: linear-gradient(135deg, #1a1e38, #2a1f4d);
+      border: 1px solid #a78bfa;
+      border-radius: 10px;
+      color: #cbd5e1;
+      font-size: 0.92rem;
+      text-align: center;
+      line-height: 1.6;
+      display: none;
+    }
+    .launch-banner.visible { display: block; }
+    .launch-banner strong { color: #c4b5fd; }
 
     .trial-note {
       max-width: 780px; margin: 2rem auto; padding: 1.2rem 1.5rem;
@@ -154,6 +184,17 @@
       <span class="en">The free tier remains fully free and always will. Pro exists for people who want more - multi-page scanning, PDF reports, no rate limits.</span>
     </p>
   </section>
+
+  <!-- LAUNCH BANNER — shown only when /api/status reports pro_available=false -->
+  <div id="launchBanner" class="launch-banner">
+    <strong>
+      <span class="sr">Pro plan stize uskoro</span>
+      <span class="en">Pro plan launching soon</span>
+    </strong>
+    <br>
+    <span class="sr">Stranica sa cenama je u finalnoj fazi pripreme. Pretplate cemo otvoriti cim zavrsimo poslednje provere. Besplatni skener u medjuvremenu radi normalno.</span>
+    <span class="en">The pricing page is in final preparation. Subscriptions open as soon as we finish the last checks. The free scanner is fully operational in the meantime.</span>
+  </div>
 
   <div id="proActiveBanner" class="pro-active-banner" style="display:none;">
     <h3>
@@ -448,6 +489,54 @@
 
     function isEn() { return document.body.classList.contains('lang-en'); }
 
+    // Check launch status on page load — if Pro is not yet live
+    // (Lemon Squeezy buy URLs not set in env), swap buy buttons to
+    // a visible "Coming Soon" state and show a banner above the plans.
+    // This lets the full pricing page exist for Lemon Squeezy review
+    // while preventing users from clicking into a broken checkout.
+    function checkLaunchStatus() {
+      fetch(API_BASE + '/api/status')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data && data.pro_available === false) {
+            applyComingSoonState();
+          }
+        })
+        .catch(function() {
+          // Fail closed — if the status call fails, treat as coming
+          // soon so we never show a broken Buy button by accident.
+          applyComingSoonState();
+        });
+    }
+
+    function applyComingSoonState() {
+      // Show the launch banner above the plans
+      var banner = document.getElementById('launchBanner');
+      if (banner) banner.classList.add('visible');
+
+      // Swap every data-plan button to the coming-soon state:
+      //   - disabled
+      //   - .coming-soon class for the muted style
+      //   - label text replaced via createElement/textContent
+      //     (no innerHTML, security hook rule)
+      var buyBtns = document.querySelectorAll('button[data-plan]');
+      for (var i = 0; i < buyBtns.length; i++) {
+        var btn = buyBtns[i];
+        btn.setAttribute('disabled', 'disabled');
+        btn.classList.add('coming-soon');
+        // Clear existing children
+        while (btn.firstChild) btn.removeChild(btn.firstChild);
+        var srLabel = document.createElement('span');
+        srLabel.className = 'sr';
+        srLabel.textContent = 'Uskoro';
+        var enLabel = document.createElement('span');
+        enLabel.className = 'en';
+        enLabel.textContent = 'Coming Soon';
+        btn.appendChild(srLabel);
+        btn.appendChild(enLabel);
+      }
+    }
+
     // Check existing subscription on page load
     function checkExistingSubscription() {
       var licenseKey = '';
@@ -544,6 +633,7 @@
 
     // Wire up event listeners when DOM is ready
     document.addEventListener('DOMContentLoaded', function() {
+      checkLaunchStatus();
       checkExistingSubscription();
 
       // Plan buy buttons
