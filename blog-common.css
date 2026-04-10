@@ -48,6 +48,30 @@ body.lang-en span.sr { display: none; } body.lang-en span.en { display: inline; 
 }
 .header-nav a:hover { color: #e8eaf6; background: #1a1e38; }
 .header-nav a.active { color: #a78bfa; background: #1a1e38; }
+
+/* Pro upsell CTA in the header — visually distinct from editorial nav links.
+   Accent background so it reads as a premium action, not another article.
+   On the pricing page itself it gets .active which inverts the colors. */
+.header-nav a.nav-pro-cta {
+  color: #0a0c15;
+  background: linear-gradient(135deg, #a78bfa, #c4b5fd);
+  font-weight: 800;
+  padding: 0.35rem 0.85rem;
+  border: 1px solid #a78bfa;
+  margin-left: 0.25rem;
+}
+.header-nav a.nav-pro-cta:hover {
+  background: linear-gradient(135deg, #c4b5fd, #ddd6fe);
+  color: #0a0c15;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(167, 139, 250, 0.3);
+}
+.header-nav a.nav-pro-cta.active {
+  background: #0a0c15;
+  color: #a78bfa;
+  border-color: #a78bfa;
+}
+
 .lang-toggle { display: flex; gap: 0.3rem; margin-left: 0.5rem; }
 .lang-btn {
   background: #1a1e38; border: 1px solid #252a4a; color: #7b83a6;

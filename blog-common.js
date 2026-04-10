@@ -145,10 +145,11 @@
   var fname = path.split('/').pop() || 'index.html';
   function isActive(cat) {
     if (cat === 'home') return fname === 'index.html' || fname === '' || fname === '/';
-    if (cat === 'security') return fname.includes('security');
+    if (cat === 'security') return fname.includes('security') && !fname.includes('scanner');
     if (cat === 'seo') return fname.includes('seo');
     if (cat === 'performance') return fname.includes('perf');
     if (cat === 'gdpr') return fname.includes('gdpr');
+    if (cat === 'pricing') return fname.includes('pricing');
     return false;
   }
 
@@ -219,6 +220,16 @@
   nav.appendChild(navLink('./blog-seo.html', 'SEO', 'SEO', isActive('seo')));
   nav.appendChild(navLink('./blog-performance.html', 'Performanse', 'Performance', isActive('performance')));
   nav.appendChild(navLink('./blog-gdpr.html', 'GDPR', 'GDPR', isActive('gdpr')));
+
+  // Pro pricing CTA — standalone, visually distinct from regular nav links.
+  // Has its own CSS class so the accent color + border can mark it as a
+  // premium upsell rather than another editorial link.
+  var proCta = el('a', {
+    href: './pricing.html',
+    className: isActive('pricing') ? 'nav-pro-cta active' : 'nav-pro-cta',
+  });
+  proCta.appendChild(srSpan('Pro', 'Pro'));
+  nav.appendChild(proCta);
 
   // Lang toggle in nav
   var langToggle = el('div', { className: 'lang-toggle' });
