@@ -38,7 +38,12 @@
       <li><strong>Vremenski pecati</strong> (kreiranje, zavrsetak)</li>
     </ul>
     <p>Svaki scan dodatno generise <strong>3 do 10 zapisa</strong> u <code>audit_log</code> tabeli (jedan po dogadjaju: scan_request, scan_start, scan_complete, scan_blocked_*, scan_error). Audit_log cuva istu pseudonimizovanu identitetsku informaciju plus context u details JSONB polju.</p>
-    <p><strong>Ono sto NE cuvamo:</strong> imena, email adrese (osim ako ih ne ukljucite dobrovoljno u abuse report), lozinke, sadrzaj skeniranog sajta osim metadata-e (header-i, score), raw IP adrese, raw User-Agent stringove, istoriju bilo cega povezano sa vasom identitetskom iz spoljnih izvora.</p>
+    <p><strong>Ono sto NE cuvamo:</strong> imena, email adrese (osim u dva slucaja — vidi ispod), lozinke, sadrzaj skeniranog sajta osim metadata-e (header-i, score), raw IP adrese, raw User-Agent stringove, istoriju bilo cega povezano sa vasom identitetskom iz spoljnih izvora.</p>
+    <p><strong>Izuzeci za email:</strong> Cuvamo vasu email adresu u dva konteksta:</p>
+    <ul>
+      <li><strong>Abuse report</strong> — ako dobrovoljno ostavite email prilikom podnosenja prijave zloupotrebe, cuvamo ga da bismo vam odgovorili na ishod</li>
+      <li><strong>Pro pretplata</strong> — ako kupite Pro plan, email koji ste koristili kod Lemon Squeezy checkout-a se sinhronizuje u nasu <code>subscriptions</code> tabelu kako bismo znali kome pripada koji license_key. Ovaj email se cuva samo dok traje pretplata plus 10 godina pravnog retention-a za porez/racunovodstvo (srpska zakonska obaveza)</li>
+    </ul>
 
     <h2 id="pp3">3. Pseudonimizacija PII (kako funkcionise hashovanje)</h2>
     <p>Umesto da cuvamo vasu IP adresu i User-Agent u izvornom obliku, propuzamo ih kroz SHA-256 hash funkciju sa <strong>tajnim server-side salt-om</strong> koji postoji samo u nasem deployment env-u i nikad ne ide u bazu:</p>
@@ -97,8 +102,10 @@
       <li><strong>Vercel</strong> — frontend hosting</li>
       <li><strong>Google AdSense</strong> — prikazivanje oglasa</li>
       <li><strong>Google Fonts</strong> — ucitavanje fontova</li>
+      <li><strong>Lemon Squeezy</strong> (USA, Merchant of Record) — obrada placanja za Pro pretplate. Ako kupite Pro plan, vasa kartica i personalna placanja se salju <strong>direktno Lemon Squeezy-ju</strong>, ne nama. Mi od njih primamo samo: email adresu, iznos, status pretplate, i license_key. Lemon Squeezy je registrovan u Delaware (SAD) i radi kao formalni prodavac za nas — oni izdaju racune, obracunavaju VAT u 100+ zemalja, i hendluju chargeback-ove. Njihova politika privatnosti: <a href="https://www.lemonsqueezy.com/privacy" target="_blank" rel="noopener">lemonsqueezy.com/privacy</a></li>
     </ul>
-    <p>Svi provajderi su odabrani tako da primarno cuvaju podatke u EU/EEA regionu. Ako imate specificna pitanja o prenosu podataka, kontaktirajte nas.</p>
+    <p><strong>Napomena o prenosu podataka u SAD:</strong> Lemon Squeezy je jedini provajder u nasem stack-u koji je van EU. Oni deklarise usaglasenost sa GDPR-om i imaju Standard Contractual Clauses (SCCs) kao osnovu za prenos podataka iz EU u SAD. Ako ne zelite da vasi podaci prolaze kroz SAD, ne kupujte Pro plan — besplatni tier ostaje potpuno EU-only.</p>
+    <p>Svi ostali provajderi su odabrani tako da primarno cuvaju podatke u EU/EEA regionu. Ako imate specificna pitanja o prenosu podataka, kontaktirajte nas.</p>
 
     <h2 id="pp8">8. Vasa prava pod GDPR-om</h2>
     <p>Ako se nalazite u Evropskom ekonomskom prostoru, imate sledeca prava:</p>
@@ -160,7 +167,12 @@
       <li><strong>Timestamps</strong> (creation, completion)</li>
     </ul>
     <p>Each scan additionally generates <strong>3 to 10 entries</strong> in the <code>audit_log</code> table (one per event: scan_request, scan_start, scan_complete, scan_blocked_*, scan_error). The audit_log stores the same pseudonymized identity information plus context in a details JSONB field.</p>
-    <p><strong>What we do NOT store:</strong> names, email addresses (unless you voluntarily include one in an abuse report), passwords, contents of the scanned site beyond metadata (headers, score), raw IP addresses, raw User-Agent strings, or any history tied to your identity from external sources.</p>
+    <p><strong>What we do NOT store:</strong> names, email addresses (except in two cases — see below), passwords, contents of the scanned site beyond metadata (headers, score), raw IP addresses, raw User-Agent strings, or any history tied to your identity from external sources.</p>
+    <p><strong>Email exceptions:</strong> We store your email address in two contexts:</p>
+    <ul>
+      <li><strong>Abuse reports</strong> — if you voluntarily leave an email when filing an abuse report, we store it so we can reply with the outcome</li>
+      <li><strong>Pro subscriptions</strong> — if you buy a Pro plan, the email you used at Lemon Squeezy checkout is synced into our <code>subscriptions</code> table so we know which license_key belongs to whom. This email is kept for the duration of the subscription plus a 10-year legal retention period for tax/accounting purposes (Serbian statutory requirement)</li>
+    </ul>
 
     <h2 id="pp3e">3. PII pseudonymization (how the hashing works)</h2>
     <p>Instead of storing your IP address and User-Agent in their original form, we pass them through a SHA-256 hash function with a <strong>secret server-side salt</strong> that lives only in our deployment environment and is never written to the database:</p>
@@ -219,8 +231,10 @@
       <li><strong>Vercel</strong> — frontend hosting</li>
       <li><strong>Google AdSense</strong> — ad display</li>
       <li><strong>Google Fonts</strong> — font loading</li>
+      <li><strong>Lemon Squeezy</strong> (USA, Merchant of Record) — payment processing for Pro subscriptions. If you buy a Pro plan, your card and personal payment information goes <strong>directly to Lemon Squeezy</strong>, not to us. From them we receive only: email address, amount, subscription status, and license_key. Lemon Squeezy is incorporated in Delaware (USA) and acts as the legal seller on our behalf — they issue invoices, calculate VAT in 100+ countries, and handle chargebacks. Their privacy policy: <a href="https://www.lemonsqueezy.com/privacy" target="_blank" rel="noopener">lemonsqueezy.com/privacy</a></li>
     </ul>
-    <p>All providers are chosen to primarily store data in the EU/EEA region. If you have specific questions about data transfers, contact us.</p>
+    <p><strong>Note on data transfer to the USA:</strong> Lemon Squeezy is the only provider in our stack outside the EU. They declare GDPR compliance and rely on Standard Contractual Clauses (SCCs) as the legal basis for EU-to-US data transfers. If you prefer that your data not pass through the USA, do not purchase a Pro plan — the free tier remains entirely EU-only.</p>
+    <p>All other providers are chosen to primarily store data in the EU/EEA region. If you have specific questions about data transfers, contact us.</p>
 
     <h2 id="pp8e">8. Your rights under GDPR</h2>
     <p>If you are located in the European Economic Area, you have the following rights:</p>

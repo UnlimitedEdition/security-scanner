@@ -353,6 +353,14 @@ def abuse_report_page():
         return FileResponse(path, media_type="text/html")
 
 
+@app.api_route("/refund-policy.html", methods=["GET", "HEAD"])
+def refund_policy_page():
+    """Dedicated refund policy page (Pro plan refund terms)."""
+    path = os.path.join(os.path.dirname(__file__), "refund-policy.html")
+    if os.path.exists(path):
+        return FileResponse(path, media_type="text/html")
+
+
 @app.api_route("/blog-common.css", methods=["GET", "HEAD"])
 def blog_common_css():
     path = os.path.join(os.path.dirname(__file__), "blog-common.css")

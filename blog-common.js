@@ -315,6 +315,11 @@
   legalTerms.appendChild(srSpan('Uslovi koriscenja', 'Terms of Service'));
   legalRow.appendChild(legalTerms);
 
+  // Politika refundacije — dedicated page (Pro plan refund terms)
+  var legalRefund = el('a', { href: './refund-policy.html' });
+  legalRefund.appendChild(srSpan('Politika refundacije', 'Refund Policy'));
+  legalRow.appendChild(legalRefund);
+
   // Prava korisnika — the user-rights blog article is the canonical source
   var legalRights = el('a', { href: './blog-gdpr-rights.html' });
   legalRights.appendChild(srSpan('Prava korisnika', 'User Rights'));

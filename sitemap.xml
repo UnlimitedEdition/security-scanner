@@ -198,10 +198,22 @@
     <priority>0.7</priority>
   </url>
 
-  <!-- Privatnost -->
+  <!-- Legal / policy -->
   <url>
     <loc>https://security-scanner-ruddy.vercel.app/privacy</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-10</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://security-scanner-ruddy.vercel.app/terms</loc>
+    <lastmod>2026-04-10</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://security-scanner-ruddy.vercel.app/refund-policy</loc>
+    <lastmod>2026-04-10</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>

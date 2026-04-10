@@ -100,6 +100,59 @@
 
     <h2 id="tos10">10. Kontakt i sporovi</h2>
     <p>Za sva pitanja u vezi sa ovim uslovima, kontaktirajte nas preko <a href="https://toske-programer.web.app" target="_blank" rel="noopener">toske-programer.web.app</a>. Eventualni sporovi se resavaju prema pravu drzave operatora, osim u meri u kojoj lokalni propisi daju korisniku jace pravo.</p>
+
+    <h2 id="tos11">11. Placeni planovi (Pro pretplata)</h2>
+    <p>Pored besplatnog tier-a koji je detaljno opisan iznad, nudimo i <strong>Web Security Scanner Pro</strong> pretplatu koja otkljucava dodatne funkcije:</p>
+    <ul>
+      <li><strong>Neograniceni skenovi</strong> — nema rate limit-a od 5 skenova po 30 minuta</li>
+      <li><strong>Multi-page skeniranje</strong> — do 10 stranica po scan-u (crawler obilazi vas sajt, ne samo homepage)</li>
+      <li><strong>PDF izvestaji</strong> — profesionalni branded izvestaj koji mozete proslediti klijentu</li>
+      <li><strong>Istorija skeniranja</strong> — pregled i preuzimanje rezultata u zadnjih 30 dana</li>
+    </ul>
+    <p><strong>Cene</strong> (u USD, naplata po Lemon Squeezy kursu za vasu zemlju):</p>
+    <ul>
+      <li><strong>Pro Monthly</strong> — $9 USD mesecno, naplata svakog 30. dana</li>
+      <li><strong>Pro Yearly</strong> — $79 USD godisnje (~27% popust u odnosu na mesecni plan), naplata jednom godisnje</li>
+    </ul>
+    <p><strong>Besplatni trial:</strong> Svaka nova Pro pretplata pocinje sa <strong>7-dnevnim besplatnim trial periodom</strong>. Morate uneti karticu pri registraciji (tako sprecavamo zloupotrebu trial-a), ali niste naplaćeni dok trial ne istekne. Mozete otkazati bilo kada u toku trial-a i nece biti naplaćeno.</p>
+    <p><strong>Merchant of Record:</strong> Placanja obradjuje <strong>Lemon Squeezy Inc.</strong> kao formalni prodavac. To znaci:</p>
+    <ul>
+      <li>Transakcija je izmedju vas i Lemon Squeezy-ja, ne direktno izmedju vas i operatora Servisa</li>
+      <li>Lemon Squeezy izdaje racune koji su EU VAT compliant, automatski hendluje porez u 100+ zemalja</li>
+      <li>Vasu karticu i licne podatke za placanje vidi samo Lemon Squeezy (nikad nas)</li>
+      <li>Pristup customer portal-u za upravljanje pretplatom (otkazivanje, menjanje plana, pregled racuna) ide kroz Lemon Squeezy portal — link dobijate u svakom email-u sa potvrdom</li>
+    </ul>
+
+    <h2 id="tos12">12. Automatsko obnavljanje i otkazivanje</h2>
+    <p><strong>Automatsko obnavljanje:</strong> Pro pretplate se automatski obnavljaju na kraju svakog billing ciklusa. Mesecni plan se obnavlja svakih 30 dana, godisnji svakih 365. Ovo je standardno ponasanje za SaaS pretplate i u skladu je sa EU Consumer Rights Directive-om — vi ste svesno odabrali recurring plan pri kupovini.</p>
+    <p><strong>Email podsetnici:</strong> Pre svakog obnavljanja, Lemon Squeezy salje email obavestenje nekoliko dana unapred. Ako ne zelite dalje obnavljanje, imate dovoljno vremena da otkazete.</p>
+    <p><strong>Kako otkazati:</strong></p>
+    <ol>
+      <li>Otvorite bilo koji email sa potvrdom koji ste dobili od Lemon Squeezy-ja</li>
+      <li>Kliknite na link &quot;Manage subscription&quot; ili &quot;Customer portal&quot;</li>
+      <li>Logujte se email adresom koju ste koristili za kupovinu</li>
+      <li>Kliknite &quot;Cancel subscription&quot;</li>
+    </ol>
+    <p>Nakon otkazivanja, pristup Pro funkcijama <strong>ostaje aktivan do kraja trenutnog placenog perioda</strong>. To znaci: ako ste platili mesecni plan 1. aprila i otkazete 15. aprila, Pro funkcije rade do 30. aprila, a 1. maja se automatski prebacujete na free tier. Nema dodatnih naplata nakon otkazivanja.</p>
+
+    <h2 id="tos13">13. Refundacije</h2>
+    <p>Imamo zasebnu, detaljniju <strong><a href="./refund-policy.html">Politiku refundacije</a></strong> koju treba da procitate ako razmisljate o povraćaju novca. Ukratko:</p>
+    <ul>
+      <li><strong>14 dana pun refund</strong> za mesecni plan od datuma prve naplate (bez pitanja)</li>
+      <li><strong>30 dana pun refund</strong> za godisnji plan (bez pitanja)</li>
+      <li><strong>7-dnevni trial</strong> — ako otkazete tokom trial-a, nista nije naplaćeno (nema potrebe za refund zahtev)</li>
+      <li><strong>Posle navedenih rokova</strong> — zahtev se razmatra od slucaja do slucaja; fer pristup</li>
+    </ul>
+
+    <h2 id="tos14">14. Fair use za Pro funkcije</h2>
+    <p>Pro plan otkljucava &quot;neogranicene skenove&quot;, ali to je ograniceno na <strong>razuman obim za jednog korisnika</strong>. Primeri zloupotrebe koji krse fair use:</p>
+    <ul>
+      <li>Koriscenje jedne Pro pretplate kao shared servis za neograniceno korisnika (npr. embed-ovanje u drugi javno dostupan alat)</li>
+      <li>Skeniranje istog domena stotine puta u kratkom vremenu radi DoS-ovanja meti (SSRF zastita i rate limit ka cilju ionako hvataju ovo, ali povreda fair use je dodatni osnov za suspenziju)</li>
+      <li>Mass-scanning kao deo offensive security operacije bez dozvola za svaki meta</li>
+      <li>Koriscenje API-ja (kad bude dostupan) za scrape-ovanje treceg alata koji sam po sebi krsi neciji ToS</li>
+    </ul>
+    <p>U slucaju zloupotrebe, zadrzavamo pravo da <strong>suspendovanjem license_key-a prekinemo pristup</strong> bez refund-a. Za standardnu upotrebu (stotine skenova mesecno za jednog korisnika ili njegove klijente), nema ogranicenja.</p>
   </div>
 
   <!-- ENGLISH -->
@@ -185,6 +238,59 @@
 
     <h2 id="tos10e">10. Contact and disputes</h2>
     <p>For any questions about these terms, contact us via <a href="https://toske-programer.web.app" target="_blank" rel="noopener">toske-programer.web.app</a>. Any disputes are resolved under the law of the operator's country, except to the extent local regulations grant the user stronger rights.</p>
+
+    <h2 id="tos11e">11. Paid plans (Pro subscription)</h2>
+    <p>Alongside the free tier described above, we also offer <strong>Web Security Scanner Pro</strong>, a paid subscription that unlocks additional features:</p>
+    <ul>
+      <li><strong>Unlimited scans</strong> — no more 5 scans per 30 minutes rate limit</li>
+      <li><strong>Multi-page scanning</strong> — up to 10 pages per scan (crawler walks your site, not just the homepage)</li>
+      <li><strong>PDF reports</strong> — professional branded reports you can send to clients</li>
+      <li><strong>Scan history</strong> — review and re-download results from the last 30 days</li>
+    </ul>
+    <p><strong>Pricing</strong> (in USD, converted at Lemon Squeezy's rate for your country):</p>
+    <ul>
+      <li><strong>Pro Monthly</strong> — $9 USD per month, billed every 30 days</li>
+      <li><strong>Pro Yearly</strong> — $79 USD per year (~27% discount vs monthly), billed once a year</li>
+    </ul>
+    <p><strong>Free trial:</strong> Every new Pro subscription starts with a <strong>7-day free trial</strong>. You must enter a card at signup (that's how we prevent trial abuse), but you are not charged until the trial ends. You can cancel anytime during the trial and will not be charged.</p>
+    <p><strong>Merchant of Record:</strong> Payments are processed by <strong>Lemon Squeezy Inc.</strong> as the legal seller. That means:</p>
+    <ul>
+      <li>The transaction is between you and Lemon Squeezy, not directly between you and the operator of the Service</li>
+      <li>Lemon Squeezy issues EU VAT compliant invoices and automatically handles tax in 100+ countries</li>
+      <li>Your card and personal payment information is only seen by Lemon Squeezy (never by us)</li>
+      <li>Access to the customer portal for managing your subscription (cancellation, plan changes, invoice history) is through the Lemon Squeezy portal — the link is in every confirmation email</li>
+    </ul>
+
+    <h2 id="tos12e">12. Automatic renewal and cancellation</h2>
+    <p><strong>Automatic renewal:</strong> Pro subscriptions auto-renew at the end of each billing cycle. Monthly plans renew every 30 days, yearly every 365. This is standard behavior for SaaS subscriptions and complies with the EU Consumer Rights Directive — you consciously chose a recurring plan at checkout.</p>
+    <p><strong>Email reminders:</strong> Before each renewal, Lemon Squeezy sends an email notification a few days in advance. If you don't want to renew, you have enough time to cancel.</p>
+    <p><strong>How to cancel:</strong></p>
+    <ol>
+      <li>Open any confirmation email you received from Lemon Squeezy</li>
+      <li>Click the &quot;Manage subscription&quot; or &quot;Customer portal&quot; link</li>
+      <li>Log in with the email address you used for the purchase</li>
+      <li>Click &quot;Cancel subscription&quot;</li>
+    </ol>
+    <p>After cancellation, access to Pro features <strong>remains active until the end of the current paid period</strong>. That means: if you paid for a monthly plan on April 1 and cancel on April 15, Pro features work until April 30, and on May 1 you automatically fall back to the free tier. There are no additional charges after cancellation.</p>
+
+    <h2 id="tos13e">13. Refunds</h2>
+    <p>We have a separate, more detailed <strong><a href="./refund-policy.html">Refund Policy</a></strong> that you should read if you're considering a refund. In short:</p>
+    <ul>
+      <li><strong>14 days full refund</strong> for monthly plans from the date of first charge (no questions asked)</li>
+      <li><strong>30 days full refund</strong> for yearly plans (no questions asked)</li>
+      <li><strong>7-day trial</strong> — if you cancel during the trial, nothing is charged (no refund request needed)</li>
+      <li><strong>After those windows</strong> — requests are considered case by case; fair approach</li>
+    </ul>
+
+    <h2 id="tos14e">14. Fair use for Pro features</h2>
+    <p>The Pro plan unlocks &quot;unlimited scans&quot;, but that is limited to <strong>a reasonable volume for a single user</strong>. Examples of abuse that violate fair use:</p>
+    <ul>
+      <li>Using one Pro subscription as a shared service for unlimited users (e.g., embedding it in another publicly-accessible tool)</li>
+      <li>Scanning the same domain hundreds of times in a short window in order to DoS the target (SSRF protection and target-side rate limits will catch this anyway, but fair-use violation is an additional basis for suspension)</li>
+      <li>Mass-scanning as part of offensive security operations without permission for each target</li>
+      <li>Using the API (when it becomes available) to scrape a third-party tool that itself violates someone's ToS</li>
+    </ul>
+    <p>In cases of abuse, we reserve the right to <strong>suspend access by revoking the license_key</strong> without a refund. For standard usage (hundreds of scans per month for a single user or their clients), there are no limits.</p>
   </div>
 
   </main>
