@@ -3,9 +3,7 @@ Risk Engine
 Analyzes scan results and produces prioritized recommendations.
 Calculates risk score per finding and generates "Top 5 priorities".
 """
-import re
 from typing import List, Dict, Any
-from urllib.parse import urlparse, parse_qs
 
 SEVERITY_WEIGHT = {
     "CRITICAL": 10,
@@ -81,14 +79,43 @@ def calculate_risk_score(item):
     return round(weight * confidence * exposure, 1)
 
 
+# Fallback difficulty by check-ID prefix, used when a specific check_id is
+# not listed in FIX_DIFFICULTY above. Explicit and ordered — no more relying
+# on dict iteration order or fuzzy rsplit matches.
+CATEGORY_DEFAULT_DIFFICULTY = {
+    "hdr_":       "easy",
+    "cookies_":   "easy",
+    "cors_":      "easy",
+    "seo_":       "easy",
+    "file_":      "easy",
+    "admin_":     "easy",
+    "api_":       "easy",
+    "extras_":    "easy",
+    "perf_":      "easy",
+    "ssl_":       "medium",
+    "dns_":       "medium",
+    "redirect_":  "medium",
+    "vuln_":      "medium",
+    "gdpr_":      "medium",
+    "js_":        "medium",
+    "cms_":       "medium",
+    "ports_":     "medium",
+    "dep_":       "medium",
+    "dependency_": "medium",
+    "whois_":     "hard",
+    "subdomain_": "hard",
+    "ct_":        "hard",
+}
+
+
 def get_fix_difficulty(check_id):
     """Get estimated difficulty to fix this issue."""
-    # Try exact match first
+    # Exact match always wins — FIX_DIFFICULTY is the source of truth
     if check_id in FIX_DIFFICULTY:
         return FIX_DIFFICULTY[check_id]
-    # Try prefix match
-    for prefix, diff in FIX_DIFFICULTY.items():
-        if check_id.startswith(prefix.rsplit("_", 1)[0]):
+    # Explicit prefix fallback — deterministic and easy to audit
+    for prefix, diff in CATEGORY_DEFAULT_DIFFICULTY.items():
+        if check_id.startswith(prefix):
             return diff
     return "medium"
 
@@ -159,27 +186,3 @@ def get_top_priorities(results, count=5):
     return priorities
 
 
-def analyze_url_risk(url):
-    """Analyze a URL for potential risk indicators."""
-    parsed = urlparse(url)
-    path = parsed.path.lower()
-    params = parse_qs(parsed.query)
-    risk_indicators = []
-
-    # Risky parameters
-    risky_params = ["id", "user", "admin", "file", "path", "url", "redirect",
-                    "next", "return", "goto", "search", "q", "query", "page",
-                    "sort", "order", "filter", "action", "cmd", "exec"]
-    for param in params:
-        if param.lower() in risky_params:
-            risk_indicators.append(f"Risky parameter: {param}")
-
-    # Risky paths
-    risky_paths = ["/admin", "/login", "/api", "/upload", "/config",
-                   "/backup", "/debug", "/test", "/old", "/temp"]
-    for rp in risky_paths:
-        if rp in path:
-            risk_indicators.append(f"Risky path: {path}")
-            break
-
-    return risk_indicators
