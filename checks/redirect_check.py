@@ -2,8 +2,13 @@
 Redirect & HTTPS Enforcement Check
 Checks: HTTP->HTTPS redirect, www/non-www consistency, redirect chain length.
 """
+import sys
+import os
 import requests
 from typing import List, Dict, Any
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from security_utils import safe_get, UnsafeTargetError
 
 TIMEOUT = 10
 
@@ -14,7 +19,7 @@ def run(domain: str, session: requests.Session) -> List[Dict[str, Any]]:
     # --- HTTP → HTTPS redirect ---
     try:
         http_url = f"http://{domain}/"
-        resp = session.get(http_url, timeout=TIMEOUT, allow_redirects=True)
+        resp = safe_get(session, http_url, timeout=TIMEOUT)
 
         # Check if final URL is HTTPS
         final_url = resp.url
@@ -82,7 +87,7 @@ def run(domain: str, session: requests.Session) -> List[Dict[str, Any]]:
         alt_domain = domain[4:] if has_www else f"www.{domain}"
 
         try:
-            alt_resp = session.get(f"https://{alt_domain}/", timeout=TIMEOUT, allow_redirects=True)
+            alt_resp = safe_get(session, f"https://{alt_domain}/", timeout=TIMEOUT)
             # Check if both work and redirect to same canonical
             final = alt_resp.url
             main_domain_in_final = domain.replace("www.", "") in final

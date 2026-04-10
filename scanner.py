@@ -31,7 +31,14 @@ from checks import performance_check, gdpr_check, vuln_check
 from checks import js_check, api_check, accessibility_check, dependency_check
 from checks import observatory_check, whois_check, tech_stack_check, email_security_check
 from checks.crawler import crawl
+from security_utils import safe_get, assert_safe_target, UnsafeTargetError
 import risk_engine
+
+# Hard upper bound on total scan wall-clock time. A malicious target could
+# otherwise keep the single scan slot busy indefinitely by responding slowly
+# to each individual check. When the deadline is hit, remaining checks are
+# skipped and a truncation notice is added to the errors list.
+SCAN_DEADLINE_SECONDS = 180
 
 # Severity weights for scoring
 SEVERITY_WEIGHTS = {
@@ -103,8 +110,12 @@ def _normalize_url(url: str) -> str:
 
 
 def _get_domain(url: str) -> str:
+    # str.lstrip("www.") is a character-set strip, not a prefix strip:
+    # "webapp.com".lstrip("www.") == "ebapp.com" (wrong).
+    # removeprefix() was added in Python 3.9 and does exactly what we want.
     parsed = urlparse(url)
-    return parsed.netloc.lstrip("www.")
+    netloc = parsed.netloc
+    return netloc.removeprefix("www.")
 
 
 def compute_score(results: List[Dict]) -> Dict[str, Any]:
@@ -185,12 +196,43 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
     Returns a dict with all results and the final score.
     """
     start_time = time.time()
+    deadline = start_time + SCAN_DEADLINE_SECONDS
     all_results = []
     errors = []
+    scan_truncated = False
 
     def update(step: str, pct: int):
         if progress_callback:
             progress_callback(step, pct)
+
+    def _deadline_exceeded() -> bool:
+        return time.time() > deadline
+
+    def run_check(step_msg: str, pct: int, name: str, fn) -> None:
+        """
+        Deadline-aware wrapper around a single check.
+
+        If the overall scan deadline has been exceeded, the check is skipped
+        and a single truncation notice is added to errors. Otherwise the
+        check runs with unified exception handling — a crash in one check
+        never stops the rest of the scan.
+        """
+        nonlocal scan_truncated
+        if _deadline_exceeded():
+            if not scan_truncated:
+                scan_truncated = True
+                errors.append(
+                    f"Scan prekoracio vremenski limit od {SCAN_DEADLINE_SECONDS}s — "
+                    f"preostali check-ovi preskoceni radi zastite servisa."
+                )
+            return
+        update(step_msg, pct)
+        try:
+            results = fn()
+            if results:
+                all_results.extend(results)
+        except Exception as e:
+            errors.append(f"{name} check greška: {str(e)[:80]}")
 
     # --- Normalize URL ---
     base_url = _normalize_url(url)
@@ -199,9 +241,12 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
 
     update("Inicijalizacija konekcije...", 2)
 
-    # Create a session with common headers
+    # Create a session with common headers.
+    # SSL verification is ALWAYS on — a security scanner that skips cert
+    # validation on its own requests is a contradiction. If SSL fails,
+    # that IS the finding and we report it, not bypass it.
     session = requests.Session()
-    session.verify = True  # Will be set to False if SSL fails
+    session.verify = True
     session.headers.update({
         "User-Agent": USER_AGENT,
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
@@ -226,13 +271,10 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
 
     try:
         update("Učitavanje sajta...", 4)
-        try:
-            main_response = session.get(base_url, timeout=15, allow_redirects=True)
-        except requests.exceptions.SSLError:
-            # SSL cert verification failed — retry without verification
-            # This happens on some hosting environments (HF Spaces) with outdated CA bundles
-            session.verify = False
-            main_response = session.get(base_url, timeout=15, allow_redirects=True)
+        # safe_get enforces SSRF protection on every redirect hop —
+        # an attacker-controlled public host cannot bounce us to 127.0.0.1,
+        # 169.254.169.254 (AWS metadata), or any internal service.
+        main_response = safe_get(session, base_url, timeout=15)
         response_headers = dict(main_response.headers)
         response_body = main_response.text[:50000]  # Cap at 50KB
         response_time_ms = main_response.elapsed.total_seconds() * 1000
@@ -250,13 +292,13 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
             try:
                 # Retry with minimal headers — sometimes bypasses Vercel challenge
                 retry_session = requests.Session()
-                retry_session.verify = session.verify
+                retry_session.verify = True
                 retry_session.headers.update({
                     "User-Agent": USER_AGENT,
                     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
                     "Accept-Language": "en-US,en;q=0.5",
                 })
-                retry_resp = retry_session.get(base_url, timeout=15, allow_redirects=True)
+                retry_resp = safe_get(retry_session, base_url, timeout=15)
                 if retry_resp.status_code == 200 and "vercel security checkpoint" not in retry_resp.text.lower() and len(retry_resp.text) > 2000:
                     main_response = retry_resp
                     response_headers = dict(retry_resp.headers)
@@ -285,6 +327,20 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
                 response_body = ""
                 response_time_ms = 0
                 page_size_bytes = 0
+    except UnsafeTargetError as e:
+        errors.append(f"Blokirana adresa (SSRF zaštita): {str(e)[:150]}")
+        return {
+            "url": url,
+            "domain": domain,
+            "base_url": base_url,
+            "scan_time": round(time.time() - start_time, 2),
+            "results": [],
+            "score": {"score": 0, "grade": "F", "grade_color": "#ef4444",
+                      "grade_label": "Blokirano / Blocked", "counts": {}},
+            "errors": errors,
+            "total_checks": 0,
+            "failed_checks": 0,
+        }
     except requests.exceptions.SSLError as e:
         errors.append(f"SSL greška: {str(e)[:100]}")
         is_https = False
@@ -309,232 +365,78 @@ def scan(url: str, progress_callback=None) -> Dict[str, Any]:
     if not response_body:
         errors.append(f"Upozorenje: prazan response body (status={main_response.status_code if main_response else 'N/A'}, bot_blocked={bot_blocked})")
 
-    # --- 1. SSL/TLS Checks ---
     # --- Crawl site pages ---
+    # This block is structurally different from the regular checks (it writes
+    # into pages_found, not all_results), so it stays outside run_check().
     pages_found = 1
-    try:
-        if not bot_blocked and response_body:
-            update("Otkrivam stranice sajta...", 5)
+    if not _deadline_exceeded() and not bot_blocked and response_body:
+        update("Otkrivam stranice sajta...", 5)
+        try:
             discovered = crawl(base_url, session, response_body)
             pages_found = len(discovered)
-    except Exception:
-        pass
+        except Exception:
+            pass
 
-    # --- 1. SSL/TLS Checks ---
-    update("Proveravam SSL/TLS sertifikat...", 7)
-    try:
-        ssl_results = ssl_check.run(domain)
-        all_results.extend(ssl_results)
-    except Exception as e:
-        errors.append(f"SSL check greška: {str(e)[:80]}")
-
-    # --- 2. HTTP Security Headers ---
-    update("Proveravam sigurnosne HTTP headere...", 11)
-    try:
-        hdr_results = headers_check.run(response_headers)
-        all_results.extend(hdr_results)
-    except Exception as e:
-        errors.append(f"Headers check greška: {str(e)[:80]}")
-
-    # --- 3. DNS Security ---
-    update("Proveravam DNS sigurnost (SPF, DMARC)...", 15)
-    try:
-        dns_results = dns_check.run(domain)
-        all_results.extend(dns_results)
-    except Exception as e:
-        errors.append(f"DNS check greška: {str(e)[:80]}")
-
-    # --- 4. Sensitive File Exposure ---
-    update("Tražim osetljive fajlove...", 19)
-    try:
-        files_results = files_check.run(base_url, session)
-        all_results.extend(files_results)
-    except Exception as e:
-        errors.append(f"Files check greška: {str(e)[:80]}")
-
-    # --- 5. Information Disclosure ---
-    update("Analiziram otkrivanje informacija o sistemu...", 23)
-    try:
-        disc_results = disclosure_check.run(response_headers, response_body)
-        all_results.extend(disc_results)
-    except Exception as e:
-        errors.append(f"Disclosure check greška: {str(e)[:80]}")
-
-    # --- 6. Cookie Security ---
-    update("Proveravam sigurnost kolačića...", 27)
-    try:
-        cookie_results = cookies_check.run(response_headers, is_https)
-        all_results.extend(cookie_results)
-    except Exception as e:
-        errors.append(f"Cookie check greška: {str(e)[:80]}")
-
-    # --- 7. Redirect Security ---
-    update("Proveravam HTTPS preusmeravanja...", 31)
-    try:
-        redirect_results = redirect_check.run(domain, session)
-        all_results.extend(redirect_results)
-    except Exception as e:
-        errors.append(f"Redirect check greška: {str(e)[:80]}")
-
-    # --- 8. CMS & Technology ---
-    update("Detektujem CMS i tehnologije...", 35)
-    try:
-        cms_results = cms_check.run(base_url, response_body, session)
-        all_results.extend(cms_results)
-    except Exception as e:
-        errors.append(f"CMS check greška: {str(e)[:80]}")
-
-    # --- 9. Admin Page Exposure ---
-    update("Tražim izložene admin stranice...", 39)
-    try:
-        admin_results = admin_check.run(base_url, session)
-        all_results.extend(admin_results)
-    except Exception as e:
-        errors.append(f"Admin check greška: {str(e)[:80]}")
-
-    # --- 10. robots.txt Analysis ---
-    update("Analiziram robots.txt...", 43)
-    try:
-        robots_results = robots_check.run(base_url, session)
-        all_results.extend(robots_results)
-    except Exception as e:
-        errors.append(f"Robots check greška: {str(e)[:80]}")
-
-    # --- 11. Dangerous Open Ports ---
-    update("Proveravam opasne otvorene portove...", 47)
-    try:
-        ports_results = ports_check.run(domain)
-        all_results.extend(ports_results)
-    except Exception as e:
-        errors.append(f"Ports check greška: {str(e)[:80]}")
-
-    # --- 12. CORS Policy ---
-    update("Proveravam CORS politiku...", 50)
-    try:
-        cors_results = cors_check.run(base_url, response_headers, session)
-        all_results.extend(cors_results)
-    except Exception as e:
-        errors.append(f"CORS check greška: {str(e)[:80]}")
-
-    # --- 13. Extras: security.txt, CAA, SRI ---
-    update("Proveravam security.txt, CAA, SRI...", 54)
-    try:
-        extras_results = extras_check.run(base_url, domain, response_body, session)
-        all_results.extend(extras_results)
-    except Exception as e:
-        errors.append(f"Extras check greška: {str(e)[:80]}")
-
-    # --- 14. Vulnerability Scan ---
-    update("Skeniram ranjivosti (pasivno)...", 58)
-    try:
-        vuln_results = vuln_check.run(base_url, response_body, response_headers, session)
-        all_results.extend(vuln_results)
-    except Exception as e:
-        errors.append(f"Vuln check greška: {str(e)[:80]}")
-
-    # --- 15. JavaScript Security ---
-    update("Analiziram JavaScript bezbednost...", 62)
-    try:
-        js_results = js_check.run(base_url, response_body, session)
-        all_results.extend(js_results)
-    except Exception as e:
-        errors.append(f"JS check greška: {str(e)[:80]}")
-
-    # --- 16. API Security ---
-    update("Proveravam API bezbednost...", 65)
-    try:
-        api_results = api_check.run(base_url, session)
-        all_results.extend(api_results)
-    except Exception as e:
-        errors.append(f"API check greška: {str(e)[:80]}")
-
-    # --- 17. Dependencies ---
-    update("Proveravam zavisnosti i biblioteke...", 69)
-    try:
-        dep_results = dependency_check.run(base_url, response_body, session)
-        all_results.extend(dep_results)
-    except Exception as e:
-        errors.append(f"Dependency check greška: {str(e)[:80]}")
-
-    # --- 18. SEO Analysis ---
-    update("Analiziram SEO...", 73)
-    try:
-        seo_results = seo_check.run(base_url, response_body, response_headers, session)
-        all_results.extend(seo_results)
-    except Exception as e:
-        errors.append(f"SEO check greška: {str(e)[:80]}")
-
-    # --- 19. Performance ---
-    update("Analiziram performanse sajta...", 77)
-    try:
-        perf_results = performance_check.run(base_url, response_body, response_headers, session, response_time_ms, page_size_bytes)
-        all_results.extend(perf_results)
-    except Exception as e:
-        errors.append(f"Performance check greška: {str(e)[:80]}")
-
-    # --- 20. GDPR / Privacy ---
-    update("Proveravam GDPR usklađenost...", 80)
-    try:
-        gdpr_results = gdpr_check.run(base_url, response_body, response_headers, session)
-        all_results.extend(gdpr_results)
-    except Exception as e:
-        errors.append(f"GDPR check greška: {str(e)[:80]}")
-
-    # --- 21. Accessibility ---
-    update("Proveravam pristupačnost (a11y)...", 84)
-    try:
-        a11y_results = accessibility_check.run(response_body)
-        all_results.extend(a11y_results)
-    except Exception as e:
-        errors.append(f"Accessibility check greška: {str(e)[:80]}")
-
-    # --- 22. WHOIS / Domain Info ---
-    update("Proveravam WHOIS podatke domena...", 87)
-    try:
-        whois_results = whois_check.run(domain)
-        all_results.extend(whois_results)
-    except Exception as e:
-        errors.append(f"WHOIS check greška: {str(e)[:80]}")
-
-    # --- 23. Technology Stack Detection ---
-    update("Detektujem tehnoloski stek...", 89)
-    try:
-        tech_results = tech_stack_check.run(response_body, response_headers)
-        all_results.extend(tech_results)
-    except Exception as e:
-        errors.append(f"Tech stack check greška: {str(e)[:80]}")
-
-    # --- 24. Email Security ---
-    update("Proveravam email bezbednost...", 91)
-    try:
-        email_results = email_security_check.run(domain)
-        all_results.extend(email_results)
-    except Exception as e:
-        errors.append(f"Email check greška: {str(e)[:80]}")
-
-    # --- 25. Mozilla Observatory ---
-    update("Mozilla Observatory analiza...", 93)
-    try:
-        obs_results = observatory_check.run(domain)
-        all_results.extend(obs_results)
-    except Exception as e:
-        errors.append(f"Observatory check greška: {str(e)[:80]}")
-
-    # --- 23. Certificate Transparency ---
-    update("Proveravam Certificate Transparency logove...", 97)
-    try:
-        ct_results = ct_check.run(domain)
-        all_results.extend(ct_results)
-    except Exception as e:
-        errors.append(f"CT check greška: {str(e)[:80]}")
-
-    # --- 23. Subdomain Enumeration ---
-    update("Skeniram subdomene...", 98)
-    try:
-        sub_results = subdomain_check.run(domain)
-        all_results.extend(sub_results)
-    except Exception as e:
-        errors.append(f"Subdomain check greška: {str(e)[:80]}")
+    # --- All security checks, run through the deadline-aware wrapper ---
+    # Each call is independent: a crash or timeout in one check never stops
+    # the rest, and once SCAN_DEADLINE_SECONDS is exceeded the remaining
+    # checks are skipped entirely instead of piling on more wall-clock time.
+    run_check("Proveravam SSL/TLS sertifikat...", 7, "SSL",
+              lambda: ssl_check.run(domain))
+    run_check("Proveravam sigurnosne HTTP headere...", 11, "Headers",
+              lambda: headers_check.run(response_headers))
+    run_check("Proveravam DNS sigurnost (SPF, DMARC)...", 15, "DNS",
+              lambda: dns_check.run(domain))
+    run_check("Tražim osetljive fajlove...", 19, "Files",
+              lambda: files_check.run(base_url, session))
+    run_check("Analiziram otkrivanje informacija o sistemu...", 23, "Disclosure",
+              lambda: disclosure_check.run(response_headers, response_body))
+    run_check("Proveravam sigurnost kolačića...", 27, "Cookie",
+              lambda: cookies_check.run(response_headers, is_https))
+    run_check("Proveravam HTTPS preusmeravanja...", 31, "Redirect",
+              lambda: redirect_check.run(domain, session))
+    run_check("Detektujem CMS i tehnologije...", 35, "CMS",
+              lambda: cms_check.run(base_url, response_body, session))
+    run_check("Tražim izložene admin stranice...", 39, "Admin",
+              lambda: admin_check.run(base_url, session))
+    run_check("Analiziram robots.txt...", 43, "Robots",
+              lambda: robots_check.run(base_url, session))
+    run_check("Proveravam opasne otvorene portove...", 47, "Ports",
+              lambda: ports_check.run(domain))
+    run_check("Proveravam CORS politiku...", 50, "CORS",
+              lambda: cors_check.run(base_url, response_headers, session))
+    run_check("Proveravam security.txt, CAA, SRI...", 54, "Extras",
+              lambda: extras_check.run(base_url, domain, response_body, session))
+    run_check("Skeniram ranjivosti (pasivno)...", 58, "Vuln",
+              lambda: vuln_check.run(base_url, response_body, response_headers, session))
+    run_check("Analiziram JavaScript bezbednost...", 62, "JS",
+              lambda: js_check.run(base_url, response_body, session))
+    run_check("Proveravam API bezbednost...", 65, "API",
+              lambda: api_check.run(base_url, session))
+    run_check("Proveravam zavisnosti i biblioteke...", 69, "Dependency",
+              lambda: dependency_check.run(base_url, response_body, session))
+    run_check("Analiziram SEO...", 73, "SEO",
+              lambda: seo_check.run(base_url, response_body, response_headers, session))
+    run_check("Analiziram performanse sajta...", 77, "Performance",
+              lambda: performance_check.run(
+                  base_url, response_body, response_headers, session,
+                  response_time_ms, page_size_bytes))
+    run_check("Proveravam GDPR usklađenost...", 80, "GDPR",
+              lambda: gdpr_check.run(base_url, response_body, response_headers, session))
+    run_check("Proveravam pristupačnost (a11y)...", 84, "Accessibility",
+              lambda: accessibility_check.run(response_body))
+    run_check("Proveravam WHOIS podatke domena...", 87, "WHOIS",
+              lambda: whois_check.run(domain))
+    run_check("Detektujem tehnoloski stek...", 89, "Tech stack",
+              lambda: tech_stack_check.run(response_body, response_headers))
+    run_check("Proveravam email bezbednost...", 91, "Email",
+              lambda: email_security_check.run(domain))
+    run_check("Mozilla Observatory analiza...", 93, "Observatory",
+              lambda: observatory_check.run(domain))
+    run_check("Proveravam Certificate Transparency logove...", 97, "CT",
+              lambda: ct_check.run(domain))
+    run_check("Skeniram subdomene...", 98, "Subdomain",
+              lambda: subdomain_check.run(domain))
 
     update("Izračunavam ocenu...", 99)
 

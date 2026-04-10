@@ -4,8 +4,13 @@ Detects WordPress, Joomla, Drupal, outdated jQuery, etc.
 Purely passive — reads only what the site publicly serves.
 """
 import re
+import sys
+import os
 import requests
 from typing import List, Dict, Any
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from security_utils import safe_get, UnsafeTargetError
 
 TIMEOUT = 8
 
@@ -43,7 +48,7 @@ def run(base_url: str, response_body: str, session: requests.Session) -> List[Di
 
         # Try RSS feed for version
         try:
-            feed_resp = session.get(base_url.rstrip("/") + "/feed/", timeout=TIMEOUT)
+            feed_resp = safe_get(session, base_url.rstrip("/") + "/feed/", timeout=TIMEOUT)
             version_match = re.search(r"<generator>https://wordpress\.org/\?v=([\d.]+)</generator>", feed_resp.text)
             if version_match:
                 wp_version_feed = version_match.group(1)
@@ -85,7 +90,7 @@ def run(base_url: str, response_body: str, session: requests.Session) -> List[Di
 
         # Check for WordPress readme.html
         try:
-            readme_resp = session.get(base_url.rstrip("/") + "/readme.html", timeout=TIMEOUT, allow_redirects=False)
+            readme_resp = safe_get(session, base_url.rstrip("/") + "/readme.html", timeout=TIMEOUT, max_redirects=0)
             if readme_resp.status_code == 200 and "WordPress" in readme_resp.text:
                 results.append({
                     "id": "cms_wp_readme",

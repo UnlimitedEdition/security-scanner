@@ -4,9 +4,15 @@ Follows links from the homepage to discover pages for multi-page scanning.
 Returns a list of unique same-domain URLs (max depth 2, max 20 URLs).
 """
 import re
+import sys
+import os
 import requests
 from urllib.parse import urlparse, urljoin
 from typing import List, Set
+
+# Import from parent directory
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from security_utils import safe_get, UnsafeTargetError
 
 MAX_DEPTH = 2
 MAX_URLS = 20
@@ -94,7 +100,10 @@ def crawl(base_url, session, response_body=""):
         visited.add(url)
 
         try:
-            resp = session.get(url, timeout=TIMEOUT, allow_redirects=True)
+            # safe_get re-validates every redirect hop against the SSRF
+            # blacklist; an attacker cannot use a redirect to reach internal
+            # services even if they control the page we're crawling.
+            resp = safe_get(session, url, timeout=TIMEOUT)
             if resp.status_code != 200:
                 continue
             content_type = resp.headers.get("content-type", "")
@@ -110,6 +119,10 @@ def crawl(base_url, session, response_body=""):
                     if link not in visited and len(to_visit) < MAX_URLS * 2:
                         to_visit.append((link, depth + 1))
 
+        except UnsafeTargetError:
+            # Link pointed somewhere forbidden (e.g. post-redirect to localhost).
+            # Silently skip — the URL is just not crawlable from our side.
+            continue
         except Exception:
             continue
 

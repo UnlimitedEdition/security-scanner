@@ -34,6 +34,7 @@ from pydantic import BaseModel, HttpUrl, field_validator
 import re
 
 import scanner
+from security_utils import is_safe_target
 
 app = FastAPI(
     title="Web Security Scanner API",
@@ -155,12 +156,15 @@ class ScanRequest(BaseModel):
         domain_pattern = r'^https?://[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
         if not re.match(domain_pattern, v):
             raise ValueError("Neispravan URL format.")
-        # Block private/local addresses
-        blocked = ["localhost", "127.0.0.1", "0.0.0.0", "::1",
-                   "192.168.", "10.", "172.16.", "169.254."]
-        for b in blocked:
-            if b in v:
-                raise ValueError("Lokalne adrese nisu dozvoljene.")
+        # SSRF protection: resolve DNS, block private/reserved ranges,
+        # loopback, link-local (AWS metadata), IPv6 ULA, etc.
+        # This runs again inside safe_get() for every redirect hop.
+        safe, reason = is_safe_target(v)
+        if not safe:
+            raise ValueError(
+                "Ciljna adresa nije dozvoljena (interna, privatna ili "
+                f"nerazrešiva). / Target not allowed: {reason}"
+            )
         return v
 
 

@@ -2,10 +2,15 @@
 Extras: security.txt, CAA DNS record, Subresource Integrity, HTTP/2
 """
 import re
+import sys
+import os
 import socket
 import requests
 import dns.resolver
 from typing import List, Dict, Any
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from security_utils import safe_get, UnsafeTargetError
 
 TIMEOUT = 7
 
@@ -21,7 +26,7 @@ def _check_security_txt(base_url: str, session: requests.Session) -> List[Dict[s
     found = False
     for url in urls_to_try:
         try:
-            resp = session.get(url, timeout=TIMEOUT, allow_redirects=False)
+            resp = safe_get(session, url, timeout=TIMEOUT, max_redirects=0)
             if resp.status_code == 200 and "contact:" in resp.text.lower():
                 found = True
                 break

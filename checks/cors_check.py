@@ -2,8 +2,13 @@
 CORS (Cross-Origin Resource Sharing) Security Check
 Checks for overly permissive CORS configuration.
 """
+import sys
+import os
 import requests
 from typing import List, Dict, Any
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from security_utils import safe_get, UnsafeTargetError
 
 TIMEOUT = 8
 
@@ -23,7 +28,8 @@ def run(base_url: str, response_headers: dict, session: requests.Session) -> Lis
         try:
             test_url = base_url.rstrip("/") + ep
             # Send a cross-origin preflight simulation
-            resp = session.get(
+            resp = safe_get(
+                session,
                 test_url,
                 timeout=TIMEOUT,
                 headers={"Origin": "https://evil-attacker.com"}

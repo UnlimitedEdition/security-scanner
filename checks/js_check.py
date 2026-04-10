@@ -4,9 +4,14 @@ Checks: API keys in code, dangerous functions, inline event handlers,
 libraries with known CVEs, exposed API endpoints, source maps.
 """
 import re
+import sys
+import os
 import requests
 from urllib.parse import urlparse
 from typing import List, Dict, Any
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from security_utils import safe_head, UnsafeTargetError
 
 TIMEOUT = 7
 
@@ -287,10 +292,15 @@ def _check_source_maps(base_url, body, session):
             map_url = base_url.rstrip("/") + "/" + src + ".map"
 
         try:
-            resp = session.head(map_url, timeout=TIMEOUT, allow_redirects=True)
+            # Script srcs come from user-controlled HTML, so safe_head is
+            # required — otherwise a malicious page could point us at
+            # http://169.254.169.254/... via a fake <script src>.
+            resp = safe_head(session, map_url, timeout=TIMEOUT)
             checked += 1
             if resp.status_code == 200:
                 accessible_maps.append(map_url[:80])
+        except UnsafeTargetError:
+            pass  # Script src pointed to a forbidden target — skip
         except Exception:
             pass
 

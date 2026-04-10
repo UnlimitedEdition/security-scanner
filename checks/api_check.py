@@ -3,8 +3,13 @@ API Security Check
 Checks: GraphQL introspection, API endpoint discovery, Swagger/OpenAPI exposure,
 unauthenticated API access, CORS on API endpoints.
 """
+import sys
+import os
 import requests
 from typing import List, Dict, Any
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from security_utils import safe_get, safe_head, safe_post, UnsafeTargetError
 
 TIMEOUT = 7
 
@@ -30,7 +35,7 @@ def _fail(check_id, severity, title_sr, title_en, desc_sr, desc_en, rec_sr, rec_
 def _get_homepage_body(base_url, session):
     """Fetch homepage body for false-positive detection (SPA routing)."""
     try:
-        resp = session.get(base_url, timeout=TIMEOUT)
+        resp = safe_get(session, base_url, timeout=TIMEOUT)
         return resp.text[:2000]
     except Exception:
         return ""
@@ -43,7 +48,8 @@ def run(base_url: str, session: requests.Session) -> List[Dict[str, Any]]:
 
     # ── 1. GraphQL Introspection ──────────────────────────────────────
     try:
-        resp = session.post(
+        resp = safe_post(
+            session,
             base + "/graphql",
             json={"query": "{__schema{types{name}}}"},
             headers={"Content-Type": "application/json"},
@@ -82,11 +88,11 @@ def run(base_url: str, session: requests.Session) -> List[Dict[str, Any]]:
 
     for path in api_paths:
         try:
-            resp = session.head(base + path, timeout=TIMEOUT, allow_redirects=False)
+            resp = safe_head(session, base + path, timeout=TIMEOUT)
             if resp.status_code in (200, 301, 302):
                 # False positive detection: check if it returns same content as homepage (SPA)
                 try:
-                    get_resp = session.get(base + path, timeout=TIMEOUT)
+                    get_resp = safe_get(session, base + path, timeout=TIMEOUT)
                     if homepage_body and get_resp.text[:2000] == homepage_body:
                         continue  # SPA routing, skip
                 except Exception:
@@ -115,7 +121,7 @@ def run(base_url: str, session: requests.Session) -> List[Dict[str, Any]]:
 
     for path in swagger_paths:
         try:
-            resp = session.get(base + path, timeout=TIMEOUT)
+            resp = safe_get(session, base + path, timeout=TIMEOUT)
             if resp.status_code == 200:
                 body_lower = resp.text.lower()
                 if "swagger" in body_lower or "openapi" in body_lower or '"paths"' in body_lower:
@@ -147,8 +153,8 @@ def run(base_url: str, session: requests.Session) -> List[Dict[str, Any]]:
         unauth_endpoints = []
         for path in discovered_endpoints:
             try:
-                resp = session.get(base + path, timeout=TIMEOUT,
-                                   headers={"Accept": "application/json"})
+                resp = safe_get(session, base + path, timeout=TIMEOUT,
+                                headers={"Accept": "application/json"})
                 if resp.status_code == 200:
                     content_type = resp.headers.get("Content-Type", "").lower()
                     body = resp.text.strip()
@@ -188,7 +194,8 @@ def run(base_url: str, session: requests.Session) -> List[Dict[str, Any]]:
         cors_issues = []
         for path in discovered_endpoints:
             try:
-                resp = session.get(
+                resp = safe_get(
+                    session,
                     base + path,
                     timeout=TIMEOUT,
                     headers={"Origin": "https://evil-attacker.com"},

@@ -4,9 +4,14 @@ Checks: privacy policy, cookie consent, third-party trackers, tracking cookies,
 terms of service, data collection forms, HTTPS for data transmission.
 """
 import re
+import sys
+import os
 import requests
 from urllib.parse import urlparse
 from typing import List, Dict, Any
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from security_utils import safe_head, UnsafeTargetError
 
 TIMEOUT = 7
 
@@ -45,7 +50,7 @@ def _check_privacy_policy(base_url, body, session):
         for path in test_paths:
             try:
                 url = base_url.rstrip("/") + path
-                resp = session.head(url, timeout=TIMEOUT, allow_redirects=True)
+                resp = safe_head(session, url, timeout=TIMEOUT)
                 if resp.status_code == 200:
                     found = True
                     break

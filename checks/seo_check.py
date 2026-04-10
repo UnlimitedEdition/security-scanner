@@ -3,9 +3,14 @@ SEO Analysis Check
 Checks: meta tags, headings, images, sitemap, robots, canonical, structured data, Open Graph
 """
 import re
+import sys
+import os
 import requests
 from urllib.parse import urlparse
 from typing import List, Dict, Any
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from security_utils import safe_get, UnsafeTargetError
 
 TIMEOUT = 8
 
@@ -324,7 +329,7 @@ def _check_sitemap(base_url, session):
 
     # Also check robots.txt for Sitemap: directive
     try:
-        robots_resp = session.get(base_url.rstrip("/") + "/robots.txt", timeout=TIMEOUT)
+        robots_resp = safe_get(session, base_url.rstrip("/") + "/robots.txt", timeout=TIMEOUT)
         if robots_resp.status_code == 200:
             for line in robots_resp.text.split("\n"):
                 line = line.strip()
@@ -340,7 +345,7 @@ def _check_sitemap(base_url, session):
     for path in sitemap_paths:
         try:
             url = path if path.startswith("http") else base_url.rstrip("/") + path
-            resp = session.get(url, timeout=TIMEOUT, allow_redirects=True)
+            resp = safe_get(session, url, timeout=TIMEOUT)
             if resp.status_code == 200 and ("<?xml" in resp.text[:200] or "<urlset" in resp.text[:500] or "<sitemapindex" in resp.text[:500] or "sitemap" in resp.text[:500].lower()):
                 found = True
                 found_url = url
@@ -368,7 +373,7 @@ def _check_sitemap(base_url, session):
 def _check_robots_seo(base_url, session):
     results = []
     try:
-        resp = session.get(base_url.rstrip("/") + "/robots.txt", timeout=TIMEOUT)
+        resp = safe_get(session, base_url.rstrip("/") + "/robots.txt", timeout=TIMEOUT)
         if resp.status_code == 200 and len(resp.text) > 5:
             if "disallow: /" in resp.text.lower() and "disallow: / " not in resp.text.lower():
                 lines = resp.text.lower().split("\n")

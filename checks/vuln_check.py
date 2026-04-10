@@ -4,9 +4,14 @@ Checks: SQL error leakage, XSS reflection, CSRF protection, insecure forms,
 directory listing, default credentials, error page info leak, open redirect.
 """
 import re
+import sys
+import os
 import requests
 from urllib.parse import urlparse, parse_qs
 from typing import List, Dict, Any
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from security_utils import safe_get, UnsafeTargetError
 
 TIMEOUT = 7
 
@@ -192,7 +197,7 @@ def _check_directory_listing(base_url, body, session):
     for path in test_paths:
         try:
             url = base_url.rstrip("/") + path
-            resp = session.get(url, timeout=TIMEOUT, allow_redirects=True)
+            resp = safe_get(session, url, timeout=TIMEOUT)
             if resp.status_code == 200 and "Index of" in resp.text and "Parent Directory" in resp.text:
                 results.append(_fail("vuln_dir_listing", "HIGH",
                     f"Directory listing omogucen na {path}",

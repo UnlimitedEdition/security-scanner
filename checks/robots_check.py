@@ -3,8 +3,13 @@ robots.txt Security Analysis
 Checks if robots.txt reveals sensitive paths or is misconfigured.
 """
 import re
+import sys
+import os
 import requests
 from typing import List, Dict, Any
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from security_utils import safe_get, UnsafeTargetError
 
 TIMEOUT = 7
 
@@ -30,7 +35,7 @@ def run(base_url: str, session: requests.Session) -> List[Dict[str, Any]]:
     url = base_url.rstrip("/") + "/robots.txt"
 
     try:
-        resp = session.get(url, timeout=TIMEOUT, allow_redirects=False)
+        resp = safe_get(session, url, timeout=TIMEOUT, max_redirects=0)
 
         if resp.status_code == 404 or len(resp.content) < 5:
             results.append({

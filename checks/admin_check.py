@@ -7,8 +7,13 @@ Shared hosting often exposes cPanel/phpMyAdmin at server level — we verify
 that the content ACTUALLY belongs to that specific tool before flagging.
 """
 import re
+import sys
+import os
 import requests
 from typing import List, Dict, Any, Optional
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from security_utils import safe_get, UnsafeTargetError
 
 TIMEOUT = 7
 
@@ -100,7 +105,7 @@ def run(base_url: str, session: requests.Session) -> List[Dict[str, Any]]:
     # Fetch homepage for SPA false-positive detection
     homepage_body = ""
     try:
-        hp = session.get(base_url, timeout=TIMEOUT, allow_redirects=True)
+        hp = safe_get(session, base_url, timeout=TIMEOUT)
         homepage_body = hp.text[:1000]
     except Exception:
         pass
@@ -109,7 +114,7 @@ def run(base_url: str, session: requests.Session) -> List[Dict[str, Any]]:
     for path, name, severity, fingerprints in ADMIN_PATHS:
         url = base_url.rstrip("/") + path
         try:
-            resp = session.get(url, timeout=TIMEOUT, allow_redirects=True)
+            resp = safe_get(session, url, timeout=TIMEOUT)
 
             if resp.status_code == 200 and len(resp.content) > 100:
                 body = resp.text[:3000]
@@ -151,7 +156,7 @@ def run(base_url: str, session: requests.Session) -> List[Dict[str, Any]]:
     for path, name, severity, fingerprints in GENERIC_PATHS:
         url = base_url.rstrip("/") + path
         try:
-            resp = session.get(url, timeout=TIMEOUT, allow_redirects=True)
+            resp = safe_get(session, url, timeout=TIMEOUT)
             if resp.status_code == 200 and len(resp.content) > 100:
                 body = resp.text[:3000]
 

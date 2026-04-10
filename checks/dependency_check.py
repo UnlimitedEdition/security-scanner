@@ -5,8 +5,13 @@ known CVE versions in JavaScript libraries.
 """
 import re
 import json
+import sys
+import os
 import requests
 from typing import List, Dict, Any
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from security_utils import safe_get, UnsafeTargetError
 
 TIMEOUT = 7
 
@@ -121,7 +126,7 @@ def run(base_url: str, response_body: str, session: requests.Session) -> List[Di
 
     # ── 1. Exposed package.json ───────────────────────────────────────
     try:
-        resp = session.get(base + "/package.json", timeout=TIMEOUT)
+        resp = safe_get(session, base + "/package.json", timeout=TIMEOUT)
         if resp.status_code == 200 and "dependencies" in resp.text:
             try:
                 pkg = json.loads(resp.text)
