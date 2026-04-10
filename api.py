@@ -729,6 +729,26 @@ def _client_ip(request: Request) -> str:
     )
 
 
+def _get_pro_subscription(request: Request) -> Optional[Dict[str, Any]]:
+    """
+    Look up the active Pro subscription for this request, or None.
+
+    Reads X-License-Key header and resolves via subscription module.
+    Returns the raw row only if is_active() passes. Used by feature
+    gates that need to know "can this request bypass the free-tier
+    rate limit / use multi-page scan / export PDF".
+
+    Fail-closed: any error or missing header returns None.
+    """
+    license_key = (request.headers.get("x-license-key") or "").strip()
+    if not license_key:
+        return None
+    try:
+        return subscription.get_active_by_license_key(license_key)
+    except Exception:
+        return None
+
+
 @app.post("/verify/request")
 def verify_request_endpoint(req: VerifyRequest, request: Request):
     """
@@ -875,10 +895,16 @@ def start_scan(req: ScanRequest, request: Request):
     client_ip = _client_ip(request)
     user_agent = request.headers.get("user-agent", "")[:500] or None
 
+    # Pro plan check — if the caller has an active Pro subscription,
+    # they bypass the free-tier rate limit. We still log the scan and
+    # run all the other safety checks (SSRF, domain block, etc.) —
+    # Pro means "more scans", not "no oversight".
+    pro_sub = _get_pro_subscription(request)
+
     # Audit: every request is logged, even rejected ones, so abuse patterns
     # are visible in forensics. Rate-limited/SSRF-blocked scans get their
     # own event types below.
-    if not _check_rate_limit(client_ip):
+    if not pro_sub and not _check_rate_limit(client_ip):
         db.log_audit_event(
             event="scan_blocked_rate_limit",
             ip=client_ip, ua=user_agent,
@@ -886,7 +912,12 @@ def start_scan(req: ScanRequest, request: Request):
         )
         raise HTTPException(
             status_code=429,
-            detail="Previše zahteva. Maksimalno 5 skeniranja po 30 minuta. / Too many requests. Max 5 scans per 30 minutes."
+            detail=(
+                "Previše zahteva. Maksimalno 5 skeniranja po 30 minuta. "
+                "Pretplatite se na Pro za neograničene skenove. / "
+                "Too many requests. Max 5 scans per 30 minutes. "
+                "Upgrade to Pro for unlimited scans."
+            ),
         )
 
     scan_id = str(uuid.uuid4())[:8]
