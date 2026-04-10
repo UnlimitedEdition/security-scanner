@@ -8,7 +8,7 @@ import requests
 import time
 import os
 from urllib.parse import urlparse
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 
 # Fix Windows CA bundle issue:
 # PostgreSQL installer sets OPENSSL_CONF which points to a missing ca-bundle.crt
@@ -192,7 +192,12 @@ def compute_score(results: List[Dict]) -> Dict[str, Any]:
     }
 
 
-def scan(url: str, progress_callback=None, max_pages: int = 1) -> Dict[str, Any]:
+def scan(
+    url: str,
+    progress_callback=None,
+    max_pages: int = 1,
+    preselected_pages: Optional[List[str]] = None,
+) -> Dict[str, Any]:
     """
     Run all security checks on the given URL.
     Returns a dict with all results and the final score.
@@ -208,6 +213,13 @@ def scan(url: str, progress_callback=None, max_pages: int = 1) -> Dict[str, Any]
             page with a 0.5s target-side rate limit and per-iteration
             deadline check. Findings from non-homepage pages carry a
             'page_url' field so the UI and PDF can group by URL.
+        preselected_pages: Optional explicit list of URLs to scan. When
+            provided, the internal crawler step is skipped and the
+            multi-page loop uses this list instead. Caller is responsible
+            for ensuring all URLs are same-origin with `url` and that
+            the list length does not exceed max_pages. Used by the
+            /api/discover -> /scan two-phase flow so Pro users can
+            pick exactly which pages they want analyzed.
     """
     start_time = time.time()
     deadline = start_time + SCAN_DEADLINE_SECONDS
@@ -402,14 +414,28 @@ def scan(url: str, progress_callback=None, max_pages: int = 1) -> Dict[str, Any]
             base_url,
         )
 
-    # --- Crawl site pages ---
-    # This block is structurally different from the regular checks (it writes
-    # into pages_found, not all_results), so it stays outside run_check().
-    # The `discovered` list is preserved in outer scope so the multi-page
-    # Pro loop at the bottom can re-use it without re-crawling.
+    # --- Crawl or honour pre-selected pages ---
+    # Two code paths feed the `discovered` list used by the multi-page
+    # Pro loop at the bottom of this function:
+    #
+    #   1. Pre-selected (Pro two-phase flow). The caller already knows
+    #      exactly which pages to scan because the user picked them
+    #      from a discovery modal. We trust the caller to have validated
+    #      same-origin constraint at the API layer - scanner.py does
+    #      not re-crawl, and it does not second-guess the list.
+    #
+    #   2. Auto crawl. Legacy path used by the free tier (1 page) and
+    #      by Pro users who hit /scan directly without going through
+    #      /api/discover first.
     pages_found = 1
     discovered: List[str] = [base_url]
-    if not _deadline_exceeded() and not bot_blocked and response_body:
+    if preselected_pages:
+        discovered = list(preselected_pages)[:max(max_pages, 1)]
+        if base_url not in discovered:
+            discovered.insert(0, base_url)
+            discovered = discovered[:max(max_pages, 1)]
+        pages_found = len(discovered)
+    elif not _deadline_exceeded() and not bot_blocked and response_body:
         update("Otkrivam stranice sajta...", 5)
         try:
             # Crawl up to max_pages so Pro users with max_pages=10 get

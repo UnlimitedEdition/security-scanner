@@ -32,7 +32,7 @@ import time
 import threading
 from collections import defaultdict
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Dict, Any, List, Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -206,6 +206,7 @@ def _run_scan_inline(
     client_ip: str,
     user_agent: Optional[str],
     max_pages: int = 1,
+    preselected_pages: Optional[List[str]] = None,
 ):
     """
     Executes a single scan. Shared between the "start immediately" path
@@ -216,6 +217,10 @@ def _run_scan_inline(
       - 1 (default): free tier behaviour, homepage only
       - up to 10: Pro tier, scanner.py will loop page-level checks on
         each additional page discovered by the crawler
+
+    preselected_pages, if provided, is a list of URLs the user already
+    picked via the discovery flow. scanner.scan() will skip its internal
+    crawler and scan exactly this list.
     """
     # Transition to running (both in-memory and DB)
     scans[scan_id]["status"] = "running"
@@ -231,7 +236,12 @@ def _run_scan_inline(
 
     progress_cb = _make_progress_cb(scan_id)
     try:
-        result = scanner.scan(url, progress_callback=progress_cb, max_pages=max_pages)
+        result = scanner.scan(
+            url,
+            progress_callback=progress_cb,
+            max_pages=max_pages,
+            preselected_pages=preselected_pages,
+        )
         scans[scan_id]["status"] = "completed"
         scans[scan_id]["progress"] = 100
         scans[scan_id]["result"] = result
@@ -297,6 +307,7 @@ def _process_queue():
             scan.get("client_ip", "unknown"),
             scan.get("user_agent"),
             int(scan.get("max_pages") or 1),
+            scan.get("preselected_pages"),
         ),
         daemon=True,
     )
@@ -313,6 +324,11 @@ class ScanRequest(BaseModel):
     consent_version: Optional[str] = None
     session_id: Optional[str] = None
     fingerprint_hash: Optional[str] = None
+    # Pro two-phase flow: frontend calls POST /api/discover first to get
+    # a list of pages, user ticks up to 10, frontend sends them back in
+    # this field. When present and caller is Pro, the scanner skips its
+    # internal crawler and scans exactly these URLs.
+    selected_pages: Optional[List[str]] = None
 
     @field_validator("url")
     @classmethod
@@ -952,6 +968,155 @@ def verify_check_endpoint(req: VerifyCheckRequest, request: Request):
     }
 
 
+# ─────────────────────────────────────────────────────────────────────────
+# Discovery endpoint — Pro two-phase scan flow (list pages first)
+# ─────────────────────────────────────────────────────────────────────────
+# Pro users can preview the list of pages the crawler would reach and
+# pick exactly which ones to scan. This endpoint is the first half of
+# that flow: it crawls the target, caches the result under a short id,
+# and returns the list to the frontend. The frontend then shows a
+# checkbox modal and submits the user's picks to POST /scan via the
+# `selected_pages` field.
+#
+# The cache is in-memory only and TTLs after 10 minutes. If the user
+# takes longer than that to pick pages, they hit a fresh /api/discover.
+# No DB state is written by this endpoint — discovery is ephemeral.
+_discovery_cache: Dict[str, Dict[str, Any]] = {}
+_DISCOVERY_TTL_SECONDS = 600  # 10 minutes
+
+
+def _prune_discovery_cache() -> None:
+    """Drop entries that have expired. Called opportunistically."""
+    now = time.time()
+    expired = [k for k, v in _discovery_cache.items() if v.get("expires_at", 0) < now]
+    for k in expired:
+        _discovery_cache.pop(k, None)
+
+
+class DiscoverRequest(BaseModel):
+    url: str
+    consent_accepted: bool = False
+
+    @field_validator("url")
+    @classmethod
+    def validate_url(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("URL ne sme biti prazan.")
+        if not v.startswith(("http://", "https://")):
+            v = "https://" + v
+        domain_pattern = r'^https?://[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
+        if not re.match(domain_pattern, v):
+            raise ValueError("Neispravan URL format.")
+        safe, reason = is_safe_target(v)
+        if not safe:
+            raise ValueError(f"Target not allowed: {reason}")
+        return v
+
+
+@app.post("/api/discover")
+def api_discover(req: DiscoverRequest, request: Request):
+    """
+    Crawl the target site and return the list of discovered same-origin
+    pages. Pro-only. Result is cached under a short id so the frontend
+    can reference it when the user submits their final scan selection,
+    but scanner.scan() itself does not read this cache — it re-validates
+    each URL in `selected_pages` at scan time.
+    """
+    pro_sub = _get_pro_subscription(request)
+    if not pro_sub:
+        raise HTTPException(
+            status_code=402,
+            detail=(
+                "Discovery (lista stranica pre skeniranja) je Pro opcija. / "
+                "Page discovery is a Pro feature. See /pricing for details."
+            ),
+        )
+
+    client_ip = _client_ip(request)
+    user_agent = request.headers.get("user-agent", "")[:500] or None
+
+    # Normalize URL the same way scanner.py does, so the discovery URL
+    # matches what the scan step will see. This means the user sees the
+    # exact same set of pages they'll end up scanning.
+    from urllib.parse import urlparse as _urlparse
+    parsed = _urlparse(req.url)
+    base_url = f"{parsed.scheme}://{parsed.netloc}"
+    domain = parsed.netloc.removeprefix("www.") or req.url
+
+    if db.is_domain_blocked(domain):
+        db.log_audit_event(
+            event="abuse_block_applied",
+            ip=client_ip, ua=user_agent, domain=domain,
+            details={"url": req.url, "reason": "confirmed_abuse_report", "endpoint": "discover"},
+        )
+        raise HTTPException(status_code=403, detail="Domain blocked by abuse report.")
+
+    # Fetch homepage to extract initial links for the crawler
+    try:
+        temp_session = requests.Session()
+        temp_session.verify = True
+        temp_session.headers.update({
+            "User-Agent": scanner.USER_AGENT if hasattr(scanner, "USER_AGENT") else "Mozilla/5.0 (compatible; WebSecurityScanner/Pro)",
+            "Accept": "text/html,application/xhtml+xml",
+        })
+        from security_utils import safe_get as _safe_get
+        resp = _safe_get(temp_session, base_url, timeout=15)
+        body = resp.text[:50000] if resp.text else ""
+    except Exception as e:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Could not fetch target site: {str(e)[:200]}",
+        )
+
+    # Run the crawler
+    from checks.crawler import crawl as _crawl
+    try:
+        pages = _crawl(base_url, temp_session, body, limit=20)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Crawler failed: {str(e)[:200]}",
+        )
+
+    if not pages:
+        pages = [base_url]
+
+    # Cache the result
+    _prune_discovery_cache()
+    discovery_id = uuid.uuid4().hex[:12]
+    expires_at = time.time() + _DISCOVERY_TTL_SECONDS
+    _discovery_cache[discovery_id] = {
+        "url": base_url,
+        "domain": domain,
+        "pages": pages,
+        "ip_hash": db.hash_ip(client_ip),
+        "expires_at": expires_at,
+    }
+
+    # Audit
+    db.log_audit_event(
+        event="scan_request",
+        ip=client_ip, ua=user_agent,
+        domain=domain,
+        details={
+            "endpoint": "discover",
+            "pages_found": len(pages),
+            "consent_accepted": req.consent_accepted,
+        },
+    )
+
+    return {
+        "discovery_id": discovery_id,
+        "domain": domain,
+        "homepage_url": base_url,
+        "pages": pages,
+        "pages_count": len(pages),
+        "max_selectable": 10,
+        "expires_at": datetime.utcfromtimestamp(expires_at).isoformat() + "Z",
+    }
+
+
 @app.post("/scan")
 def start_scan(req: ScanRequest, request: Request):
     """Start a new scan. Returns scan_id immediately."""
@@ -1023,6 +1188,56 @@ def start_scan(req: ScanRequest, request: Request):
     # N pages discovered by the crawler.
     max_pages = 10 if pro_sub else 1
 
+    # Validate selected_pages if the caller provided any
+    validated_selected: Optional[List[str]] = None
+    if req.selected_pages:
+        if not pro_sub:
+            raise HTTPException(
+                status_code=402,
+                detail=(
+                    "Izbor stranica za skeniranje je Pro opcija. / "
+                    "Per-page selection is a Pro feature. "
+                    "See /pricing for details."
+                ),
+            )
+        # Trim to max_pages, strip empties
+        cleaned = [p.strip() for p in req.selected_pages if p and p.strip()]
+        if len(cleaned) > max_pages:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Too many pages selected. Max is {max_pages}.",
+            )
+        # Same-origin check — every URL must belong to the same domain
+        # as the primary url. This matches the crawler's same-origin
+        # rule and prevents a Pro user from using the multi-page pass
+        # as a multi-target scanner against unrelated sites.
+        from urllib.parse import urlparse as _urlparse
+        primary_netloc = _urlparse(req.url).netloc.lower().removeprefix("www.")
+        for page in cleaned:
+            try:
+                page_netloc = _urlparse(page).netloc.lower().removeprefix("www.")
+            except Exception:
+                page_netloc = ""
+            if page_netloc != primary_netloc:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        f"Page {page} is not same-origin with {req.url}. "
+                        "All selected pages must share the primary domain."
+                    ),
+                )
+            # Each URL goes through SSRF check. A malicious user cannot
+            # trick us into scanning 127.0.0.1 even by including it in
+            # selected_pages — safe_get inside scanner would block it,
+            # but we fail fast here for a cleaner error.
+            safe, reason = is_safe_target(page)
+            if not safe:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Page {page} failed safety check: {reason}",
+                )
+        validated_selected = cleaned
+
     scans[scan_id] = {
         "id": scan_id,
         "url": req.url,
@@ -1041,6 +1256,7 @@ def start_scan(req: ScanRequest, request: Request):
         # Pro plan state — read by _run_scan_inline and _process_queue
         "max_pages": max_pages,
         "is_pro": bool(pro_sub),
+        "preselected_pages": validated_selected,
     }
 
     # Persist the scan + log the request. Both are best-effort — DB
@@ -1079,7 +1295,7 @@ def start_scan(req: ScanRequest, request: Request):
         scans[scan_id]["step"] = "Pokretanje skeniranja..."
         thread = threading.Thread(
             target=_run_scan_inline,
-            args=(scan_id, req.url, client_ip, user_agent, max_pages),
+            args=(scan_id, req.url, client_ip, user_agent, max_pages, validated_selected),
             daemon=True,
         )
         thread.start()
