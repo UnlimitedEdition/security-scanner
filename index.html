@@ -654,11 +654,24 @@
        ================================================================ */
     .verify-panel, .abuse-panel {
       display: none;
+      /* Match scan-wrap width constraint — the verify panel lives
+         outside .scan-wrap in the HTML structure, so it needs its
+         own max-width + auto margins to stay centered and avoid
+         stretching across the full viewport on desktop. */
+      max-width: 680px;
+      margin: 1.2rem auto;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 12px;
       padding: 1.4rem 1.5rem;
-      margin: 1.2rem 0;
+      box-sizing: border-box;
+    }
+    @media (max-width: 720px) {
+      .verify-panel, .abuse-panel {
+        margin: 1.2rem 1rem;
+        max-width: none;
+        padding: 1.2rem 1.1rem;
+      }
     }
     .verify-panel.open, .abuse-panel.open { display: block; }
     .verify-panel h3, .abuse-panel h3 {
