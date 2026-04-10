@@ -613,7 +613,12 @@
       cursor: pointer; accent-color: var(--accent);
     }
     .consent-row label { cursor: pointer; line-height: 1.4; }
-    .consent-row a { color: var(--accent); }
+    .consent-row a {
+      color: var(--accent);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .consent-row a:hover { color: #a78bfa; }
 
     /* ================================================================
        REDACTED NOTICE BANNER (in results, when _redacted=true)
@@ -829,10 +834,17 @@
     </div>
     <div class="consent-row">
       <input type="checkbox" id="consentCheckbox" />
-      <label for="consentCheckbox"
-             data-sr="Potvrdujem da imam dozvolu da skeniram ovaj sajt (svoj sajt, klijentov, ili javno dostupan sajt u svrhu edukacije). Razumem da se svaki scan evidentira u audit log."
-             data-en="I confirm I have permission to scan this site (my own, a client's, or a publicly accessible site for educational purposes). I understand every scan is recorded in the audit log.">
-        Potvrdujem da imam dozvolu da skeniram ovaj sajt (svoj sajt, klijentov, ili javno dostupan sajt u svrhu edukacije). Razumem da se svaki scan evidentira u audit log.
+      <!--
+        IMPORTANT: this label uses the .sr/.en span pattern (CSS-toggled
+        via body.lang-en class) instead of data-sr/data-en textContent
+        swap. That's because setLang() uses .textContent = ... which
+        would wipe out the inline <a> links. GDPR informed-consent
+        requires click-through to the actual binding documents
+        (Terms + Privacy) — plain text label would not be legally sound.
+      -->
+      <label for="consentCheckbox">
+        <span class="sr">Potvrdujem da imam dozvolu da skeniram ovaj sajt (svoj sajt, klijentov, ili javno dostupan sajt u svrhu edukacije). Razumem da se svaki scan evidentira u audit log saglasno <a href="./terms.html" target="_blank" rel="noopener" onclick="event.stopPropagation()">Uslovima koriscenja</a> i <a href="./privacy.html" target="_blank" rel="noopener" onclick="event.stopPropagation()">Politici privatnosti</a>.</span>
+        <span class="en">I confirm I have permission to scan this site (my own, a client's, or a publicly accessible site for educational purposes). I understand every scan is recorded in the audit log per the <a href="./terms.html" target="_blank" rel="noopener" onclick="event.stopPropagation()">Terms of Service</a> and <a href="./privacy.html" target="_blank" rel="noopener" onclick="event.stopPropagation()">Privacy Policy</a>.</span>
       </label>
     </div>
     <div class="progress-wrap" id="progressWrap" role="status" aria-live="polite">
