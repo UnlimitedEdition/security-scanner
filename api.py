@@ -402,6 +402,16 @@ def pricing_page():
         return FileResponse(path, media_type="text/html")
 
 
+@app.api_route("/account.html", methods=["GET", "HEAD"])
+def account_page():
+    """Pro account page — subscription info + scan history. Client-side
+    access control: the page loads for anyone, but its JS fetches
+    /api/subscription/me and redirects free-tier visitors back to /pricing."""
+    path = os.path.join(os.path.dirname(__file__), "account.html")
+    if os.path.exists(path):
+        return FileResponse(path, media_type="text/html")
+
+
 @app.api_route("/404.html", methods=["GET", "HEAD"])
 def not_found_page():
     """Explicit route for the branded 404 page (also served by the exception
@@ -1260,7 +1270,10 @@ def start_scan(req: ScanRequest, request: Request):
     }
 
     # Persist the scan + log the request. Both are best-effort — DB
-    # outages degrade persistence but don't break the scan.
+    # outages degrade persistence but don't break the scan. When the
+    # caller is Pro, we tag the scan with their subscription_id so
+    # the /api/subscription/scans endpoint can build a history view
+    # for the account page.
     db.create_scan(
         scan_id=scan_id,
         url=req.url,
@@ -1272,6 +1285,7 @@ def start_scan(req: ScanRequest, request: Request):
         session_id=req.session_id,
         fingerprint_hash=req.fingerprint_hash,
         status="queued" if queue_position > 0 else "running",
+        subscription_id=(pro_sub.get("id") if pro_sub else None),
     )
     db.log_audit_event(
         event="scan_request",
@@ -1569,6 +1583,44 @@ def api_subscription_me(request: Request):
         return _subscription_public(None)
     row = subscription.get_active_by_license_key(license_key)
     return _subscription_public(row)
+
+
+@app.get("/api/subscription/scans")
+def api_subscription_scans(request: Request):
+    """
+    Return the Pro user's scan history (last 30 days, max 30 entries).
+
+    Auth: X-License-Key header. If missing or invalid, returns 402
+    Payment Required — only Pro subscribers have scan history.
+
+    Response shape is deliberately light (metadata + score summary,
+    no full findings list). To see detailed findings, the frontend
+    makes a second call to GET /scan/{id} which applies the usual
+    ownership verification gate.
+    """
+    license_key = (request.headers.get("x-license-key") or "").strip()
+    if not license_key:
+        raise HTTPException(
+            status_code=402,
+            detail="Scan history requires an active Pro subscription.",
+        )
+    row = subscription.get_active_by_license_key(license_key)
+    if not row:
+        raise HTTPException(
+            status_code=402,
+            detail="Scan history requires an active Pro subscription.",
+        )
+
+    scans_list = db.get_scans_by_subscription(
+        subscription_id=row.get("id"),
+        limit=30,
+        since_days=30,
+    )
+    return {
+        "subscription": _subscription_public(row),
+        "scans": scans_list,
+        "count": len(scans_list),
+    }
 
 
 class CheckoutCreateRequest(BaseModel):

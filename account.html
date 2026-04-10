@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Moj nalog / My Account — Web Security Scanner Pro</title>
+  <meta name="description" content="Vas Pro nalog: status pretplate, istorija skeniranja (30 dana), download PDF izvestaja, upravljanje pretplatom.">
+  <meta name="robots" content="noindex, follow">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a78bfa' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+  <style>
+    .acc-main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem 4rem;
+    }
+    .acc-header {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;
+    }
+    .acc-header h1 { font-size: 1.8rem; font-weight: 800; margin: 0; }
+    .acc-header .sub { color: #9ca3af; font-size: 0.9rem; margin-top: 0.25rem; }
+
+    .acc-card {
+      background: #11142a;
+      border: 1px solid #252a4a;
+      border-radius: 14px;
+      padding: 1.75rem;
+      margin-bottom: 1.5rem;
+    }
+    .acc-card h2 {
+      font-size: 1.05rem; font-weight: 700; margin: 0 0 1rem;
+      color: #a78bfa; text-transform: uppercase; letter-spacing: 0.08em;
+    }
+
+    .plan-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+    .plan-field {
+      padding: 0.9rem 1rem;
+      background: #0a0c15;
+      border: 1px solid #252a4a;
+      border-radius: 10px;
+    }
+    .plan-field .label {
+      font-size: 0.7rem; text-transform: uppercase;
+      letter-spacing: 0.08em; color: #7b83a6; margin-bottom: 0.3rem;
+    }
+    .plan-field .value {
+      font-size: 1.05rem; font-weight: 700; color: #e8eaf6;
+    }
+    .plan-field.pill-ok .value { color: #4ade80; }
+    .plan-field.pill-warn .value { color: #eab308; }
+    .plan-field.pill-err .value { color: #f87171; }
+
+    .plan-actions {
+      margin-top: 1.25rem;
+      display: flex; gap: 0.7rem; flex-wrap: wrap;
+    }
+    .plan-btn {
+      display: inline-block;
+      padding: 0.7rem 1.2rem; border-radius: 8px;
+      font-weight: 700; font-size: 0.88rem;
+      text-decoration: none; border: 1px solid #252a4a;
+      background: #1a1e38; color: #e8eaf6; cursor: pointer;
+      font-family: inherit;
+    }
+    .plan-btn:hover { background: #252a4a; }
+    .plan-btn.primary {
+      background: #a78bfa; color: #0a0c15; border-color: #a78bfa;
+    }
+    .plan-btn.primary:hover { background: #c4b5fd; }
+    .plan-btn.danger {
+      color: #f87171; border-color: #3f1a1a;
+    }
+    .plan-btn.danger:hover { background: #2a1010; }
+
+    .history-empty {
+      text-align: center; padding: 3rem 1rem;
+      color: #7b83a6; font-size: 0.95rem;
+    }
+    .history-list { display: flex; flex-direction: column; gap: 0.7rem; }
+    .history-row {
+      display: grid;
+      grid-template-columns: 60px 1fr auto auto;
+      gap: 1rem; align-items: center;
+      padding: 0.9rem 1rem;
+      background: #0a0c15;
+      border: 1px solid #252a4a;
+      border-radius: 10px;
+      text-decoration: none;
+      color: #e8eaf6;
+      transition: border-color 0.15s;
+    }
+    .history-row:hover {
+      border-color: #a78bfa;
+    }
+    @media (max-width: 680px) {
+      .history-row { grid-template-columns: 50px 1fr; grid-template-rows: auto auto; }
+      .history-row .hist-score-text { grid-column: 2; }
+      .history-row .hist-date { grid-column: 1 / -1; grid-row: 2; text-align: left; padding-left: 66px; }
+    }
+
+    .hist-grade {
+      width: 44px; height: 44px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; font-weight: 900;
+      color: #0a0c15;
+    }
+    .hist-grade.A { background: #22c55e; }
+    .hist-grade.B { background: #84cc16; }
+    .hist-grade.C { background: #eab308; }
+    .hist-grade.D { background: #f97316; }
+    .hist-grade.F { background: #ef4444; color: #fff; }
+    .hist-grade.pending { background: #252a4a; color: #7b83a6; font-size: 0.8rem; }
+
+    .hist-main { min-width: 0; }
+    .hist-url {
+      font-family: monospace; font-size: 0.88rem;
+      color: #e8eaf6; font-weight: 600;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .hist-meta {
+      font-size: 0.75rem; color: #7b83a6; margin-top: 0.2rem;
+    }
+    .hist-meta .counts-crit { color: #ef4444; }
+    .hist-meta .counts-high { color: #f97316; }
+    .hist-meta .counts-med  { color: #eab308; }
+    .hist-meta .counts-low  { color: #84cc16; }
+
+    .hist-score-text {
+      font-weight: 800; font-size: 1.1rem; color: #e8eaf6;
+      text-align: right; min-width: 70px;
+    }
+    .hist-score-text small {
+      display: block; font-size: 0.65rem;
+      color: #7b83a6; font-weight: 500;
+    }
+    .hist-date {
+      font-size: 0.75rem; color: #7b83a6;
+      text-align: right; white-space: nowrap;
+    }
+
+    .acc-loading {
+      text-align: center; padding: 3rem 1rem;
+      color: #7b83a6; font-size: 0.95rem;
+    }
+    .acc-error {
+      text-align: center; padding: 2rem 1rem;
+      background: #2a1010; border: 1px solid #3f1a1a;
+      border-radius: 10px; color: #f87171;
+    }
+  </style>
+</head>
+<body>
+
+<main class="acc-main">
+
+  <div class="acc-header">
+    <div>
+      <h1>
+        <span class="sr">Moj nalog</span>
+        <span class="en">My Account</span>
+      </h1>
+      <div class="sub">
+        <span class="sr">Upravljanje Pro pretplatom i istorijom skeniranja</span>
+        <span class="en">Manage your Pro subscription and scan history</span>
+      </div>
+    </div>
+    <a href="./index.html" class="plan-btn">
+      <span class="sr">← Skener</span>
+      <span class="en">← Scanner</span>
+    </a>
+  </div>
+
+  <div id="accLoading" class="acc-loading">
+    <span class="sr">Ucitavanje...</span>
+    <span class="en">Loading...</span>
+  </div>
+
+  <div id="accNotPro" class="acc-card" style="display:none;">
+    <h2>
+      <span class="sr">Pristup samo za Pro korisnike</span>
+      <span class="en">Pro access required</span>
+    </h2>
+    <p style="color:#cbd5e1;line-height:1.7;">
+      <span class="sr">Ova stranica je dostupna samo korisnicima sa aktivnom Pro pretplatom. Preusmeravanje na cenovnik za 3 sekunde...</span>
+      <span class="en">This page is only available to users with an active Pro subscription. Redirecting to pricing in 3 seconds...</span>
+    </p>
+    <div class="plan-actions">
+      <a href="./pricing.html" class="plan-btn primary">
+        <span class="sr">Pretplati se na Pro</span>
+        <span class="en">Subscribe to Pro</span>
+      </a>
+      <a href="./index.html" class="plan-btn">
+        <span class="sr">Skener</span>
+        <span class="en">Scanner</span>
+      </a>
+    </div>
+  </div>
+
+  <div id="accContent" style="display:none;">
+
+    <div class="acc-card">
+      <h2>
+        <span class="sr">Pretplata</span>
+        <span class="en">Subscription</span>
+      </h2>
+      <div class="plan-grid">
+        <div class="plan-field">
+          <div class="label">
+            <span class="sr">Plan</span>
+            <span class="en">Plan</span>
+          </div>
+          <div class="value" id="fPlan">—</div>
+        </div>
+        <div class="plan-field" id="fStatusField">
+          <div class="label">Status</div>
+          <div class="value" id="fStatus">—</div>
+        </div>
+        <div class="plan-field">
+          <div class="label">
+            <span class="sr">Obnavljanje</span>
+            <span class="en">Renews</span>
+          </div>
+          <div class="value" id="fRenews">—</div>
+        </div>
+        <div class="plan-field">
+          <div class="label">Email</div>
+          <div class="value" id="fEmail">—</div>
+        </div>
+      </div>
+      <div class="plan-actions">
+        <a href="#" id="btnManage" class="plan-btn primary" target="_blank" rel="noopener">
+          <span class="sr">Upravljaj pretplatom</span>
+          <span class="en">Manage subscription</span>
+        </a>
+        <button type="button" id="btnLogout" class="plan-btn danger">
+          <span class="sr">Odjavi se</span>
+          <span class="en">Log out</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="acc-card">
+      <h2>
+        <span class="sr">Istorija skeniranja (30 dana)</span>
+        <span class="en">Scan history (30 days)</span>
+      </h2>
+      <div id="historyContainer">
+        <div class="acc-loading">
+          <span class="sr">Ucitavanje istorije...</span>
+          <span class="en">Loading history...</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+<script src="./blog-common.js" defer></script>
+<script>
+(function() {
+  var API_BASE = 'https://unlimitededition-web-security-scanner.hf.space';
+  if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+    API_BASE = location.origin;
+  }
+
+  function getLicenseKey() {
+    try { return localStorage.getItem('wss-license-key') || ''; } catch (e) { return ''; }
+  }
+  function isEn() { return document.body.classList.contains('lang-en'); }
+  function escText(s) { return (s == null) ? '' : String(s); }
+
+  function el(tag, cls, txt) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (txt != null) e.textContent = txt;
+    return e;
+  }
+
+  function formatDate(iso) {
+    if (!iso) return '—';
+    try {
+      var d = new Date(iso);
+      if (isNaN(d.getTime())) return iso;
+      return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+    } catch (e) { return iso; }
+  }
+
+  function renderSubscription(sub) {
+    document.getElementById('fPlan').textContent =
+      sub.plan === 'pro_yearly' ? 'Pro Yearly' :
+      sub.plan === 'pro_monthly' ? 'Pro Monthly' : sub.plan;
+
+    var statusField = document.getElementById('fStatusField');
+    var statusCell = document.getElementById('fStatus');
+    statusField.classList.remove('pill-ok', 'pill-warn', 'pill-err');
+    if (sub.status === 'active' || sub.status === 'on_trial') {
+      statusField.classList.add('pill-ok');
+    } else if (sub.status === 'cancelled' || sub.status === 'past_due') {
+      statusField.classList.add('pill-warn');
+    } else {
+      statusField.classList.add('pill-err');
+    }
+    statusCell.textContent = sub.status || '—';
+
+    document.getElementById('fRenews').textContent = formatDate(sub.current_period_end);
+    document.getElementById('fEmail').textContent = sub.email || '—';
+
+    // Manage subscription link — Lemon Squeezy customer portal
+    // The user's best path is their purchase confirmation email. We
+    // provide a generic link to Lemon Squeezy's "my orders" page as
+    // a starting point and a note.
+    var manage = document.getElementById('btnManage');
+    manage.href = 'https://app.lemonsqueezy.com/my-orders';
+  }
+
+  function renderHistoryList(scans) {
+    var container = document.getElementById('historyContainer');
+    container.textContent = '';
+
+    if (!scans || scans.length === 0) {
+      var empty = el('div', 'history-empty');
+      var srSpan = el('span', 'sr', 'Nema skenova u poslednjih 30 dana. Pokrenite svoj prvi Pro scan.');
+      var enSpan = el('span', 'en', 'No scans in the last 30 days. Run your first Pro scan.');
+      empty.appendChild(srSpan);
+      empty.appendChild(enSpan);
+      container.appendChild(empty);
+      return;
+    }
+
+    var list = el('div', 'history-list');
+    scans.forEach(function(scan) {
+      var row = document.createElement('a');
+      row.className = 'history-row';
+      row.href = './index.html?scan=' + encodeURIComponent(scan.id);
+
+      // Grade bubble
+      var grade = (scan.score && scan.score.grade) || '?';
+      var gradeEl = el('div', 'hist-grade ' + (grade !== '?' ? grade : 'pending'));
+      if (scan.status === 'completed') {
+        gradeEl.textContent = grade;
+      } else if (scan.status === 'error') {
+        gradeEl.textContent = '!';
+        gradeEl.className = 'hist-grade F';
+      } else {
+        gradeEl.textContent = '...';
+      }
+      row.appendChild(gradeEl);
+
+      // Main URL + counts
+      var main = el('div', 'hist-main');
+      main.appendChild(el('div', 'hist-url', scan.url || scan.domain || '(unknown)'));
+
+      var counts = (scan.score && scan.score.counts) || {};
+      var pagesScanned = scan.pages_scanned || 1;
+      var meta = el('div', 'hist-meta');
+      var pagesText = pagesScanned > 1 ? (pagesScanned + ' pages - ') : '';
+      meta.appendChild(document.createTextNode(pagesText));
+      if (scan.status === 'completed') {
+        var c = el('span', 'counts-crit', 'C:' + (counts.critical || 0));
+        var h = el('span', 'counts-high', ' H:' + (counts.high || 0));
+        var m = el('span', 'counts-med',  ' M:' + (counts.medium || 0));
+        var l = el('span', 'counts-low',  ' L:' + (counts.low || 0));
+        meta.appendChild(c); meta.appendChild(h); meta.appendChild(m); meta.appendChild(l);
+      } else {
+        meta.appendChild(document.createTextNode(scan.status || 'unknown'));
+      }
+      main.appendChild(meta);
+      row.appendChild(main);
+
+      // Score
+      var scoreTxt = el('div', 'hist-score-text');
+      if (scan.status === 'completed' && scan.score && scan.score.score != null) {
+        var num = document.createElement('span');
+        num.textContent = scan.score.score + '/100';
+        scoreTxt.appendChild(num);
+        var lbl = document.createElement('small');
+        lbl.textContent = scan.score.grade_label || '';
+        scoreTxt.appendChild(lbl);
+      } else {
+        scoreTxt.textContent = '—';
+      }
+      row.appendChild(scoreTxt);
+
+      // Date
+      var dt = el('div', 'hist-date', formatDate(scan.completed_at || scan.created_at));
+      row.appendChild(dt);
+
+      list.appendChild(row);
+    });
+    container.appendChild(list);
+  }
+
+  function showError(msg) {
+    var container = document.getElementById('historyContainer');
+    container.textContent = '';
+    var box = el('div', 'acc-error', msg);
+    container.appendChild(box);
+  }
+
+  // Main boot sequence
+  document.addEventListener('DOMContentLoaded', function() {
+    var key = getLicenseKey();
+    if (!key) {
+      document.getElementById('accLoading').style.display = 'none';
+      document.getElementById('accNotPro').style.display = 'block';
+      setTimeout(function() { location.href = './pricing.html'; }, 3000);
+      return;
+    }
+
+    fetch(API_BASE + '/api/subscription/scans', {
+      headers: { 'X-License-Key': key }
+    })
+      .then(function(r) {
+        if (r.status === 402) {
+          document.getElementById('accLoading').style.display = 'none';
+          document.getElementById('accNotPro').style.display = 'block';
+          setTimeout(function() { location.href = './pricing.html'; }, 3000);
+          throw new Error('not_pro');
+        }
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function(data) {
+        document.getElementById('accLoading').style.display = 'none';
+        document.getElementById('accContent').style.display = 'block';
+        if (data.subscription) renderSubscription(data.subscription);
+        renderHistoryList(data.scans || []);
+      })
+      .catch(function(err) {
+        if (err.message === 'not_pro') return;
+        document.getElementById('accLoading').style.display = 'none';
+        document.getElementById('accContent').style.display = 'block';
+        showError(isEn() ? 'Could not load account: ' + err.message : 'Ne mogu da ucitam nalog: ' + err.message);
+      });
+
+    // Logout button
+    var logout = document.getElementById('btnLogout');
+    if (logout) {
+      logout.addEventListener('click', function() {
+        var ok = confirm(isEn()
+          ? 'Log out? Your license key will be removed from this device. You can re-activate it anytime.'
+          : 'Odjavi se? License key ce biti uklonjen sa ovog uredjaja. Mozete ponovo da aktivirate bilo kada.');
+        if (!ok) return;
+        try { localStorage.removeItem('wss-license-key'); } catch (e) {}
+        location.href = './index.html';
+      });
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

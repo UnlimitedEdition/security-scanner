@@ -223,10 +223,16 @@ def create_scan(
     session_id: Optional[str] = None,
     fingerprint_hash: Optional[str] = None,
     status: str = "queued",
+    subscription_id: Optional[int] = None,
 ) -> Optional[Dict[str, Any]]:
     """
     INSERT a new scans row. PII is hashed before hitting the DB.
     Returns the inserted row dict on success, None on failure.
+
+    subscription_id is populated only for Pro-initiated scans; it is
+    the FK to subscriptions.id added in migration 012 and is what the
+    /api/subscription/scans endpoint queries against to build the
+    Pro user's scan history.
     """
     if not is_configured():
         return None
@@ -246,10 +252,81 @@ def create_scan(
             "consent_accepted": consent_accepted,
             "consent_version": consent_version or CONSENT_VERSION,
         }
+        if subscription_id is not None:
+            row["subscription_id"] = int(subscription_id)
         result = client.table("scans").insert(row).execute()
         return (result.data or [None])[0]
 
     return _safe_db_call("create_scan", _do)
+
+
+def get_scans_by_subscription(
+    subscription_id: int,
+    limit: int = 30,
+    since_days: int = 30,
+) -> List[Dict[str, Any]]:
+    """
+    Return the most recent scans linked to a Pro subscription.
+
+    Used by GET /api/subscription/scans to populate the account
+    history page. Only returns scan metadata (id, url, domain,
+    status, score summary, created/completed timestamps) — NOT
+    the full findings payload, so the response stays small even
+    when the user has dozens of scans. To see detailed findings,
+    the user clicks a row and the frontend fetches /scan/{id}
+    which still applies the ownership verification gate.
+
+    Pro scans retention matches the rest of the scans table (no
+    automatic deletion), but this query caps at `since_days` so
+    the account view doesn't become unwieldy as it accumulates.
+    """
+    if not subscription_id or not is_configured():
+        return []
+
+    def _do() -> List[Dict[str, Any]]:
+        client = get_client()
+        cutoff = future_utc(days=-int(since_days)).isoformat()
+        result = (
+            client.table("scans")
+            .select(
+                "id, url, domain, status, progress, error, created_at, completed_at, result"
+            )
+            .eq("subscription_id", int(subscription_id))
+            .gte("created_at", cutoff)
+            .order("created_at", desc=True)
+            .limit(int(limit))
+            .execute()
+        )
+        rows = result.data or []
+
+        # Keep the payload light: drop the heavy `result.results` list
+        # and keep only the score summary + counts so the history list
+        # renders instantly.
+        trimmed: List[Dict[str, Any]] = []
+        for row in rows:
+            result_blob = row.get("result") or {}
+            score = (result_blob or {}).get("score") or {}
+            trimmed.append({
+                "id": row.get("id"),
+                "url": row.get("url"),
+                "domain": row.get("domain"),
+                "status": row.get("status"),
+                "progress": row.get("progress") or 0,
+                "error": row.get("error"),
+                "created_at": row.get("created_at"),
+                "completed_at": row.get("completed_at"),
+                "score": {
+                    "score": score.get("score"),
+                    "grade": score.get("grade"),
+                    "grade_label": score.get("grade_label"),
+                    "counts": score.get("counts") or {},
+                },
+                "pages_scanned": (result_blob or {}).get("pages_found") or 1,
+            })
+        return trimmed
+
+    out = _safe_db_call("get_scans_by_subscription", _do)
+    return out if isinstance(out, list) else []
 
 
 def update_scan_progress(scan_id: str, progress: int, step: str) -> None:

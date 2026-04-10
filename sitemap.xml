@@ -201,9 +201,17 @@
   <!-- Pro plan landing -->
   <url>
     <loc>https://security-scanner-ruddy.vercel.app/pricing</loc>
-    <lastmod>2026-04-10</lastmod>
+    <lastmod>2026-04-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
+  </url>
+
+  <!-- Pro account (noindex; listed for completeness) -->
+  <url>
+    <loc>https://security-scanner-ruddy.vercel.app/account</loc>
+    <lastmod>2026-04-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
   </url>
 
   <!-- Legal / policy -->

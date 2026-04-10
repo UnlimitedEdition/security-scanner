@@ -221,12 +221,15 @@
   nav.appendChild(navLink('./blog-performance.html', 'Performanse', 'Performance', isActive('performance')));
   nav.appendChild(navLink('./blog-gdpr.html', 'GDPR', 'GDPR', isActive('gdpr')));
 
-  // Pro pricing CTA — standalone, visually distinct from regular nav links.
-  // Has its own CSS class so the accent color + border can mark it as a
-  // premium upsell rather than another editorial link.
+  // Pro pricing CTA — for free visitors. For subscribed users this
+  // button swaps to an 'Account' link (see logic below after the header
+  // is inserted into the DOM). Has its own CSS class so the accent
+  // color + border can mark it as a premium upsell rather than another
+  // editorial link.
   var proCta = el('a', {
     href: './pricing.html',
     className: isActive('pricing') ? 'nav-pro-cta active' : 'nav-pro-cta',
+    id: 'nav-pro-cta',
   });
   proCta.appendChild(srSpan('Pro', 'Pro'));
   nav.appendChild(proCta);
@@ -453,5 +456,39 @@
   } else {
     initTimeline();
   }
+
+  // --- Pro button → Account button swap when logged in ---
+  //
+  // When the visitor has a license key in localStorage, the Pro upsell
+  // in the header becomes an "Account" link pointing at account.html.
+  // This runs after the header has been inserted into the DOM above,
+  // so we just look up the element by id and rewrite its href + label.
+  // We do NOT hit the backend here — the full /api/subscription/me
+  // check happens on account.html itself. Here we just trust the
+  // presence of a key as a fast client-side hint, which is fine for
+  // a nav label: worst case, a user with an expired key clicks
+  // "Account" and gets redirected to /pricing.
+  try {
+    var licenseKey = localStorage.getItem('wss-license-key') || '';
+    if (licenseKey) {
+      var proBtn = document.getElementById('nav-pro-cta');
+      if (proBtn) {
+        proBtn.setAttribute('href', './account.html');
+        proBtn.textContent = '';
+        var isAccountPage = (location.pathname.indexOf('account') !== -1);
+        if (isAccountPage) {
+          proBtn.className = 'nav-pro-cta active';
+        }
+        var srLabel = document.createElement('span');
+        srLabel.className = 'sr';
+        srLabel.textContent = 'Nalog';
+        var enLabel = document.createElement('span');
+        enLabel.className = 'en';
+        enLabel.textContent = 'Account';
+        proBtn.appendChild(srLabel);
+        proBtn.appendChild(enLabel);
+      }
+    }
+  } catch (e) { /* localStorage disabled, fall through to Pro button */ }
 
 })();
