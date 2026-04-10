@@ -9,3 +9,7 @@ certifi>=2024.0.0
 # Database (Supabase Postgres client + pure-Python driver for migrations)
 supabase==2.9.1
 psycopg[binary]==3.2.3
+
+# PDF report export (Pro plan feature). Pure Python, no system deps —
+# matters for the python:3.11-slim base image on HF Spaces.
+fpdf2==2.8.1

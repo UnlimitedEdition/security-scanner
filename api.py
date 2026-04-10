@@ -1133,6 +1133,112 @@ def get_scan(scan_id: str, request: Request):
 
 
 # ─────────────────────────────────────────────────────────────────────────
+# PDF report export — Pro feature (gated on license key + ownership)
+# ─────────────────────────────────────────────────────────────────────────
+@app.get("/api/scan/{scan_id}/pdf")
+def download_scan_pdf(scan_id: str, request: Request):
+    """
+    Generate a branded PDF report for a completed scan.
+
+    Dual gate - both must pass:
+      1. Caller has an active Pro subscription (X-License-Key header)
+      2. Caller's IP hash is in verified_domains for the scan's domain
+         (Function 6 ownership verification)
+
+    Rationale for gate 2 even for Pro users: the ownership model exists
+    to prevent the scanner from being used as an exploit cheat sheet
+    against third-party sites. Paying for Pro buys you extra features
+    on your OWN scans, not a bypass of the ownership check.
+    """
+    # Gate 1: Pro subscription
+    pro_sub = _get_pro_subscription(request)
+    if not pro_sub:
+        raise HTTPException(
+            status_code=402,  # Payment Required
+            detail=(
+                "PDF izvoz zahteva aktivnu Pro pretplatu. / "
+                "PDF export requires an active Pro subscription. "
+                "See /pricing for details."
+            ),
+        )
+
+    # Look up scan (hot path: memory, cold path: DB)
+    scan = scans.get(scan_id)
+    if not scan:
+        db_row = db.get_scan_from_db(scan_id)
+        if not db_row:
+            raise HTTPException(status_code=404, detail="Skeniranje nije pronadjeno.")
+        scan = db_row
+
+    if scan.get("status") != "completed" or not scan.get("result"):
+        raise HTTPException(
+            status_code=409,  # Conflict - scan not ready
+            detail="Scan not complete yet. PDF export requires a finished scan.",
+        )
+
+    # Gate 2: ownership verification
+    requester_ip = _client_ip(request)
+    scan_domain = scan.get("domain") or ""
+    if not scan_domain:
+        try:
+            from urllib.parse import urlparse as _urlparse
+            scan_domain = (_urlparse(scan.get("url", "")).netloc.removeprefix("www.") or "")
+        except Exception:
+            scan_domain = ""
+
+    verified = bool(scan_domain) and db.is_domain_verified(scan_domain, requester_ip)
+    if not verified:
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "PDF izvoz zahteva verifikaciju vlasnistva domena. "
+                "Verifikujte se kroz meta tag, DNS TXT, ili fajl u /.well-known/. / "
+                "PDF export requires domain ownership verification. "
+                "Verify via meta tag, DNS TXT, or /.well-known/ file."
+            ),
+        )
+
+    # Generate the PDF
+    try:
+        import pdf_report
+        pdf_bytes = pdf_report.generate_pdf(scan)
+    except Exception as e:
+        import logging as _logging
+        _logging.getLogger(__name__).exception("PDF generation failed for scan %s", scan_id)
+        raise HTTPException(
+            status_code=500,
+            detail=f"PDF generation error: {str(e)[:200]}",
+        )
+
+    # Audit log the export
+    db.log_audit_event(
+        event="scan_complete",  # reuse existing enum; details carries the action
+        ip=requester_ip,
+        ua=request.headers.get("user-agent", "")[:500] or None,
+        scan_id=scan_id,
+        domain=scan_domain,
+        details={
+            "action": "pdf_export",
+            "plan": pro_sub.get("plan_name"),
+            "pdf_bytes": len(pdf_bytes),
+        },
+    )
+
+    safe_domain = "".join(c if c.isalnum() or c in "-._" else "_" for c in scan_domain)[:60] or "scan"
+    filename = f"scanner-report-{safe_domain}-{scan_id[:8]}.pdf"
+
+    from fastapi.responses import Response
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Cache-Control": "private, no-store",
+        },
+    )
+
+
+# ─────────────────────────────────────────────────────────────────────────
 # Pro plan — license key auth + subscription status
 # ─────────────────────────────────────────────────────────────────────────
 def _subscription_public(row: Optional[Dict[str, Any]]) -> Dict[str, Any]:
