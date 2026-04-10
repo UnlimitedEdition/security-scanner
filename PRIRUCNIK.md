@@ -1157,7 +1157,218 @@ SELECT COUNT(*) AS flagged_rows,
 
 ---
 
-*Poslednja verzija: 2026-04-10, po završetku Faze 3 (abuse reports).*
-*Sledeća revizija: kad završimo Fazu 5 (deploy na HF Spaces) — dodaće
-sekciju o deploy checklist-i i live monitoring-u posle prvih scans.*
+---
+
+## 13. DEPLOY + LIVE MONITORING (posle push-a na HF Spaces)
+
+Ova sekcija je tvoj "day-1-in-production" playbook. Čitaj je kad god
+push-uješ nove promene na HF Space i treba da potvrdiš da ništa nije
+slomljeno.
+
+### Pre deploy-a — checklist
+
+- [ ] `git status` — working tree clean
+- [ ] `git log space/main..master --oneline` — vidiš sve commit-e koji
+      idu
+- [ ] `git diff --stat space/main..master` — lista fajlova je razumna
+      (bez slučajno zabrljanih node_modules, .env, ili privremenih fajlova)
+- [ ] HF Space Secrets su postavljeni (Settings → Variables and secrets):
+      - `SUPABASE_URL`
+      - `SUPABASE_SERVICE_KEY`  ⚠️ proveri da je iz Supabase Dashboard,
+        ne iz koda
+      - `PII_HASH_SALT`  ⚠️ MORA biti ista vrednost kao dosad da očuvaš
+        korelacije
+      - `CONSENT_VERSION`
+- [ ] Supabase migracije su primenjene (ako si pravio nove):
+      `mcp__supabase__list_migrations` → last version match-uje lokalne
+
+### Push komanda
+
+```bash
+# Mi radimo na local master branch-u, HF prati main:
+git push space master:main
+```
+
+**NE koristi force push** (`--force` ili `+master:main`) osim ako baš
+moraš rollback-ovati. Force push može da progazi promene koje je neko
+drugi napravio direktno u HF Space web editoru.
+
+### Tokom build-a (5-10 min)
+
+HF automatski počinje rebuild čim primi push. Pratiš preko:
+https://huggingface.co/spaces/Unlimitededition/web-security-scanner
+
+- **Logs tab** pokazuje real-time build output
+- **App tab** pokazuje trenutno stanje servisa (live / building / error)
+- Build traje oko 5-10 min za naš setup (Python 3.11-slim + pip install
+  ~10 paketa)
+
+**Crveno stanje:**
+- "Build failed" → klikni Logs i pročitaj poslednje linije. Najčešći
+  razlozi: pip install timeouts (samo retry build), syntax error u kodu
+  (popravi, commit, push opet), nedostaju env vars (dodaj secret, retry)
+
+### Posle build-a — smoke test produkcije
+
+**Korak 1: /health endpoint**
+
+```bash
+curl https://unlimitededition-web-security-scanner.hf.space/health
+```
+
+Tražiš ovo u odgovoru:
+
+```json
+{
+  "status": "ok",
+  "db": {
+    "configured": true,        ← MORA biti true
+    "reachable": true,         ← MORA biti true
+    "supabase_url_set": true,
+    "service_key_set": true,
+    "salt_set": true,
+    "consent_version": "2026-04-10-v1",  ← ili tvoja aktuelna verzija
+    "schema_migrations_rows": 0   ← 0 je OK (my runner nije pušten, MCP je)
+  }
+}
+```
+
+**Ako `reachable: false`** → secret nije postavljen ili je pogrešan.
+Proveri HF Space Settings → Variables and secrets. Najčešća greška:
+dodat je `service_role_key` umesto `SUPABASE_SERVICE_KEY` (ime se
+razlikuje).
+
+**Korak 2: pravi scan na primer-u koji je siguran**
+
+Iz browser-a ili curl-a:
+```bash
+curl -X POST https://unlimitededition-web-security-scanner.hf.space/scan \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://example.com","consent_accepted":true,"consent_version":"2026-04-10-v1"}'
+```
+
+Očekivani odgovor: `{"scan_id":"xxxxxxxx","status":"running","queue_position":0}`
+
+**Korak 3: verifikacija preko Supabase Dashboard-a**
+
+U SQL Editor-u:
+```sql
+-- Poslednjih 5 scan-ova
+SELECT id, url, domain, status, progress, consent_accepted, created_at, completed_at
+  FROM scans
+ ORDER BY created_at DESC LIMIT 5;
+
+-- Audit events za taj scan_id
+SELECT event, details, created_at
+  FROM audit_log
+ WHERE scan_id = 'OVDE_PASTE_SCAN_ID'
+ ORDER BY id;
+```
+
+Tražiš red u `scans` sa tvojim URL-om i najmanje 2 reda u audit_log-u
+(`scan_request`, `scan_start`). Ako ima i `scan_complete`, znači scan je
+prošao ceo pipeline.
+
+### Prvi 24h — šta da pratiš
+
+Posle prvog dana u produkciji, pokreni sledeće queries da vidiš da li
+je sve normalno:
+
+```sql
+-- 1. Da li je backup radio?
+SELECT id, started_at, status, bytes_written, rows_exported, error_message
+  FROM backup_log
+ ORDER BY id DESC LIMIT 3;
+-- Očekujem: najnoviji backup status='success', završen oko 04:00 UTC
+
+-- 2. Koliko scan-ova je bilo?
+SELECT DATE(created_at) AS dan, COUNT(*) AS scanova,
+       COUNT(*) FILTER (WHERE status='completed') AS uspesni,
+       COUNT(*) FILTER (WHERE status='error') AS greske
+  FROM scans
+ WHERE created_at > NOW() - INTERVAL '24 hours'
+ GROUP BY dan;
+
+-- 3. Da li ima SSRF pokušaja ili rate limit blokada?
+SELECT event, COUNT(*)
+  FROM audit_log
+ WHERE event IN ('scan_blocked_ssrf','scan_blocked_rate_limit','scan_error')
+   AND created_at > NOW() - INTERVAL '24 hours'
+ GROUP BY event;
+
+-- 4. Rast audit_log-a
+SELECT pg_size_pretty(pg_total_relation_size('audit_log')) AS audit_size,
+       COUNT(*) AS total_rows,
+       MAX(created_at) AS newest
+  FROM audit_log;
+```
+
+Normalno u prvom danu sa niskim saobraćajem:
+- 10-100 scan-ova/dan
+- 0-5 scan_error (mrežni timeout-ovi)
+- 0-10 scan_blocked_rate_limit (ako si podesio razumne limite)
+- 0 scan_blocked_ssrf (ako pa ima, to su napadači)
+- audit_log raste ~3KB po scan-u
+
+### Rollback postupak (ako deploy razbije nešto)
+
+Ako posle push-a primetiš da je scanner pukao u produkciji:
+
+**Brza opcija: revert lokalno i re-push**
+
+```bash
+# Vrati na prethodni commit (koji je radio)
+git revert HEAD --no-edit
+git push space master:main
+```
+
+HF će automatski rebuildovati na vraćenu verziju (5-10 min downtime dok
+build ne prođe).
+
+**Spora ali pouzdana opcija: direct edit u HF web editor**
+
+Ako ne možeš da pristupiš svom laptop-u:
+1. HF Space → **Files** tab
+2. Otvori problematični fajl
+3. Editor direktno → Commit
+4. HF rebuild-uje automatski
+
+**Nikad ne koristi `git push --force` kao rollback.** Umesto toga,
+pravi revert commit koji se vidi u git log-u i objašnjava zašto.
+
+### Česti problemi i rešenja
+
+| Simptom | Verovatni uzrok | Rešenje |
+|---|---|---|
+| `/health` vraća 404 sa HF marketing stranicom | Space je Private — samo owner vidi URL | Settings → Change visibility → Public |
+| `/health` vraća 200 ali `db.reachable=false` | `SUPABASE_SERVICE_KEY` nije postavljen ili je pogrešan | Settings → Variables and secrets → proveri ime i vrednost secret-a |
+| Svi scanovi fail-uju sa SSL error | certifi bundle problem u kontejneru | Retry build; ako se ponovi, dodaj eksplicit `session.verify = certifi.where()` u scanner.py |
+| "Rate limit exceeded" odmah | rate_limits tabela ima stari red od prethodnog IP-ja | `DELETE FROM rate_limits WHERE key LIKE 'ip:%'` (bezbedno — brojači se resetuju) |
+| Scan staje na progress=4% | Target domen blokira HF IP-jeve | Očekivano za neke sajtove; user treba da skenira sa `localhost` ako hoće pun pristup (ali NE preporučivaj ovo u odgovoru korisniku — to je TODO za frontend) |
+| "Bot zaštita detektovana" u rezultatima | Target koristi Cloudflare/DataDome challenge | Očekivano; rezultati za HTTP headers i SEO mogu biti nepouzdani |
+
+### Ako primetiš da HF Space kontejner konstantno restart-uje
+
+HF free tier kontejner ima ograničenja memorije (16GB) i CPU-a. Ako
+scanner konstantno restart-uje:
+
+```sql
+-- Kako često se in_progress scanovi prekidaju?
+SELECT COUNT(*) AS prekinuti_scanovi
+  FROM scans
+ WHERE status = 'running'
+   AND created_at < NOW() - INTERVAL '5 minutes';
+```
+
+Ako je broj stalno visok, kontejner se restart-uje češće nego što
+scanovi stižu da završe. Razmotri:
+- Smanjiti `SCAN_DEADLINE_SECONDS` u scanner.py
+- Ograničiti broj paralelnih scan-ova (trenutno već 1)
+- Migracija na paid HF tier ili Fly.io
+
+---
+
+*Poslednja verzija: 2026-04-10, po završetku Faze 5 (deploy na HF Spaces).*
+*Sledeća revizija: kad završimo Fazu 6 (DR drill — test restore backup-a
+na izolovanom Supabase projektu).*
 
