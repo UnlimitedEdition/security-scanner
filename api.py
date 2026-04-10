@@ -34,7 +34,13 @@ from pydantic import BaseModel, HttpUrl, field_validator
 import re
 
 import scanner
+import db
 from security_utils import is_safe_target
+
+# Public defaults — can be overridden via env vars if we ever need to tune
+# rate limits per environment without code changes.
+_RATE_LIMIT = int(os.environ.get("RATE_LIMIT_MAX", "5"))
+_RATE_WINDOW = int(os.environ.get("RATE_LIMIT_WINDOW_SECONDS", "1800"))
 
 app = FastAPI(
     title="Web Security Scanner API",
@@ -74,13 +80,15 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(SecurityHeadersMiddleware)
 
-# In-memory scan store (use Redis in production)
+# In-memory scan cache — fast path for the hot /scan/{id} polling loop.
+# The authoritative copy of each scan lives in the Supabase `scans` table
+# when db.is_configured(). Cache misses fall back to db.get_scan_from_db().
 scans: Dict[str, Dict[str, Any]] = {}
 
-# Rate limiter: max 5 scans per IP per 30 min
+# In-memory rate-limit backstop. db.check_rate_limit() is the primary
+# enforcement point when the DB is reachable; _rate_store only kicks in
+# if the DB is not configured or a write fails.
 _rate_store: Dict[str, list] = defaultdict(list)
-_RATE_LIMIT = 5
-_RATE_WINDOW = 1800
 
 # Queue system: max 1 concurrent scan
 _scan_queue: list = []
@@ -88,13 +96,113 @@ _active_scan: Dict[str, Any] = {"id": None}
 _MAX_CONCURRENT = 1
 
 
-def _check_rate_limit(ip: str) -> bool:
+def _check_rate_limit_in_memory(ip: str) -> bool:
+    """
+    Legacy sliding-window limiter — kept as a fallback when the DB is
+    unreachable. Not used as the primary path when db.is_configured().
+    """
     now = time.time()
     _rate_store[ip] = [t for t in _rate_store[ip] if now - t < _RATE_WINDOW]
     if len(_rate_store[ip]) >= _RATE_LIMIT:
         return False
     _rate_store[ip].append(now)
     return True
+
+
+def _check_rate_limit(ip: str) -> bool:
+    """
+    Primary rate-limit gate. Consults the DB first (db.check_rate_limit);
+    if the DB path returns "fail-open" (None) or raises, falls back to
+    the in-memory limiter so a DB outage can't both lose persistence AND
+    disable the rate limit entirely.
+    """
+    if db.is_configured():
+        allowed, _count = db.check_rate_limit(
+            ip=ip, max_count=_RATE_LIMIT, window_seconds=_RATE_WINDOW
+        )
+        if not allowed:
+            return False
+        # Still run the in-memory limiter as a belt-and-suspenders check.
+        return _check_rate_limit_in_memory(ip)
+    return _check_rate_limit_in_memory(ip)
+
+
+def _make_progress_cb(scan_id: str):
+    """
+    Returns a progress callback closure that updates the in-memory cache
+    on every tick but only writes to the DB when progress crosses a 10%
+    threshold. This keeps DB write volume bounded to ~10 writes per scan
+    instead of ~100+.
+    """
+    last_db_pct = [0]  # mutable closure holder
+
+    def cb(step: str, pct: int):
+        scans[scan_id]["step"] = step
+        scans[scan_id]["progress"] = pct
+        # Debounced DB write: only on 10% thresholds
+        if db.is_configured() and pct - last_db_pct[0] >= 10:
+            last_db_pct[0] = pct
+            db.update_scan_progress(scan_id, pct, step)
+
+    return cb
+
+
+def _run_scan_inline(scan_id: str, url: str, client_ip: str, user_agent: Optional[str]):
+    """
+    Executes a single scan. Shared between the "start immediately" path
+    in /scan and the "pull from queue" path in _process_queue, so both
+    share identical DB + audit-log semantics.
+    """
+    # Transition to running (both in-memory and DB)
+    scans[scan_id]["status"] = "running"
+    scans[scan_id]["step"] = "Pokretanje skeniranja..."
+    db.mark_scan_running(scan_id)
+    db.log_audit_event(
+        event="scan_start",
+        ip=client_ip,
+        ua=user_agent,
+        scan_id=scan_id,
+        domain=scans[scan_id].get("domain"),
+    )
+
+    progress_cb = _make_progress_cb(scan_id)
+    try:
+        result = scanner.scan(url, progress_callback=progress_cb)
+        scans[scan_id]["status"] = "completed"
+        scans[scan_id]["progress"] = 100
+        scans[scan_id]["result"] = result
+        db.mark_scan_completed(scan_id, result)
+
+        # Detect deadline truncation from scanner.py's errors list
+        errors = (result or {}).get("errors") or []
+        truncated = any("vremenski limit" in (e or "").lower() or "prekoracio" in (e or "").lower() for e in errors)
+        if truncated:
+            db.log_audit_event(
+                event="scan_truncated_deadline",
+                ip=client_ip, ua=user_agent,
+                scan_id=scan_id, domain=scans[scan_id].get("domain"),
+                details={"errors": errors[:5]},
+            )
+        db.log_audit_event(
+            event="scan_complete",
+            ip=client_ip, ua=user_agent,
+            scan_id=scan_id, domain=scans[scan_id].get("domain"),
+            details={"score": (result or {}).get("score"), "truncated": truncated},
+        )
+    except Exception as e:
+        msg = str(e)[:200]
+        scans[scan_id]["status"] = "error"
+        scans[scan_id]["error"] = msg
+        db.mark_scan_error(scan_id, msg)
+        db.log_audit_event(
+            event="scan_error",
+            ip=client_ip, ua=user_agent,
+            scan_id=scan_id, domain=scans[scan_id].get("domain"),
+            details={"error": msg},
+        )
+    finally:
+        _active_scan["id"] = None
+        _process_queue()
 
 
 def _process_queue():
@@ -116,32 +224,25 @@ def _process_queue():
         return
 
     _active_scan["id"] = scan_id
-    scan["status"] = "running"
-    scan["step"] = "Pokretanje skeniranja..." if True else "Starting scan..."
 
-    def run_scan():
-        def progress_cb(step: str, pct: int):
-            scans[scan_id]["step"] = step
-            scans[scan_id]["progress"] = pct
-
-        try:
-            result = scanner.scan(scan["url"], progress_callback=progress_cb)
-            scans[scan_id]["status"] = "completed"
-            scans[scan_id]["progress"] = 100
-            scans[scan_id]["result"] = result
-        except Exception as e:
-            scans[scan_id]["status"] = "error"
-            scans[scan_id]["error"] = str(e)[:200]
-        finally:
-            _active_scan["id"] = None
-            _process_queue()
-
-    thread = threading.Thread(target=run_scan, daemon=True)
+    thread = threading.Thread(
+        target=_run_scan_inline,
+        args=(scan_id, scan["url"], scan.get("client_ip", "unknown"), scan.get("user_agent")),
+        daemon=True,
+    )
     thread.start()
 
 
 class ScanRequest(BaseModel):
     url: str
+    # Consent is optional for backward compat with the current frontend.
+    # When the frontend is updated to send the checkbox state + version,
+    # we can tighten this to `consent_accepted: bool` (no default) and
+    # reject non-consenting scans at the pydantic layer.
+    consent_accepted: bool = False
+    consent_version: Optional[str] = None
+    session_id: Optional[str] = None
+    fingerprint_hash: Optional[str] = None
 
     @field_validator("url")
     @classmethod
@@ -260,12 +361,31 @@ def start_scan(req: ScanRequest, request: Request):
         or request.headers.get("cf-connecting-ip", "")
         or (request.client.host if request.client else "unknown")
     )
+    user_agent = request.headers.get("user-agent", "")[:500] or None
+
+    # Audit: every request is logged, even rejected ones, so abuse patterns
+    # are visible in forensics. Rate-limited/SSRF-blocked scans get their
+    # own event types below.
     if not _check_rate_limit(client_ip):
+        db.log_audit_event(
+            event="scan_blocked_rate_limit",
+            ip=client_ip, ua=user_agent,
+            details={"url": req.url, "limit": _RATE_LIMIT, "window_s": _RATE_WINDOW},
+        )
         raise HTTPException(
             status_code=429,
             detail="Previše zahteva. Maksimalno 5 skeniranja po 30 minuta. / Too many requests. Max 5 scans per 30 minutes."
         )
+
     scan_id = str(uuid.uuid4())[:8]
+
+    # Extract domain for grouping — mirrors scanner.py._get_domain
+    try:
+        from urllib.parse import urlparse
+        parsed = urlparse(req.url)
+        domain = parsed.netloc.removeprefix("www.") or req.url
+    except Exception:
+        domain = req.url
 
     # Determine queue position
     queue_position = len(_scan_queue) + (1 if _active_scan["id"] else 0)
@@ -273,6 +393,7 @@ def start_scan(req: ScanRequest, request: Request):
     scans[scan_id] = {
         "id": scan_id,
         "url": req.url,
+        "domain": domain,
         "status": "queued" if queue_position > 0 else "running",
         "progress": 0,
         "step": "",
@@ -280,35 +401,51 @@ def start_scan(req: ScanRequest, request: Request):
         "created_at": datetime.utcnow().isoformat(),
         "result": None,
         "error": None,
+        # Stash the requester info so _process_queue can pick the scan up
+        # later and still have the full context for audit logging.
+        "client_ip": client_ip,
+        "user_agent": user_agent,
     }
 
+    # Persist the scan + log the request. Both are best-effort — DB
+    # outages degrade persistence but don't break the scan.
+    db.create_scan(
+        scan_id=scan_id,
+        url=req.url,
+        domain=domain,
+        ip=client_ip,
+        user_agent=user_agent,
+        consent_accepted=req.consent_accepted,
+        consent_version=req.consent_version,
+        session_id=req.session_id,
+        fingerprint_hash=req.fingerprint_hash,
+        status="queued" if queue_position > 0 else "running",
+    )
+    db.log_audit_event(
+        event="scan_request",
+        ip=client_ip, ua=user_agent,
+        scan_id=scan_id, domain=domain,
+        session_id=req.session_id,
+        fingerprint_hash=req.fingerprint_hash,
+        details={
+            "url": req.url,
+            "queue_position": queue_position,
+            "consent_accepted": req.consent_accepted,
+        },
+    )
+
     if queue_position > 0:
-        # Add to queue
         scans[scan_id]["step"] = f"U redu za skeniranje... pozicija {queue_position}"
         _scan_queue.append(scan_id)
     else:
         # Start immediately
         _active_scan["id"] = scan_id
         scans[scan_id]["step"] = "Pokretanje skeniranja..."
-
-        def run_scan():
-            def progress_cb(step: str, pct: int):
-                scans[scan_id]["step"] = step
-                scans[scan_id]["progress"] = pct
-
-            try:
-                result = scanner.scan(req.url, progress_callback=progress_cb)
-                scans[scan_id]["status"] = "completed"
-                scans[scan_id]["progress"] = 100
-                scans[scan_id]["result"] = result
-            except Exception as e:
-                scans[scan_id]["status"] = "error"
-                scans[scan_id]["error"] = str(e)[:200]
-            finally:
-                _active_scan["id"] = None
-                _process_queue()
-
-        thread = threading.Thread(target=run_scan, daemon=True)
+        thread = threading.Thread(
+            target=_run_scan_inline,
+            args=(scan_id, req.url, client_ip, user_agent),
+            daemon=True,
+        )
         thread.start()
 
     return {"scan_id": scan_id, "status": scans[scan_id]["status"], "queue_position": queue_position}
@@ -316,11 +453,30 @@ def start_scan(req: ScanRequest, request: Request):
 
 @app.get("/scan/{scan_id}")
 def get_scan(scan_id: str):
-    """Get scan status and results."""
-    if scan_id not in scans:
-        raise HTTPException(status_code=404, detail="Skeniranje nije pronađeno.")
+    """
+    Get scan status and results.
 
-    scan = scans[scan_id]
+    Hot path: in-memory cache (~99% of polls hit here).
+    Cold path: Supabase fallback — used when the worker has restarted
+    and the cache is empty but the scan completed before the restart.
+    """
+    scan = scans.get(scan_id)
+
+    if not scan:
+        # Cache miss — try the DB
+        db_row = db.get_scan_from_db(scan_id)
+        if not db_row:
+            raise HTTPException(status_code=404, detail="Skeniranje nije pronađeno.")
+        return {
+            "id": db_row["id"],
+            "url": db_row["url"],
+            "status": db_row["status"],
+            "progress": db_row.get("progress") or 0,
+            "step": db_row.get("step") or "",
+            "queue_position": 0,
+            "result": db_row.get("result"),
+            "error": db_row.get("error"),
+        }
 
     # Update queue position
     if scan["status"] == "queued":
@@ -350,4 +506,5 @@ def health():
         "scans_in_memory": len(scans),
         "queue_length": len(_scan_queue),
         "active_scan": _active_scan["id"] is not None,
+        "db": db.health_check(),
     }
