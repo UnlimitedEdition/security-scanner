@@ -1,0 +1,90 @@
+# Dependabot configuration
+# Docs: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+#
+# Strategy for this project:
+#   - Python deps (requirements.txt) are the main attack surface — check weekly.
+#   - Docker base image (python:3.11-slim) gets patch/minor updates weekly.
+#   - Minor + patch updates are grouped into a single PR per ecosystem to
+#     reduce review noise. Major bumps get their own PRs so we notice them.
+#   - We open at most 5 PRs per ecosystem at a time to avoid flooding.
+#   - Security updates (separate from version updates) are ALWAYS opened
+#     regardless of these limits — that is controlled by the
+#     "Dependabot security updates" toggle in repo settings, not here.
+
+version: 2
+
+updates:
+  # ------------------------------------------------------------------
+  # Python backend (api.py, scanner.py, checks/*, etc.)
+  # ------------------------------------------------------------------
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Belgrade"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "deps(python)"
+      include: "scope"
+    groups:
+      # One PR for all non-breaking updates — easier to review together
+      python-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+    # Major bumps are intentionally NOT grouped — we want to see each one
+    # on its own so we can assess breaking changes individually.
+    ignore:
+      # Pin psycopg to 3.x — do not auto-bump to a hypothetical 4.x
+      - dependency-name: "psycopg"
+        update-types: ["version-update:semver-major"]
+      # FastAPI: let Dependabot propose, we review manually
+      # (no ignore rule needed, listed here for clarity)
+
+  # ------------------------------------------------------------------
+  # Docker base image (Dockerfile for HuggingFace Space deploy)
+  # ------------------------------------------------------------------
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Belgrade"
+    open-pull-requests-limit: 2
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "deps(docker)"
+      include: "scope"
+    ignore:
+      # Pin Python major version — do not auto-bump from 3.11 to 3.12/3.13
+      # (that is a deliberate decision, test first)
+      - dependency-name: "python"
+        update-types: ["version-update:semver-major"]
+
+  # ------------------------------------------------------------------
+  # GitHub Actions (future-proofing — no workflows yet, but when we
+  # add them, Dependabot will start tracking action versions)
+  # ------------------------------------------------------------------
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Belgrade"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "deps(actions)"
+      include: "scope"
