@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Uslovi koriscenja / Terms of Service — Web Security Scanner</title>
+  <meta name="description" content="Uslovi koriscenja za Web Security Scanner — pravila, ogranicenja, i vasa odgovornost pri skeniranju sajtova.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+</head>
+<body>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr"><div class="timeline-title">Sadrzaj</div><ol id="timeline-sr"></ol></div>
+    <div class="en"><div class="timeline-title">Contents</div><ol id="timeline-en"></ol></div>
+  </aside>
+  <main class="blog-content">
+
+  <!-- SERBIAN -->
+  <div class="sr">
+    <h1>Uslovi koriscenja</h1>
+    <p class="subtitle">Verzija 2026-04-10-v1 &middot; Poslednje azuriranje: 10. april 2026.</p>
+
+    <h2 id="tos1">1. Prihvatanje uslova</h2>
+    <p>Koriscenjem Web Security Scanner-a (dalje u tekstu <strong>&quot;Servis&quot;</strong>) prihvatate ove uslove u celosti. Ako se ne slazete, molim vas da ne koristite Servis. Svaka scan operacija zahteva eksplicitno potvrdjivanje pristanka pre nego sto se pokrene, a verzija uslova u trenutku pristanka se zapisuje u nas audit log kao pravni dokaz saglasnosti.</p>
+
+    <h2 id="tos2">2. Sta Servis radi</h2>
+    <p>Servis izvrsava <strong>pasivne bezbednosne provere</strong> javno dostupnih veb sajtova. To znaci:</p>
+    <ul>
+      <li>Citamo samo informacije koje su javno dostupne kroz HTTP/HTTPS zahteve (headere, HTML, DNS zapise, SSL certifikate)</li>
+      <li>Ne pokusavamo eksploatisanje ranjivosti, ne saljemo payload-e, ne trazimo zaobilazenje autentikacije</li>
+      <li>Svaki scan ima maksimalnu duzinu od 180 sekundi i rate limit od 5 skeniranja po 30 minuta po IP adresi</li>
+      <li>SSRF zastita sprecava da Servis bude zloupotrebljen za skeniranje internih mreza ili cloud metadata endpoint-a</li>
+    </ul>
+
+    <h2 id="tos3">3. Vasa odgovornost kao korisnika</h2>
+    <p><strong>Vi ste odgovorni da imate pravnu dozvolu da skenirate bilo koji domen koji unosite u Servis.</strong> Prihvatljivi slucajevi koriscenja:</p>
+    <ul>
+      <li><strong>Vas sopstveni sajt</strong> — ako ste vlasnik domena ili imate administrativni pristup</li>
+      <li><strong>Klijentov sajt</strong> — uz pismenu dozvolu vlasnika sajta (npr. kao deo ugovora o bezbednosnoj reviziji)</li>
+      <li><strong>Javno dostupan sajt u svrhu edukacije</strong> — pod uslovom da koristite rezultate samo za licno ucenje i da ne ugrozavate sajt kroz previse cestih zahteva</li>
+      <li><strong>CTF i bug bounty programi</strong> — kada pravila programa eksplicitno dozvoljavaju automatske skenere</li>
+    </ul>
+    <p><strong>Zabranjena je upotreba Servisa za:</strong></p>
+    <ul>
+      <li>Neovlasceno skeniranje tudjih sajtova u pripremi za napad</li>
+      <li>Mass-scanning kao deo rekognasce kampanje protiv veceg broja meta</li>
+      <li>Pokusaj skeniranja internih, privatnih, ili loopback adresa (SSRF zastita ce ionako blokirati, ali pokusaj je sam po sebi krsenje uslova)</li>
+      <li>Skeniranje sajtova cije ste vlasnika vec obavestili da ne zele da budu skenirani preko nase abuse-report procedure</li>
+    </ul>
+
+    <h2 id="tos4">4. Pristanak na svaki scan</h2>
+    <p>Pre pokretanja svakog skeniranja, morate eksplicitno oznaciti checkbox kojim potvrdjujete da imate dozvolu za taj konkretni domen. Ovaj checkbox je pravni dokumentovani pristanak, ne samo UI ukrasni element. Potvrdom se u nas audit log zapisuju:</p>
+    <ul>
+      <li>Da ste potvrdili pristanak (<code>consent_accepted: true</code>)</li>
+      <li>Verzija ovih uslova koja je bila na snazi (<code>consent_version</code>)</li>
+      <li>Vremenski pecat, URL koji ste zadali, i pseudonimizovana IP adresa i User-Agent</li>
+    </ul>
+    <p>Ako u buducnosti dodje do pravnog spora oko toga da li ste imali dozvolu, mi cemo koristiti ove zapise kao dokaz da ste izjavili da imate pravo da skenirate.</p>
+
+    <h2 id="tos5">5. Sta se cuva u nasoj bazi</h2>
+    <p>Detalji o tome sta konkretno cuvamo, koliko dugo, i kako se podaci stite, opisani su u <a href="./privacy.html">Politici privatnosti</a>. Ukratko:</p>
+    <ul>
+      <li>URL, domen, i rezultat scan-a se cuvaju u nasoj bazi radi audit traga i kasnijeg pregleda od strane korisnika</li>
+      <li>IP adresa i User-Agent se cuvaju kao SHA-256 hash sa server-side salt-om (pseudonimizacija u smislu GDPR Art. 4(5))</li>
+      <li>Audit log je append-only i cuva se do 90 dana, osim redova koji su flagovani kao pravna evidencija</li>
+      <li>Dnevni enkriptovani backup se sprema na Cloudflare R2 offsite storage</li>
+    </ul>
+
+    <h2 id="tos6">6. Prava vlasnika skeniranog sajta (abuse report)</h2>
+    <p>Ako ste vlasnik domena koji je skeniran bez vase dozvole, mozete poslati prijavu zloupotrebe preko link-a &quot;Prijavi zloupotrebu&quot; u footer-u sajta ili direktno na <a href="./index.html#abuse">./index.html#abuse</a>. Za svaku prijavu:</p>
+    <ul>
+      <li>Pregledamo u roku od 72 sata</li>
+      <li>Ako je prijava legitimna, dodajemo vas domen na listu blokade — svi buduci scan-ovi tog domena ce biti odbijeni sa HTTP 403</li>
+      <li>Povezani audit_log zapisi se flaguju kao pravna evidencija i zadrzavaju zauvek (osim ako nalozi za brisanje ne nalazu drugacije)</li>
+      <li>Ako ostavite kontakt email, obavestavamo vas o ishodu</li>
+    </ul>
+
+    <h2 id="tos7">7. Verifikacija vlasnistva (Function 6)</h2>
+    <p>Po podrazumevanom podesavanju, scan rezultati za neprovereno vlasnistvo pokazuju samo osnovni grejd i kategorijske brojeve. Specificni pronalazci (izlozeni fajlovi, admin panel URL-ovi, ranjivosti) su sakriveni i zamenjeni placeholder-om sa pozivom na verifikaciju. Da biste otkljucali punu listu za svoj domen, dokazite vlasnistvo kroz jednu od tri metode:</p>
+    <ul>
+      <li><strong>Meta tag</strong> na pocetnoj stranici</li>
+      <li><strong>Fajl</strong> u <code>/.well-known/scanner-verify.txt</code></li>
+      <li><strong>DNS TXT zapis</strong> na <code>_scanner-verify.vasdomen.com</code></li>
+    </ul>
+    <p>Uspesna verifikacija vazi 30 dana po kombinaciji (domen, IP hash). Posle isteka, mozete je ponovo izvrsiti. Ova politika postoji da bi se sprecilo zlonamerno koriscenje Servisa kao exploit cheat-sheet-a za tudje sajtove.</p>
+
+    <h2 id="tos8">8. Ogranicenja odgovornosti</h2>
+    <p>Servis se pruza <strong>&quot;kako jeste&quot;</strong>, bez ikakvih garancija, izriciitih ili implicitnih. Konkretno:</p>
+    <ul>
+      <li>Ne garantujemo da ce svi mogucu ranjivosti biti otkrivene — scanner je pasivan i ne moze videti ono sto zahteva autentikaciju ili interaktivni probe</li>
+      <li>Ne garantujemo tacnost rezultata za sajtove iza bot-protection challenge stranica (Cloudflare, DataDome, itd.)</li>
+      <li>Nismo odgovorni za bilo kakvu stetu koja proizadje iz vaseg koriscenja ili nemogucnosti koriscenja Servisa</li>
+      <li>Nismo odgovorni ako vas sajt usporava ili padne tokom scan-a (ne bi trebalo da se desi — koristimo razumne timeout-e i rate limit-ove, ali theoretically moguce)</li>
+    </ul>
+
+    <h2 id="tos9">9. Izmene uslova</h2>
+    <p>Zadrzavamo pravo da azuriramo ove uslove. Kad menjamo, bump-ujemo verziju (<code>consent_version</code>) i svaki novi scan ce morati da potvrdi novu verziju. Vase prethodne saglasnosti ostaju vazece u audit log-u ali se ne retroaktivno primenjuju na nove pravne odredbe.</p>
+
+    <h2 id="tos10">10. Kontakt i sporovi</h2>
+    <p>Za sva pitanja u vezi sa ovim uslovima, kontaktirajte nas preko <a href="https://toske-programer.web.app" target="_blank" rel="noopener">toske-programer.web.app</a>. Eventualni sporovi se resavaju prema pravu drzave operatora, osim u meri u kojoj lokalni propisi daju korisniku jace pravo.</p>
+  </div>
+
+  <!-- ENGLISH -->
+  <div class="en">
+    <h1>Terms of Service</h1>
+    <p class="subtitle">Version 2026-04-10-v1 &middot; Last updated: April 10, 2026</p>
+
+    <h2 id="tos1e">1. Acceptance of terms</h2>
+    <p>By using Web Security Scanner (the <strong>&quot;Service&quot;</strong>), you accept these terms in full. If you don't agree, please don't use the Service. Every scan requires you to explicitly confirm consent before it starts, and the version of these terms in effect at that moment is recorded in our audit log as legal proof of your agreement.</p>
+
+    <h2 id="tos2e">2. What the Service does</h2>
+    <p>The Service performs <strong>passive security checks</strong> on publicly-accessible websites. That means:</p>
+    <ul>
+      <li>We only read information publicly available through HTTP/HTTPS requests (headers, HTML, DNS records, SSL certificates)</li>
+      <li>We do not attempt to exploit vulnerabilities, send attack payloads, or bypass authentication</li>
+      <li>Every scan has a hard 180-second deadline and a rate limit of 5 scans per 30 minutes per IP address</li>
+      <li>SSRF protection prevents the Service from being abused to scan internal networks or cloud metadata endpoints</li>
+    </ul>
+
+    <h2 id="tos3e">3. Your responsibility as a user</h2>
+    <p><strong>You are responsible for having legal permission to scan any domain you enter into the Service.</strong> Acceptable use cases:</p>
+    <ul>
+      <li><strong>Your own site</strong> — if you own the domain or have administrative access</li>
+      <li><strong>A client's site</strong> — with written permission from the site owner (e.g., as part of a security audit engagement)</li>
+      <li><strong>A publicly accessible site for educational purposes</strong> — provided you use the results only for personal learning and do not overload the target with excessive scans</li>
+      <li><strong>CTF and bug bounty programs</strong> — where the program rules explicitly allow automated scanners</li>
+    </ul>
+    <p><strong>Prohibited uses of the Service:</strong></p>
+    <ul>
+      <li>Unauthorized scanning of third-party sites in preparation for an attack</li>
+      <li>Mass scanning as part of a reconnaissance campaign against multiple targets</li>
+      <li>Attempting to scan internal, private, or loopback addresses (SSRF protection will block it, but the attempt itself violates these terms)</li>
+      <li>Scanning sites whose owners have already notified us through our abuse-report procedure that they do not want to be scanned</li>
+    </ul>
+
+    <h2 id="tos4e">4. Consent on every scan</h2>
+    <p>Before starting each scan, you must explicitly check a checkbox confirming you have permission for that specific domain. This checkbox is documented legal consent, not just a UI decoration. When you confirm, the following gets recorded in our audit log:</p>
+    <ul>
+      <li>That you confirmed consent (<code>consent_accepted: true</code>)</li>
+      <li>The version of these terms in effect (<code>consent_version</code>)</li>
+      <li>Timestamp, the URL you submitted, and your pseudonymized IP address and User-Agent</li>
+    </ul>
+    <p>If a legal dispute ever arises over whether you had permission, we will use these records as evidence that you declared you had the right to scan.</p>
+
+    <h2 id="tos5e">5. What we store in our database</h2>
+    <p>Detailed information about what we store, for how long, and how we protect it is described in our <a href="./privacy.html">Privacy Policy</a>. In summary:</p>
+    <ul>
+      <li>URL, domain, and scan result are stored in our database for audit trail and later review by users</li>
+      <li>IP address and User-Agent are stored as SHA-256 hashes with a server-side salt (pseudonymization in the sense of GDPR Art. 4(5))</li>
+      <li>Audit log is append-only and retained for up to 90 days, except for rows flagged as legal evidence</li>
+      <li>A daily encrypted backup is stored on Cloudflare R2 offsite storage</li>
+    </ul>
+
+    <h2 id="tos6e">6. Rights of scanned site owners (abuse report)</h2>
+    <p>If you are the owner of a domain that was scanned without your permission, you can submit an abuse report through the &quot;Report abuse&quot; link in the footer or directly at <a href="./index.html#abuse">./index.html#abuse</a>. For every report:</p>
+    <ul>
+      <li>We review within 72 hours</li>
+      <li>If the report is legitimate, we add your domain to the block list — all future scans of that domain will be refused with HTTP 403</li>
+      <li>Related audit_log entries are flagged as legal evidence and retained indefinitely (unless takedown orders require otherwise)</li>
+      <li>If you leave contact email, we will notify you of the outcome</li>
+    </ul>
+
+    <h2 id="tos7e">7. Ownership verification (Function 6)</h2>
+    <p>By default, scan results for unverified ownership show only the overall grade and category counts. Specific findings (exposed files, admin panel URLs, vulnerabilities) are hidden and replaced with a placeholder prompting verification. To unlock the full list for your domain, prove ownership through one of three methods:</p>
+    <ul>
+      <li><strong>Meta tag</strong> on the homepage</li>
+      <li><strong>File</strong> at <code>/.well-known/scanner-verify.txt</code></li>
+      <li><strong>DNS TXT record</strong> at <code>_scanner-verify.yourdomain.com</code></li>
+    </ul>
+    <p>Successful verification is valid for 30 days per (domain, IP hash) combination. After expiry, you can re-verify. This policy exists to prevent the Service from being used as an exploit cheat sheet against sites owned by someone else.</p>
+
+    <h2 id="tos8e">8. Limitation of liability</h2>
+    <p>The Service is provided <strong>&quot;as is&quot;</strong>, without warranties of any kind, express or implied. Specifically:</p>
+    <ul>
+      <li>We do not guarantee that all vulnerabilities will be discovered — the scanner is passive and cannot see what requires authentication or interactive probing</li>
+      <li>We do not guarantee accuracy of results for sites behind bot-protection challenge pages (Cloudflare, DataDome, etc.)</li>
+      <li>We are not liable for any damage arising from your use or inability to use the Service</li>
+      <li>We are not liable if your site slows down or crashes during a scan (it shouldn't — we use reasonable timeouts and rate limits, but theoretically possible)</li>
+    </ul>
+
+    <h2 id="tos9e">9. Changes to these terms</h2>
+    <p>We reserve the right to update these terms. When we do, we bump the version (<code>consent_version</code>) and every new scan will have to confirm the new version. Your prior consents remain valid in the audit log but do not retroactively apply to new legal terms.</p>
+
+    <h2 id="tos10e">10. Contact and disputes</h2>
+    <p>For any questions about these terms, contact us via <a href="https://toske-programer.web.app" target="_blank" rel="noopener">toske-programer.web.app</a>. Any disputes are resolved under the law of the operator's country, except to the extent local regulations grant the user stronger rights.</p>
+  </div>
+
+  </main>
+</div>
+<script src="./blog-common.js" defer></script>
+</body>
+</html>

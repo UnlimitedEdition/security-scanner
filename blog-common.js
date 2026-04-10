@@ -152,6 +152,8 @@
   footerGrid.appendChild(colPerf);
 
   // GDPR column
+  // GDPR column contains ONLY blog articles about GDPR — no legal pages.
+  // Legal pages (privacy, terms, rights, abuse) live in their own row below.
   var colGdpr = el('div', { className: 'footer-col' });
   colGdpr.appendChild(el('h4', {}, ['GDPR']));
   colGdpr.appendChild(footerLinkBi('./blog-gdpr.html', 'GDPR vodic', 'GDPR Guide'));
@@ -160,17 +162,32 @@
   colGdpr.appendChild(footerLink('./blog-gdpr-trackers.html', 'Third-Party Trackeri'));
   colGdpr.appendChild(footerLinkBi('./blog-gdpr-rights.html', 'Prava korisnika', 'User Rights'));
   colGdpr.appendChild(footerLinkBi('./blog-gdpr-fines.html', 'GDPR Kazne', 'GDPR Fines'));
-  colGdpr.appendChild(footerLinkBi('./privacy.html', 'Politika privatnosti', 'Privacy Policy'));
   footerGrid.appendChild(colGdpr);
 
-  // Footer bottom
-  var footerBottom = el('div', { className: 'footer-bottom' });
-  var fbP = el('p');
-  fbP.appendChild(document.createTextNode('Web Security Scanner \u00A9 2026 \u2014 '));
-  fbP.appendChild(el('a', { href: 'https://toske-programer.web.app' }, ['<Toske/>']));
-  fbP.appendChild(document.createTextNode(' \u00B7 '));
-  // Report abuse — on index.html (where the panel exists) opens the inline
-  // panel; on blog pages it falls back to navigating to index with a hash.
+  // =====================================================================
+  // LEGAL ROW — cleanly separated from blog articles above.
+  // These are actual policy pages (or panels) that define the terms of
+  // using this scanner, as opposed to the GDPR blog column which is
+  // educational content about GDPR in general.
+  // =====================================================================
+  var legalRow = el('div', { className: 'footer-legal' });
+
+  // Politika privatnosti — dedicated page
+  var legalPrivacy = el('a', { href: './privacy.html' });
+  legalPrivacy.appendChild(srSpan('Politika privatnosti', 'Privacy Policy'));
+  legalRow.appendChild(legalPrivacy);
+
+  // Uslovi koriscenja — dedicated page
+  var legalTerms = el('a', { href: './terms.html' });
+  legalTerms.appendChild(srSpan('Uslovi koriscenja', 'Terms of Service'));
+  legalRow.appendChild(legalTerms);
+
+  // Prava korisnika — the user-rights blog article is the canonical source
+  var legalRights = el('a', { href: './blog-gdpr-rights.html' });
+  legalRights.appendChild(srSpan('Prava korisnika', 'User Rights'));
+  legalRow.appendChild(legalRights);
+
+  // Prijavi zloupotrebu — opens inline panel on index.html
   var abuseLink = el('a', {
     href: './index.html#abuse',
     onclick: function(ev) {
@@ -181,7 +198,13 @@
     }
   });
   abuseLink.appendChild(srSpan('Prijavi zloupotrebu', 'Report abuse'));
-  fbP.appendChild(abuseLink);
+  legalRow.appendChild(abuseLink);
+
+  // Footer bottom — just copyright + CTA
+  var footerBottom = el('div', { className: 'footer-bottom' });
+  var fbP = el('p');
+  fbP.appendChild(document.createTextNode('Web Security Scanner \u00A9 2026 \u2014 '));
+  fbP.appendChild(el('a', { href: 'https://toske-programer.web.app' }, ['<Toske/>']));
   footerBottom.appendChild(fbP);
   var fbCta = el('a', { href: './index.html', className: 'footer-cta' });
   fbCta.appendChild(srSpan('Skeniraj svoj sajt \u2192', 'Scan your site \u2192'));
@@ -189,6 +212,7 @@
 
   var footerEl = el('footer', { className: 'site-footer' });
   footerEl.appendChild(footerGrid);
+  footerEl.appendChild(legalRow);
   footerEl.appendChild(footerBottom);
   document.body.appendChild(footerEl);
 
@@ -204,9 +228,19 @@
   }
 
   // Restore saved language
+  // IMPORTANT: call BOTH window.setLang (if page has its own full translator
+  // that handles [data-sr][data-en] elements like index.html does) AND
+  // _blogSetLang (which toggles body.lang-en for CSS-based .sr/.en spans).
+  // Calling only _blogSetLang leaves data-sr/data-en elements stuck in Serbian
+  // after the user picks EN and refreshes the page.
   try {
     var saved = localStorage.getItem('wss-lang');
-    if (saved === 'en') _blogSetLang('en');
+    if (saved === 'en') {
+      if (window.setLang && window.setLang !== _blogSetLang) {
+        window.setLang('en');
+      }
+      _blogSetLang('en');
+    }
   } catch(e) {}
 
   // Bind all lang buttons via delegation

@@ -294,6 +294,13 @@ def privacy():
         return FileResponse(path, media_type="text/html")
 
 
+@app.get("/terms.html")
+def terms():
+    path = os.path.join(os.path.dirname(__file__), "terms.html")
+    if os.path.exists(path):
+        return FileResponse(path, media_type="text/html")
+
+
 @app.get("/blog-common.css")
 def blog_common_css():
     path = os.path.join(os.path.dirname(__file__), "blog-common.css")
