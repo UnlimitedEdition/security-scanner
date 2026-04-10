@@ -7,6 +7,130 @@
 (function() {
   'use strict';
 
+  // ============================================================
+  // SELF-XSS WARNING (big STOP message in devtools console)
+  // ============================================================
+  // This is the same pattern Facebook, Google, PayPal, Discord,
+  // YouTube, Netflix, Twitter and every other consumer-grade site
+  // with AdSense or auth uses. It protects AGAINST social-engineering
+  // self-XSS attacks, where a scammer tells a non-technical victim:
+  //
+  //   "Paste this code in your console to unlock X feature!"
+  //
+  // The victim pastes, the scammer's code hijacks their session or
+  // steals data. Browser vendors (Chrome/Firefox/Safari) explicitly
+  // refuse to let websites lock devtools — that's a user right —
+  // so the only defense is social: a giant visible "STOP" that
+  // non-technical users will read and halt at.
+  //
+  // We CAN'T actually block console input from running. Overriding
+  // window.console or using debugger traps is trivially bypassable
+  // (Sources → Snippets, extensions, iframes, new-tab same-domain),
+  // hostile to legitimate tools (ad blockers, accessibility), and
+  // will get the site flagged by Google as "deceptive behavior".
+  // The warning below is the actual industry standard, not a hack.
+  //
+  // Runs inside try/catch so a missing console (weird browsers,
+  // unit tests, screen readers) doesn't break the rest of the page.
+  try {
+    var _stop = "color:#ef4444;font-size:56px;font-weight:900;" +
+                "text-shadow:2px 2px 0 rgba(0,0,0,0.5);" +
+                "padding:8px 16px;border:4px solid #ef4444;" +
+                "border-radius:8px;background:#1a1e30;";
+    var _title = "color:#fbbf24;font-size:17px;font-weight:800;" +
+                 "padding:4px 0;";
+    var _body = "color:#e6e8f0;font-size:13px;line-height:1.55;";
+    var _accent = "color:#8b5cf6;font-size:12px;font-family:monospace;" +
+                  "background:#0a0c15;padding:2px 6px;border-radius:4px;";
+
+    // The top banner
+    console.log("%c⛔ STOP!", _stop);
+
+    // Serbian warning
+    console.log("%c🇷🇸 UPOZORENJE — Web Security Scanner", _title);
+    console.log(
+      "%cOvo je alatka za programere (DevTools). Ako vam je neko rekao " +
+      "da kopirate\n" +
+      "i paste-ujete nesto ovde kako biste \"aktivirali\" neku funkciju, " +
+      "dobili\n" +
+      "besplatne skenove, \"hakovali\" nesto ili slicno — " +
+      "TO JE PREVARA.\n\n" +
+      "Ovo je napad koji se zove \"self-XSS\". Paste-ovanjem tudjeg koda " +
+      "ovde\n" +
+      "mozete:\n" +
+      "  • izgubiti kontrolu nad vasim nalogom i scan istorijom\n" +
+      "  • dozvoliti napadacu da salje zahteve u vase ime (abuse reports, " +
+      "scanove)\n" +
+      "  • otkriti kolacice trecim licima\n" +
+      "  • postati deo bot-net mreze koja napada druge sajtove\n\n" +
+      "Zatvorite ovu konzolu. Ne paste-ujte NISTA sto vam je neko poslao.\n" +
+      "Ako ste programer i trebate dijagnoziku, kontaktirajte nas preko " +
+      "zvanicnih\n" +
+      "kanala (ispod).",
+      _body
+    );
+
+    console.log("");
+
+    // English warning
+    console.log("%c🇬🇧 WARNING — Web Security Scanner", _title);
+    console.log(
+      "%cThis is a browser feature intended for developers (DevTools). " +
+      "If someone\n" +
+      "told you to copy and paste something here to \"enable\" a feature, " +
+      "get\n" +
+      "free scans, \"hack\" something, or similar — " +
+      "IT IS A SCAM.\n\n" +
+      "This attack is called \"self-XSS\". By pasting someone else's code " +
+      "here\n" +
+      "you may:\n" +
+      "  • lose control of your account and scan history\n" +
+      "  • allow the attacker to send requests on your behalf (abuse " +
+      "reports, scans)\n" +
+      "  • leak your cookies to third parties\n" +
+      "  • become part of a botnet attacking other sites\n\n" +
+      "Close this console. Do NOT paste anything someone sent you.\n" +
+      "If you are a developer and need to debug, contact us via the " +
+      "official\n" +
+      "channels below.",
+      _body
+    );
+
+    console.log("");
+
+    // Legitimate contact info
+    console.log("%cLegitimni kanali / Legitimate channels:", _title);
+    console.log(
+      "%c  https://toske-programer.web.app",
+      _accent
+    );
+    console.log(
+      "%c  /abuse-report.html     — prijavi zloupotrebu / report abuse",
+      _accent
+    );
+    console.log(
+      "%c  /privacy.html          — politika privatnosti / privacy policy",
+      _accent
+    );
+    console.log(
+      "%c  /terms.html            — uslovi koriscenja / terms of service",
+      _accent
+    );
+
+    console.log("");
+
+    // Closing note
+    console.log(
+      "%cIf you're a security researcher and found something interesting, " +
+      "please\ncontact us via the channels above before publishing. " +
+      "We respond within 72h.",
+      "color:#8b92b0;font-size:12px;font-style:italic;"
+    );
+  } catch (_ignore) {
+    // console not available (ancient browser, specific test runners) —
+    // silently ignore; the warning is a "nice to have", not critical.
+  }
+
   // --- Detect active category from URL ---
   var path = location.pathname;
   var fname = path.split('/').pop() || 'index.html';
