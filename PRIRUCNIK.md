@@ -19,6 +19,7 @@
 | Korisnik traži "obrišite moje podatke" (GDPR) | **§5.3** |
 | Korisnik pita "zašto ne vidim detalje scan-a?" | **§11 (verifikacija)** |
 | Primio sam abuse report — šta sad? | **§12 (abuse workflow)** |
+| Baza je umrla — moram sve da vratim | **§14 (DR drill)** |
 | Scanner je prestao da radi | **§6.3** |
 | Backup nije napravljen 2+ dana | **§6.1** |
 | Mislim da je `SUPABASE_SERVICE_KEY` procureo | **§8** |
@@ -1368,7 +1369,276 @@ scanovi stižu da završe. Razmotri:
 
 ---
 
-*Poslednja verzija: 2026-04-10, po završetku Faze 5 (deploy na HF Spaces).*
-*Sledeća revizija: kad završimo Fazu 6 (DR drill — test restore backup-a
-na izolovanom Supabase projektu).*
+---
+
+## 14. DR DRILL — kako da stvarno vratiš bazu iz backup-a
+
+Ovo je **najvažnija sekcija u priručniku.** Backup koji nije testiran
+nije backup — on je samo .enc fajl u cloud-u za koji se nadaš da će
+raditi. DR drill je procedura kojom se to **dokazuje** pre nego što ti
+bude zaista potrebno.
+
+**Preporučena cadence: jednom kvartalno** (i uvek nakon veće promene
+u backup/restore pipeline-u — npr. menjanje schema_version, rotacija
+encryption key-a, migracija R2 bucket-a).
+
+### Šta DR drill zapravo testira
+
+1. Možeš da download-uješ backup blob iz R2
+2. Imaš ispravan encryption key i dekripcija uspeva
+3. Gzip decompress radi na downloaded blob-u
+4. JSON payload ima očekivani shape (schema_version match)
+5. psycopg može da INSERT-uje u svežu bazu
+6. Migrations runable bez izmena na praznom projektu
+7. Content integrity — restorovani redovi izgledaju kao original
+8. Koliko **stvarno** traje ceo proces od incidenta do recovery
+
+Ako bilo šta od ovih 8 pukne u drill-u, pukne i u pravom incidentu.
+Zato testiramo unapred.
+
+### Preduslovi
+
+- Drugi Supabase nalog ili drugi projekat na istom nalogu (free tier
+  dozvoljava 2 projekta)
+- Lokalni `.env` ili shell env sa:
+  - R2 kredencijalima (`R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`,
+    `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_ENDPOINT`)
+  - `BACKUP_ENCRYPTION_KEY` (iz password manager-a — bez ovoga nema
+    recovery-ja, backup je mrtva datoteka)
+- Python 3.11+ sa sledećim paketima:
+  ```
+  pip install --user boto3 cryptography "psycopg[binary]==3.2.3" python-dotenv
+  ```
+  **Obavezno `psycopg[binary]`**, ne pure `psycopg` — pure varijanta
+  traži libpq na sistemu i pada sa "no pq wrapper available" čak i
+  ako je instaliran PostgreSQL server.
+
+### Korak 1 — Kreiraj staging projekat na Supabase-u
+
+1. https://supabase.com/dashboard → New Project
+2. Ime: `security-scanner-dr-drill` (ili kako hoćeš, biće obrisano)
+3. Generiši i sačuvaj DB password privremeno u notepad
+4. Region: bilo koji
+5. Plan: Free
+6. Sačekaj 2-3 min da se DB provizioniše
+
+Kad bude zelena "Project is ready":
+- **Settings → Database → Connection string → Transaction pooler** (6543) → copy URI → zameni `[YOUR-PASSWORD]` sa onim iz koraka 3
+- Sačuvaj kao `STAGING_DB_URL` u notepad
+
+### Korak 2 — Primeni schema u staging projektu
+
+U repo-u postoji `scripts/dr_drill_bootstrap.sql` — generisan fajl koji
+spaja sve migracije `001-010` u jedan blok za paste-and-run. Ako je
+zastareo (dodao si nove migracije od prošlog drill-a), regeneriši ga:
+
+```bash
+python -c "
+import os
+files = sorted(f for f in os.listdir('migrations') if f.endswith('.sql'))
+with open('scripts/dr_drill_bootstrap.sql', 'w', encoding='utf-8') as out:
+    out.write('-- DR DRILL BOOTSTRAP\n')
+    for f in files:
+        with open(f'migrations/{f}', encoding='utf-8') as m:
+            out.write(f'\n-- === {f} ===\n')
+            out.write(m.read())
+"
+```
+
+Onda u staging projektu:
+1. SQL Editor → New query
+2. Paste ceo `dr_drill_bootstrap.sql` sadržaj
+3. Run
+4. Očekuj "Success. No rows returned" + možda neke NOTICE poruke (OK)
+5. Database → Tables → proveri da vidiš svih 7 tabela
+   (`schema_migrations`, `scans`, `verification_tokens`,
+   `verified_domains`, `audit_log`, `rate_limits`, `abuse_reports`,
+   `backup_log`)
+
+### Korak 3 — (OPCIONO) manual backup pre drill-a
+
+Ako želiš da testiraš restore na realističnom dataset-u (a ne samo
+ono što je noćni cron ostavio u R2), pokreni manual backup u
+produkciji kroz Supabase SQL Editor:
+
+```sql
+SELECT net.http_post(
+    url := 'https://wmerashfovgaugxpexqo.supabase.co/functions/v1/backup',
+    headers := jsonb_build_object(
+        'Content-Type', 'application/json',
+        'X-Webhook-Secret', (
+            SELECT decrypted_secret FROM vault.decrypted_secrets
+             WHERE name = 'backup_webhook_secret'
+        )
+    ),
+    body := jsonb_build_object('trigger', 'dr-drill-preflight'),
+    timeout_milliseconds := 60000
+);
+```
+
+Posle par sekundi proveri `backup_log`:
+```sql
+SELECT * FROM backup_log ORDER BY id DESC LIMIT 1;
+```
+Tražimo `status='success'` i skoriji `started_at`.
+
+### Korak 4 — Snimi baseline row counts iz produkcije
+
+Pre nego što pokreneš restore, snimi koliko redova ima u svakoj tabeli
+u produkciji. Posle restore-a ćeš uporediti sa staging-om.
+
+```sql
+SELECT
+    (SELECT COUNT(*) FROM scans) AS scans,
+    (SELECT COUNT(*) FROM audit_log) AS audit_log,
+    (SELECT COUNT(*) FROM abuse_reports) AS abuse_reports,
+    (SELECT COUNT(*) FROM verified_domains) AS verified_domains;
+```
+
+Zapiši brojeve u notepad. **Napomena:** produkcioni brojevi mogu biti
+**veći** od baseline-a posle nekog vremena (jer produkcija prima
+saobraćaj) — staging će imati SNAPSHOT koji je bio u backup-u, ne
+trenutno prod stanje. Poredi staging counts sa `backup_log.rows_exported`
+iz tog konkretnog backup-a, NE sa current prod counts.
+
+### Korak 5 — Pripremi shell za restore (Windows git bash)
+
+Otvori git bash u `F:\security-scanner\security-scanner` (desni klik
+na folder → "Open Git Bash here").
+
+```bash
+# Clear env vars koje love lažne CA bundle-ove (PostgreSQL 17 na Windows-u)
+unset CURL_CA_BUNDLE
+export CURL_CA_BUNDLE=
+
+# Override SUPABASE_DB_URL na staging
+# VAŽNO: ne diraš .env fajl — shell export samo nadjačava za ovaj terminal
+export SUPABASE_DB_URL='PASTE_STAGING_URL_IZ_KORAKA_1'
+
+# Ako tvoj .env nema R2 credentials i encryption key (ja sam ih namerno
+# ostavio prazne u default template-u), export ih iz password manager-a:
+export R2_ACCESS_KEY_ID='...'
+export R2_SECRET_ACCESS_KEY='...'
+export BACKUP_ENCRYPTION_KEY='...'
+
+# Sanity check da si u staging mode
+echo "staging check: ${SUPABASE_DB_URL:0:60}..."
+# ^ treba da pokaže drugi project ref, NE wmerashfovgaugxpexqo
+```
+
+### Korak 6 — Pokreni restore u 3 pod-koraka
+
+Svaki pod-korak otkriva drugi nivo problema ako postoji. Ne preskači ih.
+
+```bash
+# 6a — List (proverava R2 konekciju + kredencijale)
+python scripts/restore_backup.py --list
+
+# 6b — Dry-run (proverava dekripciju + JSON parse, bez DB write-a)
+python scripts/restore_backup.py --latest
+
+# 6c — Stvarni restore (INSERT sa ON CONFLICT DO NOTHING — idempotent)
+python scripts/restore_backup.py --latest --apply
+```
+
+Output na uspeh izgleda ovako:
+```
+Restoring [APPLY]
+  verified_domains     0 rows  (skip)
+  abuse_reports        0 rows  (skip)
+  scans                0 rows  (skip)
+  audit_log            29 rows  (29 inserted, 0 skipped)
+Restore complete.
+```
+
+Ako vidiš `N inserted, M skipped` gde je M > 0, to znači da je neki
+red već postojao u staging-u (npr. iz prethodnog drill-a bez
+čišćenja). Skripta je idempotentna, to je bezbedno.
+
+### Korak 7 — Verifikuj u staging-u preko SQL Editor-a
+
+U staging projektu → SQL Editor → pokreni verifikacione queries:
+
+```sql
+-- Verifikacija 1: row counts treba da match-uju backup_log.rows_exported
+SELECT
+    (SELECT COUNT(*) FROM scans) AS scans,
+    (SELECT COUNT(*) FROM audit_log) AS audit_log,
+    (SELECT COUNT(*) FROM abuse_reports) AS abuse_reports,
+    (SELECT COUNT(*) FROM verified_domains) AS verified_domains;
+
+-- Verifikacija 2: spot check na sadržaj — 5 random audit rows
+SELECT id, event, domain, LEFT(details::text, 60) AS details_preview, created_at
+  FROM audit_log
+ ORDER BY random()
+ LIMIT 5;
+
+-- Verifikacija 3: event distribution treba da pokazuje očekivane tipove
+SELECT event, COUNT(*) FROM audit_log GROUP BY event ORDER BY COUNT(*) DESC;
+```
+
+**Šta tražiš:**
+- Verif 1: row counts **tačno** match sa onim što je `backup_log.rows_exported` pokazao za taj backup
+- Verif 2: event-i izgledaju stvarno (ne prazni, ne kvarni JSON u details, timestampi iz prošlosti)
+- Verif 3: distribucija ima raznovrsne event tipove, ne samo jednu vrstu
+
+### Korak 8 — Cleanup
+
+Kad si potvrdio da sve radi:
+1. Obriši staging projekat: Settings → General → Delete project
+2. Zatvori git bash prozor (briše shell env override-e)
+3. `.env` je i dalje netaknut, i dalje pokazuje na produkciju
+
+### Česti problemi (i rešenja) na Windows-u
+
+| Simptom | Uzrok | Rešenje |
+|---|---|---|
+| `no pq wrapper available` | `pip install psycopg` instalira pure-Python verziju koja traži libpq | `pip install --user "psycopg[binary]==3.2.3" --force-reinstall` |
+| `CERTIFICATE_VERIFY_FAILED` u boto3 | `CURL_CA_BUNDLE` postavljen na putanju iz PostgreSQL 17 koja ne postoji | `unset CURL_CA_BUNDLE && export CURL_CA_BUNDLE=` pre pokretanja |
+| `missing env vars: R2_ACCESS_KEY_ID, ...` | `.env` ima prazne placeholder-e | `export` varijable iz password manager-a u shell pre pokretanja |
+| `relation "audit_log" does not exist` | Bootstrap SQL nije primenjen u staging-u | Vrati se na Korak 2 |
+| `password authentication failed` | `[YOUR-PASSWORD]` nije zamenjen u connection string-u | Proveri da si kopirao pravu vrednost iz Koraka 1.3 |
+| `Invalid authentication tag` (u dekripciji) | `BACKUP_ENCRYPTION_KEY` ne match-uje onaj sa kojim je backup napravljen | Proveri password manager — ne rotiraj ovaj ključ bez čuvanja starog dok ne istroše svi backup-i starije od rotation tačke |
+
+### Izmerene performanse (2026-04-10 drill)
+
+Ove vrednosti su zabeležene tokom prvog drill-a posle postavke
+Function 6 i Phase 3. Koristi ih kao baseline za sledeće drill-ove:
+
+| Korak | Trajanje |
+|---|---|
+| Kreiranje novog Supabase projekta + provizioniranje | ~3 min |
+| Primena bootstrap SQL (10 migracija) | ~5 sec |
+| Manual backup trigger (29 audit_log rows) | ~1 sec |
+| R2 list objects | <1 sec |
+| R2 get + decrypt + parse (2014 bytes enkriptovano) | ~2 sec |
+| psycopg INSERT 29 audit_log rows | <1 sec |
+| **Ukupno od kreiranja do potpunog restore-a** | **~20 min** |
+
+Za ozbiljniji incident (full prod data recovery), očekuj 10-30 min
+ukupno. Većina vremena je provisioning novog projekta, što ne možeš
+da ubrzaš.
+
+### Procena uspešnosti drill-a
+
+Drill je **uspešan** ako:
+- ✅ Sve 3 skripte (`--list`, `--latest`, `--latest --apply`) izašle sa exit code 0
+- ✅ Row counts u staging-u tačno match-uju `backup_log.rows_exported`
+  onog backup-a koji je restorovan
+- ✅ Spot check random rows pokazuje autentičan sadržaj sa pravim
+  event tipovima i timestamp-ima
+- ✅ Nijedan korak nije trebao code izmenu u `restore_backup.py`
+  (ako jeste, to je stvarni bug i treba ga popraviti pre nego što se
+  projekat smatra safe)
+
+Drill je **neuspešan** ako bilo koji od gore puca. U tom slučaju,
+**smatraj produkcioni backup nepouzdanim** dok ne popraviš uzrok —
+možda moraš manuelno dumpovati DB kroz Supabase Dashboard pg_dump
+ako ti zaista nešto treba pre sledećeg drill-a.
+
+---
+
+*Poslednja verzija: 2026-04-10, po završetku Faze 6 (DR drill).*
+*Sledeća revizija: kad završimo Fazu 7 (frontend polish) ili Fazu 4
+(paid multi-page). Cadence za sledeći DR drill: 2026-07-10 (kvartalno).*
 
