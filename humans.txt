@@ -1,0 +1,35 @@
+/* TEAM */
+
+Project author & maintainer: Toske-Programer
+GitHub: @UnlimitedEdition
+Location: Serbia
+Role: Everything — backend, frontend, ops, docs
+
+
+/* THANKS */
+
+Claude (Anthropic) — pair-programming assistant
+FastAPI team — async Python framework
+Supabase — Postgres + RLS + Vault
+HuggingFace — Space hosting
+Vercel — frontend hosting
+Cloudflare — R2 backups + email routing
+
+
+/* SITE */
+
+Last update: 2026/04/10
+Language: Serbian (primary) + English
+Doctype: HTML5
+Backend: Python 3.11 + FastAPI
+Frontend: Vanilla HTML/CSS/JS (no framework)
+Database: Supabase Postgres
+Deploy: HuggingFace Space (backend) + Vercel (frontend)
+Components: 110+ passive security checks
+Standards: GDPR-compliant, CSP, HSTS, SRI-ready
+
+
+/* LICENSE */
+
+Source code: MIT — see LICENSE
+Editorial content: CC BY-NC 4.0 — see LICENSE-CONTENT

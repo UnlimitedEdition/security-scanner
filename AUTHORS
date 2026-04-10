@@ -1,0 +1,59 @@
+Web Security Scanner — Authors and Contributors
+================================================
+
+This file lists the people who have contributed to Web Security Scanner.
+It is maintained manually; if you submit a PR and want to be listed,
+add your name in the same format as part of the PR.
+
+Copyright for contributions belongs to the individual authors listed
+below, licensed under MIT (for code) or CC BY-NC 4.0 (for editorial
+content) as described in LICENSE and LICENSE-CONTENT.
+
+--------------------------------------------------------------------------
+PROJECT AUTHOR
+--------------------------------------------------------------------------
+
+Toske-Programer <@UnlimitedEdition>
+  Role: Project creator, maintainer, operator
+  Contributions: Initial architecture, backend (FastAPI + checks/),
+                 frontend (index.html + blog-*.html), operator
+                 handbook (PRIRUCNIK.md), deployment (HF Space +
+                 Vercel + Supabase), security hardening, all
+                 editorial content.
+
+--------------------------------------------------------------------------
+AI ASSISTANT (coding support)
+--------------------------------------------------------------------------
+
+Claude (Anthropic)
+  Role: Pair-programming assistant via Claude Code CLI
+  Contributions: Code review, refactoring suggestions, debugging help,
+                 draft prose for documentation, security analysis of
+                 the codebase, migration authoring support.
+  Note: All AI-assisted changes are reviewed and accepted by the
+        project author before commit. Copyright in AI-assisted output
+        follows Anthropic's terms and the project's MIT/CC BY-NC 4.0
+        licensing model.
+
+--------------------------------------------------------------------------
+CONTRIBUTORS
+--------------------------------------------------------------------------
+
+(No external contributors yet. Be the first — see CONTRIBUTING.md.)
+
+--------------------------------------------------------------------------
+ACKNOWLEDGEMENTS
+--------------------------------------------------------------------------
+
+This project stands on the work of many others. Particular thanks to:
+
+- The FastAPI team for a framework that makes async Python enjoyable
+- Supabase for the free-tier Postgres + RLS + Vault stack
+- HuggingFace for free Space hosting for open-source projects
+- Vercel for free frontend hosting
+- Cloudflare for free R2 (backup storage) and email routing
+- The Contributor Covenant project for the spirit of our CoC
+- Every security researcher whose public write-ups informed the
+  check catalog in checks/
+
+If you should be on this list and are not, open an issue or PR.

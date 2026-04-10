@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Toske-Programer (Web Security Scanner contributors)
 """
 Security Scanner API
 FastAPI backend — run with: uvicorn api:app --host 0.0.0.0 --port 8000
