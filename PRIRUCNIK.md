@@ -17,6 +17,7 @@
 | Neko mi šalje pretnju "skenirali ste me bez dozvole" | **§5.1** |
 | Policija / sud / advokat traži podatke | **§5.2** |
 | Korisnik traži "obrišite moje podatke" (GDPR) | **§5.3** |
+| Korisnik pita "zašto ne vidim detalje scan-a?" | **§11 (verifikacija)** |
 | Scanner je prestao da radi | **§6.3** |
 | Backup nije napravljen 2+ dana | **§6.1** |
 | Mislim da je `SUPABASE_SERVICE_KEY` procureo | **§8** |
@@ -719,7 +720,190 @@ dokument, trebao bi da raste kako se sistem menja.
 
 ---
 
-*Poslednja verzija: 2026-04-10, po završetku Faze 1 (DB integracija).*
-*Sledeća revizija: kad završimo Fazu 2 (ownership verification) — dodaće
-sekciju o `verify_*` event-ima i `verified_domains` tabeli.*
+---
+
+## 11. OWNERSHIP VERIFICATION (Function 6) — kako to radi
+
+Ovo je mehanizam koji **sprečava da korisnik vidi osetljive detalje
+skena** (URLs otkrivenih admin strana, putanje ranjivih fajlova, payload
+savete) za domen koji **nije dokazao da je njegov**. Drugim rečima: ako
+neko skenira tuđi sajt preko našeg scanner-a, dobija samo **counts +
+severity + grade**, bez "exploit cheat-sheet-a".
+
+### Kako izgleda korisniku
+
+1. Pokrene scan za `mycompany.com` kao i obično
+2. Dobija rezultat ali sa redacted poljima:
+   ```json
+   {
+     "check_id": "file_env",
+     "severity": "CRITICAL",
+     "message": "Pronadjen .env fajl",
+     "url": "[verify ownership to see details]",
+     "path": "[verify ownership to see details]"
+   }
+   ```
+3. Frontend mu prikazuje: "**Verifikuj vlasnistvo da vidis sve detalje**"
+4. Bira jedan od 3 metoda:
+   - **Meta tag** — doda `<meta name="scanner-verify" content="TOKEN">` u `<head>`
+   - **Fajl** — upload-uje `/.well-known/scanner-verify.txt` sa token-om
+   - **DNS TXT** — pravi TXT zapis `_scanner-verify.mycompany.com` sa token-om
+5. Pritiska "Proveri" → mi potvrđujemo → od tog trenutka **narednih 30
+   dana** sa iste IP adrese dobija sve detalje za `mycompany.com`
+
+### Kako izgleda tehnički
+
+```
+Korisnik                 api.py                 DB                   Target domain
+   │                       │                    │                        │
+   │ POST /verify/request  │                    │                        │
+   │   {domain, method}    │                    │                        │
+   │──────────────────────>│                    │                        │
+   │                       │ create_verification_token                   │
+   │                       │───────────────────>│                        │
+   │                       │<───────────────────│                        │
+   │  {token,              │                    │                        │
+   │   instructions}       │                    │                        │
+   │<──────────────────────│                    │                        │
+   │                       │                    │                        │
+   │  [user stavi meta/file/DNS]                │                        │
+   │                       │                    │                        │
+   │ POST /verify/check    │                    │                        │
+   │   {token}             │                    │                        │
+   │──────────────────────>│                    │                        │
+   │                       │ get_verification_token                      │
+   │                       │───────────────────>│                        │
+   │                       │<───────────────────│                        │
+   │                       │                    │                        │
+   │                       │ GET homepage OR .well-known OR DNS TXT      │
+   │                       │─────────────────────────────────────────────>│
+   │                       │<─────────────────────────────────────────────│
+   │                       │                    │                        │
+   │                       │ mark_token_verified + upsert_verified_domain│
+   │                       │───────────────────>│                        │
+   │  {verified: true,     │                    │                        │
+   │   valid_for_days: 30} │                    │                        │
+   │<──────────────────────│                    │                        │
+```
+
+### Tabele koje ovo koristi
+
+**`verification_tokens`** — kratkotrajni challenge-i
+- `token` (PK, 32 hex chars)
+- `domain`, `method` (meta/file/dns)
+- `ip_hash` (ko je inicirao challenge)
+- `status` — pending → verified | expired | failed
+- `attempts` — koliko puta je korisnik pokušao (cap = 5)
+- `expires_at` — 1h od kreiranja, pa pg_cron automatski setuje 'expired'
+
+**`verified_domains`** — uspešne verifikacije (30-day cache)
+- `(domain, ip_hash)` — UNIQUE
+- `method` — koja metoda je uspela
+- `expires_at` — 30 dana od uspeha
+- pg_cron briše istekle svakog dana u 03:05 UTC
+
+### Audit event-i u `audit_log`
+
+| event | kada | details JSONB |
+|---|---|---|
+| `verify_request` | POST /verify/request | `{method, token_prefix}` |
+| `verify_success` | uspešna verifikacija | `{method, reason}` |
+| `verify_failure` | neuspela verifikacija | `{method, reason, attempts_made, attempts_remaining}` |
+
+### Korisne SQL komande za verifikaciju
+
+```sql
+-- Aktivne verifikacije (30-day cache)
+SELECT domain, ip_hash, method, verified_at, expires_at
+  FROM verified_domains
+ WHERE expires_at > NOW()
+ ORDER BY verified_at DESC;
+
+-- Pending challenges koji čekaju korisnika
+SELECT token, domain, method, attempts, expires_at
+  FROM verification_tokens
+ WHERE status = 'pending'
+   AND expires_at > NOW()
+ ORDER BY created_at DESC
+ LIMIT 20;
+
+-- Koje domene se najčešće ne uspevaju verifikovati (sumnja na abuse)
+SELECT details->>'method' AS method,
+       details->>'reason' AS reason,
+       COUNT(*) AS puta
+  FROM audit_log
+ WHERE event = 'verify_failure'
+   AND created_at > NOW() - INTERVAL '7 days'
+ GROUP BY method, reason
+ ORDER BY puta DESC;
+
+-- Success rate po metodi
+SELECT details->>'method' AS method,
+       COUNT(*) FILTER (WHERE event = 'verify_success') AS uspesi,
+       COUNT(*) FILTER (WHERE event = 'verify_failure') AS neuspesi,
+       ROUND(
+         100.0 * COUNT(*) FILTER (WHERE event = 'verify_success') /
+         NULLIF(COUNT(*), 0),
+       1) AS success_pct
+  FROM audit_log
+ WHERE event IN ('verify_success', 'verify_failure')
+   AND created_at > NOW() - INTERVAL '30 days'
+ GROUP BY method;
+
+-- Ako korisnik kaže "verifikovao sam ali i dalje ne vidim detalje":
+-- proveri da li mu je IP hash u verified_domains
+SELECT vd.*
+  FROM verified_domains vd
+ WHERE vd.domain = 'mycompany.com'
+   AND vd.ip_hash = encode(sha256(('KORISNIK_IP:' || '<salt>')::bytea), 'hex')
+   AND vd.expires_at > NOW();
+```
+
+### Šta kad korisnik ima problem sa verifikacijom
+
+**"Dodao sam meta tag ali 'verify' ne uspeva"**
+- Proveri `audit_log` za njegov verify_failure:
+  ```sql
+  SELECT details FROM audit_log
+   WHERE event = 'verify_failure'
+     AND domain = 'njegov-domain.com'
+   ORDER BY created_at DESC LIMIT 5;
+  ```
+- Ako je reason "homepage fetch failed" → njegov sajt ne odgovara
+- Ako je "meta tag with the expected token was not found" → njegov CDN
+  možda kešira staru verziju, recite mu "sačekajte 5 min pa probajte opet"
+- Ako je "attempts_exhausted" → token je istrošen (cap 5), treba novi preko
+  `/verify/request`
+
+**"DNS TXT zapis ne prolazi"**
+- DNS propagacija može da traje do 5-10 minuta. `dig TXT _scanner-verify.domain.com @1.1.1.1` odmah proverava sa Cloudflare DNS-a.
+- Token cap je 5 pokušaja. Ako istroši, daj novi token.
+
+**"Hoću da obrišem verifikaciju koju sam pogrešno napravio"**
+```sql
+DELETE FROM verified_domains
+ WHERE domain = 'X'
+   AND ip_hash = encode(sha256(('Y:' || '<salt>')::bytea), 'hex');
+```
+
+### Ograničenja ovog sistema (koja TREBA da znaš)
+
+- **30-day grant po `(domain, ip_hash)`** — ako korisnik promeni IP (mobilni,
+  VPN), mora ponovo da verifikuje. Ovo je neizbežno jer nemamo login sistem.
+- **Meta i file metode su slabije** od DNS-a. CMS admin može da stavi
+  meta tag bez punog domain ownership-a. Za visokoosetljive rezultate,
+  razmisli o tome da odbiješ meta/file za neke specifične event-e.
+- **Attempts cap = 5** po tokenu. Ako korisnik ima zeznut challenge,
+  mora da traži novi token preko `/verify/request`.
+- **Scanner ionako čuva CEO rezultat u bazi** — verifikacija samo kontroliše
+  šta se VRAĆA korisniku. Ti kao operater uvek vidiš sve kroz Supabase
+  Dashboard. Ovo je namerno — verifikacija je za PUBLIC acces control,
+  ne za privacy prema tebi.
+
+---
+
+*Poslednja verzija: 2026-04-10, po završetku Faze 2 (ownership verification).*
+*Sledeća revizija: kad završimo Fazu 3 (abuse reports endpoint) — dodaće
+sekciju o `abuse_report_submitted` / `abuse_block_applied` event-ima
+i radnom toku sa domain block listama.*
 

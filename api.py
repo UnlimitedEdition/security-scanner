@@ -7,10 +7,17 @@ import os
 # ============================================================
 # FIX: PostgreSQL sets OPENSSL_CONF which breaks requests SSL
 # Must be cleared BEFORE any import of requests/ssl/httpx
+#
+# CURL_CA_BUNDLE is added because PostgreSQL 17 on Windows points it
+# at a non-existent path that pip / requests / urllib3 will try to
+# use before falling back to certifi. See:
+# https://github.com/psf/requests/blob/main/src/requests/sessions.py
+# (DEFAULT_CA_BUNDLE_PATH resolution order).
 # ============================================================
 os.environ.pop("OPENSSL_CONF", None)
 os.environ.pop("SSL_CERT_FILE", None)
 os.environ.pop("REQUESTS_CA_BUNDLE", None)
+os.environ.pop("CURL_CA_BUNDLE", None)
 try:
     import certifi
     os.environ["REQUESTS_CA_BUNDLE"] = certifi.where()
@@ -35,6 +42,8 @@ import re
 
 import scanner
 import db
+import verification
+import secrets as _secrets
 from security_utils import is_safe_target
 
 # Public defaults — can be overridden via env vars if we ever need to tune
@@ -351,6 +360,244 @@ def security_txt():
         return FileResponse(path, media_type="text/plain")
 
 
+# ═══════════════════════════════════════════════════════════════════════
+# Function 6 — ownership verification
+# ═══════════════════════════════════════════════════════════════════════
+# Before a user can see the full scan findings (URLs of exposed files,
+# admin paths, payload hints, etc.), they must prove they control the
+# domain. Three methods are supported: meta tag on homepage, file at
+# /.well-known/scanner-verify.txt, or a DNS TXT record. Any one is
+# sufficient. Successful verification binds the domain to the requester's
+# IP hash for 30 days in the `verified_domains` table. Unverified scans
+# still run and still store full results in the DB — only the GET
+# endpoint redacts sensitive fields before returning them.
+
+# Cap on verification attempts per token before we kill it, to prevent
+# an attacker from brute-forcing the meta tag / file path of a domain
+# they don't control by iterating through many scan tokens.
+MAX_VERIFY_ATTEMPTS = 5
+
+# Keys that look like "URLs or details" and get replaced with a
+# placeholder in unverified GET /scan responses. If the finding schema
+# grows new sensitive keys, add them here. Over-redaction is safe;
+# under-redaction is a data leak.
+REDACTED_FINDING_KEYS = {
+    "url", "path", "found_at", "payload", "raw",
+    "evidence", "body", "details", "snippet",
+    "header_value", "response_excerpt",
+}
+REDACTION_PLACEHOLDER = "[verify ownership to see details]"
+
+
+def _redact_finding(finding: Any) -> Any:
+    """
+    Replace sensitive string values on a finding dict with a placeholder.
+    Non-dict findings are returned as-is. Boolean/int fields are kept
+    because they don't leak URLs.
+    """
+    if not isinstance(finding, dict):
+        return finding
+    return {
+        k: (REDACTION_PLACEHOLDER if k in REDACTED_FINDING_KEYS and v else v)
+        for k, v in finding.items()
+    }
+
+
+def _redact_result(result: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """
+    Returns a shallow copy of the scan result with every entry in
+    results[] run through _redact_finding. score, grade, counts, and
+    errors are untouched — those are the public summary.
+    """
+    if not isinstance(result, dict):
+        return result
+    redacted = dict(result)
+    findings = result.get("results")
+    if isinstance(findings, list):
+        redacted["results"] = [_redact_finding(f) for f in findings]
+    redacted["_redacted"] = True
+    redacted["_redaction_notice"] = (
+        "Full findings (URLs, paths, details) are hidden until you verify "
+        "ownership of the scanned domain. Use POST /verify/request to start."
+    )
+    return redacted
+
+
+class VerifyRequest(BaseModel):
+    domain: str
+    method: str  # "meta" | "file" | "dns"
+
+    @field_validator("method")
+    @classmethod
+    def validate_method(cls, v: str) -> str:
+        if v not in ("meta", "file", "dns"):
+            raise ValueError("Metoda mora biti meta, file ili dns.")
+        return v
+
+
+class VerifyCheckRequest(BaseModel):
+    token: str
+
+    @field_validator("token")
+    @classmethod
+    def validate_token(cls, v: str) -> str:
+        v = (v or "").strip()
+        # Tokens are 32 hex chars (secrets.token_hex(16)). Reject anything
+        # that doesn't look like one to fail fast on malformed input.
+        if not re.match(r"^[a-f0-9]{32}$", v):
+            raise ValueError("Neispravan format tokena.")
+        return v
+
+
+def _client_ip(request: Request) -> str:
+    """Extract real client IP honoring proxy headers (Vercel/HF/Cloudflare)."""
+    return (
+        request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+        or request.headers.get("x-real-ip", "")
+        or request.headers.get("cf-connecting-ip", "")
+        or (request.client.host if request.client else "unknown")
+    )
+
+
+@app.post("/verify/request")
+def verify_request_endpoint(req: VerifyRequest, request: Request):
+    """
+    Generate a verification challenge. The user picks a method, we return
+    a token and human-readable instructions for how to present it.
+    """
+    client_ip = _client_ip(request)
+    user_agent = request.headers.get("user-agent", "")[:500] or None
+
+    domain = verification.normalize_domain(req.domain)
+    if not domain:
+        raise HTTPException(
+            status_code=400,
+            detail="Neispravan format domena. / Invalid domain format."
+        )
+
+    token = _secrets.token_hex(16)  # 32 hex chars = 128 bits
+    row = db.create_verification_token(
+        token=token, domain=domain, method=req.method, ip=client_ip, ttl_seconds=3600,
+    )
+
+    db.log_audit_event(
+        event="verify_request",
+        ip=client_ip, ua=user_agent, domain=domain,
+        details={"method": req.method, "token_prefix": token[:8]},
+    )
+
+    return {
+        "token": token,
+        "domain": domain,
+        "method": req.method,
+        "expires_in_seconds": 3600,
+        "instructions": verification.build_instructions(domain, token, req.method),
+    }
+
+
+@app.post("/verify/check")
+def verify_check_endpoint(req: VerifyCheckRequest, request: Request):
+    """
+    Execute the verification check for a pending token. If successful,
+    the token is marked 'verified' and an entry is added to
+    verified_domains so the requester's IP hash gets 30 days of
+    unredacted scan results for that domain.
+    """
+    client_ip = _client_ip(request)
+    user_agent = request.headers.get("user-agent", "")[:500] or None
+
+    token_row = db.get_verification_token(req.token)
+    if not token_row:
+        db.log_audit_event(
+            event="verify_failure",
+            ip=client_ip, ua=user_agent,
+            details={"reason": "token_not_found"},
+        )
+        raise HTTPException(status_code=404, detail="Token ne postoji ili je istekao.")
+
+    domain = token_row["domain"]
+    method = token_row["method"]
+
+    # Terminal states
+    if token_row["status"] == "verified":
+        return {
+            "verified": True,
+            "domain": domain,
+            "method": method,
+            "note": "token was already verified",
+        }
+    if token_row["status"] in ("expired", "failed"):
+        raise HTTPException(
+            status_code=410,
+            detail=f"Token je u stanju {token_row['status']}. Zatrazite novi.",
+        )
+
+    # Expiry check (client-side — pg_cron also sweeps stale pending rows)
+    from datetime import datetime as _dt
+    expires_at = token_row.get("expires_at") or ""
+    try:
+        exp_dt = _dt.fromisoformat(str(expires_at).replace("Z", "+00:00"))
+        from datetime import timezone as _tz
+        if exp_dt < _dt.now(_tz.utc):
+            raise HTTPException(status_code=410, detail="Token je istekao.")
+    except HTTPException:
+        raise
+    except Exception:
+        pass  # If parsing fails, fall through to the check — worst case pg_cron will clean it up
+
+    # Attempt cap
+    attempts = int(token_row.get("attempts") or 0)
+    if attempts >= MAX_VERIFY_ATTEMPTS:
+        db.mark_token_failed(req.token)
+        db.log_audit_event(
+            event="verify_failure",
+            ip=client_ip, ua=user_agent, domain=domain,
+            details={"reason": "attempts_exhausted", "attempts": attempts},
+        )
+        raise HTTPException(
+            status_code=429,
+            detail="Previse pokusaja za ovaj token. Zatrazite novi."
+        )
+
+    # Run the actual check
+    db.increment_verification_attempts(req.token)
+    result = verification.run_verification(method, domain, req.token)
+
+    if result.ok:
+        db.mark_token_verified(req.token)
+        db.upsert_verified_domain(domain=domain, ip=client_ip, method=method, ttl_days=30)
+        db.log_audit_event(
+            event="verify_success",
+            ip=client_ip, ua=user_agent, domain=domain,
+            details={"method": method, "reason": result.reason},
+        )
+        return {
+            "verified": True,
+            "domain": domain,
+            "method": method,
+            "valid_for_days": 30,
+            "reason": result.reason,
+        }
+
+    db.log_audit_event(
+        event="verify_failure",
+        ip=client_ip, ua=user_agent, domain=domain,
+        details={
+            "method": method,
+            "reason": result.reason,
+            "attempts_made": attempts + 1,
+            "attempts_remaining": max(0, MAX_VERIFY_ATTEMPTS - attempts - 1),
+        },
+    )
+    return {
+        "verified": False,
+        "domain": domain,
+        "method": method,
+        "reason": result.reason,
+        "attempts_remaining": max(0, MAX_VERIFY_ATTEMPTS - attempts - 1),
+    }
+
+
 @app.post("/scan")
 def start_scan(req: ScanRequest, request: Request):
     """Start a new scan. Returns scan_id immediately."""
@@ -452,14 +699,20 @@ def start_scan(req: ScanRequest, request: Request):
 
 
 @app.get("/scan/{scan_id}")
-def get_scan(scan_id: str):
+def get_scan(scan_id: str, request: Request):
     """
     Get scan status and results.
 
     Hot path: in-memory cache (~99% of polls hit here).
     Cold path: Supabase fallback — used when the worker has restarted
     and the cache is empty but the scan completed before the restart.
+
+    Gate: if the requester's IP hash is not in verified_domains for the
+    scan's domain, sensitive fields inside result.results[] are replaced
+    with a placeholder. Score, grade, counts, and check IDs are always
+    visible — those are the public summary anyone gets to see.
     """
+    requester_ip = _client_ip(request)
     scan = scans.get(scan_id)
 
     if not scan:
@@ -467,6 +720,17 @@ def get_scan(scan_id: str):
         db_row = db.get_scan_from_db(scan_id)
         if not db_row:
             raise HTTPException(status_code=404, detail="Skeniranje nije pronađeno.")
+
+        # Derive domain for the verification gate
+        try:
+            from urllib.parse import urlparse
+            parsed = urlparse(db_row["url"])
+            cold_domain = parsed.netloc.removeprefix("www.") or db_row["url"]
+        except Exception:
+            cold_domain = db_row["url"]
+
+        verified = db.is_domain_verified(cold_domain, requester_ip)
+        result_out = db_row.get("result") if verified else _redact_result(db_row.get("result"))
         return {
             "id": db_row["id"],
             "url": db_row["url"],
@@ -474,8 +738,9 @@ def get_scan(scan_id: str):
             "progress": db_row.get("progress") or 0,
             "step": db_row.get("step") or "",
             "queue_position": 0,
-            "result": db_row.get("result"),
+            "result": result_out,
             "error": db_row.get("error"),
+            "verified": verified,
         }
 
     # Update queue position
@@ -487,6 +752,11 @@ def get_scan(scan_id: str):
             # Was in queue, now should be processing
             scan["queue_position"] = 0
 
+    scan_domain = scan.get("domain") or ""
+    verified = bool(scan_domain) and db.is_domain_verified(scan_domain, requester_ip)
+    raw_result = scan.get("result")
+    result_out = raw_result if verified else _redact_result(raw_result)
+
     return {
         "id": scan["id"],
         "url": scan["url"],
@@ -494,8 +764,9 @@ def get_scan(scan_id: str):
         "progress": scan["progress"],
         "step": scan["step"],
         "queue_position": scan.get("queue_position", 0),
-        "result": scan.get("result"),
+        "result": result_out,
         "error": scan.get("error"),
+        "verified": verified,
     }
 
 

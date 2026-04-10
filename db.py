@@ -423,6 +423,179 @@ def check_rate_limit(
 # ─────────────────────────────────────────────────────────────────────────
 # Audit log
 # ─────────────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────
+# Ownership verification (Function 6)
+# ─────────────────────────────────────────────────────────────────────────
+def create_verification_token(
+    token: str,
+    domain: str,
+    method: str,
+    ip: str,
+    ttl_seconds: int = 3600,
+) -> Optional[Dict[str, Any]]:
+    """
+    INSERT a pending verification_tokens row. Caller provides the token
+    so it can include it in the response without re-querying. Returns
+    the inserted row on success, None on failure.
+    """
+    if not is_configured():
+        return None
+
+    def _do():
+        client = get_client()
+        expires = future_utc(seconds=ttl_seconds).isoformat()
+        row = {
+            "token": token,
+            "domain": domain,
+            "method": method,
+            "ip_hash": hash_ip(ip),
+            "status": "pending",
+            "attempts": 0,
+            "expires_at": expires,
+        }
+        result = client.table("verification_tokens").insert(row).execute()
+        return (result.data or [None])[0]
+
+    return _safe_db_call("create_verification_token", _do)
+
+
+def get_verification_token(token: str) -> Optional[Dict[str, Any]]:
+    """
+    SELECT the token row if it exists. Returns None if missing, expired,
+    or the DB call fails. Callers must still check status ∈ {pending}
+    and expires_at > now() — this function does not do that.
+    """
+    if not is_configured():
+        return None
+
+    def _do():
+        client = get_client()
+        result = (
+            client.table("verification_tokens")
+            .select("token, domain, method, ip_hash, status, attempts, expires_at, verified_at")
+            .eq("token", token)
+            .limit(1)
+            .execute()
+        )
+        rows = result.data or []
+        return rows[0] if rows else None
+
+    return _safe_db_call("get_verification_token", _do)
+
+
+def increment_verification_attempts(token: str) -> None:
+    """Bump attempts counter on a pending token (for audit / rate-limit)."""
+    if not is_configured():
+        return
+
+    def _do():
+        client = get_client()
+        # Read-modify-write is racy but fine here — attempts is advisory
+        row = (
+            client.table("verification_tokens")
+            .select("attempts")
+            .eq("token", token)
+            .limit(1)
+            .execute()
+        )
+        rows = row.data or []
+        current = int((rows[0] or {}).get("attempts") or 0) if rows else 0
+        client.table("verification_tokens").update({
+            "attempts": current + 1,
+        }).eq("token", token).execute()
+
+    _safe_db_call("increment_verification_attempts", _do)
+
+
+def mark_token_verified(token: str) -> None:
+    """Transition verification_tokens.status -> 'verified'."""
+    if not is_configured():
+        return
+
+    def _do():
+        client = get_client()
+        client.table("verification_tokens").update({
+            "status": "verified",
+            "verified_at": now_utc().isoformat(),
+        }).eq("token", token).execute()
+
+    _safe_db_call("mark_token_verified", _do)
+
+
+def mark_token_failed(token: str) -> None:
+    """Transition verification_tokens.status -> 'failed' (after too many attempts)."""
+    if not is_configured():
+        return
+
+    def _do():
+        client = get_client()
+        client.table("verification_tokens").update({
+            "status": "failed",
+        }).eq("token", token).execute()
+
+    _safe_db_call("mark_token_failed", _do)
+
+
+def upsert_verified_domain(
+    domain: str,
+    ip: str,
+    method: str,
+    ttl_days: int = 30,
+) -> None:
+    """
+    Insert or refresh a verified_domains row for (domain, ip_hash).
+    The table has UNIQUE(domain, ip_hash), so we use ON CONFLICT via
+    Supabase's upsert() to atomically extend the TTL on re-verification.
+    """
+    if not is_configured():
+        return
+
+    def _do():
+        client = get_client()
+        row = {
+            "domain": domain,
+            "ip_hash": hash_ip(ip),
+            "method": method,
+            "verified_at": now_utc().isoformat(),
+            "expires_at": future_utc(days=ttl_days).isoformat(),
+        }
+        (
+            client.table("verified_domains")
+            .upsert(row, on_conflict="domain,ip_hash")
+            .execute()
+        )
+
+    _safe_db_call("upsert_verified_domain", _do)
+
+
+def is_domain_verified(domain: str, ip: str) -> bool:
+    """
+    Returns True if (domain, hash(ip)) has a non-expired row in
+    verified_domains. Fail-closed — if DB is unreachable or anything
+    raises, returns False, because the safe default for "is this user
+    authorized" is NO.
+    """
+    if not is_configured():
+        return False
+
+    def _do() -> bool:
+        client = get_client()
+        now_iso = now_utc().isoformat()
+        result = (
+            client.table("verified_domains")
+            .select("id, expires_at")
+            .eq("domain", domain)
+            .eq("ip_hash", hash_ip(ip))
+            .gte("expires_at", now_iso)
+            .limit(1)
+            .execute()
+        )
+        return bool(result.data)
+
+    out = _safe_db_call("is_domain_verified", _do)
+    return bool(out) if out is not None else False
+
+
 def log_audit_event(
     event: str,
     ip: str,
