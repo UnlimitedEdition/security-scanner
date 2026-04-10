@@ -132,13 +132,23 @@ A backup that has never been tested is not a backup.
 ## Reporting a vulnerability in THIS scanner
 
 If you discover a security issue in the scanner itself, please report it
-privately. Do **not** open a public GitHub issue.
+privately. Do **not** open a public GitHub issue, and do **not** post it
+to the HuggingFace Space community tab — both are public and would
+expose the bug to attackers before a fix ships.
 
-- **Email:** (add contact here)
+- **Preferred — GitHub Security Advisories (private):**
+  https://github.com/UnlimitedEdition/security-scanner/security/advisories/new
+  This channel is private between you and the maintainers, supports
+  embargo coordination, and issues a CVE if warranted.
 - **Response time:** We aim to acknowledge reports within 72 hours.
+- **Credit:** We will credit responsible reporters in release notes
+  (unless you prefer anonymity).
 
-We will credit responsible reporters in release notes (unless you prefer
-anonymity).
+### What to include
+- Affected file / endpoint / check name
+- Reproduction steps (minimal POC preferred)
+- Impact assessment (what an attacker gains)
+- Your suggested fix, if any
 
 ## Scope
 
@@ -154,3 +164,9 @@ Out-of-scope:
 - DoS against our own infrastructure via legitimate scanning traffic
   (use the rate limit path instead)
 - Issues in third-party dependencies (report to upstream)
+
+## License
+
+- **Source code** — MIT License, see [LICENSE](LICENSE)
+- **Editorial content** (blog articles, PRIRUCNIK, privacy/terms prose) —
+  CC BY-NC 4.0, see [LICENSE-CONTENT](LICENSE-CONTENT)
