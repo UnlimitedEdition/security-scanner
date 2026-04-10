@@ -725,24 +725,11 @@
       border: 1px solid rgba(239, 68, 68, 0.3);
     }
 
-    /* ================================================================
-       ABUSE FORM FIELDS
-       ================================================================ */
-    .abuse-panel label {
-      display: block; margin: 0.6rem 0 0.25rem;
-      font-size: 0.78rem; color: var(--text-dim);
-    }
-    .abuse-panel input[type="text"],
-    .abuse-panel input[type="email"],
-    .abuse-panel textarea {
-      width: 100%;
-      background: var(--bg); border: 1px solid var(--border);
-      color: var(--text); padding: 0.55rem 0.8rem;
-      border-radius: 7px; font-family: inherit; font-size: 0.85rem;
-    }
-    .abuse-panel textarea {
-      min-height: 90px; resize: vertical; line-height: 1.4;
-    }
+    /* (.abuse-panel form CSS removed — abuse reporting is now a
+       dedicated /abuse-report.html page with its own inline styles.
+       The shared .verify-panel / .abuse-panel base rules above remain
+       because .verify-panel still uses them. Cleanup one day if the
+       shared rules become awkward.) */
 
     /* PRINT HEADER (hidden on screen, visible in print) */
     .print-header {
@@ -1039,28 +1026,8 @@
   <div class="verify-result" id="verifyResult"></div>
 </div>
 
-<!-- ABUSE REPORT PANEL (opened from footer link) -->
-<div class="abuse-panel" id="abusePanel">
-  <h3 data-sr="Prijavi zloupotrebu" data-en="Report abuse">Prijavi zloupotrebu</h3>
-  <p style="font-size:0.82rem;color:var(--text-dim);margin:0 0 0.4rem"
-     data-sr="Ako je neko koristio nas scanner da skenira vas sajt bez dozvole, popunite formular ispod. Pregledacemo u roku od 72h. Ako potvrdimo zloupotrebu, dodajemo vas domen na listu blokade."
-     data-en="If someone used our scanner to scan your site without permission, fill out the form below. We'll review within 72h. If confirmed, we add your domain to the block list.">
-    Ako je neko koristio nas scanner da skenira vas sajt bez dozvole, popunite formular ispod. Pregledacemo u roku od 72h. Ako potvrdimo zloupotrebu, dodajemo vas domen na listu blokade.
-  </p>
-  <label for="abuseDomain" data-sr="Domen koji zelite da prijavite" data-en="Domain you want to report">Domen koji zelite da prijavite</label>
-  <input type="text" id="abuseDomain" placeholder="mycompany.com" />
-  <label for="abuseEmail" data-sr="Vas email (opciono, za kontakt)" data-en="Your email (optional, for contact)">Vas email (opciono, za kontakt)</label>
-  <input type="email" id="abuseEmail" placeholder="admin@mycompany.com" />
-  <label for="abuseDescription" data-sr="Opis problema (min 10 karaktera)" data-en="Problem description (min 10 characters)">Opis problema (min 10 karaktera)</label>
-  <textarea id="abuseDescription" placeholder="Neko skenira moj sajt uzastopno, molim vas obustavite..."></textarea>
-  <div class="abuse-actions">
-    <button class="abuse-btn" id="abuseSubmitBtn" onclick="submitAbuseReport()"
-            data-sr="Posalji prijavu" data-en="Submit report">Posalji prijavu</button>
-    <button class="abuse-btn secondary" onclick="closeAbusePanel()"
-            data-sr="Zatvori" data-en="Close">Zatvori</button>
-  </div>
-  <div class="abuse-result" id="abuseResult"></div>
-</div>
+<!-- Abuse reporting lives on its own page: ./abuse-report.html
+     (referenced from the footer in blog-common.js). -->
 
 </main>
 </div><!-- /.page-content -->
@@ -2007,10 +1974,8 @@ document.getElementById("urlInput").addEventListener("keydown", function(e) {
   if (e.key === "Enter") startScan();
 });
 
-// Auto-open abuse panel if landed with #abuse hash (from footer link on other pages)
-if (location.hash === "#abuse") {
-  setTimeout(function() { openAbusePanel(""); }, 200);
-}
+// (#abuse hash auto-open removed — abuse reporting is now a dedicated
+// page at /abuse-report.html, no inline panel to open.)
 
 // ====================================================================
 // VERIFY OWNERSHIP FLOW
@@ -2160,71 +2125,8 @@ async function checkVerification() {
   }
 }
 
-// ====================================================================
-// ABUSE REPORT FLOW
-// ====================================================================
-function openAbusePanel(prefillDomain) {
-  document.getElementById("abusePanel").classList.add("open");
-  if (prefillDomain) {
-    document.getElementById("abuseDomain").value = prefillDomain;
-  }
-  document.getElementById("abuseResult").className = "abuse-result";
-  document.getElementById("abuseResult").textContent = "";
-  document.getElementById("abusePanel").scrollIntoView({behavior: "smooth", block: "center"});
-}
-
-function closeAbusePanel() {
-  document.getElementById("abusePanel").classList.remove("open");
-}
-
-async function submitAbuseReport() {
-  var domain = document.getElementById("abuseDomain").value.trim();
-  var email = document.getElementById("abuseEmail").value.trim();
-  var description = document.getElementById("abuseDescription").value.trim();
-  var resultEl = document.getElementById("abuseResult");
-  var btn = document.getElementById("abuseSubmitBtn");
-
-  if (!domain) { alert(currentLang === "en" ? "Domain is required." : "Domen je obavezan."); return; }
-  if (description.length < 10) {
-    alert(currentLang === "en" ? "Description must be at least 10 characters." : "Opis mora imati bar 10 karaktera.");
-    return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = currentLang === "en" ? "Sending..." : "Slanje...";
-  resultEl.className = "abuse-result";
-  resultEl.textContent = "";
-
-  try {
-    var body = { reported_domain: domain, description: description };
-    if (email) body.reporter_email = email;
-
-    var resp = await fetch(API_BASE + "/abuse-report", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
-    });
-    var data = await resp.json();
-    if (!resp.ok) {
-      throw new Error(typeof data.detail === "string" ? data.detail : "Validation error");
-    }
-    resultEl.className = "abuse-result success visible";
-    resultEl.textContent = currentLang === "en"
-      ? "Report submitted. Reference #" + (data.report_id || "?") + ". We'll review within 72 hours."
-      : "Prijava primljena. Broj prijave #" + (data.report_id || "?") + ". Pregledacemo u roku od 72 sata.";
-    setTimeout(function() {
-      document.getElementById("abuseDomain").value = "";
-      document.getElementById("abuseEmail").value = "";
-      document.getElementById("abuseDescription").value = "";
-    }, 3000);
-  } catch (e) {
-    resultEl.className = "abuse-result error visible";
-    resultEl.textContent = (currentLang === "en" ? "Error: " : "Greska: ") + e.message;
-  } finally {
-    btn.disabled = false;
-    btn.textContent = currentLang === "en" ? "Submit report" : "Posalji prijavu";
-  }
-}
+// Abuse report submission moved to dedicated ./abuse-report.html page.
+// The form lives there with its own handler, so index.html stays leaner.
 </script>
 
 </body>

@@ -187,16 +187,12 @@
   legalRights.appendChild(srSpan('Prava korisnika', 'User Rights'));
   legalRow.appendChild(legalRights);
 
-  // Prijavi zloupotrebu — opens inline panel on index.html
-  var abuseLink = el('a', {
-    href: './index.html#abuse',
-    onclick: function(ev) {
-      if (typeof window.openAbusePanel === 'function') {
-        ev.preventDefault();
-        window.openAbusePanel('');
-      }
-    }
-  });
+  // Prijavi zloupotrebu — dedicated page with form + FAQ + process details
+  // (earlier iteration was an inline panel on index.html, but cross-page
+  // navigation had timing bugs and the inline layout couldn't fit enough
+  // explanation. A standalone page is cleaner, more SEO-friendly, and
+  // works without JavaScript.)
+  var abuseLink = el('a', { href: './abuse-report.html' });
   abuseLink.appendChild(srSpan('Prijavi zloupotrebu', 'Report abuse'));
   legalRow.appendChild(abuseLink);
 

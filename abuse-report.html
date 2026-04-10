@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prijavi zloupotrebu / Report Abuse — Web Security Scanner</title>
+  <meta name="description" content="Ako je neko skenirao vas sajt preko nase alatke bez dozvole, prijavite to ovde. Pregledamo u roku od 72h i blokiramo buduce skeniranje.">
+  <meta name="robots" content="index,follow">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+  <style>
+    /* Abuse form — uses same dark theme as index.html */
+    :root {
+      --bg: #0a0c15;
+      --surface: #11141f;
+      --surface2: #1a1e30;
+      --border: #252a4a;
+      --text: #e6e8f0;
+      --text-dim: #8b92b0;
+      --accent: #6c63ff;
+      --accent-hover: #8b5cf6;
+      --danger: #ef4444;
+      --success: #22c55e;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Inter", -apple-system, system-ui, sans-serif;
+      line-height: 1.6;
+      margin: 0;
+    }
+    .abuse-page {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+    .abuse-page h1 {
+      font-size: 2rem;
+      margin: 0 0 0.3rem;
+      background: linear-gradient(135deg, #6c63ff, #a78bfa);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .abuse-page .subtitle {
+      color: var(--text-dim);
+      font-size: 0.92rem;
+      margin-bottom: 2rem;
+    }
+    .abuse-page h2 {
+      font-size: 1.15rem;
+      color: var(--accent);
+      margin-top: 2rem;
+      margin-bottom: 0.6rem;
+    }
+    .abuse-page p, .abuse-page li {
+      color: var(--text-dim);
+      font-size: 0.92rem;
+    }
+    .abuse-page ul { padding-left: 1.2rem; }
+    .abuse-page code {
+      background: var(--surface2);
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.82rem;
+      color: var(--text);
+    }
+    .abuse-form {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.8rem;
+      margin: 2rem 0;
+    }
+    .abuse-form label {
+      display: block;
+      margin: 1rem 0 0.35rem;
+      font-size: 0.85rem;
+      color: var(--text);
+      font-weight: 600;
+    }
+    .abuse-form label:first-child { margin-top: 0; }
+    .abuse-form .hint {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      font-weight: 400;
+      margin-top: 0.2rem;
+    }
+    .abuse-form input[type="text"],
+    .abuse-form input[type="email"],
+    .abuse-form textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.65rem 0.9rem;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.92rem;
+      box-sizing: border-box;
+      transition: border-color 0.2s;
+    }
+    .abuse-form input:focus,
+    .abuse-form textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .abuse-form textarea {
+      min-height: 130px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+    .abuse-form .actions {
+      display: flex;
+      gap: 0.8rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .abuse-form button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 0.7rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.92rem;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .abuse-form button:hover { background: var(--accent-hover); }
+    .abuse-form button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .abuse-form button.secondary {
+      background: var(--surface2);
+      color: var(--text-dim);
+    }
+    .abuse-result {
+      margin-top: 1.2rem;
+      padding: 0.9rem 1.1rem;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      display: none;
+    }
+    .abuse-result.visible { display: block; }
+    .abuse-result.success {
+      background: rgba(34, 197, 94, 0.1);
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+    .abuse-result.error {
+      background: rgba(239, 68, 68, 0.1);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .faq-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.2rem;
+      margin-bottom: 0.8rem;
+    }
+    .faq-item strong { color: var(--text); display: block; margin-bottom: 0.3rem; }
+    .nav-back {
+      display: inline-block;
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 0.85rem;
+      margin-bottom: 1.5rem;
+    }
+    .nav-back:hover { color: var(--accent); }
+  </style>
+</head>
+<body>
+
+<main class="abuse-page">
+
+  <a href="./index.html" class="nav-back">&larr; <span class="sr">Nazad na scanner</span><span class="en">Back to scanner</span></a>
+
+  <!-- SERBIAN -->
+  <div class="sr">
+    <h1>Prijava zloupotrebe</h1>
+    <p class="subtitle">Ako je neko skenirao vas sajt preko nase alatke bez dozvole, ovde mozete podneti formalnu prijavu.</p>
+
+    <h2>Kada podneti prijavu</h2>
+    <p>Ova forma je za <strong>vlasnike domena</strong> koji su primetili da je njihov sajt skeniran od strane naseg alata bez njihovog odobrenja. Konkretno:</p>
+    <ul>
+      <li>Vidite nase User-Agent u vasim server logovima (<code>WebSecurityScanner-Verifier/1.0</code>)</li>
+      <li>Primetili ste povecan broj automatizovanih zahteva koji odgovaraju signaturi naseg skenera</li>
+      <li>Neko vam je poslao rezultat skeniranja vaseg domena koji niste trazili</li>
+      <li>Imate drugi razlog da verujete da je vas domen skeniran bez dozvole</li>
+    </ul>
+
+    <h2>Kako se prijava obradjuje</h2>
+    <ul>
+      <li>Prijava se belezi u audit log odmah po prijemu (append-only, ne moze se prepraviti)</li>
+      <li>Operator pregleda u roku od <strong>72 sata</strong> radnim danima</li>
+      <li>Ako prijava ima konkretne <code>scan_id</code> reference, povezani audit zapisi se flaguju kao pravna evidencija i cuvaju zauvek (umesto podrazumevanih 90 dana)</li>
+      <li>Ako se potvrdi zloupotreba, vas domen se dodaje na listu blokade — svi buduci pokusaji skeniranja vraćaju HTTP 403</li>
+      <li>Ako ste ostavili email, obavestavamo vas o ishodu</li>
+    </ul>
+
+    <h2>Sta nece biti uradjeno</h2>
+    <ul>
+      <li>Ne mozemo da retroaktivno &quot;obrisemo&quot; rezultat ranijeg skeniranja jer scanner je pasivan — nismo uopste preuzeli podatke iz vase baze, samo smo citali javno dostupne odgovore</li>
+      <li>Ne mozemo da kaznimo korisnika koji je pokrenuo scan — nemamo njegove raw identifikatore (samo pseudonimizovane hash-ove IP adrese)</li>
+      <li>Ne pruzamo besplatne pravne savete — ako su vam potrebni, obratite se advokatu koji se bavi cyber-security-jem</li>
+    </ul>
+
+    <h2>Obrazac za prijavu</h2>
+
+    <form class="abuse-form" onsubmit="event.preventDefault(); submitAbuseReport();">
+      <label for="abuseDomain">Domen koji zelite da prijavite
+        <div class="hint">Bez <code>https://</code>, bez trailing slash-a. Primer: <code>mycompany.com</code></div>
+      </label>
+      <input type="text" id="abuseDomain" placeholder="mycompany.com" required />
+
+      <label for="abuseEmail">Vas email (opciono)
+        <div class="hint">Ako zelite da vas obavestimo o ishodu. Ne cuvamo ga nigde osim u abuse_reports tabeli vezanoj za ovu prijavu.</div>
+      </label>
+      <input type="email" id="abuseEmail" placeholder="admin@mycompany.com" />
+
+      <label for="abuseDescription">Opis problema (min 10 karaktera)
+        <div class="hint">Sto detaljnije — datumi, user agents koje ste videli u log-ovima, procenjen broj zahteva, bilo sta sto pomaze da razumemo situaciju.</div>
+      </label>
+      <textarea id="abuseDescription" placeholder="Neko skenira moj sajt (mycompany.com) vise puta dnevno od 15. marta. Vidim WebSecurityScanner-Verifier user agent u access log-ovima. Molim vas da obustavite." required></textarea>
+
+      <label for="abuseScanIds">Scan ID-jevi (opciono)
+        <div class="hint">Ako znate specificne scan ID-jeve (8-karakterni hex, kao <code>29235cd6</code>), navedite ih odvojene zarezom. Mi cemo onda flagovati te konkretne zapise u audit log-u kao pravnu evidenciju.</div>
+      </label>
+      <input type="text" id="abuseScanIds" placeholder="29235cd6, 39666f09" />
+
+      <div class="actions">
+        <button type="submit" id="abuseSubmitBtn">Posalji prijavu</button>
+        <a href="./index.html" class="secondary" style="background:var(--surface2);color:var(--text-dim);text-decoration:none;padding:0.7rem 1.5rem;border-radius:8px;font-weight:600;font-size:0.92rem;display:inline-block">Otkazi</a>
+      </div>
+      <div class="abuse-result" id="abuseResult"></div>
+    </form>
+
+    <h2>FAQ</h2>
+    <div class="faq-item">
+      <strong>Zasto uopste postoji besplatni scanner koji radi bez mog odobrenja?</strong>
+      Scanner je namenjen vlasnicima sajtova koji zele da provere svoj sopstveni sajt. Uslovi koriscenja (<a href="./terms.html">pogledaj</a>) eksplicitno trazze da korisnik potvrdi consent checkbox pre svakog scan-a. Zloupotrebe su retke ali se desavaju — ova prijava je upravo kanal za njih.
+    </div>
+    <div class="faq-item">
+      <strong>Mogu li da trazzim brisanje svih zapisa o mom domenu?</strong>
+      Da — takva prijava se tretira kao GDPR takedown zahtev. Pogledajte <a href="./privacy.html">Politiku privatnosti</a> sekciju 8 za detalje. Napomena: audit_log zapisi su append-only i cuvaju se 90 dana — mozemo ih markirati kao &quot;izuzeti iz statistike&quot; ali fizicki brisanje nije moguce dok se automatski ne obrisu po retention pravilu.
+    </div>
+    <div class="faq-item">
+      <strong>Sta ako ovo zlouupotrebljava konkurentski sajt ili bot mreza?</strong>
+      Operater moze dodati blok na nivou domena ili IP hash-a. Ako imate dokazi o organizovanoj kampanji (mnogo razlicitih IP-jeva sa istim fingerprint-om), navedite to u opisu — postoje posebni alati za takve slucajeve.
+    </div>
+    <div class="faq-item">
+      <strong>Hocu da dokazzem da sam vlasnik domena pre podnosenja</strong>
+      Nije obavezno za abuse report, ali ako zelite i druge beneficije (pregledati svoju scan istoriju, videti detaljne rezultate), mozete izvrsiti verifikaciju vlasnistva kroz meta tag / fajl / DNS TXT zapis. Vise detalja u <a href="./terms.html">Uslovima koriscenja</a> sekcija 7.
+    </div>
+  </div>
+
+  <!-- ENGLISH -->
+  <div class="en">
+    <h1>Report abuse</h1>
+    <p class="subtitle">If someone scanned your site through our tool without your permission, you can file a formal report here.</p>
+
+    <h2>When to file a report</h2>
+    <p>This form is for <strong>domain owners</strong> who have noticed that their site was scanned by our tool without their approval. Specifically:</p>
+    <ul>
+      <li>You see our User-Agent in your server logs (<code>WebSecurityScanner-Verifier/1.0</code>)</li>
+      <li>You noticed an increase in automated requests matching our scanner's signature</li>
+      <li>Someone sent you a scan result of your domain that you didn't request</li>
+      <li>You have another reason to believe your domain was scanned without permission</li>
+    </ul>
+
+    <h2>How the report is processed</h2>
+    <ul>
+      <li>The report is logged to the audit log immediately upon receipt (append-only, cannot be modified)</li>
+      <li>The operator reviews within <strong>72 hours</strong> on business days</li>
+      <li>If the report includes specific <code>scan_id</code> references, the related audit entries are flagged as legal evidence and kept indefinitely (instead of the default 90 days)</li>
+      <li>If abuse is confirmed, your domain is added to the block list — all future scan attempts return HTTP 403</li>
+      <li>If you left an email, we notify you of the outcome</li>
+    </ul>
+
+    <h2>What will not be done</h2>
+    <ul>
+      <li>We cannot retroactively &quot;delete&quot; an earlier scan's results because the scanner is passive — we never pulled data from your database, we only read publicly available responses</li>
+      <li>We cannot punish the user who initiated the scan — we don't have their raw identifiers (only pseudonymized IP hashes)</li>
+      <li>We do not provide free legal advice — if you need it, contact a lawyer who deals with cybersecurity</li>
+    </ul>
+
+    <h2>Report form</h2>
+
+    <form class="abuse-form" onsubmit="event.preventDefault(); submitAbuseReport();">
+      <label for="abuseDomainEn">Domain you want to report
+        <div class="hint">Without <code>https://</code>, without trailing slash. Example: <code>mycompany.com</code></div>
+      </label>
+      <input type="text" id="abuseDomainEn" placeholder="mycompany.com" required />
+
+      <label for="abuseEmailEn">Your email (optional)
+        <div class="hint">If you want to be notified of the outcome. We don't store it anywhere except in the abuse_reports table tied to this report.</div>
+      </label>
+      <input type="email" id="abuseEmailEn" placeholder="admin@mycompany.com" />
+
+      <label for="abuseDescriptionEn">Problem description (min 10 characters)
+        <div class="hint">As detailed as possible — dates, user agents you saw in logs, estimated number of requests, anything that helps understand the situation.</div>
+      </label>
+      <textarea id="abuseDescriptionEn" placeholder="Someone is scanning my site (mycompany.com) multiple times daily since March 15. I see WebSecurityScanner-Verifier user agent in access logs. Please stop." required></textarea>
+
+      <label for="abuseScanIdsEn">Scan IDs (optional)
+        <div class="hint">If you know specific scan IDs (8-char hex, like <code>29235cd6</code>), list them comma-separated. We will then flag those specific entries in the audit log as legal evidence.</div>
+      </label>
+      <input type="text" id="abuseScanIdsEn" placeholder="29235cd6, 39666f09" />
+
+      <div class="actions">
+        <button type="submit">Submit report</button>
+        <a href="./index.html" class="secondary" style="background:var(--surface2);color:var(--text-dim);text-decoration:none;padding:0.7rem 1.5rem;border-radius:8px;font-weight:600;font-size:0.92rem;display:inline-block">Cancel</a>
+      </div>
+    </form>
+
+    <h2>FAQ</h2>
+    <div class="faq-item">
+      <strong>Why does a free scanner even exist that works without my approval?</strong>
+      The scanner is intended for site owners who want to check their own site. The <a href="./terms.html">Terms of Service</a> explicitly require the user to check a consent checkbox before every scan. Abuse is rare but happens — this report is exactly the channel for it.
+    </div>
+    <div class="faq-item">
+      <strong>Can I request deletion of all records about my domain?</strong>
+      Yes — such a request is treated as a GDPR takedown request. See the <a href="./privacy.html">Privacy Policy</a> section 8 for details. Note: audit_log entries are append-only and retained for 90 days — we can mark them as &quot;excluded from statistics&quot; but physical deletion is not possible until automatic pruning per retention rules.
+    </div>
+    <div class="faq-item">
+      <strong>What if this is being abused by a competitor site or a bot network?</strong>
+      The operator can add a block at the domain or IP hash level. If you have evidence of an organized campaign (many different IPs with the same fingerprint), mention it in the description — there are special tools for such cases.
+    </div>
+    <div class="faq-item">
+      <strong>I want to prove domain ownership before filing</strong>
+      Not required for an abuse report, but if you want additional benefits (review your own scan history, see detailed results), you can complete ownership verification through a meta tag / file / DNS TXT record. More details in the <a href="./terms.html">Terms of Service</a> section 7.
+    </div>
+  </div>
+
+</main>
+
+<script src="./blog-common.js" defer></script>
+<script>
+// API base — auto-detect local vs prod
+const API_BASE = (location.hostname === "localhost" || location.hostname === "127.0.0.1")
+  ? "http://localhost:8000"
+  : "https://unlimitededition-web-security-scanner.hf.space";
+
+async function submitAbuseReport() {
+  // Both language forms share the same fields — read from whichever is visible.
+  // The CSS swap via body.lang-en hides one or the other, so we read from both
+  // and use whichever has a value.
+  var domain = (document.getElementById("abuseDomain").value ||
+                document.getElementById("abuseDomainEn").value).trim();
+  var email = (document.getElementById("abuseEmail").value ||
+               document.getElementById("abuseEmailEn").value).trim();
+  var description = (document.getElementById("abuseDescription").value ||
+                     document.getElementById("abuseDescriptionEn").value).trim();
+  var scanIdsRaw = (document.getElementById("abuseScanIds").value ||
+                    document.getElementById("abuseScanIdsEn").value).trim();
+
+  var resultEl = document.getElementById("abuseResult");
+  var isEn = document.body.classList.contains("lang-en");
+
+  // Client-side validation
+  if (!domain) {
+    alert(isEn ? "Domain is required." : "Domen je obavezan.");
+    return;
+  }
+  if (description.length < 10) {
+    alert(isEn
+      ? "Description must be at least 10 characters."
+      : "Opis mora imati bar 10 karaktera.");
+    return;
+  }
+
+  // Parse scan_ids — split by comma, trim, filter empty
+  var scanIds = scanIdsRaw
+    ? scanIdsRaw.split(",").map(function(s) { return s.trim(); }).filter(Boolean)
+    : null;
+
+  // Build body
+  var body = { reported_domain: domain, description: description };
+  if (email) body.reporter_email = email;
+  if (scanIds && scanIds.length > 0) body.related_scan_ids = scanIds;
+
+  // Disable all submit buttons
+  var btns = document.querySelectorAll(".abuse-form button[type=submit]");
+  btns.forEach(function(b) {
+    b.disabled = true;
+    b.dataset.originalText = b.textContent;
+    b.textContent = isEn ? "Sending..." : "Slanje...";
+  });
+  resultEl.className = "abuse-result";
+  resultEl.textContent = "";
+
+  try {
+    var resp = await fetch(API_BASE + "/abuse-report", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+    var data = await resp.json();
+    if (!resp.ok) {
+      throw new Error(typeof data.detail === "string" ? data.detail : "Validation error");
+    }
+    resultEl.className = "abuse-result success visible";
+    resultEl.textContent = isEn
+      ? "Report submitted. Reference #" + (data.report_id || "?") +
+        ". We will review within 72 hours."
+      : "Prijava primljena. Broj prijave #" + (data.report_id || "?") +
+        ". Pregledacemo u roku od 72 sata.";
+    // Clear fields after a delay
+    setTimeout(function() {
+      ["abuseDomain","abuseEmail","abuseDescription","abuseScanIds",
+       "abuseDomainEn","abuseEmailEn","abuseDescriptionEn","abuseScanIdsEn"].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.value = "";
+      });
+    }, 5000);
+  } catch (e) {
+    resultEl.className = "abuse-result error visible";
+    resultEl.textContent = (isEn ? "Error: " : "Greska: ") + e.message;
+  } finally {
+    btns.forEach(function(b) {
+      b.disabled = false;
+      b.textContent = b.dataset.originalText || (isEn ? "Submit report" : "Posalji prijavu");
+    });
+  }
+}
+</script>
+
+</body>
+</html>

@@ -106,6 +106,10 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             "connect-src 'self' https://unlimitededition-web-security-scanner.hf.space "
             "https://*.googlesyndication.com https://*.g.doubleclick.net "
             "https://*.adtrafficquality.google "
+            # Funding Choices (Google consent framework) fetches
+            # /el/... endpoints from fundingchoicesmessages — needs
+            # both script-src (script load) AND connect-src (fetch).
+            "https://fundingchoicesmessages.google.com "
             "https://www.google.com https://www.googletagservices.com "
             "https://www.googletagmanager.com https://csi.gstatic.com; "
             "frame-src https://*.googlesyndication.com https://*.g.doubleclick.net "
@@ -334,6 +338,14 @@ def privacy():
 @app.get("/terms.html")
 def terms():
     path = os.path.join(os.path.dirname(__file__), "terms.html")
+    if os.path.exists(path):
+        return FileResponse(path, media_type="text/html")
+
+
+@app.get("/abuse-report.html")
+def abuse_report_page():
+    """Dedicated abuse-report page (form + FAQ + process explanation)."""
+    path = os.path.join(os.path.dirname(__file__), "abuse-report.html")
     if os.path.exists(path):
         return FileResponse(path, media_type="text/html")
 
