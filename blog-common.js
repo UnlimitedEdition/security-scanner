@@ -1,11 +1,20 @@
 /* =============================================
    BLOG COMMON JS — Web Security Scanner
+   Version: 2026-04-10-v2 (self-XSS console warning)
+   Last change: 2026-04-10 14:40 UTC
    Injects header, footer, timeline + lang toggle
    All content is static/trusted (no user input)
    ============================================= */
 
 (function() {
   'use strict';
+
+  // Version marker logged to console so you can verify which build
+  // of blog-common.js is actually running. If you see "v2" here, the
+  // latest deploy is live. If you don't see this line at all, your
+  // browser is serving a cached version — hard refresh with Ctrl+F5
+  // or test in an incognito window.
+  try { console.log("%c[blog-common.js] v2 @ 2026-04-10 — loaded OK", "color:#22c55e;font-weight:bold"); } catch(_){}
 
   // ============================================================
   // SELF-XSS WARNING (big STOP message in devtools console)
