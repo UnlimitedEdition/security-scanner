@@ -596,6 +596,100 @@ def is_domain_verified(domain: str, ip: str) -> bool:
     return bool(out) if out is not None else False
 
 
+# ─────────────────────────────────────────────────────────────────────────
+# Abuse reports (Function 3)
+# ─────────────────────────────────────────────────────────────────────────
+def create_abuse_report(
+    reported_domain: str,
+    description: str,
+    reporter_ip: str,
+    reporter_email: Optional[str] = None,
+    related_scan_ids: Optional[List[str]] = None,
+) -> Optional[Dict[str, Any]]:
+    """
+    INSERT a new abuse_reports row with status='open'. Returns the
+    inserted row (with its new id) on success, None on failure.
+    """
+    if not is_configured():
+        return None
+
+    def _do():
+        client = get_client()
+        row = {
+            "reported_domain": reported_domain,
+            "description": (description or "")[:4000],
+            "reporter_email": (reporter_email or None),
+            "reporter_ip_hash": hash_ip(reporter_ip),
+            "status": "open",
+            "related_scan_ids": related_scan_ids or None,
+        }
+        result = client.table("abuse_reports").insert(row).execute()
+        return (result.data or [None])[0]
+
+    return _safe_db_call("create_abuse_report", _do)
+
+
+def flag_audit_rows_for_scans(scan_ids: List[str]) -> int:
+    """
+    Flag audit_log rows linked to the given scan_ids so the daily
+    prune_old_audit_log job skips them. Used when an abuse report
+    cites specific scans — we want to keep the forensic trail past
+    the normal 90-day retention window as legal evidence.
+
+    Returns the number of rows updated, or 0 on failure.
+
+    Implementation note: audit_log has UPDATE revoked from service_role
+    (migration 004 — append-only by default). We bypass this via the
+    `flag_audit_rows_for_scan_ids` SECURITY DEFINER RPC added in
+    migration 010, which runs as postgres superuser and only permits
+    the specific UPDATE we need (flagged = TRUE).
+    """
+    if not scan_ids or not is_configured():
+        return 0
+
+    def _do() -> int:
+        client = get_client()
+        result = client.rpc(
+            "flag_audit_rows_for_scan_ids",
+            {"p_scan_ids": list(scan_ids)},
+        ).execute()
+        # RPC returns the integer count directly
+        data = result.data
+        if isinstance(data, int):
+            return data
+        if isinstance(data, list) and data:
+            return int(data[0]) if isinstance(data[0], (int, float)) else 0
+        return 0
+
+    out = _safe_db_call("flag_audit_rows_for_scans", _do)
+    return int(out) if isinstance(out, int) else 0
+
+
+def is_domain_blocked(domain: str) -> bool:
+    """
+    True if the given domain has a confirmed abuse_reports row.
+    Fail-closed — DB outage returns False (don't block if we can't
+    check, to avoid DoSing legitimate scans due to DB flake).
+    """
+    if not is_configured():
+        return False
+
+    def _do() -> bool:
+        client = get_client()
+        result = (
+            client.table("abuse_reports")
+            .select("id")
+            .eq("reported_domain", domain)
+            .eq("status", "confirmed")
+            .limit(1)
+            .execute()
+        )
+        return bool(result.data)
+
+    out = _safe_db_call("is_domain_blocked", _do)
+    return bool(out) if out is not None else False
+
+
 def log_audit_event(
     event: str,
     ip: str,

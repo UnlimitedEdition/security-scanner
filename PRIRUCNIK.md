@@ -18,6 +18,7 @@
 | Policija / sud / advokat traži podatke | **§5.2** |
 | Korisnik traži "obrišite moje podatke" (GDPR) | **§5.3** |
 | Korisnik pita "zašto ne vidim detalje scan-a?" | **§11 (verifikacija)** |
+| Primio sam abuse report — šta sad? | **§12 (abuse workflow)** |
 | Scanner je prestao da radi | **§6.3** |
 | Backup nije napravljen 2+ dana | **§6.1** |
 | Mislim da je `SUPABASE_SERVICE_KEY` procureo | **§8** |
@@ -902,8 +903,261 @@ DELETE FROM verified_domains
 
 ---
 
-*Poslednja verzija: 2026-04-10, po završetku Faze 2 (ownership verification).*
-*Sledeća revizija: kad završimo Fazu 3 (abuse reports endpoint) — dodaće
-sekciju o `abuse_report_submitted` / `abuse_block_applied` event-ima
-i radnom toku sa domain block listama.*
+---
+
+## 12. ABUSE REPORTS — workflow za operatera
+
+Kanal za žalbe vlasnika sajtova je `POST /abuse-report`. Svaka podneta
+prijava pada u tabelu `abuse_reports` sa `status='open'`. **Tvoj posao
+kao operatera je da ih pregledaš i odlučiš šta dalje.**
+
+### Kako izgleda puni workflow
+
+```
+Korisnik                    Scanner                  Operator (ti)
+   │                           │                        │
+   │ POST /abuse-report        │                        │
+   │──────────────────────────>│                        │
+   │                           │ INSERT status='open'   │
+   │                           │ FLAG audit_log rows    │
+   │                           │ LOG abuse_report_submitted
+   │                           │                        │
+   │ {report_id, message}      │                        │
+   │<──────────────────────────│                        │
+   │                           │                        │
+   │                           │  .... neko vreme ....  │
+   │                           │                        │
+   │                           │          Ti otvaras    │
+   │                           │          Supabase SQL  │
+   │                           │<───────────────────────│
+   │                           │                        │
+   │                           │  Pregled, triage,      │
+   │                           │  UPDATE status =       │
+   │                           │   reviewed /           │
+   │                           │   confirmed /          │
+   │                           │   dismissed            │
+   │                           │                        │
+   │                           │ (confirmed → blokira   │
+   │                           │  buduce scanove tog    │
+   │                           │  domena)               │
+```
+
+### Status lifecycle
+
+| Status | Značenje | Posledica |
+|---|---|---|
+| `open` | Upravo primljeno, nepregledano | Nema — scan tog domena i dalje radi |
+| `reviewed` | Pogledao sam, razmišljam | Nema — isto kao open |
+| `confirmed` | Legitimna prijava, domen se blokira | **`POST /scan` tog domena vraća 403** + loguje `abuse_block_applied` |
+| `dismissed` | Lažna / zlonamerna prijava | Nema — isto kao open |
+
+### Kako da vidiš nove prijave (dnevni workflow)
+
+```sql
+-- Sve otvorene prijave, najnovije prve
+SELECT id, reported_domain, description, reporter_email,
+       array_length(related_scan_ids, 1) AS related_scans,
+       created_at
+  FROM abuse_reports
+ WHERE status = 'open'
+ ORDER BY created_at DESC;
+```
+
+Za svaku prijavu treba da odgovoriš na 3 pitanja:
+
+1. **Da li je pravi vlasnik domena?**  
+   Proveri `reporter_email` — da li dolazi sa domena o kome je priča?
+   (npr. `admin@mycompany.com` prijavljuje `mycompany.com`). Ako je
+   `reporter_email` iz drugog domena ili `null`, to je yellow flag —
+   možda je legitiman bug bounty researcher, možda je troll.
+
+2. **Da li smo stvarno skenirali taj domen?**  
+   ```sql
+   SELECT id, url, created_at, consent_accepted, consent_version, ip_hash
+     FROM scans
+    WHERE domain = 'mycompany.com'
+    ORDER BY created_at DESC LIMIT 20;
+   ```
+   Ako ima rezultata → da, i imaš dokaz ko je (ip_hash) + kada + sa
+   kojim consent-om. Ako ne → ili laže, ili je neko drugi.
+
+3. **Da li je korisnik imao pristanak?**  
+   Ako su u pitanju scanovi gde je `consent_accepted=true` + pravi
+   `consent_version`, to je legalno valjan scan. Korisnik te ne može
+   pravno tužiti. Ali **možeš i treba** da blokiraš domen ako vlasnik
+   to traži — to je goodwill, ne legal obligation.
+
+### Triage odluka — SQL primeri
+
+#### Scenario A: "Ovo je legitiman zahtev vlasnika domena"
+
+```sql
+-- Mark reviewed + confirmed sa operaterskim napomenama
+UPDATE abuse_reports
+   SET status = 'confirmed',
+       reviewed_at = NOW(),
+       reviewer_notes = '2026-04-10: owner confirmed via email from admin@mycompany.com, domain blocked from future scans'
+ WHERE id = <ID>;
+```
+
+Od tog trenutka, `POST /scan` za `mycompany.com` vraća 403. Loguj u
+svoj email thread da se radnja dogodila — ako te vlasnik pita "jeste
+li stvarno blokirali?", pokaži mu SQL rezultat.
+
+#### Scenario B: "Ovo je troll / lažna prijava"
+
+```sql
+UPDATE abuse_reports
+   SET status = 'dismissed',
+       reviewed_at = NOW(),
+       reviewer_notes = '2026-04-10: false report — reporter_email does not match domain WHOIS; no scans of this domain in our logs'
+ WHERE id = <ID>;
+```
+
+Dismissed prijave ostaju u bazi (forenzika) ali ne utiču ni na šta.
+Ako isti IP šalje 5+ dismissed prijava, razmotri da dodaš njegov
+ip_hash u buducu block listu (jer je bot ili maliciozni actor).
+
+#### Scenario C: "Trebam više vremena"
+
+```sql
+UPDATE abuse_reports
+   SET status = 'reviewed',
+       reviewed_at = NOW(),
+       reviewer_notes = '2026-04-10: pending clarification from reporter re: scan IDs mentioned'
+ WHERE id = <ID>;
+```
+
+"reviewed" je parking space — nije confirmed, nije dismissed, samo
+kažeš "otvoreno pitanje". Vrati se kasnije.
+
+### Kako da brzo unblock-uješ domen (ako si pogrešno confirmed)
+
+```sql
+UPDATE abuse_reports
+   SET status = 'dismissed',
+       reviewer_notes = reviewer_notes || ' | UNBLOCKED on 2026-04-10 — false positive'
+ WHERE id = <ID> AND status = 'confirmed';
+```
+
+`is_domain_blocked()` proverava **samo `confirmed` status**. Čim
+izmeniš status, domen opet može da se skenira.
+
+### Legal-hold flagovanje (automatsko)
+
+Kad korisnik pošalje abuse report sa `related_scan_ids` listom, ti
+specifični scanovi dobijaju `flagged=true` na svim njihovim
+`audit_log` redovima. **Ovi redovi više neće biti obrisani posle 90
+dana** — ostaju kao legal evidence dok ih ručno ne ukloniš.
+
+Ovo koristi RPC `flag_audit_rows_for_scan_ids(p_scan_ids text[])` iz
+migracije 010, koja radi kao SECURITY DEFINER da zaobiđe `REVOKE
+UPDATE` na audit_log (migration 004). RPC dozvoljava **samo**
+flagged=TRUE — ne može da radi drugo sa audit_log-om.
+
+Ako ikad trebaš da poništiš flag (npr. prijava je bila troll i više
+ne treba legal hold):
+
+```sql
+-- NAPOMENA: ovo ZAHTEVA superuser acces. Ne možeš da uradiš direktno
+-- preko dashboard SQL editor-a bez da otključaš audit_log UPDATE privilege.
+-- Najlakše je napraviti novu migraciju po potrebi.
+```
+
+U praksi: skoro nikad ne unflagujemo. Legal hold je "za svaki slučaj" i
+košta nas samo DB storage (malo). Puno bolje zadržati nego izgubiti.
+
+### Korisne SQL komande za abuse
+
+```sql
+-- Distribucija po statusu u poslednjih 30 dana
+SELECT status, COUNT(*) AS broj
+  FROM abuse_reports
+ WHERE created_at > NOW() - INTERVAL '30 days'
+ GROUP BY status
+ ORDER BY broj DESC;
+
+-- Svi blokirani domeni (confirmed)
+SELECT reported_domain, reviewed_at, reviewer_notes
+  FROM abuse_reports
+ WHERE status = 'confirmed'
+ ORDER BY reviewed_at DESC;
+
+-- Top reporter IPs (sumnja na floods)
+SELECT reporter_ip_hash, COUNT(*) AS prijava,
+       array_agg(DISTINCT status) AS statusi
+  FROM abuse_reports
+ WHERE created_at > NOW() - INTERVAL '30 days'
+ GROUP BY reporter_ip_hash
+HAVING COUNT(*) >= 3
+ ORDER BY prijava DESC;
+
+-- Koliko puta neko pokušava scan blokiranog domena
+SELECT domain, COUNT(*) AS block_hits,
+       array_length(array_agg(DISTINCT ip_hash), 1) AS unique_ips
+  FROM audit_log
+ WHERE event = 'abuse_block_applied'
+   AND created_at > NOW() - INTERVAL '30 days'
+ GROUP BY domain
+ ORDER BY block_hits DESC;
+
+-- Trenutno flagovani audit rows (legal hold)
+SELECT COUNT(*) AS flagged_rows,
+       MIN(created_at) AS oldest,
+       MAX(created_at) AS newest
+  FROM audit_log
+ WHERE flagged = TRUE;
+```
+
+### Template za odgovor reporter-u (copy-paste)
+
+**Ako confirmuješ (dodaješ na block listu):**
+> Poštovani,
+>
+> Primili smo vašu prijavu za domen `<DOMAIN>` dana `<DATUM>`. Nakon
+> pregleda našeg audit sistema, potvrđujemo da su skeniranja izvršena
+> i da su povezani zapisi označeni za trajno čuvanje kao dokaz.
+>
+> Dodali smo `<DOMAIN>` na listu blokiranih domena. Od ovog trenutka
+> naš scanner odbija sve zahteve za skeniranje vašeg domena sa HTTP
+> statusom 403.
+>
+> Ako ste vlasnik domena i u budućnosti želite da sami skenirate
+> svoj sajt, molim vas da nam pošaljete email sa domenom pošiljaoca
+> koji se poklapa sa WHOIS-om — deblokiraćemo prema potrebi.
+>
+> Ukoliko smatrate da se radi o kompromitovanom sajtu koji trenutno
+> skenira napadač, predlažemo vam da nas kontaktirate putem telefona
+> ili email-a sa pravnim zastupnikom za formalni takedown zahtev.
+>
+> Hvala na saradnji.
+
+**Ako dismissuješ (nije legitiman vlasnik):**
+> Poštovani,
+>
+> Primili smo vašu prijavu dana `<DATUM>`. Nakon pregleda, nismo
+> mogli da potvrdimo da je prijavilac vlasnik domena `<DOMAIN>`
+> (email domena se ne poklapa sa WHOIS registraacijom, ili nema
+> odgovarajućih audit zapisa u našem sistemu).
+>
+> Ako ste stvarni vlasnik domena, molim vas da nam pošaljete email
+> sa domenom pošiljaoca koji se poklapa sa WHOIS-om, ili da nam
+> dostavite sudski zahtev / takedown obaveštenje preko formalnih
+> kanala.
+>
+> Za sada prijava ostaje u našem sistemu kao "odbijena". Nema
+> automatske blokade domena na osnovu neverifikovanih prijava.
+
+### Što NE radi u ovoj fazi (ali treba znati)
+
+- **Nema automatskog emaila reporter-u.** Treba ti email klijent i manual copy-paste. U budućnosti može da se doda.
+- **Nema dashboard UI-ja.** Sve kroz SQL Editor na Supabase dashboard-u.
+- **Nema auto-confirmed** na osnovu broja prijava. Ti odlučuješ svaki put.
+- **Block je po `(status=confirmed, domain)`** — ne po `(domain, ip_hash)`. Tj. jednom kad confirmujes, niko ne može da skenira taj domen — ni ti sam bez verifikacije. Ako treba da ga skeniraš (npr. internal audit), privremeno ga unblock-uj.
+
+---
+
+*Poslednja verzija: 2026-04-10, po završetku Faze 3 (abuse reports).*
+*Sledeća revizija: kad završimo Fazu 5 (deploy na HF Spaces) — dodaće
+sekciju o deploy checklist-i i live monitoring-u posle prvih scans.*
 

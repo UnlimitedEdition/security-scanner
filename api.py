@@ -361,6 +361,155 @@ def security_txt():
 
 
 # ═══════════════════════════════════════════════════════════════════════
+# Abuse reports — Function 3
+# ═══════════════════════════════════════════════════════════════════════
+# When a site owner sees their domain in our scan logs (e.g. via a bot
+# crawling the results page, or via Cloudflare alert firing on our scan
+# UA), they need a way to say "stop". This endpoint is that channel.
+#
+# The submitted report lands in `abuse_reports` with status='open'.
+# The operator triages reports through the Supabase dashboard and
+# manually transitions them to 'reviewed' → 'confirmed' or 'dismissed'.
+# Confirmed reports block any future scans of the reported domain via
+# `is_domain_blocked()` checked in /scan.
+#
+# When the reporter cites specific scan_ids, we flag the corresponding
+# audit_log rows to exempt them from 90-day pruning. They then persist
+# as legal evidence for as long as the operator needs them.
+#
+# There's no rate limit specifically for abuse reports separate from
+# the global /scan rate limit, because legitimate reporters won't
+# submit hundreds of reports. Malicious floods would show up in the
+# audit log under abuse_report_submitted and can be handled manually.
+
+# Maximum length for free-text fields (chars). DB column is TEXT but
+# we guard at the API layer too to prevent trivial storage blowup.
+MAX_REPORT_DESCRIPTION = 4000
+MAX_REPORT_EMAIL = 320  # RFC 5321 max practical length
+MAX_RELATED_SCAN_IDS = 20
+
+
+class AbuseReport(BaseModel):
+    reported_domain: str
+    description: str
+    reporter_email: Optional[str] = None
+    related_scan_ids: Optional[list] = None
+
+    @field_validator("reported_domain")
+    @classmethod
+    def validate_domain(cls, v: str) -> str:
+        normalized = verification.normalize_domain(v)
+        if not normalized:
+            raise ValueError("Neispravan format domena.")
+        return normalized
+
+    @field_validator("description")
+    @classmethod
+    def validate_description(cls, v: str) -> str:
+        v = (v or "").strip()
+        if len(v) < 10:
+            raise ValueError("Opis prijave mora imati bar 10 karaktera.")
+        if len(v) > MAX_REPORT_DESCRIPTION:
+            raise ValueError(f"Opis ne sme biti duzi od {MAX_REPORT_DESCRIPTION} karaktera.")
+        return v
+
+    @field_validator("reporter_email")
+    @classmethod
+    def validate_email(cls, v: Optional[str]) -> Optional[str]:
+        if v is None or v.strip() == "":
+            return None
+        v = v.strip()
+        if len(v) > MAX_REPORT_EMAIL:
+            raise ValueError(f"Email predug (max {MAX_REPORT_EMAIL}).")
+        # Minimal sanity check — not a full RFC validator, just "looks
+        # like an email". If the operator needs to contact back, they'll
+        # notice if it's broken.
+        if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", v):
+            raise ValueError("Email nije u ispravnom formatu.")
+        return v
+
+    @field_validator("related_scan_ids")
+    @classmethod
+    def validate_scan_ids(cls, v: Optional[list]) -> Optional[list]:
+        if not v:
+            return None
+        if len(v) > MAX_RELATED_SCAN_IDS:
+            raise ValueError(f"Najvise {MAX_RELATED_SCAN_IDS} scan ID-jeva po prijavi.")
+        # scan_ids are 8-char hex from uuid4[:8]
+        cleaned = []
+        for sid in v:
+            if not isinstance(sid, str):
+                raise ValueError("scan_ids mora biti lista stringova.")
+            sid = sid.strip()
+            if not re.match(r"^[a-f0-9]{8}$", sid):
+                raise ValueError(f"Neispravan scan_id format: {sid[:12]}")
+            cleaned.append(sid)
+        return cleaned
+
+
+@app.post("/abuse-report")
+def abuse_report_endpoint(req: AbuseReport, request: Request):
+    """
+    Accept an abuse report from a site owner. Creates an abuse_reports
+    row with status='open', flags any cited scan_ids' audit_log rows
+    for legal retention, and emits an audit event.
+    """
+    reporter_ip = _client_ip(request)
+    user_agent = request.headers.get("user-agent", "")[:500] or None
+
+    # Global rate limit applies — same check as /scan to prevent a
+    # single IP from flooding the abuse queue
+    if not _check_rate_limit(reporter_ip):
+        db.log_audit_event(
+            event="scan_blocked_rate_limit",
+            ip=reporter_ip, ua=user_agent,
+            details={
+                "endpoint": "/abuse-report",
+                "reported_domain": req.reported_domain,
+            },
+        )
+        raise HTTPException(
+            status_code=429,
+            detail="Previse zahteva. Pokusajte ponovo za nekoliko minuta.",
+        )
+
+    row = db.create_abuse_report(
+        reported_domain=req.reported_domain,
+        description=req.description,
+        reporter_ip=reporter_ip,
+        reporter_email=req.reporter_email,
+        related_scan_ids=req.related_scan_ids,
+    )
+
+    # Flag any cited scans' audit_log rows for legal-hold retention
+    flagged_count = 0
+    if req.related_scan_ids:
+        flagged_count = db.flag_audit_rows_for_scans(req.related_scan_ids)
+
+    db.log_audit_event(
+        event="abuse_report_submitted",
+        ip=reporter_ip, ua=user_agent, domain=req.reported_domain,
+        details={
+            "report_id": (row or {}).get("id"),
+            "has_email": bool(req.reporter_email),
+            "related_scan_count": len(req.related_scan_ids or []),
+            "audit_rows_flagged": flagged_count,
+        },
+    )
+
+    return {
+        "ok": True,
+        "report_id": (row or {}).get("id"),
+        "reported_domain": req.reported_domain,
+        "status": "open",
+        "message": (
+            "Prijava je primljena i bice pregledana u roku od 72 sata. "
+            "Ako ste ostavili email, kontaktiracemo vas sa ishodom."
+        ),
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════
 # Function 6 — ownership verification
 # ═══════════════════════════════════════════════════════════════════════
 # Before a user can see the full scan findings (URLs of exposed files,
@@ -602,12 +751,7 @@ def verify_check_endpoint(req: VerifyCheckRequest, request: Request):
 def start_scan(req: ScanRequest, request: Request):
     """Start a new scan. Returns scan_id immediately."""
     # Get real IP from proxy headers (Vercel/Cloudflare/HF forward real IP)
-    client_ip = (
-        request.headers.get("x-forwarded-for", "").split(",")[0].strip()
-        or request.headers.get("x-real-ip", "")
-        or request.headers.get("cf-connecting-ip", "")
-        or (request.client.host if request.client else "unknown")
-    )
+    client_ip = _client_ip(request)
     user_agent = request.headers.get("user-agent", "")[:500] or None
 
     # Audit: every request is logged, even rejected ones, so abuse patterns
@@ -633,6 +777,25 @@ def start_scan(req: ScanRequest, request: Request):
         domain = parsed.netloc.removeprefix("www.") or req.url
     except Exception:
         domain = req.url
+
+    # Domain block check — if someone has submitted a confirmed abuse
+    # report for this domain, refuse to scan it. Logs the block attempt
+    # so the operator can see recurring attempts against blocked domains.
+    if db.is_domain_blocked(domain):
+        db.log_audit_event(
+            event="abuse_block_applied",
+            ip=client_ip, ua=user_agent, domain=domain,
+            details={"url": req.url, "reason": "confirmed_abuse_report"},
+        )
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "Ovaj domen je na listi za blokadu na osnovu prijave zloupotrebe. "
+                "Ako ste vlasnik domena i smatrate da je ovo greška, kontaktirajte nas. "
+                "/ This domain is blocked based on an abuse report. "
+                "If you're the owner and believe this is wrong, contact us."
+            ),
+        )
 
     # Determine queue position
     queue_position = len(_scan_queue) + (1 if _active_scan["id"] else 0)
