@@ -526,48 +526,101 @@ def abuse_report_endpoint(req: AbuseReport, request: Request):
 # they don't control by iterating through many scan tokens.
 MAX_VERIFY_ATTEMPTS = 5
 
-# Keys that look like "URLs or details" and get replaced with a
-# placeholder in unverified GET /scan responses. If the finding schema
-# grows new sensitive keys, add them here. Over-redaction is safe;
-# under-redaction is a data leak.
-REDACTED_FINDING_KEYS = {
-    "url", "path", "found_at", "payload", "raw",
-    "evidence", "body", "details", "snippet",
-    "header_value", "response_excerpt",
-}
-REDACTION_PLACEHOLDER = "[verify ownership to see details]"
+# Check-id prefixes whose findings expose specific attack surface
+# (file locations, admin URLs, exploitable vulnerabilities, API
+# endpoints, server fingerprints). These are hidden from unverified
+# callers — the mere existence of a "file_env" finding tells an
+# attacker there's a .env at /.env even if we scrub the description.
+#
+# Hardening-level findings (missing HSTS, weak SPF, SEO issues,
+# accessibility gaps, etc.) stay visible because they describe
+# *what's missing* rather than *where to attack*, and seeing them is
+# the whole value of running the scan.
+SENSITIVE_CHECK_PREFIXES = (
+    "file_",   # exposed sensitive files — exact path is the exploit
+    "admin_",  # discovered admin panels — exact URL is the login target
+    "vuln_",   # actively detected vulnerabilities
+    "api_",    # exposed API endpoints (GraphQL introspection, swagger, etc.)
+    "disc_",   # information disclosure (server version, debug info, etc.)
+)
+
+REDACTION_PLACEHOLDER = (
+    "[Verifikujte vlasnistvo domena da vidite detalje. / "
+    "Verify domain ownership to see details.]"
+)
+
+
+def _is_sensitive_finding(finding: Dict[str, Any]) -> bool:
+    """
+    True if this finding's check_id starts with any of the sensitive
+    prefixes. Unknown / missing IDs default to "not sensitive" — we
+    don't want a typo in the check catalog to accidentally mask a
+    hardening finding.
+    """
+    fid = str(finding.get("id") or "").lower()
+    return any(fid.startswith(p) for p in SENSITIVE_CHECK_PREFIXES)
 
 
 def _redact_finding(finding: Any) -> Any:
     """
-    Replace sensitive string values on a finding dict with a placeholder.
-    Non-dict findings are returned as-is. Boolean/int fields are kept
-    because they don't leak URLs.
+    For sensitive findings, return a stub that preserves the useful
+    public facts (severity, category, passed) but replaces all
+    human-readable fields with a placeholder. Non-sensitive findings
+    pass through unchanged so the user still sees their full
+    hardening report.
     """
     if not isinstance(finding, dict):
         return finding
+    if not _is_sensitive_finding(finding):
+        return finding
     return {
-        k: (REDACTION_PLACEHOLDER if k in REDACTED_FINDING_KEYS and v else v)
-        for k, v in finding.items()
+        "id": "redacted",
+        "category": finding.get("category", "Locked"),
+        "severity": finding.get("severity", "UNKNOWN"),
+        "passed": finding.get("passed", False),
+        "title": REDACTION_PLACEHOLDER,
+        "title_en": REDACTION_PLACEHOLDER,
+        "description": REDACTION_PLACEHOLDER,
+        "description_en": REDACTION_PLACEHOLDER,
+        "recommendation": REDACTION_PLACEHOLDER,
+        "recommendation_en": REDACTION_PLACEHOLDER,
+        "_was_redacted": True,
     }
 
 
 def _redact_result(result: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
     """
-    Returns a shallow copy of the scan result with every entry in
-    results[] run through _redact_finding. score, grade, counts, and
-    errors are untouched — those are the public summary.
+    Returns a shallow copy of the scan result with sensitive findings
+    replaced by stubs. score, grade, counts, and errors are preserved
+    — those are the public summary a visitor is allowed to see.
+
+    Adds `_redacted_count` so the frontend can render a "N findings
+    hidden, verify to unlock" hint without re-scanning the list.
     """
     if not isinstance(result, dict):
         return result
     redacted = dict(result)
     findings = result.get("results")
+    redacted_count = 0
     if isinstance(findings, list):
-        redacted["results"] = [_redact_finding(f) for f in findings]
+        new_findings = []
+        for f in findings:
+            new_f = _redact_finding(f)
+            if isinstance(new_f, dict) and new_f.get("_was_redacted"):
+                redacted_count += 1
+            new_findings.append(new_f)
+        redacted["results"] = new_findings
     redacted["_redacted"] = True
+    redacted["_redacted_count"] = redacted_count
     redacted["_redaction_notice"] = (
-        "Full findings (URLs, paths, details) are hidden until you verify "
-        "ownership of the scanned domain. Use POST /verify/request to start."
+        "Specificni pronalazi vezani za izlozene fajlove, admin stranice, "
+        "ranjivosti, API endpoint-e i otkrivanje sistemskih informacija su "
+        "sakriveni dok ne verifikujete vlasnistvo domena. Koristite "
+        "POST /verify/request da pokrenete verifikaciju. "
+        "/ Specific findings related to exposed files, admin pages, "
+        "vulnerabilities, API endpoints and information disclosure are "
+        "hidden until you verify ownership of the domain. Use "
+        "POST /verify/request to start."
     )
     return redacted
 
