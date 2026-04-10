@@ -801,6 +801,105 @@
       .sev-INFO { color: #15803d !important; background: #dcfce7 !important; }
       .error-box { background: #fee2e2 !important; border: 1px solid #dc2626 !important; color: #dc2626 !important; }
     }
+
+    /* ============================================================
+       PRO DISCOVERY MODAL — checkbox list of pages to scan
+       Shown to Pro users after they click "Scan" but before the
+       actual scan starts, so they can pick up to 10 pages from
+       the crawler's discovered set instead of letting the scanner
+       auto-pick by BFS order.
+       ============================================================ */
+    .disc-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(6px);
+      z-index: 10000;
+      display: none;
+      align-items: center; justify-content: center;
+      padding: 1rem;
+    }
+    .disc-backdrop.visible { display: flex; }
+    .disc-modal {
+      background: #11142a;
+      border: 1px solid #a78bfa;
+      border-radius: 14px;
+      padding: 1.75rem;
+      max-width: 640px;
+      width: 100%;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .disc-modal h2 {
+      font-size: 1.3rem; font-weight: 800; margin: 0 0 0.3rem;
+      color: #e8eaf6;
+    }
+    .disc-modal .disc-sub {
+      color: #9ca3af; font-size: 0.9rem; margin-bottom: 1rem;
+    }
+    .disc-modal .disc-badge {
+      display: inline-block; padding: 0.2rem 0.6rem;
+      background: #a78bfa; color: #0a0c15;
+      border-radius: 999px; font-size: 0.7rem; font-weight: 800;
+      letter-spacing: 0.05em; text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+    .disc-counter {
+      font-size: 0.85rem; color: #cbd5e1; margin-bottom: 0.5rem;
+    }
+    .disc-counter strong { color: #a78bfa; }
+    .disc-list {
+      flex: 1; overflow-y: auto;
+      background: #0a0c15;
+      border: 1px solid #252a4a;
+      border-radius: 10px;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .disc-item {
+      display: flex; align-items: center; gap: 0.7rem;
+      padding: 0.6rem 0.8rem; border-radius: 8px;
+      cursor: pointer; transition: background 0.12s;
+    }
+    .disc-item:hover { background: #1a1e38; }
+    .disc-item input[type="checkbox"] {
+      width: 16px; height: 16px; accent-color: #a78bfa;
+      cursor: pointer; flex-shrink: 0;
+    }
+    .disc-item .disc-url {
+      font-family: monospace; font-size: 0.85rem;
+      color: #e8eaf6;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      flex: 1; min-width: 0;
+    }
+    .disc-item .disc-tag {
+      font-size: 0.68rem; padding: 0.15rem 0.5rem;
+      background: #1a1e38; color: #7b83a6;
+      border-radius: 999px; flex-shrink: 0;
+    }
+    .disc-item .disc-tag.home { background: #a78bfa; color: #0a0c15; }
+    .disc-item.disabled { opacity: 0.4; cursor: not-allowed; }
+    .disc-item.disabled:hover { background: transparent; }
+    .disc-actions {
+      display: flex; gap: 0.7rem; justify-content: flex-end;
+    }
+    .disc-btn {
+      padding: 0.7rem 1.4rem; border-radius: 8px;
+      font-weight: 700; font-size: 0.9rem;
+      border: 1px solid #252a4a; background: #1a1e38;
+      color: #e8eaf6; cursor: pointer; font-family: inherit;
+    }
+    .disc-btn:hover { background: #252a4a; }
+    .disc-btn.primary {
+      background: #a78bfa; color: #0a0c15; border-color: #a78bfa;
+    }
+    .disc-btn.primary:hover { background: #c4b5fd; }
+    .disc-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+    .disc-loading {
+      text-align: center; padding: 2rem 1rem;
+      color: #9ca3af; font-size: 0.9rem;
+    }
   </style>
 </head>
 <body>
@@ -1125,6 +1224,130 @@ function _loadAdSlot(slotId) {
   });
 }
 
+// ────────────────────────────────────────────────────────────────
+// Pro plan helpers (license key + discovery modal)
+// ────────────────────────────────────────────────────────────────
+function getLicenseKey() {
+  try { return localStorage.getItem("wss-license-key") || ""; } catch (e) { return ""; }
+}
+
+function proAuthHeaders() {
+  var key = getLicenseKey();
+  return key ? { "X-License-Key": key } : {};
+}
+
+// Cache of the last /api/subscription/me response so we don't make
+// redundant calls. Refreshed on page load and after activation.
+var _proStatusCache = null;
+async function isProUser() {
+  if (_proStatusCache !== null) return _proStatusCache.active;
+  var key = getLicenseKey();
+  if (!key) { _proStatusCache = { active: false }; return false; }
+  try {
+    var resp = await fetch(API_BASE + "/api/subscription/me", {
+      headers: { "X-License-Key": key }
+    });
+    var data = await resp.json();
+    _proStatusCache = data;
+    return !!data.active;
+  } catch (e) {
+    _proStatusCache = { active: false };
+    return false;
+  }
+}
+
+// Show the discovery modal with a list of crawlable pages and return
+// a promise that resolves to the user's selection, or null if they
+// cancelled. The caller chains this after a successful /api/discover
+// call and feeds the resolved array into POST /scan as selected_pages.
+function showDiscoveryModal(pages, homeUrl, maxSelect) {
+  return new Promise(function(resolve) {
+    var backdrop = document.getElementById("discBackdrop");
+    var list = document.getElementById("discList");
+    var selectedEl = document.getElementById("discSelected");
+    var maxEl = document.getElementById("discMax");
+    var totalEl = document.getElementById("discTotal");
+    var startBtn = document.getElementById("discStartBtn");
+    var cancelBtn = document.getElementById("discCancelBtn");
+
+    maxEl.textContent = String(maxSelect || 10);
+    totalEl.textContent = String(pages.length);
+
+    // Build list rows
+    list.textContent = "";
+    var pickedSet = {};
+    pickedSet[homeUrl] = true;  // homepage always picked, first iteration
+
+    function rebuildRows() {
+      list.textContent = "";
+      var initialCount = Math.min(maxSelect, pages.length);
+      pages.forEach(function(url, idx) {
+        var row = document.createElement("label");
+        row.className = "disc-item";
+        var cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.value = url;
+        var isHome = (url === homeUrl);
+        // Pre-select first N or anything already in pickedSet
+        var prePicked = isHome || !!pickedSet[url] || (idx < initialCount);
+        cb.checked = prePicked;
+        if (prePicked) pickedSet[url] = true;
+        if (isHome) {
+          cb.disabled = true;  // homepage cannot be unchecked
+          row.classList.add("disabled");
+        }
+        cb.addEventListener("change", function() {
+          if (cb.checked) {
+            pickedSet[url] = true;
+          } else {
+            delete pickedSet[url];
+          }
+          // Enforce max cap
+          var currentCount = Object.keys(pickedSet).length;
+          if (currentCount > maxSelect) {
+            cb.checked = false;
+            delete pickedSet[url];
+            alert("Max " + maxSelect + " pages.");
+            currentCount = Object.keys(pickedSet).length;
+          }
+          selectedEl.textContent = String(currentCount);
+        });
+
+        var urlSpan = document.createElement("span");
+        urlSpan.className = "disc-url";
+        urlSpan.textContent = url;
+        var tag = document.createElement("span");
+        tag.className = "disc-tag" + (isHome ? " home" : "");
+        tag.textContent = isHome ? "HOME" : "";
+        row.appendChild(cb);
+        row.appendChild(urlSpan);
+        if (isHome) row.appendChild(tag);
+        list.appendChild(row);
+      });
+      selectedEl.textContent = String(Object.keys(pickedSet).length);
+    }
+    rebuildRows();
+
+    function cleanup() {
+      backdrop.classList.remove("visible");
+      startBtn.onclick = null;
+      cancelBtn.onclick = null;
+    }
+    startBtn.onclick = function() {
+      var picked = Object.keys(pickedSet);
+      if (picked.length === 0) { alert("Select at least one page."); return; }
+      cleanup();
+      resolve(picked);
+    };
+    cancelBtn.onclick = function() {
+      cleanup();
+      resolve(null);
+    };
+
+    backdrop.classList.add("visible");
+  });
+}
+
 async function startScan() {
   if (isAdBlocked()) {
     var msg = currentLang === "en"
@@ -1151,6 +1374,50 @@ async function startScan() {
   btn.disabled = true;
   btn.textContent = "Skeniranje...";
 
+  // Pro discovery flow: if the user has an active Pro subscription, go
+  // through /api/discover first so they can pick which pages to scan.
+  // Free users stay on the single-page path.
+  var selectedPages = null;
+  try {
+    var isPro = await isProUser();
+    if (isPro) {
+      btn.textContent = currentLang === "en" ? "Discovering pages..." : "Trazim stranice...";
+      var discResp = await fetch(API_BASE + "/api/discover", {
+        method: "POST",
+        headers: Object.assign(
+          { "Content-Type": "application/json" },
+          proAuthHeaders()
+        ),
+        body: JSON.stringify({ url: url, consent_accepted: true })
+      });
+      if (!discResp.ok) {
+        var dErr = await discResp.json().catch(function(){ return {}; });
+        throw new Error(dErr.detail || ("Discovery HTTP " + discResp.status));
+      }
+      var discData = await discResp.json();
+      var discoveredPages = discData.pages || [];
+      var homeUrl = discData.homepage_url || url;
+      var maxSelect = discData.max_selectable || 10;
+
+      // Pop the modal and wait for user selection
+      btn.textContent = currentLang === "en" ? "Scan site" : "Skeniraj sajt";
+      selectedPages = await showDiscoveryModal(discoveredPages, homeUrl, maxSelect);
+
+      if (selectedPages === null) {
+        // User cancelled
+        btn.disabled = false;
+        btn.textContent = currentLang === "en" ? "Scan site" : "Skeniraj sajt";
+        return;
+      }
+      btn.textContent = "Skeniranje...";
+    }
+  } catch (discoveryErr) {
+    // Non-fatal: fall back to single-page scan with a warning. This
+    // protects the main scan flow from a discovery-only bug.
+    console.warn("Pro discovery failed, falling back to single-page scan:", discoveryErr);
+    selectedPages = null;
+  }
+
   document.getElementById("progressWrap").style.display = "block";
   document.getElementById("resultsWrap").style.display = "none";
   document.getElementById("resultTabs").classList.add("visible");
@@ -1171,14 +1438,21 @@ async function startScan() {
   setProgress("Pokretanje skeniranja...", 2);
 
   try {
+    var scanBody = {
+      url: url,
+      consent_accepted: true,
+      consent_version: "2026-04-10-v2"
+    };
+    if (selectedPages && selectedPages.length > 0) {
+      scanBody.selected_pages = selectedPages;
+    }
     var resp = await fetch(API_BASE + "/scan", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        url: url,
-        consent_accepted: true,
-        consent_version: "2026-04-10-v1"
-      })
+      headers: Object.assign(
+        { "Content-Type": "application/json" },
+        proAuthHeaders()
+      ),
+      body: JSON.stringify(scanBody)
     });
     if (!resp.ok) { var e = await resp.json(); throw new Error(e.detail || "API greska"); }
     var data = await resp.json();
@@ -2140,6 +2414,47 @@ async function checkVerification() {
 // Abuse report submission moved to dedicated ./abuse-report.html page.
 // The form lives there with its own handler, so index.html stays leaner.
 </script>
+
+<!-- Pro discovery modal — hidden by default, shown by showDiscoveryModal() -->
+<div class="disc-backdrop" id="discBackdrop" role="dialog" aria-modal="true" aria-labelledby="discTitle">
+  <div class="disc-modal">
+    <div class="disc-badge">Pro</div>
+    <h2 id="discTitle">
+      <span class="sr">Izaberite stranice za skeniranje</span>
+      <span class="en">Select pages to scan</span>
+    </h2>
+    <p class="disc-sub">
+      <span class="sr">Pro plan vam omogucava da skenirate do 10 stranica. Cekirajte koje zelite, homepage je obavezna.</span>
+      <span class="en">Pro plan lets you scan up to 10 pages. Tick the ones you want — homepage is required.</span>
+    </p>
+    <div class="disc-counter">
+      <span class="sr">Izabrano:</span>
+      <span class="en">Selected:</span>
+      <strong><span id="discSelected">0</span>/<span id="discMax">10</span></strong>
+      <span class="sr"> stranica od </span>
+      <span class="en"> pages of </span>
+      <span id="discTotal">0</span>
+      <span class="sr"> pronadjenih</span>
+      <span class="en"> found</span>
+    </div>
+    <div class="disc-list" id="discList">
+      <div class="disc-loading">
+        <span class="sr">Ucitavanje...</span>
+        <span class="en">Loading...</span>
+      </div>
+    </div>
+    <div class="disc-actions">
+      <button type="button" class="disc-btn" id="discCancelBtn">
+        <span class="sr">Odustani</span>
+        <span class="en">Cancel</span>
+      </button>
+      <button type="button" class="disc-btn primary" id="discStartBtn">
+        <span class="sr">Skeniraj izabrano</span>
+        <span class="en">Scan selected</span>
+      </button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
