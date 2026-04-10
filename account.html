@@ -259,6 +259,68 @@
       </div>
     </div>
 
+    <div class="acc-card">
+      <h2>
+        <span class="sr">Cesta pitanja</span>
+        <span class="en">Common questions</span>
+      </h2>
+      <details style="background:#0a0c15;border:1px solid #252a4a;border-radius:10px;padding:1rem 1.25rem;margin-bottom:0.7rem;">
+        <summary style="cursor:pointer;font-weight:600;color:#e8eaf6;font-size:0.9rem;list-style:none;">
+          <span style="color:#a78bfa;">+ </span>
+          <span class="sr">Kako da se ulogujem na drugom uredjaju?</span>
+          <span class="en">How do I log in on another device?</span>
+        </summary>
+        <div style="margin-top:0.8rem;color:#9ca3af;font-size:0.85rem;line-height:1.7;">
+          <p>
+            <span class="sr">Nema klasicnog login-a - umesto passworda koristi se vas license key. Otvorite scanner na novom uredjaju, kliknete <a href="./pricing.html#activate" style="color:#a78bfa;">Aktiviraj Pro</a>, paste key, gotovo. Key je isti na svim uredjajima i nema ogranicenja aktivacija.</span>
+            <span class="en">There is no classic login - instead of a password, you use your license key. Open the scanner on the new device, click <a href="./pricing.html#activate" style="color:#a78bfa;">Activate Pro</a>, paste the key, done. The key is the same on all devices and has no activation limit.</span>
+          </p>
+        </div>
+      </details>
+
+      <details style="background:#0a0c15;border:1px solid #252a4a;border-radius:10px;padding:1rem 1.25rem;margin-bottom:0.7rem;">
+        <summary style="cursor:pointer;font-weight:600;color:#e8eaf6;font-size:0.9rem;list-style:none;">
+          <span style="color:#a78bfa;">+ </span>
+          <span class="sr">Izgubio sam key, kako da ga dobijem ponovo?</span>
+          <span class="en">I lost my key, how do I recover it?</span>
+        </summary>
+        <div style="margin-top:0.8rem;color:#9ca3af;font-size:0.85rem;line-height:1.7;">
+          <p>
+            <span class="sr">Kliknite "Upravljaj pretplatom" iznad - to vodi direktno na Lemon Squeezy customer portal. Upisete email koji ste koristili pri kupovini, Lemon Squeezy vam salje magic link, kliknete, vidite sve svoje license key-e. Portal je uvek dostupan i ne zahteva password.</span>
+            <span class="en">Click "Manage subscription" above — it takes you straight to the Lemon Squeezy customer portal. Enter the email you used at purchase, Lemon Squeezy sends you a magic link, click it, and you see all your license keys. The portal is always available and requires no password.</span>
+          </p>
+        </div>
+      </details>
+
+      <details style="background:#0a0c15;border:1px solid #252a4a;border-radius:10px;padding:1rem 1.25rem;margin-bottom:0.7rem;">
+        <summary style="cursor:pointer;font-weight:600;color:#e8eaf6;font-size:0.9rem;list-style:none;">
+          <span style="color:#a78bfa;">+ </span>
+          <span class="sr">Kako da otkazem pretplatu?</span>
+          <span class="en">How do I cancel my subscription?</span>
+        </summary>
+        <div style="margin-top:0.8rem;color:#9ca3af;font-size:0.85rem;line-height:1.7;">
+          <p>
+            <span class="sr">Otkazivanje ide kroz Lemon Squeezy customer portal (dugme "Upravljaj pretplatom" iznad). Logujete se email-om, kliknete "Cancel subscription". Pro funkcije ostaju aktivne do kraja trenutnog placenog perioda, posle toga se automatski prebacujete na free tier. Nema dodatnih naplata. Vise detalja u <a href="./terms.html#tos12" style="color:#a78bfa;">Uslovima koriscenja, sekcija 12</a>.</span>
+            <span class="en">Cancellation happens through the Lemon Squeezy customer portal ("Manage subscription" button above). Log in with your email, click "Cancel subscription". Pro features remain active until the end of your current paid period, then you automatically drop to the free tier. No additional charges. More details in <a href="./terms.html#tos12e" style="color:#a78bfa;">Terms of Service, section 12</a>.</span>
+          </p>
+        </div>
+      </details>
+
+      <details style="background:#0a0c15;border:1px solid #252a4a;border-radius:10px;padding:1rem 1.25rem;">
+        <summary style="cursor:pointer;font-weight:600;color:#e8eaf6;font-size:0.9rem;list-style:none;">
+          <span style="color:#a78bfa;">+ </span>
+          <span class="sr">Zasto nema klasicnog passworda i login-a?</span>
+          <span class="en">Why is there no classic password and login?</span>
+        </summary>
+        <div style="margin-top:0.8rem;color:#9ca3af;font-size:0.85rem;line-height:1.7;">
+          <p>
+            <span class="sr">Namerno. License key + Lemon Squeezy customer portal zajedno rade sve sto bi klasican account sistem radio, bez rizika password breach-a i bez potrebe za email verifikacijom. Za security scanner ovo je bolja praksa - manje mesta gde se nesto moze pokvariti, a svi operativni use case-ovi (multi-device, recovery, otkazivanje, menjanje kartice) i dalje rade kroz Lemon portal.</span>
+            <span class="en">Deliberate. License key + Lemon Squeezy customer portal together do everything a classic account system would, without password-breach risk and without needing email verification flows. For a security scanner this is actually better practice — fewer places where something can go wrong, and every operational use case (multi-device, recovery, cancellation, card change) still works through the Lemon portal.</span>
+          </p>
+        </div>
+      </details>
+    </div>
+
   </div>
 
 </main>
@@ -313,12 +375,14 @@
     document.getElementById('fRenews').textContent = formatDate(sub.current_period_end);
     document.getElementById('fEmail').textContent = sub.email || '—';
 
-    // Manage subscription link — Lemon Squeezy customer portal
-    // The user's best path is their purchase confirmation email. We
-    // provide a generic link to Lemon Squeezy's "my orders" page as
-    // a starting point and a note.
+    // Manage subscription link — Lemon Squeezy customer portal.
+    // The customer portal URL is the store's .lemonsqueezy.com/billing
+    // page where users enter their email and get a passwordless magic
+    // link to manage subscriptions + see license keys. This is the
+    // canonical self-service endpoint — the app.lemonsqueezy.com/my-orders
+    // URL we used before is a different (admin-facing) page.
     var manage = document.getElementById('btnManage');
-    manage.href = 'https://app.lemonsqueezy.com/my-orders';
+    manage.href = 'https://unlimitededition.lemonsqueezy.com/billing';
   }
 
   function renderHistoryList(scans) {
