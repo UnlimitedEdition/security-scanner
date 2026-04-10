@@ -5,3 +5,7 @@ dnspython==2.7.0
 pydantic==2.10.0
 beautifulsoup4==4.12.3
 certifi>=2024.0.0
+
+# Database (Supabase Postgres client + pure-Python driver for migrations)
+supabase==2.9.1
+psycopg[binary]==3.2.3
