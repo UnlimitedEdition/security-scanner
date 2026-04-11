@@ -21,6 +21,23 @@ from security_utils import safe_get, UnsafeTargetError
 TIMEOUT = 6
 MAX_WORKERS = 5
 
+# Git deep walker — probe internal .git files beyond /.git/config to decide
+# whether a full repository dump is possible. Each path has its own content
+# signature in _git_deep_matches() to reject SPA catch-all 200 responses.
+GIT_DEEP_PATHS = [
+    "/.git/HEAD",
+    "/.git/index",
+    "/.git/logs/HEAD",
+    "/.git/refs/heads/main",
+    "/.git/refs/heads/master",
+    "/.git/packed-refs",
+]
+
+# Minimum git-internal files that must respond with valid content before we
+# flag "fully dumpable". Below this threshold we stay silent and let the
+# existing /.git/config check speak for itself.
+GIT_DEEP_THRESHOLD = 2
+
 SENSITIVE_FILES = [
     {
         "id": "file_env",
@@ -321,6 +338,161 @@ def _probe_file(base_url: str, session: requests.Session,
     }
 
 
+def _git_deep_matches(path: str, resp: requests.Response) -> bool:
+    """
+    Path-aware content validation for git-internal files. Returns True only
+    when the response body matches the on-disk shape of that specific git
+    file type. A plain 200 is never enough — SPA catch-alls and WAF error
+    pages can 200 anything, so each path is matched against the fixed
+    structure of the real git file.
+    """
+    content = resp.content
+    if len(content) < 4:
+        return False
+
+    # /.git/index — binary, always starts with "DIRC" magic
+    if path == "/.git/index":
+        return content[:4] == b"DIRC"
+
+    # Text files below — decode defensively
+    try:
+        body = resp.text
+    except Exception:
+        return False
+
+    # SPA / catch-all guard: if the server just rendered an HTML shell,
+    # no git content is actually exposed regardless of substring hits.
+    stripped = body.lstrip()[:64].lower()
+    if stripped.startswith("<!doctype html") or stripped.startswith("<html"):
+        return False
+
+    head = body.strip()
+    if not head:
+        return False
+
+    def _is_sha1(s: str) -> bool:
+        return len(s) == 40 and all(c in "0123456789abcdef" for c in s.lower())
+
+    if path == "/.git/HEAD":
+        # Normal: "ref: refs/heads/<name>". Detached: raw 40-char hex.
+        if head.startswith("ref: refs/"):
+            return True
+        return _is_sha1(head)
+
+    if path.startswith("/.git/refs/heads/"):
+        # File contains exactly a 40-char SHA-1 (plus optional trailing newline).
+        return _is_sha1(head)
+
+    if path == "/.git/logs/HEAD":
+        # Each reflog line starts with two 40-char SHAs separated by a space.
+        first = head.split("\n", 1)[0]
+        parts = first.split(" ")
+        if len(parts) < 2:
+            return False
+        return _is_sha1(parts[0]) and _is_sha1(parts[1])
+
+    if path == "/.git/packed-refs":
+        # Canonical header or a line whose first token is a 40-char SHA.
+        if head.startswith("# pack-refs with:"):
+            return True
+        first_token = head.split("\n", 1)[0].split(" ", 1)[0]
+        return _is_sha1(first_token)
+
+    return False
+
+
+def _probe_git_deep_path(base_url: str, session: requests.Session,
+                         path: str) -> Optional[str]:
+    """
+    Single-URL probe for the git deep walker. Returns the path on a confirmed
+    hit, None otherwise. Kept as thin as _probe_file so it can share the same
+    executor pattern without surprises.
+    """
+    url = base_url.rstrip("/") + path
+    try:
+        resp = safe_get(session, url, timeout=TIMEOUT, max_redirects=0)
+    except (UnsafeTargetError, requests.exceptions.RequestException):
+        return None
+    except Exception:
+        return None
+
+    if resp.status_code != 200:
+        return None
+    if not _git_deep_matches(path, resp):
+        return None
+    return path
+
+
+def _scan_git_deep(base_url: str, session: requests.Session) -> Optional[Dict[str, Any]]:
+    """
+    Run the git deep walker and return a single aggregated finding when the
+    number of confirmed hits reaches GIT_DEEP_THRESHOLD. Below threshold we
+    return None and let the existing /.git/config check (if any) stand on
+    its own — this module is specifically about the "fully dumpable" signal.
+
+    refs/heads/main and refs/heads/master are deduplicated so a site with only
+    one default branch file can't accidentally inflate the hit count to 2.
+    """
+    hits: List[str] = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        futures = {
+            executor.submit(_probe_git_deep_path, base_url, session, p): p
+            for p in GIT_DEEP_PATHS
+        }
+        for fut in concurrent.futures.as_completed(futures):
+            try:
+                hit = fut.result(timeout=TIMEOUT + 2)
+            except Exception:
+                continue
+            if hit:
+                hits.append(hit)
+
+    effective_count = len(hits)
+    if "/.git/refs/heads/main" in hits and "/.git/refs/heads/master" in hits:
+        effective_count -= 1
+
+    if effective_count < GIT_DEEP_THRESHOLD:
+        return None
+
+    confirmed = ", ".join(sorted(hits))
+    return {
+        "id": "git_deep_dumpable",
+        "category": "Sensitive Files",
+        "severity": "CRITICAL",
+        "passed": False,
+        "title": ".git repozitorijum je potpuno izvučiv — izložen kompletan source code",
+        "title_en": ".git Repository is Fully Dumpable — Full Source Code Exposed",
+        "description": (
+            f"Otkriveno {len(hits)} internih .git fajlova: {confirmed}. "
+            "Sa ovom kombinacijom napadač može pokrenuti alat 'git-dumper' i "
+            "rekonstruisati ceo repozitorijum, uključujući kompletnu commit "
+            "istoriju, lozinke i tajne tokene koji su ikad bili commit-ovani — "
+            "čak i ako su kasnije obrisani iz trenutne verzije koda."
+        ),
+        "description_en": (
+            f"Discovered {len(hits)} internal .git files: {confirmed}. "
+            "With this combination an attacker can run the 'git-dumper' tool "
+            "and reconstruct the entire repository, including full commit "
+            "history, passwords and secret tokens that were ever committed — "
+            "even if they were later removed from the current version of the code."
+        ),
+        "recommendation": (
+            "Blokirajte pristup celom .git direktorijumu na web serveru. "
+            "Nginx: 'location ~ /\\.git { deny all; return 404; }'. "
+            "Apache: 'RedirectMatch 404 /\\.git'. Idealno — .git uopšte ne "
+            "sme da stoji na produkcionom serveru. Koristite 'git archive' "
+            "ili CI/CD build artifact u deploy procesu umesto 'git pull' na serveru."
+        ),
+        "recommendation_en": (
+            "Block access to the entire .git directory on the web server. "
+            "Nginx: 'location ~ /\\.git { deny all; return 404; }'. "
+            "Apache: 'RedirectMatch 404 /\\.git'. Ideally, .git should not "
+            "be present on a production server at all — use 'git archive' or "
+            "a CI/CD build artifact in the deploy process instead of 'git pull' on the server."
+        ),
+    }
+
+
 def run(base_url: str, session: requests.Session) -> List[Dict[str, Any]]:
     results = []
 
@@ -338,6 +510,13 @@ def run(base_url: str, session: requests.Session) -> List[Dict[str, Any]]:
                 continue
             if finding:
                 results.append(finding)
+
+    # Git deep walker — escalates "/.git exposed" from a single clue into a
+    # CRITICAL "fully dumpable" finding when 2+ internal git files respond
+    # with real git content (path-aware signature match, not just 200 OK).
+    git_deep = _scan_git_deep(base_url, session)
+    if git_deep:
+        results.append(git_deep)
 
     if not results:
         results.append({
