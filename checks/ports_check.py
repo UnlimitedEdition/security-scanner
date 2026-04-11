@@ -71,6 +71,100 @@ DANGEROUS_PORTS = [
      "Port 8443 is open. Verify if this is intentional.",
      "Proverite šta radi servis na ovom portu i da li je potreban.",
      "Check what service is running on this port and if it is needed."),
+
+    # ── Modern stack: distributed databases ───────────────────────────────
+    (9042, "Apache Cassandra (distribuirana baza)", "CRITICAL",
+     "Cassandra CQL port je otvoren. Distribuirane baze često imaju slabu defaultnu autentifikaciju, a eksponiranje znači potpun pristup podacima iz celog klastera.",
+     "Cassandra CQL port is open. Distributed databases often have weak default authentication, and exposing it means full access to all cluster data.",
+     "Zatvorite port 9042 na firewall-u. Omogućite PasswordAuthenticator u cassandra.yaml i bind samo na privatnu mrežu.",
+     "Close port 9042 at the firewall. Enable PasswordAuthenticator in cassandra.yaml and bind only to the private network."),
+
+    (5984, "Apache CouchDB (Fauxton admin)", "CRITICAL",
+     "CouchDB port je otvoren sa Fauxton admin interfejsom. Istorijski je imao 'admin party' mode — baza bez lozinke — i CVE-2022-24706 RCE.",
+     "CouchDB port is open with Fauxton admin interface. Historically had 'admin party' mode — database with no password — and CVE-2022-24706 RCE.",
+     "Zatvorite port 5984. Postavite admin lozinku kroz local.ini i bind na localhost.",
+     "Close port 5984. Set an admin password via local.ini and bind to localhost."),
+
+    (28015, "RethinkDB (NoSQL)", "HIGH",
+     "RethinkDB driver port je otvoren. Defaultno nema autentifikaciju i napadač može čitati ili menjati sve podatke.",
+     "RethinkDB driver port is open. Has no authentication by default and an attacker can read or modify all data.",
+     "Zatvorite port 28015. Konfigurišite user/password u RethinkDB admin bazi.",
+     "Close port 28015. Configure a user/password in the RethinkDB admin database."),
+
+    (8091, "Couchbase admin UI", "CRITICAL",
+     "Couchbase admin port je otvoren. Defaultno ima admin UI sa mogućnošću upravljanja celom bazom, i istorijski se instalira bez postavljene admin lozinke.",
+     "Couchbase admin port is open. By default has an admin UI with full database management, and historically gets installed without an admin password set.",
+     "Zatvorite port 8091 za javne IP-eve. Postavite jak Cluster Administrator password odmah pri instalaciji i bind na privatnu mrežu.",
+     "Close port 8091 to public IPs. Set a strong Cluster Administrator password immediately on install and bind to the private network."),
+
+    # ── Message brokers & coordination ────────────────────────────────────
+    (15672, "RabbitMQ management UI", "HIGH",
+     "RabbitMQ management interfejs je otvoren. Defaultni kredencijali guest/guest rade sa bilo koje IP adrese ako je port javan — svi message brokeri su izloženi.",
+     "RabbitMQ management interface is open. Default guest/guest credentials work from any IP when the port is public — all message brokers are exposed.",
+     "Zatvorite port 15672. Obrišite 'guest' korisnika, postavite jak password, i omogućite management plugin samo na localhost.",
+     "Close port 15672. Delete the 'guest' user, set a strong password, and enable the management plugin only on localhost."),
+
+    (9092, "Apache Kafka broker", "HIGH",
+     "Kafka broker port je otvoren. Bez SASL autentifikacije napadač može čitati ili produkovati poruke u bilo koji topic — potpuna kompromitacija stream podataka.",
+     "Kafka broker port is open. Without SASL authentication, an attacker can read or produce messages to any topic — full compromise of stream data.",
+     "Zatvorite port 9092 za javne IP-eve. Omogućite SASL/SCRAM i TLS, i koristite ACL-ove po topic-u.",
+     "Close port 9092 to public IPs. Enable SASL/SCRAM and TLS, and use per-topic ACLs."),
+
+    (2181, "Apache Zookeeper", "HIGH",
+     "Zookeeper port je otvoren. Drži koordinacione metapodatke za Kafka/Hadoop/HBase klastere — otkriva strukturu celog sistema i može se koristiti za manipulaciju stanja klastera.",
+     "Zookeeper port is open. Holds coordination metadata for Kafka/Hadoop/HBase clusters — reveals the whole system structure and can be used to manipulate cluster state.",
+     "Zatvorite port 2181. Koristite Zookeeper ACL-ove i SASL autentifikaciju, bind na privatnu mrežu.",
+     "Close port 2181. Use Zookeeper ACLs and SASL authentication, bind to the private network."),
+
+    # ── Container orchestration (Docker / Kubernetes) ─────────────────────
+    (2375, "Docker daemon API (HTTP, bez TLS)", "CRITICAL",
+     "Docker daemon API je otvoren bez TLS-a. Ovo je trivijalni RCE — svaka komanda 'docker -H <host>:2375 run ...' daje napadaču root shell na serveru.",
+     "Docker daemon API is open without TLS. This is a trivial RCE — any 'docker -H <host>:2375 run ...' command gives the attacker a root shell on the server.",
+     "ODMAH zatvorite port 2375. Docker daemon ne sme biti javno eksponiran. Za remote pristup koristite TLS (port 2376) ili SSH tunel.",
+     "Close port 2375 IMMEDIATELY. The Docker daemon must never be publicly exposed. For remote access use TLS (port 2376) or an SSH tunnel."),
+
+    (2376, "Docker daemon API (TLS)", "HIGH",
+     "Docker daemon TLS port je otvoren. Zahteva klijentski sertifikat, ali svaka slabost u TLS konfiguraciji ili CA management-u vodi direktno do RCE-a na serveru.",
+     "Docker daemon TLS port is open. Requires a client certificate, but any weakness in TLS configuration or CA management leads directly to RCE on the server.",
+     "Ako remote Docker pristup nije neophodan, zatvorite port 2376. Ako jeste — proverite da li je mTLS stvarno strogo postavljen.",
+     "If remote Docker access is not required, close port 2376. If it is — verify that mTLS is actually strictly configured."),
+
+    (10250, "Kubernetes Kubelet API", "CRITICAL",
+     "Kubelet API port je otvoren. Kubelet kontroliše sve pod-ove na node-u — anonimni pristup ili slaba autentifikacija znači RCE na svakom pod-u u klasteru.",
+     "Kubelet API port is open. Kubelet controls all pods on the node — anonymous access or weak authentication means RCE on every pod in the cluster.",
+     "Zatvorite port 10250 za sve osim control plane-a. Postavite --anonymous-auth=false i --authorization-mode=Webhook u kubelet konfiguraciji.",
+     "Close port 10250 to everything except the control plane. Set --anonymous-auth=false and --authorization-mode=Webhook in the kubelet configuration."),
+
+    (2379, "etcd key-value store", "CRITICAL",
+     "etcd port je otvoren. etcd sadrži celu Kubernetes config bazu uključujući secrets, tokens i service accounts — eksponirano = potpun cluster takeover.",
+     "etcd port is open. etcd contains the entire Kubernetes config database including secrets, tokens, and service accounts — exposed = full cluster takeover.",
+     "Zatvorite port 2379 za sve osim control plane node-ova. Omogućite client-to-server TLS sa mutual auth.",
+     "Close port 2379 to all non-control-plane nodes. Enable client-to-server TLS with mutual auth."),
+
+    # ── Search & big data ─────────────────────────────────────────────────
+    (8983, "Apache Solr admin", "HIGH",
+     "Solr admin port je otvoren. Istorijski lanac ranjivosti kroz VelocityResponseWriter, DataImportHandler i Log4Shell — eksponiran Solr je često direktno RCE.",
+     "Solr admin port is open. Historical vulnerability chain through VelocityResponseWriter, DataImportHandler and Log4Shell — exposed Solr is often direct RCE.",
+     "Zatvorite port 8983. Omogućite Solr autentifikaciju kroz security.json i bind na localhost.",
+     "Close port 8983. Enable Solr authentication via security.json and bind to localhost."),
+
+    (50070, "Hadoop NameNode UI", "HIGH",
+     "Hadoop NameNode web UI je otvoren. Otkriva strukturu HDFS fajl sistema, listu svih fajlova, i često dozvoljava direktan download podataka bez autentifikacije.",
+     "Hadoop NameNode web UI is open. Reveals HDFS filesystem structure, full file listings, and often allows direct data downloads without authentication.",
+     "Zatvorite port 50070. Omogućite Kerberos autentifikaciju za Hadoop i bind NameNode UI na privatnu mrežu.",
+     "Close port 50070. Enable Kerberos authentication for Hadoop and bind the NameNode UI to the private network."),
+
+    (7077, "Apache Spark master", "HIGH",
+     "Spark master port je otvoren. Napadač može da preda proizvoljne Spark job-ove klasteru što znači udaljeno izvršenje koda na svim worker node-ovima.",
+     "Spark master port is open. An attacker can submit arbitrary Spark jobs to the cluster, meaning remote code execution on all worker nodes.",
+     "Zatvorite port 7077. Omogućite Spark ACL-ove (spark.acls.enable=true) i bind master samo na internu mrežu klastera.",
+     "Close port 7077. Enable Spark ACLs (spark.acls.enable=true) and bind the master only to the internal cluster network."),
+
+    (4040, "Apache Spark application UI", "MEDIUM",
+     "Spark application web UI je otvoren. Otkriva listu aktivnih job-ova, konfiguraciju, environment promenljive i često putanje fajlova — korisno za napadača u pripremi napada.",
+     "Spark application web UI is open. Reveals the list of active jobs, configuration, environment variables and often file paths — useful for an attacker in attack preparation.",
+     "Zatvorite port 4040. Omogućite spark.ui.filters za autentifikaciju ili stavite iza reverse proxy-ja.",
+     "Close port 4040. Enable spark.ui.filters for authentication or place behind a reverse proxy."),
 ]
 
 
@@ -86,8 +180,10 @@ def run(domain: str) -> List[Dict[str, Any]]:
     results = []
     open_ports = []
 
-    # Run port checks concurrently for speed
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    # Run port checks concurrently for speed. max_workers scales with the
+    # port list — at 25 ports and TIMEOUT=3, 15 workers keeps wall time
+    # under ~6 seconds in the worst case (all ports time out).
+    with ThreadPoolExecutor(max_workers=15) as executor:
         future_to_port = {
             executor.submit(_check_port, domain, port): (port, name, severity, desc_sr, desc_en, rec_sr, rec_en)
             for port, name, severity, desc_sr, desc_en, rec_sr, rec_en in DANGEROUS_PORTS
@@ -124,8 +220,8 @@ def run(domain: str) -> List[Dict[str, Any]]:
             "passed": True,
             "title": f"Provereno {len(DANGEROUS_PORTS)} opasnih portova — svi zatvoreni ✓",
             "title_en": f"Checked {len(DANGEROUS_PORTS)} dangerous ports — all closed ✓",
-            "description": "MySQL, PostgreSQL, MongoDB, Redis, Elasticsearch, FTP, Telnet, Memcached — nijedan nije javno dostupan.",
-            "description_en": "MySQL, PostgreSQL, MongoDB, Redis, Elasticsearch, FTP, Telnet, Memcached — none are publicly accessible.",
+            "description": "Baze podataka (MySQL, PostgreSQL, MongoDB, Redis, Elasticsearch, Cassandra, CouchDB, Couchbase), legacy servisi (FTP, Telnet), cache (Memcached), message brokeri (RabbitMQ, Kafka, Zookeeper), container orchestration (Docker daemon, Kubelet, etcd), search i big data (Solr, Hadoop, Spark) — nijedan nije javno dostupan.",
+            "description_en": "Databases (MySQL, PostgreSQL, MongoDB, Redis, Elasticsearch, Cassandra, CouchDB, Couchbase), legacy services (FTP, Telnet), cache (Memcached), message brokers (RabbitMQ, Kafka, Zookeeper), container orchestration (Docker daemon, Kubelet, etcd), search and big data (Solr, Hadoop, Spark) — none are publicly accessible.",
             "recommendation": "",
             "recommendation_en": "",
         })
