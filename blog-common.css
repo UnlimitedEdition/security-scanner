@@ -5,6 +5,17 @@
 
 /* === RESET & BASE === */
 * { box-sizing: border-box; margin: 0; padding: 0; }
+/* Global horizontal-overflow safety net: if any child element (table,
+   pre, long URL, oversized image, misconfigured grid) tries to be wider
+   than the viewport, we clip instead of giving the whole page a
+   horizontal scroll bar. Each wide element should still have its own
+   local scroll (pre has overflow-x:auto, tables get the same via the
+   rule further down) so nothing becomes unreadable — but the <body>
+   itself never scrolls sideways on any screen size. */
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
 body {
   font-family: 'Inter', sans-serif;
   background: #0a0c15;
@@ -13,6 +24,13 @@ body {
   line-height: 1.8;
 }
 a { color: #a78bfa; }
+/* Prevent very long inline code (URLs, paths, tokens) from pushing the
+   page wider than the viewport on mobile. */
+code { word-break: break-word; overflow-wrap: break-word; }
+/* Images should never exceed their container. This is a defensive
+   default in case a blog article forgets the max-width on an inline
+   <img> tag. */
+img { max-width: 100%; height: auto; }
 
 /* === LANGUAGE TOGGLE === */
 .sr { display: block; } .en { display: none; }
@@ -165,13 +183,35 @@ pre code { background: none; padding: 0; color: #c0c4db; }
 .callout-danger { border-left-color: #ef4444; }
 .callout strong { color: #a78bfa; }
 
-/* === TABLE === */
-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+/* === TABLE ===
+   Tables default to full-width on desktop. On narrow screens we
+   turn the table itself into a horizontally-scrollable block so
+   wide tables (GDPR fine amounts, feature comparisons with many
+   columns, etc.) do not push the page layout. The inner <thead>
+   and <tbody> stay inline-table so the column layout is preserved
+   when scrolled. */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
 th, td {
   text-align: left; padding: 0.6rem 0.8rem;
   border-bottom: 1px solid #252a4a; font-size: 0.88rem; color: #c0c4db;
+  word-break: break-word;
 }
 th { color: #a78bfa; font-weight: 600; }
+@media (max-width: 720px) {
+  /* Mobile: let the table scroll horizontally inside its own box
+     instead of forcing the whole page to scroll. */
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+  }
+  th, td { font-size: 0.82rem; padding: 0.5rem 0.6rem; }
+}
 
 /* === REFERENCES === */
 .ref { font-size: 0.82rem; color: #7b83a6; }
@@ -227,9 +267,23 @@ th { color: #a78bfa; font-weight: 600; }
 }
 .footer-grid {
   max-width: 1100px; margin: 0 auto;
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 2rem; margin-bottom: 2rem;
+  display: grid;
+  /* minmax(150px, 1fr) leaves enough room for 2 columns on a 360px
+     viewport without the column minimum pushing content off-screen.
+     The larger 180px value we had before caused horizontal scroll on
+     narrow phones because two 180px columns plus 2rem gap exceeded
+     the usable viewport width. */
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2rem;
+  min-width: 0;
 }
+/* Footer columns must shrink to fit their parent grid cell, otherwise
+   a long link text (e.g. 'Privacy Policy detekcija') inside a fixed
+   grid column can overflow its column and push the grid wider than
+   the viewport. */
+.footer-col { min-width: 0; }
+.footer-col a { word-break: break-word; }
 .footer-col h4 {
   color: #a78bfa; font-size: 0.82rem; font-weight: 700;
   margin-bottom: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;
@@ -292,7 +346,23 @@ th { color: #a78bfa; font-weight: 600; }
   .footer-grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 480px) {
-  .footer-grid { grid-template-columns: 1fr; }
+  .footer-grid { grid-template-columns: 1fr; gap: 1.2rem; }
   .footer-bottom { flex-direction: column; text-align: center; }
-  .footer-legal { gap: 0.8rem 1.2rem; font-size: 0.78rem; }
+  .footer-legal {
+    gap: 0.6rem 1rem;
+    font-size: 0.76rem;
+    padding: 1rem 0.5rem 0;
+  }
+  .footer-legal a { padding: 0.2rem 0.05rem; }
+  .site-footer { padding: 2.5rem 1rem 1.5rem; }
+  .footer-cta { font-size: 0.78rem; padding: 0.5rem 1rem; }
+  /* Blog content tight mode — smaller side padding and smaller
+     headings so 320px phones don't waste screen estate. */
+  .blog-content { padding: 0 0.25rem 1.5rem; }
+  .blog-content h1 { font-size: 1.5rem; }
+  .blog-content h2 { font-size: 1.15rem; }
+  .blog-content h3 { font-size: 1rem; }
+  /* Stat cards: single column on very narrow screens to avoid
+     the 150px min-column squeeze on 320-360px phones. */
+  .stat-grid { grid-template-columns: 1fr; }
 }
