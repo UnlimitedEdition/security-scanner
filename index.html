@@ -1209,39 +1209,73 @@
 <div class="verify-panel" id="verifyPanel">
   <h3 data-sr="Verifikuj vlasnistvo domena" data-en="Verify domain ownership">Verifikuj vlasnistvo domena</h3>
 
-  <!-- WHY THIS EXISTS — ownership gate rationale -->
+  <!-- WHY THIS EXISTS — ownership gate rationale.
+       Uses the <span class="sr"> / <span class="en"> inline sibling
+       pattern (same as the rest of index.html) so the language toggle
+       driven by body.lang-en CSS class works consistently. Direct
+       class="sr" on a <p> or <li> would apply display:block via
+       blog-common.css and break list-item rendering. -->
   <div class="verify-intro">
-    <p class="sr"><strong>Zasto trazimo verifikaciju?</strong> Scanner otkriva specificne ranjivosti sajta - URL-ove izlozenih fajlova, admin stranice, detalje ranjivosti, reprodukcione korake. Ove informacije su korisne vlasniku sajta koji hoce da popravi probleme, ali bi u rukama napadaca bile exploit cheat sheet. Zato za svaku takvu stavku trazimo da dokazete da ste vi vlasnik domena koji skenirate.</p>
-    <p class="en"><strong>Why do we require verification?</strong> The scanner uncovers specific site vulnerabilities — exposed file URLs, admin panel paths, vulnerability details, reproduction steps. That information is useful for the site owner who wants to fix the problems, but would be an exploit cheat sheet in an attacker's hands. So for every sensitive finding, we require you to prove you are the owner of the domain you are scanning.</p>
+    <p>
+      <strong>
+        <span class="sr">Zasto trazimo verifikaciju?</span>
+        <span class="en">Why do we require verification?</span>
+      </strong>
+      <span class="sr"> Scanner otkriva specificne ranjivosti sajta - URL-ove izlozenih fajlova, admin stranice, detalje ranjivosti, reprodukcione korake. Ove informacije su korisne vlasniku sajta koji hoce da popravi probleme, ali bi u rukama napadaca bile exploit cheat sheet. Zato za svaku takvu stavku trazimo da dokazete da ste vi vlasnik domena koji skenirate.</span>
+      <span class="en"> The scanner uncovers specific site vulnerabilities — exposed file URLs, admin panel paths, vulnerability details, reproduction steps. That information is useful for the site owner who wants to fix the problems, but would be an exploit cheat sheet in an attacker's hands. So for every sensitive finding, we require you to prove you are the owner of the domain you are scanning.</span>
+    </p>
   </div>
 
-  <!-- WHAT YOU UNLOCK — concrete preview -->
+  <!-- WHAT YOU UNLOCK — concrete preview. Each <li> is a single
+       list-item holding both SR and EN spans so the bullet stays
+       rendered correctly and only the current-language span is
+       visible inside. -->
   <div class="verify-unlocks">
     <h4>
       <span class="sr">Nakon verifikacije dobijate</span>
       <span class="en">After verification you get</span>
     </h4>
     <ul>
-      <li class="sr">Pun spisak izlozenih fajlova (.env, .git, backup dumpovi, phpMyAdmin, wp-config.php)</li>
-      <li class="en">Full list of exposed files (.env, .git, backup dumps, phpMyAdmin, wp-config.php)</li>
-      <li class="sr">Admin panel URL-ove i njihove status kodove</li>
-      <li class="en">Admin panel URLs and their status codes</li>
-      <li class="sr">Detaljne opise ranjivosti sa severity ocenama i preporukama za popravku</li>
-      <li class="en">Detailed vulnerability descriptions with severity ratings and fix recommendations</li>
-      <li class="sr">Reprodukcione korake za pronadjene probleme (za tvoje devops/security kolege)</li>
-      <li class="en">Reproduction steps for the findings (for your devops/security team)</li>
-      <li class="sr">30-dnevni otkljucan pristup za bilo koji buduci scan istog domena sa iste IP adrese</li>
-      <li class="en">30-day unlocked access to any future scan of the same domain from the same IP</li>
+      <li>
+        <span class="sr">Pun spisak izlozenih fajlova (.env, .git, backup dumpovi, phpMyAdmin, wp-config.php)</span>
+        <span class="en">Full list of exposed files (.env, .git, backup dumps, phpMyAdmin, wp-config.php)</span>
+      </li>
+      <li>
+        <span class="sr">Admin panel URL-ove i njihove status kodove</span>
+        <span class="en">Admin panel URLs and their status codes</span>
+      </li>
+      <li>
+        <span class="sr">Detaljne opise ranjivosti sa severity ocenama i preporukama za popravku</span>
+        <span class="en">Detailed vulnerability descriptions with severity ratings and fix recommendations</span>
+      </li>
+      <li>
+        <span class="sr">Reprodukcione korake za pronadjene probleme (za tvoje devops/security kolege)</span>
+        <span class="en">Reproduction steps for the findings (for your devops/security team)</span>
+      </li>
+      <li>
+        <span class="sr">30-dnevni otkljucan pristup za bilo koji buduci scan istog domena sa iste IP adrese</span>
+        <span class="en">30-day unlocked access to any future scan of the same domain from the same IP</span>
+      </li>
     </ul>
   </div>
 
-  <!-- RESPONSIBILITY ACKNOWLEDGMENT — gates the Check button -->
+  <!-- RESPONSIBILITY ACKNOWLEDGMENT — gates the Check button.
+       Uses span-inside-span pattern so the label stays a single
+       line-wrapping block and only one language shows. -->
   <div class="verify-responsibility">
     <label for="verifyResponsibilityCheck">
       <input type="checkbox" id="verifyResponsibilityCheck">
       <span>
-        <span class="sr"><strong>Preuzimam punu pravnu odgovornost.</strong> Potvrdjujem da je ovaj domen moj sopstveni web sajt ili aplikacija, ili da imam pismeno ovlascenje vlasnika da vrsim bezbednosnu reviziju istog. Razumem da: (1) ovu verifikaciju pokrecem iskljucivo radi otkrivanja ranjivosti MOG SAJTA kako bih ih popravio, (2) svaki pokusaj verifikacije se logira u nas audit trail sa mojim pseudonimizovanim IP hash-om i user agentom, (3) ako ne budem uspeo da dokazem vlasnistvo ili se ispostavi da sam zloupotrebio sistem, sve detaljne nalazi ostaju sakriveni, i (4) zloupotreba verifikacije radi skeniranja tudjih sajtova predstavlja krsenje <a href="./terms.html#tos3" target="_blank" rel="noopener" onclick="event.stopPropagation()">Uslova koriscenja, sekcija 3</a>, i moze biti podlozno pravnim posledicama.</span>
-        <span class="en"><strong>I accept full legal responsibility.</strong> I confirm that this domain is my own website or application, or I have written authorization from its owner to perform a security review. I understand that: (1) I am initiating this verification solely to discover vulnerabilities of MY OWN SITE so I can fix them, (2) every verification attempt is logged in our audit trail together with my pseudonymized IP hash and user agent, (3) if I fail to prove ownership or if abuse is detected, the detailed findings remain hidden, and (4) abusing verification to scan third-party sites is a violation of the <a href="./terms.html#tos3e" target="_blank" rel="noopener" onclick="event.stopPropagation()">Terms of Service, section 3</a> and may be subject to legal consequences.</span>
+        <strong>
+          <span class="sr">Preuzimam punu pravnu odgovornost.</span>
+          <span class="en">I accept full legal responsibility.</span>
+        </strong>
+        <span class="sr"> Potvrdjujem da je ovaj domen moj sopstveni web sajt ili aplikacija, ili da imam pismeno ovlascenje vlasnika da vrsim bezbednosnu reviziju istog. Razumem da: (1) ovu verifikaciju pokrecem iskljucivo radi otkrivanja ranjivosti MOG SAJTA kako bih ih popravio, (2) svaki pokusaj verifikacije se logira u nas audit trail sa mojim pseudonimizovanim IP hash-om i user agentom, (3) ako ne budem uspeo da dokazem vlasnistvo ili se ispostavi da sam zloupotrebio sistem, sve detaljne nalazi ostaju sakriveni, i (4) zloupotreba verifikacije radi skeniranja tudjih sajtova predstavlja krsenje </span>
+        <span class="en"> I confirm that this domain is my own website or application, or I have written authorization from its owner to perform a security review. I understand that: (1) I am initiating this verification solely to discover vulnerabilities of MY OWN SITE so I can fix them, (2) every verification attempt is logged in our audit trail together with my pseudonymized IP hash and user agent, (3) if I fail to prove ownership or if abuse is detected, the detailed findings remain hidden, and (4) abusing verification to scan third-party sites is a violation of the </span>
+        <span class="sr"><a href="./terms.html#tos3" target="_blank" rel="noopener" onclick="event.stopPropagation()">Uslova koriscenja, sekcija 3</a></span>
+        <span class="en"><a href="./terms.html#tos3e" target="_blank" rel="noopener" onclick="event.stopPropagation()">Terms of Service, section 3</a></span>
+        <span class="sr">, i moze biti podlozno pravnim posledicama.</span>
+        <span class="en"> and may be subject to legal consequences.</span>
       </span>
     </label>
   </div>
@@ -2376,12 +2410,89 @@ function printReport(mode) {
 
 function shareResults() {
   if (!currentResults) return;
-  var s = currentResults.score;
-  var text = "Security Scanner rezultat za " + currentResults.domain + ": " + s.grade + " (" + s.score + "/100) - " + currentResults.failed_checks + " problema od " + currentResults.total_checks + " provera. Testiraj svoj sajt: " + location.href;
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(text).then(function() { alert("Rezultat kopiran!"); });
+  var s = currentResults.score || {};
+  var domain = currentResults.domain || "";
+  var grade = s.grade || "?";
+  var score = s.score != null ? s.score : "?";
+  var failed = currentResults.failed_checks != null ? currentResults.failed_checks : 0;
+  var total = currentResults.total_checks != null ? currentResults.total_checks : 0;
+  var pages = currentResults.pages_found || 1;
+  var url = "https://security-scanner-ruddy.vercel.app/";
+  var isEn = (currentLang === "en");
+
+  // Grade-specific emoji and one-line summary so the shared post has a
+  // clear at-a-glance sentiment instead of just a letter grade.
+  var gradeEmoji = {
+    "A": "🟢", "B": "🟢", "C": "🟡", "D": "🟠", "F": "🔴"
+  }[String(grade).toUpperCase()] || "⚪";
+
+  var title, text;
+
+  if (isEn) {
+    title = "Security scan result for " + domain;
+    text =
+      "🛡️ Web Security Scanner — scan result\n\n" +
+      gradeEmoji + " Domain: " + domain + "\n" +
+      "Grade: " + grade + " (" + score + "/100)\n" +
+      "Issues: " + failed + " findings across " + total + " checks" +
+      (pages > 1 ? " on " + pages + " pages" : "") + "\n\n" +
+      "The scanner runs 110+ passive security checks: SSL/TLS, HTTP " +
+      "security headers, DNS hygiene (SPF/DMARC/DNSSEC), sensitive file " +
+      "exposure (.env, .git, backups), CMS detection, vulnerability " +
+      "patterns (SQL/XSS/CSRF), CORS, admin panel exposure, JS security, " +
+      "API endpoint checks, dependency scanning, GDPR compliance signals, " +
+      "SEO basics, accessibility, and performance metrics.\n\n" +
+      "Free. No registration. Your own scan takes ~90 seconds.\n" +
+      "Scan your site: " + url;
   } else {
-    prompt("Kopiraj:", text);
+    title = "Rezultat bezbednosne analize za " + domain;
+    text =
+      "🛡️ Web Security Scanner — rezultat skeniranja\n\n" +
+      gradeEmoji + " Domen: " + domain + "\n" +
+      "Ocena: " + grade + " (" + score + "/100)\n" +
+      "Problemi: " + failed + " nalaza od " + total + " provera" +
+      (pages > 1 ? " na " + pages + " stranica" : "") + "\n\n" +
+      "Scanner pokrece 110+ pasivnih bezbednosnih provera: SSL/TLS, HTTP " +
+      "sigurnosne headere, DNS higijenu (SPF/DMARC/DNSSEC), izlozene " +
+      "osetljive fajlove (.env, .git, backup dumpovi), detekciju CMS-a, " +
+      "obrasce ranjivosti (SQL/XSS/CSRF), CORS, izlozene admin panele, " +
+      "JS bezbednost, API endpoint provere, skeniranje zavisnosti, GDPR " +
+      "signale uskladjenosti, SEO osnove, pristupacnost i performanse.\n\n" +
+      "Besplatno. Bez registracije. Tvoj scan traje ~90 sekundi.\n" +
+      "Skeniraj svoj sajt: " + url;
+  }
+
+  // Preferred path: native Web Share API. On mobile this opens the
+  // system share sheet (WhatsApp, Messenger, Telegram, email, X, etc.).
+  // On desktop Chrome/Edge it opens the OS share dialog or Edge/Chrome's
+  // built-in share UI. AbortError just means the user dismissed the
+  // sheet — we silently swallow that, no fallback copy.
+  if (navigator.share) {
+    navigator.share({ title: title, text: text, url: url })
+      .catch(function(err) {
+        if (!err || err.name === "AbortError") return;
+        // Real error — fall through to clipboard copy
+        _shareFallbackCopy(text);
+      });
+    return;
+  }
+
+  // Fallback: copy to clipboard
+  _shareFallbackCopy(text);
+}
+
+function _shareFallbackCopy(text) {
+  var okMsg = currentLang === "en"
+    ? "Result copied to clipboard — paste it wherever you like."
+    : "Rezultat kopiran u clipboard - paste-uj gde god zelis.";
+  var promptMsg = currentLang === "en" ? "Copy this text:" : "Kopiraj ovaj tekst:";
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text)
+      .then(function() { alert(okMsg); })
+      .catch(function() { prompt(promptMsg, text); });
+  } else {
+    prompt(promptMsg, text);
   }
 }
 
