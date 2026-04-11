@@ -53,6 +53,19 @@ dostojanstvena komunikacija, prevencija kao ogledalo — ne kao strah**.
 - **Fallback semantika**: `script-src` nasleđuje `default-src`; `base-uri`/`frame-ancestors`/`form-action` ne nasleđuju (po CSP spec-u)
 - 10/10 unit testova: strict policy, individualne slabosti, fallback, empty CSP, all-wrong slučaj
 
+### JWT Exposure & Weakness Check (bivša #11)
+- **Fajl**: `checks/jwt_check.py` (novo), `scanner.py` (registracija single-page + multi-page)
+- **Commit**: `6791825`
+- **Pokriva**: pasivnu detekciju JWT-ova u 3 izvora (response body, response headers, session cookies) i 4 klase slabosti:
+  - `alg: none` → CRITICAL (trivijalna falsifikacija — token bez potpisa)
+  - `HS256/HS384/HS512` sa slabim secretom → CRITICAL (offline dictionary attack nad curated listom od ~55 javno poznatih weak secrets)
+  - Missing `exp` claim → LOW ("token traje zauvek")
+  - `exp` > 1 godina u budućnost → LOW
+- **Offline dictionary attack**: HMAC računanje in-process nad već primljenim bajtovima, 100 pokušaja za 0.3ms — nula mrežnog saobraćaja ka meti, tehnički HMAC verify a ne cracking
+- **Dedup**: 5 tokena sa istom slabošću → 1 agregirani nalaz (ne 5)
+- **Masking**: tokeni su skraćeni na prvih 24 char-a u izveštaju da ne bi zapisivali pune kredencijale
+- 13/13 unit testova: sva 4 tipa slabosti, HS384 varijanta, empty string secret, Authorization header detekcija, dedup, false positive rejection, mixed-issue aggregation, timing bound
+
 ---
 
 ## 📋 Next up — Easy wins (S, None/Low legal)
@@ -95,12 +108,6 @@ Male izmene, visoka vrednost. Redosled je okviran — biraj šta ti je najvažni
 - **Fajl**: `checks/js_check.py` (extend)
 - **Effort**: S-M · **Legal**: None · **Impact**: MEDIUM
 - **Obuhvat**: kada `.map` detektovan, fetch, parse `sources` array, flaguj leaked interne path-ove koji sadrže `/home/`, `C:\Users\`, imena programera, secret-like substringove
-
-### 11. JWT exposure & weakness check
-- **Fajl**: novo `checks/jwt_check.py`
-- **Effort**: S-M · **Legal**: None (pasivno — samo gleda JWT koji su već vidljivi u response)
-- **Impact**: **HIGH** (alg:none = instant auth bypass)
-- **Obuhvat**: detektuj JWT pattern u response body/headers/cookies, base64-decode header, flaguj `alg:none`, `alg:HS256` sa sumnjivo kratkim secret-om (probaj common words offline), `exp` previše dugo, missing `kid`
 
 ### 12. Crossdomain / clientaccesspolicy check
 - **Fajl**: `checks/files_check.py` (extend)
@@ -207,6 +214,7 @@ Male izmene, visoka vrednost. Redosled je okviran — biraj šta ti je najvažni
 - **2026-04-11** — Prevention Receipts DB (#18) označen kao prerekvizit za Mythos korelaciju (#21) i Continuous Monitoring (#19).
 - **2026-04-12** — Završene tri easy-win stavke u jednoj sesiji: #8 Git deep walker (`0a1bbee`), #1 Prošireni dangerous ports 10→25 (`941fef2`), #2 CSP strict analyzer (`dced3eb`). Go-to-market kontekst potvrđen: B2B outreach kroz hosting kuće, nikakav direktan kontakt sa vlasnicima sajtova.
 - **2026-04-12** — Sledeći planirani redosled po korisniku: #11 JWT exposure check, potom #14 WPScan-lite, pa ostale S/M stavke u pasivnim granicama. Izvan ROADMAP-a: potrebna nova `user-rights.html` legal stranica jer trenutni footer linkovi "Prava korisnika" vode na generic GDPR blog umesto na dedicated legal fajl.
+- **2026-04-12** — Završeno #11 JWT exposure & weakness check (`6791825`). Offline dictionary attack prihvaćen kao pasivna tehnika jer nema mreže — HMAC računanje nad već primljenim bajtovima je tehnički verifikacija a ne cracking. Push na space je odložen dok i #14 ne bude gotov, da se HF Space ne rebildje dva puta u kratkom roku.
 
 ---
 
