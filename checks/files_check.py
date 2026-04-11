@@ -271,6 +271,29 @@ SENSITIVE_FILES = [
         "recommendation": "HITNO uklonite site.zip sa web root-a. Ako je bio dostupan javno, pretpostavite da je source code u javnom vlasništvu — rotirajte sve tajne vrednosti iz koda.",
         "recommendation_en": "URGENTLY remove site.zip from the web root. If it was publicly accessible, assume source code is now public — rotate all secrets embedded in the code.",
     },
+    # ── Roadmap #12: Flash/Silverlight legacy cross-domain policy files ──
+    {
+        "id": "file_crossdomain",
+        "path": "/crossdomain.xml",
+        "severity": "MEDIUM",
+        "title": "crossdomain.xml dostupan — Flash cross-domain politika",
+        "title_en": "crossdomain.xml accessible — Flash cross-domain policy",
+        "description": "crossdomain.xml je Flash/Adobe AIR cross-domain policy fajl. Ako sadrži allow-access-from sa wildcard '*', bilo koji domen može da čita podatke iz vašeg sajta kroz legacy Flash klijente ili neke PDF viewer-e koji još uvek interpretiraju ovaj fajl.",
+        "description_en": "crossdomain.xml is the Flash/Adobe AIR cross-domain policy file. If it contains allow-access-from with wildcard '*', any domain can read data from your site through legacy Flash clients or some PDF viewers that still interpret this file.",
+        "recommendation": "Obrišite crossdomain.xml sa web root-a ako ne hostujete Flash content. Ako ga zadržavate, zamenite wildcard '*' eksplicitnom listom dozvoljenih domena.",
+        "recommendation_en": "Delete crossdomain.xml from the web root if you are not hosting Flash content. If you keep it, replace wildcard '*' with an explicit list of allowed domains.",
+    },
+    {
+        "id": "file_clientaccesspolicy",
+        "path": "/clientaccesspolicy.xml",
+        "severity": "MEDIUM",
+        "title": "clientaccesspolicy.xml dostupan — Silverlight cross-domain politika",
+        "title_en": "clientaccesspolicy.xml accessible — Silverlight cross-domain policy",
+        "description": "clientaccesspolicy.xml je Silverlight pandan crossdomain.xml fajlu. Ako dozvoljava wildcard pristup, Silverlight aplikacije sa bilo kog domena mogu čitati vaš sadržaj. Silverlight je deprecated ali fajl se još uvek interpretira na nekim enterprise sistemima.",
+        "description_en": "clientaccesspolicy.xml is the Silverlight counterpart to crossdomain.xml. If it allows wildcard access, Silverlight applications from any domain can read your content. Silverlight is deprecated but the file is still interpreted by some enterprise systems.",
+        "recommendation": "Obrišite clientaccesspolicy.xml sa web root-a. Silverlight je deprecated od 2021. — nema legitimne razloga da ovaj fajl postoji na modernim sajtovima.",
+        "recommendation_en": "Delete clientaccesspolicy.xml from the web root. Silverlight has been deprecated since 2021 — there is no legitimate reason for this file to exist on modern sites.",
+    },
 ]
 
 
@@ -452,6 +475,26 @@ CONTENT_SIGNATURES: Dict[str, Dict[str, Any]] = {
     "file_site_zip": {
         # ZIP magic numbers (local file header / central directory).
         "signatures_magic": [b"PK\x03\x04", b"PK\x05\x06", b"PK\x07\x08"],
+    },
+    # ── Roadmap #12 signatures ───────────────────────────────────────────
+    "file_crossdomain": {
+        # Flash cross-domain policy — always XML with <cross-domain-policy>.
+        "signatures_any": [
+            "<cross-domain-policy",
+            "<allow-access-from",
+            "<allow-http-request-headers-from",
+            "<!DOCTYPE cross-domain-policy",
+        ],
+    },
+    "file_clientaccesspolicy": {
+        # Silverlight client access policy — XML with <access-policy>.
+        "signatures_any": [
+            "<access-policy",
+            "<cross-domain-access",
+            "<policy>",
+            "<allow-from",
+            "<grant-to",
+        ],
     },
 }
 

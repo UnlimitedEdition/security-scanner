@@ -68,13 +68,21 @@ dostojanstvena komunikacija, prevencija kao ogledalo — ne kao strah**.
 
 ### DS_Store / IDE / backup leak check (bivša #9)
 - **Fajl**: `checks/files_check.py` (extend)
-- **Commit**: `__PLACEHOLDER__`
+- **Commit**: `e6d466a`
 - **Pokriva**: 10 novih osetljivih fajlova podeljenih u 3 kategorije (SENSITIVE_FILES sa 11 → 21 entry-ja, CONTENT_SIGNATURES sa 11 → 21 signatures):
   - **IDE/OS metadata** (MEDIUM/LOW): `.idea/workspace.xml` (JetBrains), `.vscode/settings.json` (VS Code), `Thumbs.db` (Windows binary magic), `desktop.ini` (Windows INI)
   - **Environment variants** (CRITICAL): `.env.local`, `.env.backup`, `.env.production` — istih signature kao postojeći `.env`
   - **Backups/eksporti** (CRITICAL): `dump.sql` (isto sig kao `backup.sql`), `users.csv` (CSV header pattern sa reject_html guard-om), `site.zip` (ZIP magic isti kao `backup.zip`)
 - Svaki entry ima specifican content signature — SPA catch-all 200 OK responses se odbijaju
 - 9/9 signature unit testova: thumbs.db binary magic, desktop.ini INI headers, VSCode JSON keys, idea XML, env substrings, users.csv CSV header, site.zip ZIP magic, dump.sql SQL markers, SPA rejection
+
+### Crossdomain / clientaccesspolicy check (bivša #12)
+- **Fajl**: `checks/files_check.py` (extend)
+- **Commit**: `__PLACEHOLDER__`
+- **Pokriva**: 2 nova entry-ja — `/crossdomain.xml` (Flash policy) i `/clientaccesspolicy.xml` (Silverlight policy), oba MEDIUM severity
+- **Signatures**: `<cross-domain-policy>` / `<allow-access-from>` za Flash, `<access-policy>` / `<cross-domain-access>` / `<allow-from>` za Silverlight
+- Silverlight je deprecated od 2021, Flash od 2020 — postojanje ovih fajlova na modernim sajtovima je skoro uvek konfiguracijska greska ili zaboravljen legacy
+- SENSITIVE_FILES: 21 → 23, CONTENT_SIGNATURES: 21 → 23
 
 ### WPScan-lite (bivša #14)
 - **Fajl**: `checks/wpscan_lite.py` (novo, 585 linija), `scanner.py` (registracija single-page samo — domain-level check, ne ide u multi-page pass)
@@ -126,11 +134,6 @@ Male izmene, visoka vrednost. Redosled je okviran — biraj šta ti je najvažni
 - **Fajl**: `checks/js_check.py` (extend)
 - **Effort**: S-M · **Legal**: None · **Impact**: MEDIUM
 - **Obuhvat**: kada `.map` detektovan, fetch, parse `sources` array, flaguj leaked interne path-ove koji sadrže `/home/`, `C:\Users\`, imena programera, secret-like substringove
-
-### 12. Crossdomain / clientaccesspolicy check
-- **Fajl**: `checks/files_check.py` (extend)
-- **Effort**: S · **Legal**: None · **Impact**: MEDIUM
-- **Obuhvat**: `/crossdomain.xml` i `/clientaccesspolicy.xml` — ako postoje i imaju `*`, flaguj (Flash/Silverlight legacy, i dalje eksploatabilan na nekim sajtovima)
 
 ---
 
