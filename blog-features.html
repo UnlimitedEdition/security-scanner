@@ -21,6 +21,53 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./blog-common.css">
+  <style>
+    .features-page { max-width: 1100px; }
+    .features-hero { text-align: center; padding: 2rem 0 1.5rem; border-bottom: 1px solid #252a4a; margin-bottom: 2rem; }
+    .features-hero h1 { font-size: 2rem; margin-bottom: 0.6rem; line-height: 1.2; }
+    .features-hero .subtitle { color: #9ca3af; font-size: 1rem; margin-bottom: 1.5rem; }
+
+    .features-toc { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.6rem; margin-bottom: 2.5rem; }
+    .toc-item { display: flex; align-items: center; gap: 0.55rem; padding: 0.7rem 0.85rem; background: #11142a; border: 1px solid #252a4a; border-radius: 10px; text-decoration: none; color: #e8eaf6; font-size: 0.85rem; font-weight: 600; transition: border-color .15s, transform .15s, background .15s; }
+    .toc-item:hover { border-color: #a78bfa; background: #1a1e38; transform: translateY(-2px); }
+    .toc-item .toc-emoji { font-size: 1.1rem; flex-shrink: 0; }
+    .toc-item em { font-style: normal; color: #a78bfa; font-size: 0.72rem; margin-left: auto; padding: 0.15rem 0.45rem; background: rgba(167,139,250,0.1); border-radius: 999px; }
+
+    .features-cat { margin: 3rem 0; scroll-margin-top: 80px; }
+    .features-cat > h2 { font-size: 1.55rem; font-weight: 800; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.6rem; }
+    .features-cat > h2 .cat-count { font-size: 0.75rem; color: #0a0c15; background: #a78bfa; padding: 0.2rem 0.6rem; border-radius: 999px; font-weight: 800; letter-spacing: 0.04em; }
+    .features-cat > .cat-intro { color: #9ca3af; font-size: 0.92rem; margin-bottom: 1.5rem; max-width: 680px; line-height: 1.65; }
+
+    .features-subgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.1rem; }
+
+    .feature-subcard { background: #11142a; border: 1px solid #252a4a; border-radius: 12px; padding: 1.3rem 1.4rem 1.2rem; display: flex; flex-direction: column; transition: border-color .2s; }
+    .feature-subcard:hover { border-color: #a78bfa; }
+    .feature-subcard h3 { font-size: 1rem; margin: 0 0 0.3rem; color: #e8eaf6; display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap; }
+    .feature-subcard h3 .sub-count { font-size: 0.68rem; color: #7b83a6; background: rgba(167,139,250,0.08); padding: 0.1rem 0.5rem; border-radius: 999px; letter-spacing: 0.03em; font-weight: 600; }
+    .feature-subcard .sub-intro { color: #9ca3af; font-size: 0.82rem; line-height: 1.6; margin-bottom: 0.7rem; }
+    .feature-subcard ul { list-style: none; padding: 0; margin: 0 0 1rem; flex: 1; }
+    .feature-subcard ul li { position: relative; padding: 0.25rem 0 0.25rem 1.1rem; color: #c0c4db; font-size: 0.78rem; line-height: 1.55; border-top: 1px solid rgba(255,255,255,0.03); }
+    .feature-subcard ul li:first-child { border-top: none; }
+    .feature-subcard ul li::before { content: "\2713"; position: absolute; left: 0; top: 0.25rem; color: #4ade80; font-weight: 700; font-size: 0.75rem; }
+    .feature-subcard ul li strong { color: #e8eaf6; font-weight: 600; }
+    .feature-subcard ul li .why { color: #7b83a6; font-size: 0.74rem; display: block; margin-top: 0.15rem; }
+    .feature-subcard .subcard-link { display: inline-flex; align-items: center; gap: 0.35rem; margin-top: auto; padding-top: 0.6rem; color: #a78bfa; font-size: 0.8rem; font-weight: 700; text-decoration: none; border-top: 1px solid #252a4a; }
+    .feature-subcard .subcard-link:hover { color: #c4b5fd; }
+    .feature-subcard .subcard-link.no-link { color: #7b83a6; pointer-events: none; }
+
+    .features-big-cta { margin: 3rem 0 1rem; padding: 2rem 1.5rem; background: linear-gradient(135deg, #1a1e38, #2a1f4d); border: 1px solid #a78bfa; border-radius: 14px; text-align: center; }
+    .features-big-cta h3 { font-size: 1.4rem; color: #e8eaf6; margin-bottom: 0.5rem; }
+    .features-big-cta p { color: #cbd5e1; font-size: 0.92rem; margin-bottom: 1.25rem; }
+    .features-big-cta a { display: inline-block; padding: 0.9rem 2rem; background: linear-gradient(135deg, #a78bfa, #c4b5fd); color: #0a0c15; font-weight: 800; border-radius: 10px; text-decoration: none; font-size: 0.95rem; transition: transform .15s, box-shadow .2s; }
+    .features-big-cta a:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(167,139,250,0.35); }
+
+    @media (max-width: 600px) {
+      .features-hero h1 { font-size: 1.5rem; }
+      .features-subgrid { grid-template-columns: 1fr; gap: 0.9rem; }
+      .feature-subcard { padding: 1.1rem 1.2rem 1rem; }
+      .features-cat > h2 { font-size: 1.3rem; }
+    }
+  </style>
 </head>
 <body>
 <div class="blog-layout">
@@ -28,98 +75,383 @@
     <div class="sr"><div class="timeline-title">Kategorije</div><ol id="timeline-sr"></ol></div>
     <div class="en"><div class="timeline-title">Categories</div><ol id="timeline-en"></ol></div>
   </aside>
-  <main class="blog-content">
+  <main class="blog-content features-page">
 
-  <div class="sr">
-    <h1>110+ Provera &mdash; Kompletna lista</h1>
-    <p class="subtitle">Sve sto Web Security Scanner automatski proverava na vasem sajtu</p>
+    <header class="features-hero">
+      <h1>
+        <span class="sr">110+ Provera &mdash; Kompletna lista</span>
+        <span class="en">110+ Checks &mdash; Complete Catalog</span>
+      </h1>
+      <p class="subtitle">
+        <span class="sr">Sve sto Web Security Scanner automatski proverava, zasto to radi, i gde da procitas vise</span>
+        <span class="en">Everything Web Security Scanner automatically checks, why it matters, and where to read more</span>
+      </p>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-num">110+</div><div class="stat-label"><span class="sr">Ukupno provera</span><span class="en">Total checks</span></div></div>
+        <div class="stat-card"><div class="stat-num">5</div><div class="stat-label"><span class="sr">Kategorija</span><span class="en">Categories</span></div></div>
+        <div class="stat-card"><div class="stat-num">20</div><div class="stat-label"><span class="sr">Stranica crawler</span><span class="en">Pages crawled</span></div></div>
+        <div class="stat-card"><div class="stat-num">~90s</div><div class="stat-label"><span class="sr">Vreme skeniranja</span><span class="en">Scan time</span></div></div>
+      </div>
+    </header>
 
-    <div class="stat-grid">
-      <div class="stat-card"><div class="stat-num">110+</div><div class="stat-label">Ukupno provera</div></div>
-      <div class="stat-card"><div class="stat-num">4</div><div class="stat-label">Glavne kategorije</div></div>
-      <div class="stat-card"><div class="stat-num">20</div><div class="stat-label">Stranica crawler analizira</div></div>
-      <div class="stat-card"><div class="stat-num">~15s</div><div class="stat-label">Prosecno vreme skeniranja</div></div>
+    <nav class="features-toc" aria-label="Quick navigation">
+      <a href="#f-sec" class="toc-item"><span class="toc-emoji">&#128737;</span><span class="sr">Bezbednost</span><span class="en">Security</span> <em>60+</em></a>
+      <a href="#f-seo" class="toc-item"><span class="toc-emoji">&#128269;</span>SEO <em>12</em></a>
+      <a href="#f-perf" class="toc-item"><span class="toc-emoji">&#9889;</span><span class="sr">Performanse</span><span class="en">Performance</span> <em>9</em></a>
+      <a href="#f-a11y" class="toc-item"><span class="toc-emoji">&#9855;</span><span class="sr">Pristupacnost</span><span class="en">Accessibility</span> <em>7</em></a>
+      <a href="#f-gdpr" class="toc-item"><span class="toc-emoji">&#127466;&#127482;</span>GDPR <em>7</em></a>
+      <a href="#f-extra" class="toc-item"><span class="toc-emoji">&#129520;</span><span class="sr">Dodatno</span><span class="en">Extras</span> <em>6</em></a>
+    </nav>
+
+    <section id="f-sec" class="features-cat">
+      <h2>&#128737; <span class="sr">Bezbednost</span><span class="en">Security</span> <span class="cat-count">60+</span></h2>
+      <p class="cat-intro">
+        <span class="sr">Srce skenera &mdash; sve sto cini razliku izmedju bezbednog sajta i onog koji ce biti hakovan. Svaka provera je mapirana na konkretnu ranjivost koju napadaci stvarno koriste.</span>
+        <span class="en">The heart of the scanner &mdash; everything that makes the difference between a secure site and one that will be hacked. Each check maps to a concrete vulnerability attackers actually use.</span>
+      </p>
+      <div class="features-subgrid">
+
+        <article class="feature-subcard">
+          <h3>SSL/TLS <span class="sub-count">4</span></h3>
+          <p class="sub-intro"><span class="sr">Bez HTTPS-a, lozinke i kartice idu u cistom tekstu preko WiFi-ja. Proveravamo da li je enkripcija tamo gde treba.</span><span class="en">Without HTTPS, passwords and cards travel plain-text over WiFi. We check the encryption is where it should be.</span></p>
+          <ul>
+            <li><strong><span class="sr">Validnost sertifikata</span><span class="en">Certificate validity</span></strong><span class="why"><span class="sr">Da li browser veruje sertifikatu (Let's Encrypt, DigiCert)</span><span class="en">Whether browsers trust the cert</span></span></li>
+            <li><strong>TLS 1.2 / 1.3</strong><span class="why"><span class="sr">Stare verzije (1.0/1.1) su probijene</span><span class="en">Old versions (1.0/1.1) are broken</span></span></li>
+            <li><strong><span class="sr">Dani do isteka</span><span class="en">Days until expiry</span></strong><span class="why"><span class="sr">Istekao = upozorenje u browseru</span><span class="en">Expired = browser warning bar</span></span></li>
+            <li><strong><span class="sr">Lanac poverenja</span><span class="en">Trust chain</span></strong><span class="why"><span class="sr">Intermediate sertifikati moraju biti ispravni</span><span class="en">Intermediate certs must be correct</span></span></li>
+          </ul>
+          <a href="./blog-security-ssl.html" class="subcard-link"><span class="sr">SSL/TLS vodic &rarr;</span><span class="en">SSL/TLS guide &rarr;</span></a>
+        </article>
+
+        <article class="feature-subcard">
+          <h3>HTTP Security Headers <span class="sub-count">7</span></h3>
+          <p class="sub-intro"><span class="sr">Security headeri kazu browser-u kako da tretira sadrzaj. Skeniramo 7 najbitnijih.</span><span class="en">Security headers tell the browser how to treat content. We scan the 7 most important ones.</span></p>
+          <ul>
+            <li><strong>HSTS</strong><span class="why"><span class="sr">Forsira HTTPS, sprecava downgrade napade</span><span class="en">Forces HTTPS, prevents downgrade attacks</span></span></li>
+            <li><strong>CSP</strong><span class="why"><span class="sr">Najjaca XSS zastita ako je pravilno postavljen</span><span class="en">Strongest XSS protection when configured</span></span></li>
+            <li><strong>X-Frame-Options</strong><span class="why"><span class="sr">Sprecava clickjacking</span><span class="en">Prevents clickjacking</span></span></li>
+            <li><strong>X-Content-Type-Options</strong><span class="why"><span class="sr">Sprecava MIME sniffing</span><span class="en">Prevents MIME sniffing</span></span></li>
+            <li><strong>Referrer-Policy, Permissions-Policy, COOP</strong><span class="why"><span class="sr">Moderni fini kontrolni headeri</span><span class="en">Modern fine-grained controls</span></span></li>
+          </ul>
+          <a href="./blog-security-headers.html" class="subcard-link"><span class="sr">Headers vodic &rarr;</span><span class="en">Headers guide &rarr;</span></a>
+        </article>
+
+        <article class="feature-subcard">
+          <h3>DNS <span class="sub-count">3</span></h3>
+          <p class="sub-intro"><span class="sr">Email spoofing i DNS hijacking pocinju sa neobezbedjenom DNS zonom.</span><span class="en">Email spoofing and DNS hijacking start with an unsecured DNS zone.</span></p>
+          <ul>
+            <li><strong>SPF</strong><span class="why"><span class="sr">Sprecava slanje laznih email-ova sa tvog domena</span><span class="en">Prevents sending fake emails as your domain</span></span></li>
+            <li><strong>DMARC</strong><span class="why"><span class="sr">Politika za lazne (quarantine / reject)</span><span class="en">Policy for fakes (quarantine / reject)</span></span></li>
+            <li><strong>DNSSEC</strong><span class="why"><span class="sr">Kriptografsko potpisivanje DNS odgovora</span><span class="en">Cryptographic signing of DNS answers</span></span></li>
+          </ul>
+          <a href="./blog-security-dns.html" class="subcard-link"><span class="sr">DNS vodic &rarr;</span><span class="en">DNS guide &rarr;</span></a>
+        </article>
+
+        <article class="feature-subcard">
+          <h3><span class="sr">Osetljivi fajlovi</span><span class="en">Sensitive files</span> <span class="sub-count">11</span></h3>
+          <p class="sub-intro"><span class="sr">Najcesci put kako sajtovi bivaju hakovani &mdash; izlozen .env ili .git folder.</span><span class="en">The most common way sites get hacked &mdash; an exposed .env or .git folder.</span></p>
+          <ul>
+            <li><strong>.env</strong><span class="why"><span class="sr">Database passwords, API kljucevi, svi secrets</span><span class="en">Database passwords, API keys, all secrets</span></span></li>
+            <li><strong>.git/config</strong><span class="why"><span class="sr">Ceo git repo javan, i delete-ovani commit-i sa secrets</span><span class="en">Full git repo exposed, including deleted commits</span></span></li>
+            <li><strong>wp-config.php, phpinfo.php</strong><span class="why"><span class="sr">WordPress DB creds i PHP config</span><span class="en">WordPress DB creds and PHP config</span></span></li>
+            <li><strong>backup.sql, database.sql</strong><span class="why"><span class="sr">Cela baza u jednom download-u</span><span class="en">Entire database in one download</span></span></li>
+            <li><strong>.htaccess, .DS_Store, docker-compose.yml, .npmrc, server-status</strong></li>
+          </ul>
+          <a href="./blog-security.html" class="subcard-link"><span class="sr">Security hub &rarr;</span><span class="en">Security hub &rarr;</span></a>
+        </article>
+
+        <article class="feature-subcard">
+          <h3><span class="sr">Pattern-i ranjivosti</span><span class="en">Vulnerability patterns</span> <span class="sub-count">8</span></h3>
+          <p class="sub-intro"><span class="sr">Pasivna detekcija obrazaca koji ukazuju na OWASP Top 10 rupe. Ne eksploatisemo &mdash; prijavimo.</span><span class="en">Passive detection of patterns indicating OWASP Top 10 holes. We don't exploit &mdash; we report.</span></p>
+          <ul>
+            <li><strong>SQL Injection</strong><span class="why"><span class="sr">Obrasci SQL greske u HTTP odgovorima</span><span class="en">SQL error patterns in HTTP responses</span></span><a href="./blog-security-sql.html" style="color:#a78bfa;font-size:0.72rem;margin-left:0.3rem;">[vodic]</a></li>
+            <li><strong>XSS reflection</strong><span class="why"><span class="sr">Parametri koji se odrazavaju u HTML-u bez escape-a</span><span class="en">Params reflected in HTML without escaping</span></span><a href="./blog-security-xss.html" style="color:#a78bfa;font-size:0.72rem;margin-left:0.3rem;">[vodic]</a></li>
+            <li><strong>Open redirect</strong><span class="why"><span class="sr">Koristi se za phishing kampanje</span><span class="en">Used for phishing campaigns</span></span></li>
+            <li><strong>Directory traversal</strong><span class="why"><span class="sr">../../../etc/passwd pattern</span><span class="en">../../../etc/passwd pattern</span></span></li>
+            <li><strong>Server disclosure, default credentials, backup fajlovi, info disclosure</strong></li>
+          </ul>
+          <a href="./blog-security-csrf.html" class="subcard-link"><span class="sr">CSRF + XSS vodic &rarr;</span><span class="en">CSRF + XSS guide &rarr;</span></a>
+        </article>
+
+        <article class="feature-subcard">
+          <h3>JavaScript <span class="sub-count">6</span></h3>
+          <p class="sub-intro"><span class="sr">Analiziramo JS kod u potrazi za izlozenim API kljucevima i obrascima koji olaksavaju XSS.</span><span class="en">We analyze the JS code looking for exposed API keys and patterns that enable XSS.</span></p>
+          <ul>
+            <li><strong><span class="sr">Izlozeni API kljucevi</span><span class="en">Exposed API keys</span></strong><span class="why">AWS, Google, Stripe, Firebase</span></li>
+            <li><strong><span class="sr">Opasne legacy funkcije</span><span class="en">Dangerous legacy functions</span></strong><span class="why"><span class="sr">Dinamicko izvrsavanje koda iz stringa, legacy HTML injection API-ji</span><span class="en">Dynamic code execution from strings, legacy HTML injection APIs</span></span></li>
+            <li><strong>Inline event handlers</strong><span class="why"><span class="sr">onclick/onload atributi koji krse CSP</span><span class="en">onclick/onload attrs that break CSP</span></span></li>
+            <li><strong>Mixed content</strong><span class="why"><span class="sr">http:// resursi na https:// stranici</span><span class="en">http:// resources on an https:// page</span></span></li>
+            <li><strong><span class="sr">Source map fajlovi</span><span class="en">Source map files</span></strong><span class="why"><span class="sr">.js.map otkriva ceo source kod</span><span class="en">.js.map exposes the full source code</span></span></li>
+            <li><strong>Console leak</strong><span class="why"><span class="sr">Osetljivi podaci u browser konzoli</span><span class="en">Sensitive data in browser console</span></span></li>
+          </ul>
+          <a href="./blog-security-xss.html" class="subcard-link"><span class="sr">XSS vodic &rarr;</span><span class="en">XSS guide &rarr;</span></a>
+        </article>
+
+        <article class="feature-subcard">
+          <h3>API <span class="sub-count">5</span></h3>
+          <p class="sub-intro"><span class="sr">API-ji su najbrze rastuci attack surface. Trazimo izlozene endpoint-e i javnu dokumentaciju.</span><span class="en">APIs are the fastest-growing attack surface. We look for exposed endpoints and public docs.</span></p>
+          <ul>
+            <li><strong><span class="sr">Otkriveni endpoint-i</span><span class="en">Exposed endpoints</span></strong><span class="why">/api/*, /v1/*, /graphql</span></li>
+            <li><strong>GraphQL introspection</strong><span class="why"><span class="sr">Otkriva ceo schema napadacu</span><span class="en">Reveals full schema to attacker</span></span></li>
+            <li><strong>Swagger/OpenAPI</strong><span class="why">/swagger, /docs, /api-docs</span></li>
+            <li><strong>CORS</strong><span class="why"><span class="sr">Wildcard * + credentials = kriticna rupa</span><span class="en">Wildcard * + credentials = critical hole</span></span></li>
+            <li><strong>Rate limiting</strong><span class="why"><span class="sr">Nepostojanje = API nije zasticen</span><span class="en">Absence = API isn't protected</span></span></li>
+          </ul>
+          <a href="./blog-security-api.html" class="subcard-link"><span class="sr">API security vodic &rarr;</span><span class="en">API security guide &rarr;</span></a>
+        </article>
+
+        <article class="feature-subcard">
+          <h3><span class="sr">Portovi i admin</span><span class="en">Ports &amp; admin</span> <span class="sub-count">15+</span></h3>
+          <p class="sub-intro"><span class="sr">Otvoreni database portovi i admin paneli su najcesci put za napadaca.</span><span class="en">Open database ports and admin panels are the most common path for attackers.</span></p>
+          <ul>
+            <li><strong>21, 22, 23, 25</strong><span class="why">FTP, SSH, Telnet, SMTP</span></li>
+            <li><strong>3306, 5432, 6379</strong><span class="why">MySQL, PostgreSQL, Redis</span></li>
+            <li><strong>8080, 8443, 9200</strong><span class="why">Dev i Elasticsearch portovi</span></li>
+            <li><strong>/admin, /wp-admin, /login, /phpmyadmin</strong></li>
+          </ul>
+          <a href="./blog-security-ports.html" class="subcard-link"><span class="sr">Port scanning vodic &rarr;</span><span class="en">Port scanning guide &rarr;</span></a>
+        </article>
+
+        <article class="feature-subcard">
+          <h3><span class="sr">Ostale security provere</span><span class="en">Other security checks</span> <span class="sub-count">10+</span></h3>
+          <p class="sub-intro"><span class="sr">Cookie flagovi, redirect chain, CMS detekcija, subdomen enumeracija, CT logovi, CVE scan zavisnosti.</span><span class="en">Cookie flags, redirect chain, CMS detection, subdomain enumeration, CT logs, dependency CVE scan.</span></p>
+          <ul>
+            <li><strong>Cookie security</strong><span class="why">HttpOnly, Secure, SameSite</span></li>
+            <li><strong>Redirect chain</strong><span class="why"><span class="sr">HTTP&rarr;HTTPS, open redirects</span><span class="en">HTTP&rarr;HTTPS, open redirects</span></span></li>
+            <li><strong>CMS detection</strong><span class="why">WordPress, Joomla, Drupal</span></li>
+            <li><strong>CORS policy</strong></li>
+            <li><strong>robots.txt, security.txt</strong></li>
+            <li><strong>Subdomain enum, CT logs, dependency CVEs</strong></li>
+          </ul>
+          <a href="./blog-security.html" class="subcard-link"><span class="sr">Security hub &rarr;</span><span class="en">Security hub &rarr;</span></a>
+        </article>
+
+      </div>
+    </section>
+
+    <section id="f-seo" class="features-cat">
+      <h2>&#128269; SEO <span class="cat-count">12</span></h2>
+      <p class="cat-intro"><span class="sr">Ako nisi indeksiran, ne postojis. Skeniramo 12 kljucnih SEO signala.</span><span class="en">If you are not indexed, you do not exist. We scan 12 key SEO signals.</span></p>
+      <div class="features-subgrid">
+
+        <article class="feature-subcard">
+          <h3>On-page <span class="sub-count">6</span></h3>
+          <p class="sub-intro"><span class="sr">Osnovni meta-tagovi i title &mdash; prva stvar koju Google vidi.</span><span class="en">Core meta tags and title &mdash; the first thing Google sees.</span></p>
+          <ul>
+            <li><strong>Title</strong><span class="why"><span class="sr">30-60 karaktera, jedinstvenost</span><span class="en">30-60 chars, uniqueness</span></span></li>
+            <li><strong>Meta description</strong><span class="why">120-160 chars</span></li>
+            <li><strong>Meta viewport</strong></li>
+            <li><strong>Canonical URL</strong></li>
+            <li><strong>H1 tag</strong></li>
+            <li><strong>Images alt</strong></li>
+          </ul>
+          <a href="./blog-seo-meta.html" class="subcard-link"><span class="sr">Meta tagovi vodic &rarr;</span><span class="en">Meta tags guide &rarr;</span></a>
+        </article>
+
+        <article class="feature-subcard">
+          <h3>Social &amp; structured <span class="sub-count">3</span></h3>
+          <p class="sub-intro"><span class="sr">Kako stranica izgleda kada je neko podeli i da li Google moze da izvuce rich snippets.</span><span class="en">How the page looks when shared and whether Google can extract rich snippets.</span></p>
+          <ul>
+            <li><strong>Open Graph</strong><span class="why">og:title, og:description, og:image</span><a href="./blog-seo-opengraph.html" style="color:#a78bfa;font-size:0.72rem;margin-left:0.3rem;">[vodic]</a></li>
+            <li><strong>Twitter Cards</strong></li>
+            <li><strong><span class="sr">Schema.org / JSON-LD</span><span class="en">Schema.org / JSON-LD</span></strong><a href="./blog-seo-schema.html" style="color:#a78bfa;font-size:0.72rem;margin-left:0.3rem;">[vodic]</a></li>
+          </ul>
+          <a href="./blog-seo-opengraph.html" class="subcard-link"><span class="sr">Open Graph vodic &rarr;</span><span class="en">Open Graph guide &rarr;</span></a>
+        </article>
+
+        <article class="feature-subcard">
+          <h3><span class="sr">Tehnicki</span><span class="en">Technical</span> <span class="sub-count">3</span></h3>
+          <p class="sub-intro"><span class="sr">Infrastruktura koja odlucuje da li crawler uopste moze da stigne do tebe.</span><span class="en">Infrastructure that decides whether crawlers can even reach you.</span></p>
+          <ul>
+            <li><strong>Sitemap.xml</strong><a href="./blog-seo-sitemap.html" style="color:#a78bfa;font-size:0.72rem;margin-left:0.3rem;">[vodic]</a></li>
+            <li><strong>robots.txt</strong></li>
+            <li><strong>HTML lang</strong></li>
+          </ul>
+          <a href="./blog-seo.html" class="subcard-link"><span class="sr">SEO hub &rarr;</span><span class="en">SEO hub &rarr;</span></a>
+        </article>
+
+      </div>
+    </section>
+
+    <section id="f-perf" class="features-cat">
+      <h2>&#9889; <span class="sr">Performanse</span><span class="en">Performance</span> <span class="cat-count">9</span></h2>
+      <p class="cat-intro"><span class="sr">Core Web Vitals su ranking faktor. Brzi sajt konvertuje bolje i pojavljuje se vise u pretrazi.</span><span class="en">Core Web Vitals are a ranking factor. A fast site converts better and ranks higher.</span></p>
+      <div class="features-subgrid">
+
+        <article class="feature-subcard">
+          <h3>Server &amp; transport <span class="sub-count">4</span></h3>
+          <p class="sub-intro"><span class="sr">Kako brzo server odgovori, koliko salje, da li je kompresovan optimalno.</span><span class="en">How fast the server responds and whether content is optimally compressed.</span></p>
+          <ul>
+            <li><strong>TTFB</strong><span class="why"><span class="sr">Time to First Byte</span><span class="en">Time to First Byte</span></span><a href="./blog-perf-cwv.html" style="color:#a78bfa;font-size:0.72rem;margin-left:0.3rem;">[vodic]</a></li>
+            <li><strong><span class="sr">Velicina stranice</span><span class="en">Page size</span></strong></li>
+            <li><strong>Gzip / Brotli</strong><a href="./blog-perf-compression.html" style="color:#a78bfa;font-size:0.72rem;margin-left:0.3rem;">[vodic]</a></li>
+            <li><strong>HTTP/2 / HTTP/3</strong></li>
+          </ul>
+          <a href="./blog-perf-cwv.html" class="subcard-link"><span class="sr">Core Web Vitals &rarr;</span><span class="en">Core Web Vitals &rarr;</span></a>
+        </article>
+
+        <article class="feature-subcard">
+          <h3><span class="sr">Kesiranje i CDN</span><span class="en">Caching &amp; CDN</span> <span class="sub-count">2</span></h3>
+          <p class="sub-intro"><span class="sr">Najbrzi HTTP zahtev je onaj koji se nikad ne dogodi.</span><span class="en">The fastest HTTP request is the one that never happens.</span></p>
+          <ul>
+            <li><strong>Cache-Control headers</strong><a href="./blog-perf-cache.html" style="color:#a78bfa;font-size:0.72rem;margin-left:0.3rem;">[vodic]</a></li>
+            <li><strong>CDN detection</strong><a href="./blog-perf-cdn.html" style="color:#a78bfa;font-size:0.72rem;margin-left:0.3rem;">[vodic]</a></li>
+          </ul>
+          <a href="./blog-perf-cache.html" class="subcard-link"><span class="sr">HTTP caching &rarr;</span><span class="en">HTTP caching &rarr;</span></a>
+        </article>
+
+        <article class="feature-subcard">
+          <h3><span class="sr">Resursi</span><span class="en">Assets</span> <span class="sub-count">3</span></h3>
+          <p class="sub-intro"><span class="sr">Slike i JS/CSS cine najveci deo vremena ucitavanja.</span><span class="en">Images and JS/CSS are the biggest part of load time.</span></p>
+          <ul>
+            <li><strong><span class="sr">Optimizacija slika</span><span class="en">Image optimization</span></strong><span class="why">WebP, AVIF, srcset</span><a href="./blog-perf-images.html" style="color:#a78bfa;font-size:0.72rem;margin-left:0.3rem;">[vodic]</a></li>
+            <li><strong>Lazy loading</strong><a href="./blog-perf-lazy.html" style="color:#a78bfa;font-size:0.72rem;margin-left:0.3rem;">[vodic]</a></li>
+            <li><strong><span class="sr">CSS/JS minifikacija</span><span class="en">CSS/JS minification</span></strong></li>
+          </ul>
+          <a href="./blog-performance.html" class="subcard-link"><span class="sr">Performance hub &rarr;</span><span class="en">Performance hub &rarr;</span></a>
+        </article>
+
+      </div>
+    </section>
+
+    <section id="f-a11y" class="features-cat">
+      <h2>&#9855; <span class="sr">Pristupacnost</span><span class="en">Accessibility</span> <span class="cat-count">7</span></h2>
+      <p class="cat-intro"><span class="sr">15% korisnika globalno koristi pomocne tehnologije. U EU je a11y zakonska obaveza (EAA 2025).</span><span class="en">15% of users globally use assistive tech. In the EU, a11y is legally required (EAA 2025).</span></p>
+      <div class="features-subgrid">
+        <article class="feature-subcard">
+          <h3>WCAG 2.1 <span class="sub-count">7</span></h3>
+          <p class="sub-intro"><span class="sr">Sedam kljucnih provera koje screen reader korisnici najvise osete.</span><span class="en">Seven key checks screen reader users feel the most.</span></p>
+          <ul>
+            <li><strong>Alt text</strong><span class="why"><span class="sr">Sve slike moraju imati alt</span><span class="en">All images need alt</span></span></li>
+            <li><strong>Form labels &amp; aria-label</strong></li>
+            <li><strong>ARIA landmarks</strong><span class="why">main, nav, header, footer</span></li>
+            <li><strong>Heading hierarchy</strong></li>
+            <li><strong>Link text</strong></li>
+            <li><strong>HTML lang</strong></li>
+            <li><strong>Tabindex</strong></li>
+          </ul>
+          <a href="./blog-gdpr-rights.html" class="subcard-link no-link"><span class="sr">Vodic uskoro &rarr;</span><span class="en">Coming soon &rarr;</span></a>
+        </article>
+      </div>
+    </section>
+
+    <section id="f-gdpr" class="features-cat">
+      <h2>&#127466;&#127482; GDPR <span class="cat-count">7</span></h2>
+      <p class="cat-intro"><span class="sr">GDPR kazne idu do 20M evra ili 4% godisnjeg prihoda. Skeniramo 7 signala usaglasenosti.</span><span class="en">GDPR fines go up to 20M euros or 4% of revenue. We scan 7 compliance signals.</span></p>
+      <div class="features-subgrid">
+
+        <article class="feature-subcard">
+          <h3><span class="sr">Politike</span><span class="en">Policies</span> <span class="sub-count">2</span></h3>
+          <p class="sub-intro"><span class="sr">Bez Privacy Policy i Terms, ne mozes prikupljati podatke u EU.</span><span class="en">Without Privacy Policy and Terms, you cannot collect data in the EU.</span></p>
+          <ul>
+            <li><strong>Privacy Policy</strong><a href="./blog-gdpr-policy.html" style="color:#a78bfa;font-size:0.72rem;margin-left:0.3rem;">[vodic]</a></li>
+            <li><strong>Terms of Service</strong></li>
+          </ul>
+          <a href="./blog-gdpr-policy.html" class="subcard-link"><span class="sr">Privacy Policy vodic &rarr;</span><span class="en">Privacy Policy guide &rarr;</span></a>
+        </article>
+
+        <article class="feature-subcard">
+          <h3><span class="sr">Kolacici i consent</span><span class="en">Cookies &amp; consent</span> <span class="sub-count">3</span></h3>
+          <p class="sub-intro"><span class="sr">Cookie consent je obavezan za EU posetioce.</span><span class="en">Cookie consent is mandatory for EU visitors.</span></p>
+          <ul>
+            <li><strong>Consent banner</strong><span class="why">CookieConsent, OneTrust, Cookiebot</span><a href="./blog-gdpr-cookies.html" style="color:#a78bfa;font-size:0.72rem;margin-left:0.3rem;">[vodic]</a></li>
+            <li><strong>Third-party trackers</strong><span class="why">GA, Facebook Pixel, Hotjar</span><a href="./blog-gdpr-trackers.html" style="color:#a78bfa;font-size:0.72rem;margin-left:0.3rem;">[vodic]</a></li>
+            <li><strong>Tracking cookies</strong></li>
+          </ul>
+          <a href="./blog-gdpr-cookies.html" class="subcard-link"><span class="sr">Cookie consent vodic &rarr;</span><span class="en">Cookie consent guide &rarr;</span></a>
+        </article>
+
+        <article class="feature-subcard">
+          <h3><span class="sr">Prava i enkripcija</span><span class="en">Rights &amp; encryption</span> <span class="sub-count">2</span></h3>
+          <p class="sub-intro"><span class="sr">Art. 32 zahteva enkripciju podataka u prenosu.</span><span class="en">Art. 32 requires encryption of data in transit.</span></p>
+          <ul>
+            <li><strong><span class="sr">Forme za prikupljanje</span><span class="en">Data collection forms</span></strong></li>
+            <li><strong>HTTPS</strong><span class="why"><span class="sr">Podaci u prenosu moraju biti enkriptovani</span><span class="en">Data in transit must be encrypted</span></span></li>
+          </ul>
+          <a href="./blog-gdpr-rights.html" class="subcard-link"><span class="sr">Prava korisnika &rarr;</span><span class="en">User rights &rarr;</span></a>
+        </article>
+
+      </div>
+    </section>
+
+    <section id="f-extra" class="features-cat">
+      <h2>&#129520; <span class="sr">Dodatne analize</span><span class="en">Additional Analyses</span> <span class="cat-count">6</span></h2>
+      <p class="cat-intro"><span class="sr">Nevidljivi signali &mdash; ko je registrovao domen, sta je u tech stack-u, kako tretirati email.</span><span class="en">Invisible signals &mdash; who registered the domain, what is in the tech stack, how to handle email.</span></p>
+      <div class="features-subgrid">
+
+        <article class="feature-subcard">
+          <h3>WHOIS</h3>
+          <p class="sub-intro"><span class="sr">Istek, starost, registrar, lock status. Istekao domen = propao biznis.</span><span class="en">Expiry, age, registrar, lock status. Expired domain = failed business.</span></p>
+          <ul>
+            <li><strong><span class="sr">Datum isteka</span><span class="en">Expiry date</span></strong></li>
+            <li><strong><span class="sr">Starost domena</span><span class="en">Domain age</span></strong></li>
+            <li><strong>Registrar + lock status</strong></li>
+          </ul>
+          <a href="./blog-security.html" class="subcard-link"><span class="sr">Security hub &rarr;</span><span class="en">Security hub &rarr;</span></a>
+        </article>
+
+        <article class="feature-subcard">
+          <h3>Tech Stack</h3>
+          <p class="sub-intro"><span class="sr">45+ tehnologija &mdash; framework, CMS, CDN, analytics, server.</span><span class="en">45+ technologies &mdash; framework, CMS, CDN, analytics, server.</span></p>
+          <ul>
+            <li><strong>Frontend</strong><span class="why">React, Vue, Angular, Next, Nuxt</span></li>
+            <li><strong>Backend / CMS</strong><span class="why">WordPress, Shopify, Laravel, Django</span></li>
+            <li><strong>CDN / hosting</strong><span class="why">Cloudflare, Vercel, Netlify</span></li>
+          </ul>
+          <a href="./blog-security.html" class="subcard-link"><span class="sr">Security hub &rarr;</span><span class="en">Security hub &rarr;</span></a>
+        </article>
+
+        <article class="feature-subcard">
+          <h3><span class="sr">Email bezbednost</span><span class="en">Email security</span></h3>
+          <p class="sub-intro"><span class="sr">Konfiguracija koja sprecava slanje laznih email-ova u ime tvog domena.</span><span class="en">Configuration that prevents sending fake emails as your domain.</span></p>
+          <ul>
+            <li><strong>MX records</strong></li>
+            <li><strong>STARTTLS</strong></li>
+            <li><strong>BIMI, DKIM</strong></li>
+          </ul>
+          <a href="./blog-security-dns.html" class="subcard-link"><span class="sr">DNS + email &rarr;</span><span class="en">DNS + email &rarr;</span></a>
+        </article>
+
+        <article class="feature-subcard">
+          <h3>Mozilla Observatory</h3>
+          <p class="sub-intro"><span class="sr">Nezavisna ocena sa observatory.mozilla.org koja se koristi kao industry benchmark.</span><span class="en">Independent grade from observatory.mozilla.org used as industry benchmark.</span></p>
+          <ul>
+            <li><strong>Mozilla grade (A+ to F)</strong></li>
+            <li><strong>Score (0-100+)</strong></li>
+          </ul>
+          <a href="./blog-security-headers.html" class="subcard-link"><span class="sr">Headers + Observatory &rarr;</span><span class="en">Headers + Observatory &rarr;</span></a>
+        </article>
+
+        <article class="feature-subcard">
+          <h3>Crawler</h3>
+          <p class="sub-intro"><span class="sr">Otkriva do 20 stranica (2 nivoa dubine). Pro plan skenira do 10 pojedinacno.</span><span class="en">Discovers up to 20 pages (2 levels deep). Pro plan scans up to 10 individually.</span></p>
+          <ul>
+            <li><strong>BFS crawl</strong><span class="why">Max depth 2, same-origin only</span></li>
+            <li><strong>SSRF-safe</strong></li>
+            <li><strong>Pro: multi-page scan</strong></li>
+          </ul>
+          <a href="./pricing.html" class="subcard-link"><span class="sr">Pro plan &rarr;</span><span class="en">Pro plan &rarr;</span></a>
+        </article>
+
+        <article class="feature-subcard">
+          <h3>Risk Engine</h3>
+          <p class="sub-intro"><span class="sr">Top 5 najvaznijih problema sa prioritetima + preporukama za popravku.</span><span class="en">Top 5 most important issues with priorities + fix recommendations.</span></p>
+          <ul>
+            <li><strong>Top 5 priorities</strong></li>
+            <li><strong>Fix recommendations</strong></li>
+            <li><strong>Grade + score (A-F)</strong></li>
+          </ul>
+          <a href="./blog-security.html" class="subcard-link"><span class="sr">Security hub &rarr;</span><span class="en">Security hub &rarr;</span></a>
+        </article>
+
+      </div>
+    </section>
+
+    <div class="features-big-cta">
+      <h3><span class="sr">Pokreni sve ovo za 90 sekundi</span><span class="en">Run all of this in 90 seconds</span></h3>
+      <p><span class="sr">Unesi URL svog sajta, klikni "Skeniraj", i dobi izvestaj sa preporukama. Besplatno, bez registracije.</span><span class="en">Enter your URL, click "Scan", get a report with recommendations. Free, no registration.</span></p>
+      <a href="./index.html"><span class="sr">Skeniraj svoj sajt &rarr;</span><span class="en">Scan your site &rarr;</span></a>
     </div>
-
-    <h2 id="f-sec">Bezbednost (60+ provera)</h2>
-    <h3>SSL/TLS sertifikati</h3>
-    <ul><li>Validnost sertifikata i lanac poverenja</li><li>TLS verzija (1.2 / 1.3)</li><li>Istek sertifikata i dani do isteka</li><li>Izdavac (Let's Encrypt, DigiCert, itd.)</li></ul>
-    <h3>HTTP Security Headers (7)</h3>
-    <ul><li>Strict-Transport-Security (HSTS)</li><li>Content-Security-Policy (CSP)</li><li>X-Frame-Options</li><li>X-Content-Type-Options</li><li>Referrer-Policy</li><li>Permissions-Policy</li><li>Cross-Origin-Opener-Policy (COOP)</li></ul>
-    <h3>DNS bezbednost</h3>
-    <ul><li>SPF record (email autentifikacija)</li><li>DMARC record i policy</li><li>DNSSEC validacija</li></ul>
-    <h3>Osetljivi fajlovi (11)</h3>
-    <ul><li>.env, .git/config, .htaccess</li><li>wp-config.php, phpinfo.php</li><li>backup.sql, database.sql</li><li>.DS_Store, server-status</li><li>docker-compose.yml, .npmrc</li></ul>
-    <h3>Ranjivosti (8)</h3>
-    <ul><li>SQL Injection pattern detekcija</li><li>XSS refleksija u parametrima</li><li>Open redirect ranjivosti</li><li>Directory traversal</li><li>Server version disclosure</li><li>Default credentials stranice</li><li>Backup fajl detekcija</li><li>Information disclosure headeri</li></ul>
-    <h3>JavaScript bezbednost (6)</h3>
-    <ul><li>Izlozeni API kljucevi u kodu</li><li>Opasne JS funkcije u kodu</li><li>Inline event handleri</li><li>Mixed content (HTTP na HTTPS)</li><li>Source map fajlovi</li><li>Console.log sa osetljivim podacima</li></ul>
-    <h3>API bezbednost (5)</h3>
-    <ul><li>Otkriveni API endpointi</li><li>GraphQL introspection</li><li>Swagger/OpenAPI dokumentacija</li><li>CORS konfiguracija</li><li>Rate limiting headeri</li></ul>
-    <h3>Ostalo</h3>
-    <ul><li>Kolacici: HttpOnly, Secure, SameSite</li><li>Redirecti: HTTP&rarr;HTTPS, otvoreni redirecti</li><li>CMS detekcija (WordPress, Joomla, Drupal)</li><li>Admin paneli (/admin, /wp-admin, /login)</li><li>Otvoreni portovi (10 kriticnih: 21, 22, 23, 25, 3306, 5432, 6379, 8080, 8443, 9200)</li><li>CORS: wildcard, credentials</li><li>robots.txt i security.txt</li><li>Subdomain enumeracija</li><li>Certificate Transparency logovi</li><li>Dependency check (poznati CVE-ovi)</li></ul>
-
-    <h2 id="f-extra">Dodatne analize</h2>
-    <ul><li><strong>WHOIS</strong> &mdash; istek domena, starost, registrar, status</li><li><strong>Tech Stack</strong> &mdash; detekcija 45+ tehnologija (framework, CMS, CDN, analytics, server)</li><li><strong>Email bezbednost</strong> &mdash; MX zapisi, STARTTLS, BIMI, DKIM</li><li><strong>Mozilla Observatory</strong> &mdash; nezavisna ocena sa mozilla.org</li><li><strong>Crawler</strong> &mdash; otkriva do 20 stranica na sajtu (2 nivoa dubine)</li><li><strong>Risk Engine</strong> &mdash; Top 5 prioritetnih problema sa preporukama</li></ul>
-
-    <h2 id="f-seo">SEO Analiza (12 provera)</h2>
-    <ul><li>Title tag &mdash; prisustvo, duzina (30-60 kar.), jedinstvenost</li><li>Meta description &mdash; prisustvo, duzina (120-160 kar.)</li><li>Meta viewport &mdash; mobile-friendly konfiguracija</li><li>Canonical URL &mdash; prisustvo i ispravnost</li><li>H1 naslov &mdash; prisustvo, jedinstvenost, sadrzaj</li><li>Slike &mdash; alt atributi za SVE slike</li><li>Open Graph &mdash; og:title, og:description, og:image</li><li>Twitter Cards &mdash; twitter:card, twitter:title</li><li>HTML lang atribut &mdash; jezicka identifikacija</li><li>Sitemap.xml &mdash; prisustvo i validnost</li><li>robots.txt &mdash; prisustvo i konfiguracija</li><li>Strukturirani podaci &mdash; Schema.org / JSON-LD detekcija</li></ul>
-
-    <h2 id="f-perf">Performanse i Pristupacnost (16 provera)</h2>
-    <h3>Performanse (9)</h3>
-    <ul><li>TTFB (Time to First Byte) &mdash; vreme odgovora servera</li><li>Velicina stranice &mdash; HTML + resursi</li><li>HTTP kompresija &mdash; Gzip / Brotli detekcija</li><li>Cache-Control headeri</li><li>Broj eksternih resursa</li><li>Optimizacija slika</li><li>Lazy loading implementacija</li><li>Minifikacija CSS/JS</li><li>HTTP/2 podrska</li></ul>
-    <h3>Pristupacnost (7)</h3>
-    <ul><li>Alt tekst na slikama</li><li>Form labele i aria-label</li><li>ARIA landmark elementi (main, nav, header, footer)</li><li>Heading hijerarhija (h1&rarr;h2&rarr;h3, bez preskakanja)</li><li>Link tekst (izbegavanje generickog teksta)</li><li>HTML lang atribut</li><li>Tabindex validacija</li></ul>
-
-    <h2 id="f-gdpr">GDPR / Privatnost (7 provera)</h2>
-    <ul><li>Privacy Policy &mdash; detekcija linka u HTML-u + provera URL-a</li><li>Cookie consent &mdash; baner/dijalog detekcija (CookieConsent, OneTrust, Cookiebot, Google Funding Choices)</li><li>Third-party trackeri &mdash; Google Analytics, Facebook Pixel, Hotjar, Clarity, LinkedIn</li><li>Tracking kolacici &mdash; poznati tracking cookies u Set-Cookie headerima</li><li>Uslovi koriscenja &mdash; Terms of Service link detekcija</li><li>Forme za prikupljanje &mdash; osetljiva polja (password, credit card)</li><li>HTTPS &mdash; enkripcija podataka u prenosu</li></ul>
-
-    <a href="./index.html" class="cta">Skenirajte svoj sajt &mdash; 110+ provera besplatno &rarr;</a>
-  </div>
-
-  <div class="en">
-    <h1>110+ Checks &mdash; Complete List</h1>
-    <p class="subtitle">Everything Web Security Scanner automatically checks on your site</p>
-
-    <div class="stat-grid">
-      <div class="stat-card"><div class="stat-num">110+</div><div class="stat-label">Total checks</div></div>
-      <div class="stat-card"><div class="stat-num">4</div><div class="stat-label">Main categories</div></div>
-      <div class="stat-card"><div class="stat-num">20</div><div class="stat-label">Pages crawler analyzes</div></div>
-      <div class="stat-card"><div class="stat-num">~15s</div><div class="stat-label">Average scan time</div></div>
-    </div>
-
-    <h2 id="f-sec-e">Security (60+ checks)</h2>
-    <h3>SSL/TLS</h3>
-    <ul><li>Certificate validity and chain</li><li>TLS version (1.2/1.3)</li><li>Expiry and days remaining</li><li>Issuer</li></ul>
-    <h3>HTTP Security Headers (7)</h3>
-    <ul><li>HSTS, CSP, X-Frame-Options, X-Content-Type-Options</li><li>Referrer-Policy, Permissions-Policy, COOP</li></ul>
-    <h3>DNS Security</h3>
-    <ul><li>SPF, DMARC, DNSSEC</li></ul>
-    <h3>Sensitive Files (11)</h3>
-    <ul><li>.env, .git, .htaccess, wp-config, phpinfo, backups, docker-compose</li></ul>
-    <h3>Vulnerabilities (8)</h3>
-    <ul><li>SQL Injection, XSS, open redirect, directory traversal</li><li>Server disclosure, default credentials, backup files, info disclosure</li></ul>
-    <h3>JavaScript Security (6)</h3>
-    <ul><li>Exposed API keys, dangerous JS functions, inline handlers</li><li>Mixed content, source maps, console logging</li></ul>
-    <h3>API Security (5)</h3>
-    <ul><li>Exposed endpoints, GraphQL introspection, Swagger, CORS, rate limiting</li></ul>
-    <h3>Other</h3>
-    <ul><li>Cookies (HttpOnly, Secure, SameSite), redirects, CMS detection</li><li>Admin panels, open ports (10), CORS, robots.txt, security.txt</li><li>Subdomains, CT logs, dependency CVEs</li></ul>
-
-    <h2 id="f-extra-e">Additional Analyses</h2>
-    <ul><li><strong>WHOIS</strong> &mdash; domain expiry, age, registrar</li><li><strong>Tech Stack</strong> &mdash; 45+ technologies detected</li><li><strong>Email Security</strong> &mdash; MX, STARTTLS, BIMI, DKIM</li><li><strong>Mozilla Observatory</strong> &mdash; independent grade</li><li><strong>Crawler</strong> &mdash; discovers up to 20 pages (2 levels)</li><li><strong>Risk Engine</strong> &mdash; Top 5 priorities with recommendations</li></ul>
-
-    <h2 id="f-seo-e">SEO Analysis (12 checks)</h2>
-    <ul><li>Title, description, viewport, canonical, H1, images alt</li><li>Open Graph, Twitter Cards, lang attribute</li><li>Sitemap.xml, robots.txt, structured data</li></ul>
-
-    <h2 id="f-perf-e">Performance &amp; Accessibility (16 checks)</h2>
-    <ul><li><strong>Performance (9):</strong> TTFB, page size, compression, cache, external resources, images, lazy loading, minification, HTTP/2</li><li><strong>Accessibility (7):</strong> Alt text, form labels, ARIA landmarks, heading hierarchy, link text, lang, tabindex</li></ul>
-
-    <h2 id="f-gdpr-e">GDPR / Privacy (7 checks)</h2>
-    <ul><li>Privacy Policy, cookie consent, trackers, tracking cookies</li><li>Terms of service, data collection forms, HTTPS</li></ul>
-
-    <a href="./index.html" class="cta">Scan your site &mdash; 110+ checks for free &rarr;</a>
-  </div>
 
   </main>
 </div>
