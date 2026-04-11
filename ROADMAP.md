@@ -86,7 +86,7 @@ dostojanstvena komunikacija, prevencija kao ogledalo — ne kao strah**.
 
 ### Source Map Deep Parser (bivša #10)
 - **Fajl**: `checks/js_check.py` (extend — 2 nova helpera + integracija u _check_source_maps)
-- **Commit**: `__PLACEHOLDER__`
+- **Commit**: `ebcd754`
 - **Pokriva**: kada se detektuje pristupačan `.map` fajl, sada se i **fetch-uje** i parsira JSON, i `sources` array se analizira za 5 klasa leak patterna:
   - `/home/<user>/` → MEDIUM (Linux/macOS developer path)
   - `/Users/<user>/` → MEDIUM (macOS developer path)
