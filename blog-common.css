@@ -108,6 +108,18 @@ body.lang-en span.sr { display: none; } body.lang-en span.en { display: inline; 
   display: grid; grid-template-columns: 200px 1fr;
   gap: 0; padding: 2rem 1.5rem 0;
 }
+/* Ultra-wide screens (34" monitors, 3440x1440 and similar): let the
+   blog layout breathe with a wider container, bigger timeline sidebar,
+   and more padding so the content does not look like a narrow column
+   stuck in the middle of a black viewport. Content column itself stays
+   readable because .blog-content retains its own max-width. */
+@media (min-width: 1800px) {
+  .blog-layout {
+    max-width: 1500px;
+    grid-template-columns: 260px 1fr;
+    padding: 3rem 2rem 0;
+  }
+}
 
 /* === TIMELINE SIDEBAR === */
 .timeline-nav {
@@ -260,7 +272,16 @@ th { color: #a78bfa; font-weight: 600; }
   box-shadow: 0 4px 20px rgba(108,99,255,0.3);
 }
 
-/* === GLOBAL FOOTER === */
+/* === GLOBAL FOOTER ===
+   Two-column layout on desktop: the LEFT column is left-aligned and
+   groups Security + SEO editorial links; the RIGHT column is
+   right-aligned and groups Performance + GDPR. This matches the
+   user request for 'dve kolone, leva ravna, desna ravna' and gives
+   a visually balanced footer on wide monitors without wasting
+   vertical space on long stacked lists.
+
+   On phones (below 720px) both columns stack into a centered
+   single-column layout for readability. */
 .site-footer {
   background: #080a13; border-top: 1px solid #252a4a;
   padding: 3rem 1.5rem 1.5rem; margin-top: 3rem;
@@ -268,22 +289,24 @@ th { color: #a78bfa; font-weight: 600; }
 .footer-grid {
   max-width: 1100px; margin: 0 auto;
   display: grid;
-  /* minmax(150px, 1fr) leaves enough room for 2 columns on a 360px
-     viewport without the column minimum pushing content off-screen.
-     The larger 180px value we had before caused horizontal scroll on
-     narrow phones because two 180px columns plus 2rem gap exceeded
-     the usable viewport width. */
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 2rem;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem 4rem;
   margin-bottom: 2rem;
   min-width: 0;
 }
-/* Footer columns must shrink to fit their parent grid cell, otherwise
-   a long link text (e.g. 'Privacy Policy detekcija') inside a fixed
-   grid column can overflow its column and push the grid wider than
-   the viewport. */
+/* Two visual columns, two stacked groups per column:
+     LEFT col  = Security (top) + SEO (bottom)   — left-aligned
+     RIGHT col = Performance (top) + GDPR (bottom) — right-aligned
+   The JS footer generator appends in the order
+   Security, SEO, Performance, GDPR, so we explicitly pin each
+   one to a grid cell. Default auto-placement would fill rows
+   first (Sec, SEO in row 1; Perf, GDPR in row 2) which is not
+   what the user asked for. */
 .footer-col { min-width: 0; }
-.footer-col a { word-break: break-word; }
+.footer-col:nth-child(1) { grid-column: 1; grid-row: 1; text-align: left; }
+.footer-col:nth-child(2) { grid-column: 1; grid-row: 2; text-align: left; }
+.footer-col:nth-child(3) { grid-column: 2; grid-row: 1; text-align: right; }
+.footer-col:nth-child(4) { grid-column: 2; grid-row: 2; text-align: right; }
 .footer-col h4 {
   color: #a78bfa; font-size: 0.82rem; font-weight: 700;
   margin-bottom: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;
@@ -291,8 +314,17 @@ th { color: #a78bfa; font-weight: 600; }
 .footer-col a {
   display: block; color: #7b83a6; text-decoration: none;
   font-size: 0.8rem; padding: 0.2rem 0; transition: color 0.2s;
+  word-break: break-word;
 }
 .footer-col a:hover { color: #a78bfa; }
+
+/* Ultra-wide (>=1800px): footer can breathe into wider container
+   for better use of 34" widescreen real estate. Two columns stay
+   but with more generous max-width and gap. */
+@media (min-width: 1800px) {
+  .footer-grid { max-width: 1500px; gap: 2rem 6rem; }
+  .site-footer { padding: 3.5rem 2rem 2rem; }
+}
 /* LEGAL ROW — horizontal list between the blog grid and the copyright line.
    Explicitly separate from blog content so users know these are binding
    policy links, not educational articles. */
@@ -343,10 +375,27 @@ th { color: #a78bfa; font-weight: 600; }
   }
   .header-nav.open { display: flex; }
   .hamburger { display: block; }
-  .footer-grid { grid-template-columns: repeat(2, 1fr); }
+  /* Footer collapses from 2-col asymmetric to 1-col centered on
+     phones/tablets — asymmetric alignment would be hard to read
+     on narrow screens. Reset the explicit grid-column/grid-row
+     pins so all 4 sections stack naturally in a single column. */
+  .footer-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    gap: 1.8rem;
+    text-align: center;
+  }
+  .footer-col:nth-child(1),
+  .footer-col:nth-child(2),
+  .footer-col:nth-child(3),
+  .footer-col:nth-child(4) {
+    grid-column: 1;
+    grid-row: auto;
+    text-align: center;
+  }
 }
 @media (max-width: 480px) {
-  .footer-grid { grid-template-columns: 1fr; gap: 1.2rem; }
+  .footer-grid { gap: 1.3rem; }
   .footer-bottom { flex-direction: column; text-align: center; }
   .footer-legal {
     gap: 0.6rem 1rem;

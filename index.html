@@ -222,6 +222,19 @@
     @media (max-width: 550px) {
       .features-grid { grid-template-columns: 1fr; }
     }
+    /* Ultra-wide screens (>=1800px) — use more horizontal real estate.
+       Features grid becomes a single row of 4 cards (one per category)
+       instead of 2x2 so the hero + features all fit in one viewport on
+       a 34" widescreen. Hero + scan form stay centered at their
+       current widths because wider input/button would look odd and
+       widening the hero h1 beyond clamp max does not help readability. */
+    @media (min-width: 1800px) {
+      .features-section { max-width: 1400px; }
+      .features-grid { grid-template-columns: repeat(4, 1fr); gap: 1.2rem; }
+      .features-title h2 { font-size: 1.6rem; }
+      /* Results tabs stay at 800px — the tab panels still render a
+         single-column read flow inside them for scan findings. */
+    }
     .feature-card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -340,6 +353,14 @@
       margin-top: 0.9rem;
       font-size: 0.8rem; color: var(--text-dim);
       text-align: center;
+    }
+    /* Mobile: stack input + button vertically, full-width, so the
+       scan button stays visually centered instead of snapping to
+       the left edge when flex-wrap kicks in. */
+    @media (max-width: 520px) {
+      .scan-row { flex-direction: column; gap: 0.6rem; }
+      .scan-input { width: 100%; min-width: 0; }
+      .scan-btn { width: 100%; padding: 0.9rem 1.2rem; }
     }
 
     /* PROGRESS */
