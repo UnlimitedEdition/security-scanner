@@ -34,6 +34,7 @@ from checks import js_check, api_check, accessibility_check, dependency_check
 from checks import observatory_check, whois_check, tech_stack_check, email_security_check
 from checks import takeover_check
 from checks import jwt_check
+from checks import wpscan_lite
 from checks.crawler import crawl
 from security_utils import safe_get, assert_safe_target, UnsafeTargetError
 import risk_engine
@@ -468,6 +469,8 @@ def scan(
               lambda: redirect_check.run(domain, session))
     run_check("Detektujem CMS i tehnologije...", 35, "CMS",
               lambda: cms_check.run(base_url, response_body, session))
+    run_check("WordPress deep-pass (plugini, useri, xmlrpc)...", 37, "WPScan",
+              lambda: wpscan_lite.run(base_url, response_body, session))
     run_check("Tražim izložene admin stranice...", 39, "Admin",
               lambda: admin_check.run(base_url, session))
     run_check("Analiziram robots.txt...", 43, "Robots",
