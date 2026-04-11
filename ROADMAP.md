@@ -23,23 +23,41 @@ dostojanstvena komunikacija, prevencija kao ogledalo — ne kao strah**.
 - **Pokriva**: 51 subdomen × 22 SaaS servisa (GitHub Pages, Heroku, S3, CloudFront, Azure, Shopify, Fastly, Tumblr, Surge, Bitbucket, Ghost, Zendesk, Unbounce, Pantheon, Readme.io, Netlify, Webflow, Kinsta, Strikingly, Helpjuice, Tilda, Intercom)
 - **Detekcija**: two-gate (CNAME match → HTTP fingerprint verify) za 0 false positives na legitimnim CNAME-ima
 
+### Git Deep Walker (bivša #8)
+- **Fajl**: `checks/files_check.py` (extend)
+- **Commit**: `0a1bbee`
+- **Pokriva**: 6 internih .git fajlova (HEAD, index, logs/HEAD, refs/heads/main, refs/heads/master, packed-refs), svaki sa path-aware content validacijom
+- **Threshold**: 2+ pogodaka → jedan agregirani CRITICAL nalaz `git_deep_dumpable` (napadač može pokrenuti `git-dumper` i rekonstruisati ceo repo)
+- **Dedup**: `refs/heads/main` + `refs/heads/master` računaju se kao jedan hit — default branch sam ne može da prebaci threshold
+- **SPA guard**: text putanje odbijaju body koji počinje sa `<!doctype html` ili `<html`
+
+### Prošireni Dangerous Ports (bivša #1)
+- **Fajl**: `checks/ports_check.py` (extend)
+- **Commit**: `941fef2`
+- **Pokriva**: 10 → 25 portova, podeljeno u 4 kategorije:
+  - Distribuirane baze: Cassandra 9042, CouchDB 5984, RethinkDB 28015, Couchbase 8091
+  - Message brokeri i coordination: RabbitMQ 15672, Kafka 9092, Zookeeper 2181
+  - Container orchestration: Docker daemon 2375/2376, Kubelet 10250, etcd 2379
+  - Search i big data: Solr 8983, Hadoop NameNode 50070, Spark master 7077, Spark UI 4040
+- **Severity breakdown**: 12 CRITICAL, 10 HIGH, 2 MEDIUM, 1 LOW
+- **Tri RCE-trigger porta označena CRITICAL**: Docker daemon 2375 (trivijalni RCE), Kubelet 10250 (node RCE), etcd 2379 (cluster takeover)
+- `max_workers` bumped 10 → 15 da wall-time ostane ~6s za 25 portova
+
+### CSP Strict Analyzer (bivša #2)
+- **Fajl**: `checks/headers_check.py` (extend)
+- **Commit**: `dced3eb`
+- **Pokriva**: 8 provera kvaliteta postojećeg CSP-a:
+  - `script-src` (sa fallback na `default-src`): `'unsafe-inline'` HIGH, `'unsafe-eval'` HIGH, wildcard `*` CRITICAL, `data:` URI HIGH
+  - Nedostajuće direktive: `object-src` (ako `default-src` nije `'none'`) MEDIUM, `base-uri` LOW, `frame-ancestors` LOW, `form-action` LOW
+- **Format**: jedan agregirani `hdr_csp_weak` nalaz sa listom svih slabosti, severity = max pojedinačne slabosti
+- **Fallback semantika**: `script-src` nasleđuje `default-src`; `base-uri`/`frame-ancestors`/`form-action` ne nasleđuju (po CSP spec-u)
+- 10/10 unit testova: strict policy, individualne slabosti, fallback, empty CSP, all-wrong slučaj
+
 ---
 
 ## 📋 Next up — Easy wins (S, None/Low legal)
 
 Male izmene, visoka vrednost. Redosled je okviran — biraj šta ti je najvažnije.
-
-### 1. Prošireni "dangerous ports" spisak
-- **Fajl**: `checks/ports_check.py` (extend)
-- **Effort**: S · **Legal**: None · **Impact**: HIGH
-- **Dodaci**: 11211 (Memcached), 9042 (Cassandra), 5984 (CouchDB), 28015 (RethinkDB), 15672 (RabbitMQ), 9092 (Kafka), 2181 (Zookeeper), 2375/2376 (Docker daemon), 10250 (Kubelet), 2379 (etcd), 8091 (Couchbase), 8983 (Solr), 50070 (Hadoop), 7077 (Spark), 4040 (Spark UI)
-- **Zašto**: trenutno hvataš klasične baze (MySQL/PG/Mongo/Redis), ali moderne stack-ove propuštaš. Exposed Memcached je čest u .rs prostoru.
-
-### 2. CSP strict analyzer
-- **Fajl**: `checks/headers_check.py` (extend) ili novo `checks/csp_check.py`
-- **Effort**: S · **Legal**: None · **Impact**: MEDIUM
-- **Obuhvat**: parse postojeći CSP header, flaguj `unsafe-inline`, `unsafe-eval`, `*`, `data:` u `script-src`, nedostajuće `object-src`, `frame-ancestors`, `base-uri`, `form-action`
-- **Zašto**: trenutno samo proveravaš "da li postoji CSP", ne njegov kvalitet. Većina CSP-ova u praksi je "postoji ali bezvredan".
 
 ### 3. DMARC policy parser
 - **Fajl**: `checks/dns_check.py` ili `checks/email_security_check.py` (extend)
@@ -67,12 +85,6 @@ Male izmene, visoka vrednost. Redosled je okviran — biraj šta ti je najvažni
 - **Fajl**: `checks/ssl_check.py` ili `checks/headers_check.py` (extend)
 - **Effort**: S · **Legal**: None · **Impact**: LOW
 - **Obuhvat**: proveri da li je domen u Chromium HSTS preload listi (cache-ovana statička lista)
-
-### 8. Git deep directory walker
-- **Fajl**: `checks/files_check.py` (extend)
-- **Effort**: S · **Legal**: Low · **Impact**: **CRITICAL**
-- **Obuhvat**: pored `/.git/config`, probe `/.git/HEAD`, `/.git/logs/HEAD`, `/.git/refs/heads/main`, `/.git/index`, `/.git/packed-refs` — ako 2+ vraćaju 200, flaguj "full repo dumpable"
-- **Zašto**: `.git/config` sam nije dovoljan za potpun leak; ova provera pokazuje da li napadač može da `git-dumper`-om rekonstruiše ceo repo.
 
 ### 9. DS_Store / IDE / backup leak check
 - **Fajl**: `checks/files_check.py` (extend)
@@ -193,6 +205,8 @@ Male izmene, visoka vrednost. Redosled je okviran — biraj šta ti je najvažni
 - **2026-04-11** — Roadmap startovan. Završen subdomain takeover check kao prvi dodatak.
 - **2026-04-11** — Filozofija zaključana: passive-only, "ogledalo ne strah", dostojanstvena komunikacija, legitimnost pre outreach-a.
 - **2026-04-11** — Prevention Receipts DB (#18) označen kao prerekvizit za Mythos korelaciju (#21) i Continuous Monitoring (#19).
+- **2026-04-12** — Završene tri easy-win stavke u jednoj sesiji: #8 Git deep walker (`0a1bbee`), #1 Prošireni dangerous ports 10→25 (`941fef2`), #2 CSP strict analyzer (`dced3eb`). Go-to-market kontekst potvrđen: B2B outreach kroz hosting kuće, nikakav direktan kontakt sa vlasnicima sajtova.
+- **2026-04-12** — Sledeći planirani redosled po korisniku: #11 JWT exposure check, potom #14 WPScan-lite, pa ostale S/M stavke u pasivnim granicama. Izvan ROADMAP-a: potrebna nova `user-rights.html` legal stranica jer trenutni footer linkovi "Prava korisnika" vode na generic GDPR blog umesto na dedicated legal fajl.
 
 ---
 
