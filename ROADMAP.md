@@ -84,9 +84,24 @@ dostojanstvena komunikacija, prevencija kao ogledalo — ne kao strah**.
 - Silverlight je deprecated od 2021, Flash od 2020 — postojanje ovih fajlova na modernim sajtovima je skoro uvek konfiguracijska greska ili zaboravljen legacy
 - SENSITIVE_FILES: 21 → 23, CONTENT_SIGNATURES: 21 → 23
 
+### .well-known Endpoint Enumerator (bivša #6)
+- **Fajl**: `checks/wellknown_check.py` (novo, 205 linija), `scanner.py` (registracija na pct=55 posle extras_check)
+- **Commit**: `__PLACEHOLDER__`
+- **Pokriva**: 8 IETF/W3C registered .well-known endpoint-a (security.txt vec pokriven u extras_check):
+  - `/change-password` (RFC 8615) — prihvata 200/302 redirect
+  - `/assetlinks.json` — Android App Links (JSON validation)
+  - `/apple-app-site-association` — iOS Universal Links (JSON validation)
+  - `/openid-configuration` — OIDC discovery document (JSON validation)
+  - `/host-meta` — XRD metadata
+  - `/webfinger` — social discovery
+  - `/nodeinfo` — ActivityPub/Fediverse server info (JSON validation)
+  - `/openpgpkey/hu/policy` — OpenPGP Web Key Directory
+- **Svi nalazi su INFO pozitivni** — missing endpoint-i se ne flaguju jer većina sajtova legitimno ne koristi većinu ovih. Vrednost je u surfacing onoga sto JESTE izloženo
+- **Validacija**: JSON endpoint-i moraju parse-ovati kao dict/list; text endpoint-i imaju SPA HTML guard — oba odbijaju catch-all 200 OK shell-ove
+
 ### Modern Email Security (bivša #4)
 - **Fajl**: `checks/email_security_check.py` (extend)
-- **Commit**: `__PLACEHOLDER__`
+- **Commit**: `dc1b951`
 - **Pokriva**: 3 nove email-security provere + 1 fix postojeće:
   - **MTA-STS full verify** (MEDIUM if policy missing) — proverava i DNS record i HTTP policy fajl na `https://mta-sts.<domain>/.well-known/mta-sts.txt`. DNS record sam nije dovoljan; postojeća provera je ranije flagovala "pozitivno" i za domene sa samo DNS-om bez policy-ja
   - **TLS-RPT** — `_smtp._tls.<domain>` TXT record sa `v=TLSRPTv1`, INFO pozitivan nalaz
@@ -144,11 +159,6 @@ dostojanstvena komunikacija, prevencija kao ogledalo — ne kao strah**.
 ## 📋 Next up — Easy wins (S, None/Low legal)
 
 Male izmene, visoka vrednost. Redosled je okviran — biraj šta ti je najvažnije.
-
-### 6. `.well-known` endpoint enumerator
-- **Fajl**: novo `checks/wellknown_check.py`
-- **Effort**: S · **Legal**: None · **Impact**: LOW-MEDIUM
-- **Obuhvat**: `security.txt` (već imaš), `change-password`, `assetlinks.json`, `apple-app-site-association`, `openid-configuration`, `openpgpkey`, `host-meta`, `webfinger`, `nodeinfo`
 
 ### 10. Source map deep parser
 - **Fajl**: `checks/js_check.py` (extend)

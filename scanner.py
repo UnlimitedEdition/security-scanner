@@ -35,6 +35,7 @@ from checks import observatory_check, whois_check, tech_stack_check, email_secur
 from checks import takeover_check
 from checks import jwt_check
 from checks import wpscan_lite
+from checks import wellknown_check
 from checks.crawler import crawl
 from security_utils import safe_get, assert_safe_target, UnsafeTargetError
 import risk_engine
@@ -481,6 +482,8 @@ def scan(
               lambda: cors_check.run(base_url, response_headers, session))
     run_check("Proveravam security.txt, CAA, SRI...", 54, "Extras",
               lambda: extras_check.run(base_url, domain, response_body, session))
+    run_check("Enumerišem .well-known endpointe...", 55, "WellKnown",
+              lambda: wellknown_check.run(base_url, session))
     run_check("Skeniram ranjivosti (pasivno)...", 58, "Vuln",
               lambda: vuln_check.run(base_url, response_body, response_headers, session))
     run_check("Analiziram JavaScript bezbednost...", 62, "JS",
