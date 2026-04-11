@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Toske-Programer (Web Security Scanner contributors)
 """
 Extras: security.txt, CAA DNS record, Subresource Integrity, HTTP/2
 """

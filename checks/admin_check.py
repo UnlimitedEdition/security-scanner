@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Toske-Programer (Web Security Scanner contributors)
 """
 Admin Page Exposure Check
 Checks if common admin panels are publicly accessible.

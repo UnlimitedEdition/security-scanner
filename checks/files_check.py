@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Toske-Programer (Web Security Scanner contributors)
 """
 Sensitive File Exposure Check
 Checks for publicly accessible files that should NEVER be public.

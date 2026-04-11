@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Toske-Programer (Web Security Scanner contributors)
 """
 Redirect & HTTPS Enforcement Check
 Checks: HTTP->HTTPS redirect, www/non-www consistency, redirect chain length.

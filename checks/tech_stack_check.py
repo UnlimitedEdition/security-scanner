@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Toske-Programer (Web Security Scanner contributors)
 """
 Technology Stack Detection
 Deep analysis of technologies used on the website.

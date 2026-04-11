@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Toske-Programer (Web Security Scanner contributors)
 """
 Certificate Transparency Check
 Queries crt.sh to verify CT log coverage and detect unauthorized certificates.

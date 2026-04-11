@@ -39,6 +39,27 @@ Live: https://security-scanner-ruddy.vercel.app
 See `PRIRUCNIK.md` (Serbian) for the full operator handbook and
 `checks/` directory for the individual check implementations.
 
+## Free vs Pro
+
+The scanner is free-first. Every check in the catalog above runs on
+the free tier with no account needed — enter a URL and scan. A paid
+**Pro** plan is available for users who want more:
+
+- **Unlimited scans** (no 5 scans / 30 min rate limit)
+- **Multi-page scanning** — pick up to 10 same-origin pages from the
+  crawler's discovered set and run the page-level check subset on
+  each, with findings tagged per URL
+- **PDF report export** — branded A4 reports you can hand to a client
+  or print for compliance review (requires ownership verification)
+- **30-day scan history** in the `/account` dashboard
+- **Stateless license key auth** — no passwords, no email verification,
+  no magic link flow. The key is issued at purchase by Lemon Squeezy
+  (our Merchant of Record) and activated via `/pricing`. See
+  `pricing.html` and `account.html` for the user-facing flow.
+
+Pricing, FAQ, and the refund policy live at
+[`/pricing`](https://security-scanner-ruddy.vercel.app/pricing).
+
 ## Tech stack
 
 - **Backend:** Python 3.11 + FastAPI (async), deployed as Docker on
@@ -46,8 +67,12 @@ See `PRIRUCNIK.md` (Serbian) for the full operator handbook and
 - **Frontend:** Vanilla HTML/CSS/JS, deployed on Vercel
 - **Database:** Supabase Postgres with RLS, pg_cron, Vault, daily
   encrypted backups to Cloudflare R2
+- **Payments:** Lemon Squeezy (Merchant of Record) for Pro plan
+  subscriptions — we store license keys in `subscriptions` and
+  mirror Lemon webhook state in `lemon_webhook_events`
+- **PDF reports:** `fpdf2` (pure Python, no system deps)
 - **Libraries:** `dnspython`, `requests`, `certifi`, `psycopg`,
-  `cryptography`
+  `cryptography`, `fpdf2`
 
 ## Security posture
 

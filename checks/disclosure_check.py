@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Toske-Programer (Web Security Scanner contributors)
 """
 Information Disclosure Check
 Checks for server/technology version leakage in HTTP headers and HTML.

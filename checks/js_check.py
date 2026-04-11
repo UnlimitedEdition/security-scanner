@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Toske-Programer (Web Security Scanner contributors)
 """
 JavaScript Security Check
 Checks: API keys in code, dangerous functions, inline event handlers,

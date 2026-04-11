@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Toske-Programer (Web Security Scanner contributors)
 """
 CORS (Cross-Origin Resource Sharing) Security Check
 Checks for overly permissive CORS configuration.

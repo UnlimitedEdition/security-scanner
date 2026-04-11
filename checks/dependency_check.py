@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Toske-Programer (Web Security Scanner contributors)
 """
 Dependency Security Check
 Checks: exposed package.json, outdated JS libraries, CDN without SRI,

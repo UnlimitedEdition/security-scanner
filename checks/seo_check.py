@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Toske-Programer (Web Security Scanner contributors)
 """
 SEO Analysis Check
 Checks: meta tags, headings, images, sitemap, robots, canonical, structured data, Open Graph

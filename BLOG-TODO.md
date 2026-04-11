@@ -43,19 +43,39 @@ Niko ne ceka da drugi zavrsi. Progresivni rezultati.
 - Free: 2 skeniranja / 2 sata (smanjiti sa trenutnih 5/30min)
 - Paid: bez limita dok traje paket
 
-### Faze implementacije
-1. Smanjiti free rate limit + crawler teaser (prikaži listu stranica)
-2. Stripe payment integration
-3. Multipage scan backend (POST /scan/multipage, round-robin queue)
-4. Frontend: paketi, progress, rezultati po stranici
-5. Boost opcija + prepaid krediti
-6. Agregatni izvestaj ("15/30 stranica ima SEO probleme")
+### Faze implementacije — STATUS APRIL 2026
 
-### Tech stack za paid
-- Payment: Stripe Checkout
-- Database: Supabase (ili SQLite za pocetak)
-- Queue: Python asyncio queue sa round-robin
-- Auth: payment token (ne zahteva registraciju — plati i koristi)
+STIGLI SMO DO FAZA 4.13 (Phase 4 je u potpunosti zavrsen osim operativnog
+setup-a sa Lemon Squeezy dashboardom):
+
+1. [DONE] Phase 4.2 - DB migracije (011_subscriptions, 012_scans_subscription_fk)
+2. [DONE] Phase 4.4 - Backend endpoints (webhook, auth, checkout, me)
+3. [DONE] Phase 4.5 - Pro rate limit bypass
+4. [DONE] Phase 4.6 - pricing.html sa Feature comparison + FAQ
+5. [DONE] Phase 4.7 - Pro CTA header button (swapuje se u Account kada user ima key)
+6. [DONE] Phase 4.8 - PDF report export (fpdf2, Pro-gated + ownership-gated)
+7. [DONE] Phase 4.9 - Multi-page crawl (3 dela: scanner loop, discovery endpoint, frontend modal)
+8. [DONE] Phase 4.10 - Legal updates (Terms sekcije 11-14, Privacy + Lemon Squeezy, Refund Policy)
+9. [DONE] Phase 4.11 - account.html (subscription info + scan history)
+10. [DONE] Phase 4.12 - License key recovery UX polish
+11. [DONE] Phase 4.13 - Verify panel liability copy + responsibility checkbox
+12. [BLOKIRANO] Phase 4.3 - Lemon Squeezy dashboard setup (cekamo approval)
+13. [BLOKIRANO] Phase 4.1 - Custom domain (kupiti kad bude vreme)
+
+### Tech stack za paid — STVARNO STANJE
+
+- Payment: **Lemon Squeezy** kao Merchant of Record (NE Stripe — Stripe
+  ne podrzava Srbiju kao seller country). Lemon hendluje license keys,
+  subscription portal, refund flow, EU VAT, i customer portal.
+- Database: Supabase Postgres sa subscriptions + lemon_webhook_events
+  + magic_links tabelama (migration 011 + 012 primenjene)
+- Auth: license key u localStorage (stateless) + Lemon Squeezy customer
+  portal za recovery. Namerno bez passworda / bez registracije /
+  bez email+password login-a jer nemamo custom domen za email infra.
+- Queue: postojeci asyncio single-active-scan queue, Pro zaobilazi
+  rate limit ali deli isti queue (fair use)
+- Coming Soon mode: /api/status proverava LEMON_BUY_URL_* env vars
+  i frontend-u javlja da li da pokaze live buttons ili "Uskoro" badge
 
 ## PRAVILA ZA SVAKI FAJL:
 - Minimum 300 linija, idealno 400-700

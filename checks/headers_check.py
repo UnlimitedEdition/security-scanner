@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Toske-Programer (Web Security Scanner contributors)
 """
 HTTP Security Headers Check
 Checks 11 critical security headers that most Serbian sites are missing.

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Toske-Programer (Web Security Scanner contributors)
 """
 API Security Check
 Checks: GraphQL introspection, API endpoint discovery, Swagger/OpenAPI exposure,

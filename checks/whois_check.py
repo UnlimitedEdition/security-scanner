@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Toske-Programer (Web Security Scanner contributors)
 """
 WHOIS Domain Information Check
 Checks domain registration details: expiry, age, registrar.

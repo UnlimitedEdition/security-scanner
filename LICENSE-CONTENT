@@ -24,11 +24,20 @@ Scanner project, specifically:
   * SECURITY.md — the public security policy
   * BLOG-TODO.md — content roadmap
   * privacy.html — Privacy Policy (both Serbian and English halves)
-  * terms.html — Terms of Service (both halves)
+  * terms.html — Terms of Service (both halves, including Pro plan
+    sections 11–14: paid plans, automatic renewal, refunds, fair use)
+  * refund-policy.html — standalone Refund Policy document (both halves)
   * abuse-report.html — Abuse Report page (prose content only; the
     form logic and JavaScript are under the MIT License, see LICENSE)
+  * pricing.html — Pro plan pricing page (feature comparison, plan
+    descriptions, FAQ text; the JavaScript and CSS are under MIT)
+  * account.html — Pro account dashboard (FAQ prose, help text,
+    labels; the JavaScript is under MIT)
+  * 404.html — branded error page (prose and suggestion list;
+    the JavaScript is under MIT)
   * User-facing text inside index.html (hero copy, feature descriptions,
-    result labels, scan tab descriptions)
+    result labels, scan tab descriptions, verify-panel rationale and
+    liability copy, method explanation content in VERIFY_METHOD_INFO)
   * README.md and migrations/README.md (documentation prose only)
   * This LICENSE-CONTENT file itself
 

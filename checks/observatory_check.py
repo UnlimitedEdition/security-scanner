@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Toske-Programer (Web Security Scanner contributors)
 """
 Mozilla Observatory Integration
 Queries Mozilla HTTP Observatory API for an independent security grade.

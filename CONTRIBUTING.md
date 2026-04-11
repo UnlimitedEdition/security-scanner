@@ -6,10 +6,27 @@ and what a good PR looks like.
 
 ## Quick orientation
 
-- **Backend:** Python 3.11 + FastAPI (`api.py`, `scanner.py`, `checks/`)
-- **Frontend:** Static HTML (`index.html`, `blog-*.html`) served via
-  Vercel
+- **Backend:** Python 3.11 + FastAPI
+  - Core: `api.py`, `scanner.py`, `db.py`, `security_utils.py`,
+    `verification.py`, `risk_engine.py`, `migration_runner.py`
+  - Pro plan: `subscription.py` (Lemon Squeezy webhooks + queries),
+    `pdf_report.py` (fpdf2-based report generator)
+  - Checks: `checks/*.py` (29 individual checks, one per feature)
+- **Frontend:** Static HTML served via Vercel
+  - Scanner: `index.html` (+ inline CSS/JS, ~2700 lines)
+  - Pro pages: `pricing.html`, `account.html`
+  - Legal: `terms.html`, `privacy.html`, `refund-policy.html`
+  - Error: `404.html`
+  - Blog: `blog-*.html` (25+ articles, SR + EN bilingual)
+  - Shared: `blog-common.css`, `blog-common.js` (injected header/footer)
 - **Database:** Supabase Postgres with RLS, pg_cron, Vault
+  - Core tables: `scans`, `audit_log`, `verified_domains`, `rate_limits`,
+    `abuse_reports`, `backup_log`
+  - Pro tables: `subscriptions`, `lemon_webhook_events`, `magic_links`
+  - Migrations in `migrations/` (applied via `migration_runner.py` or
+    Supabase Studio / MCP)
+- **Payments:** Lemon Squeezy (Merchant of Record), not Stripe
+  (Stripe does not support Serbia as seller country)
 - **Deploy targets:** HuggingFace Space (backend Docker) + Vercel
   (frontend)
 - **Docs:** `PRIRUCNIK.md` (operator handbook, Serbian) is the primary

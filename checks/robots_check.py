@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Toske-Programer (Web Security Scanner contributors)
 """
 robots.txt Security Analysis
 Checks if robots.txt reveals sensitive paths or is misconfigured.
