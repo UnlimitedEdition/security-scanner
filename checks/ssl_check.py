@@ -6,8 +6,47 @@ Checks: certificate validity, expiry, TLS version, cipher strength
 """
 import ssl
 import socket
+import json
+import urllib.request
+import urllib.parse
 from datetime import datetime
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
+
+
+def _check_hsts_preload(hostname: str) -> Optional[str]:
+    """
+    Roadmap #7. Query the hstspreload.org API v2 to check whether the
+    domain is in the Chromium HSTS preload list. Returns one of:
+      - "preloaded"  — domain is currently in the preload list
+      - "pending"    — domain is submitted but not yet shipped in Chrome
+      - "unknown"    — domain is not in the list
+      - None         — API call failed (network error, timeout, unexpected
+                       shape). On failure we return None and the caller
+                       skips emitting any finding, rather than falsely
+                       reporting "not preloaded".
+
+    The API is public, unauthenticated, and effectively serves as a
+    read-only lookup table. One extra lightweight HTTP request per scan.
+    """
+    try:
+        url = f"https://hstspreload.org/api/v2/status?domain={urllib.parse.quote(hostname)}"
+        req = urllib.request.Request(
+            url,
+            headers={
+                "User-Agent": "WebSecurityScanner/1.0 (https://web-security-scanner.com)",
+                "Accept": "application/json",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=6) as resp:
+            if resp.status != 200:
+                return None
+            data = json.loads(resp.read().decode("utf-8", errors="replace"))
+        status = data.get("status")
+        if status not in ("preloaded", "pending", "unknown"):
+            return None
+        return status
+    except Exception:
+        return None
 
 
 def run(hostname: str) -> List[Dict[str, Any]]:
@@ -168,5 +207,97 @@ def run(hostname: str) -> List[Dict[str, Any]]:
             "recommendation": "Proverite da li je HTTPS ispravno konfigurisan.",
             "recommendation_en": "Verify HTTPS is correctly configured.",
         })
+
+    # ── HSTS preload list check (Roadmap #7) ─────────────────────────────
+    # Runs regardless of whether the earlier TLS probe succeeded — the
+    # lookup is purely a DNS-level check against the Chromium list, so
+    # even TLS-misconfigured domains still give useful data.
+    preload_status = _check_hsts_preload(hostname)
+    if preload_status == "preloaded":
+        results.append({
+            "id": "ssl_hsts_preloaded",
+            "category": "SSL/TLS",
+            "severity": "INFO",
+            "passed": True,
+            "title": "Domen je u Chromium HSTS preload listi ✓",
+            "title_en": "Domain is in the Chromium HSTS preload list ✓",
+            "description": (
+                "Domen je hardkodovan u Chromium preload listi, što znači da "
+                "svaki moderan browser (Chrome, Edge, Firefox, Safari, Opera) "
+                "odbija HTTP konekciju ka ovom domenu PRE bilo kakvog TLS "
+                "handshake-a. Prva poseta korisnika koji nikad nije bio na "
+                "sajtu je automatski zaštićena od SSL strip napada."
+            ),
+            "description_en": (
+                "The domain is hardcoded into the Chromium preload list, "
+                "which means every modern browser (Chrome, Edge, Firefox, "
+                "Safari, Opera) refuses HTTP connections to this domain "
+                "BEFORE any TLS handshake. A first-time visitor who has "
+                "never been to the site is automatically protected from "
+                "SSL stripping attacks."
+            ),
+            "recommendation": "",
+            "recommendation_en": "",
+        })
+    elif preload_status == "pending":
+        results.append({
+            "id": "ssl_hsts_preload_pending",
+            "category": "SSL/TLS",
+            "severity": "INFO",
+            "passed": True,
+            "title": "Domen je submitted za HSTS preload listu (pending)",
+            "title_en": "Domain is submitted to HSTS preload list (pending)",
+            "description": (
+                "Domen je prijavljen za uključivanje u Chromium preload listu "
+                "ali još nije shipped u stable verziji browser-a. Tipicno traje "
+                "6-12 nedelja od submit-a do aktivnog preload-a."
+            ),
+            "description_en": (
+                "The domain is submitted for inclusion in the Chromium preload "
+                "list but has not yet shipped in a stable browser release. "
+                "Typical turnaround is 6-12 weeks from submission to active "
+                "preload."
+            ),
+            "recommendation": "",
+            "recommendation_en": "",
+        })
+    elif preload_status == "unknown":
+        results.append({
+            "id": "ssl_hsts_not_preloaded",
+            "category": "SSL/TLS",
+            "severity": "LOW",
+            "passed": False,
+            "title": "Domen nije u HSTS preload listi",
+            "title_en": "Domain is not in the HSTS preload list",
+            "description": (
+                "Domen nije u Chromium HSTS preload listi. HSTS header alone "
+                "štiti samo posetioce koji su već bili na sajtu (first-visit "
+                "je ranjiv na SSL stripping). Preload lista eliminise taj "
+                "'first visit' prozor jer browser zna unapred da je domen "
+                "HTTPS-only, pre nego što bilo kakav zahtev ode."
+            ),
+            "description_en": (
+                "The domain is not in the Chromium HSTS preload list. An HSTS "
+                "header alone only protects visitors who have already been to "
+                "the site (the first visit is still vulnerable to SSL "
+                "stripping). The preload list eliminates that first-visit "
+                "window because the browser knows in advance that the domain "
+                "is HTTPS-only, before any request goes out."
+            ),
+            "recommendation": (
+                "Prijavite domen na https://hstspreload.org/ nakon što postavite "
+                "HSTS header sa: max-age=31536000 (1 godina ili više), "
+                "includeSubDomains, preload — i uverite se da SVE subdomene "
+                "rade preko HTTPS-a jer preload pokriva ceo prostor domena."
+            ),
+            "recommendation_en": (
+                "Submit the domain at https://hstspreload.org/ after setting "
+                "an HSTS header with: max-age=31536000 (1 year or more), "
+                "includeSubDomains, preload — and verify that ALL subdomains "
+                "work over HTTPS, because preload covers the entire domain "
+                "space."
+            ),
+        })
+    # preload_status is None → API failed, skip silently (no finding)
 
     return results

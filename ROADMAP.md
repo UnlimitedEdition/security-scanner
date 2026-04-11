@@ -84,9 +84,20 @@ dostojanstvena komunikacija, prevencija kao ogledalo — ne kao strah**.
 - Silverlight je deprecated od 2021, Flash od 2020 — postojanje ovih fajlova na modernim sajtovima je skoro uvek konfiguracijska greska ili zaboravljen legacy
 - SENSITIVE_FILES: 21 → 23, CONTENT_SIGNATURES: 21 → 23
 
+### HSTS Preload List Check (bivša #7)
+- **Fajl**: `checks/ssl_check.py` (extend)
+- **Commit**: `__PLACEHOLDER__`
+- **Pokriva**: lookup domena u Chromium HSTS preload listi kroz hstspreload.org API v2 — lightweight HTTP GET (read-only, unauthenticated)
+- **Tri stanja**:
+  - `preloaded` → INFO pozitivni nalaz "domen je u preload listi, first-visit je automatski zaštićen od SSL stripping"
+  - `pending` → INFO pozitivni nalaz "submitted, čeka sledeći Chrome release"
+  - `unknown` → LOW negativni nalaz sa uputstvima za submission na hstspreload.org
+- **Fail-open**: ako API nije dostupan (network error, timeout, nepoznat status string) → vraća None i check se tiho preskače — ne želimo false "not preloaded" findings kad ne možemo da verifikujemo
+- Live API test potvrđen: github.com → preloaded (bulk: True), google.com → unknown (pokriveno kroz parent TLD, ne direktno)
+
 ### Cookie Prefix Enforcement (bivša #5)
 - **Fajl**: `checks/cookies_check.py` (extend)
-- **Commit**: `__PLACEHOLDER__`
+- **Commit**: `d6e1470`
 - **Pokriva**: detekcija session/auth kolačića koji ne koriste `__Host-` ili `__Secure-` prefiks (LOW severity, samo na HTTPS)
 - **Selektivnost**: pattern match na imenu kolačića (session, sess, sid, auth, token, login, user, jwt, access, refresh, connect.sid, phpsessid, asp.net_sessionid) — non-session kolačići (analytics, consent, theme) se **ne** flaguju da se izbegne spam
 - **HTTPS-only gate**: prefiks enforcement se primjenjuje samo kad je konekcija HTTPS — HTTP sajtovi dobiju druga upozorenja (no-Secure) pa prefiks postaje besmisleni
@@ -127,11 +138,6 @@ Male izmene, visoka vrednost. Redosled je okviran — biraj šta ti je najvažni
 - **Fajl**: novo `checks/wellknown_check.py`
 - **Effort**: S · **Legal**: None · **Impact**: LOW-MEDIUM
 - **Obuhvat**: `security.txt` (već imaš), `change-password`, `assetlinks.json`, `apple-app-site-association`, `openid-configuration`, `openpgpkey`, `host-meta`, `webfinger`, `nodeinfo`
-
-### 7. HSTS preload list check
-- **Fajl**: `checks/ssl_check.py` ili `checks/headers_check.py` (extend)
-- **Effort**: S · **Legal**: None · **Impact**: LOW
-- **Obuhvat**: proveri da li je domen u Chromium HSTS preload listi (cache-ovana statička lista)
 
 ### 10. Source map deep parser
 - **Fajl**: `checks/js_check.py` (extend)
