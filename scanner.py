@@ -33,6 +33,7 @@ from checks import performance_check, gdpr_check, vuln_check
 from checks import js_check, api_check, accessibility_check, dependency_check
 from checks import observatory_check, whois_check, tech_stack_check, email_security_check
 from checks import takeover_check
+from checks import jwt_check
 from checks.crawler import crawl
 from security_utils import safe_get, assert_safe_target, UnsafeTargetError
 import risk_engine
@@ -481,6 +482,8 @@ def scan(
               lambda: vuln_check.run(base_url, response_body, response_headers, session))
     run_check("Analiziram JavaScript bezbednost...", 62, "JS",
               lambda: js_check.run(base_url, response_body, session))
+    run_check("Analiziram JWT tokene u odgovoru...", 64, "JWT",
+              lambda: jwt_check.run(response_body, response_headers, session))
     run_check("Proveravam API bezbednost...", 65, "API",
               lambda: api_check.run(base_url, session))
     run_check("Proveravam zavisnosti i biblioteke...", 69, "Dependency",
@@ -574,6 +577,7 @@ def scan(
                 ("Disclosure", lambda: disclosure_check.run(page_headers, page_body)),
                 ("Vuln",       lambda: vuln_check.run(page_url, page_body, page_headers, session)),
                 ("JS",         lambda: js_check.run(page_url, page_body, session)),
+                ("JWT",        lambda: jwt_check.run(page_body, page_headers, session)),
                 ("SEO",        lambda: seo_check.run(page_url, page_body, page_headers, session)),
             ]
             for check_name, check_fn in page_level_checks:
