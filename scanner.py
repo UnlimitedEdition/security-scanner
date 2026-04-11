@@ -32,6 +32,7 @@ from checks import ct_check, subdomain_check, seo_check
 from checks import performance_check, gdpr_check, vuln_check
 from checks import js_check, api_check, accessibility_check, dependency_check
 from checks import observatory_check, whois_check, tech_stack_check, email_security_check
+from checks import takeover_check
 from checks.crawler import crawl
 from security_utils import safe_get, assert_safe_target, UnsafeTargetError
 import risk_engine
@@ -506,6 +507,8 @@ def scan(
               lambda: ct_check.run(domain))
     run_check("Skeniram subdomene...", 98, "Subdomain",
               lambda: subdomain_check.run(domain))
+    run_check("Proveravam dangling CNAME zapise (subdomain takeover)...", 98, "Takeover",
+              lambda: takeover_check.run(domain))
 
     # ─────────────────────────────────────────────────────────────────
     # Multi-page pass (Pro plan only — max_pages > 1)
