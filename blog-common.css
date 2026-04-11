@@ -289,24 +289,15 @@ th { color: #a78bfa; font-weight: 600; }
 .footer-grid {
   max-width: 1100px; margin: 0 auto;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem 4rem;
+  /* Desktop: normal 4-column layout via auto-fit. Renders up to
+     4-5 columns depending on container width. This is the original
+     behaviour before the short-lived 2-col experiment. */
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 2rem;
   margin-bottom: 2rem;
   min-width: 0;
 }
-/* Two visual columns, two stacked groups per column:
-     LEFT col  = Security (top) + SEO (bottom)   — left-aligned
-     RIGHT col = Performance (top) + GDPR (bottom) — right-aligned
-   The JS footer generator appends in the order
-   Security, SEO, Performance, GDPR, so we explicitly pin each
-   one to a grid cell. Default auto-placement would fill rows
-   first (Sec, SEO in row 1; Perf, GDPR in row 2) which is not
-   what the user asked for. */
 .footer-col { min-width: 0; }
-.footer-col:nth-child(1) { grid-column: 1; grid-row: 1; text-align: left; }
-.footer-col:nth-child(2) { grid-column: 1; grid-row: 2; text-align: left; }
-.footer-col:nth-child(3) { grid-column: 2; grid-row: 1; text-align: right; }
-.footer-col:nth-child(4) { grid-column: 2; grid-row: 2; text-align: right; }
 .footer-col h4 {
   color: #a78bfa; font-size: 0.82rem; font-weight: 700;
   margin-bottom: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;
@@ -319,10 +310,10 @@ th { color: #a78bfa; font-weight: 600; }
 .footer-col a:hover { color: #a78bfa; }
 
 /* Ultra-wide (>=1800px): footer can breathe into wider container
-   for better use of 34" widescreen real estate. Two columns stay
-   but with more generous max-width and gap. */
+   for better use of 34" widescreen real estate. Original 4-col
+   auto-fit grid keeps its behavior but with more max-width and gap. */
 @media (min-width: 1800px) {
-  .footer-grid { max-width: 1500px; gap: 2rem 6rem; }
+  .footer-grid { max-width: 1500px; gap: 2rem 3rem; }
   .site-footer { padding: 3.5rem 2rem 2rem; }
 }
 /* LEGAL ROW — horizontal list between the blog grid and the copyright line.
@@ -375,24 +366,23 @@ th { color: #a78bfa; font-weight: 600; }
   }
   .header-nav.open { display: flex; }
   .hamburger { display: block; }
-  /* Footer collapses from 2-col asymmetric to 1-col centered on
-     phones/tablets — asymmetric alignment would be hard to read
-     on narrow screens. Reset the explicit grid-column/grid-row
-     pins so all 4 sections stack naturally in a single column. */
+  /* MOBILE FOOTER LAYOUT: 2-column asymmetric.
+     LEFT col  = Security (top) + SEO (bottom)   — left-aligned
+     RIGHT col = Performance (top) + GDPR (bottom) — right-aligned
+     This is the only breakpoint where the 4 section grid is
+     forced into an explicit 2-col layout with pin-up. Desktop
+     keeps its original auto-fit 4-col behavior.
+     Gives less vertical scroll on phones and a visually balanced
+     left/right split instead of a single long centered stack. */
   .footer-grid {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto;
-    gap: 1.8rem;
-    text-align: center;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 1.5rem 1rem;
   }
-  .footer-col:nth-child(1),
-  .footer-col:nth-child(2),
-  .footer-col:nth-child(3),
-  .footer-col:nth-child(4) {
-    grid-column: 1;
-    grid-row: auto;
-    text-align: center;
-  }
+  .footer-col:nth-child(1) { grid-column: 1; grid-row: 1; text-align: left; }
+  .footer-col:nth-child(2) { grid-column: 1; grid-row: 2; text-align: left; }
+  .footer-col:nth-child(3) { grid-column: 2; grid-row: 1; text-align: right; }
+  .footer-col:nth-child(4) { grid-column: 2; grid-row: 2; text-align: right; }
 }
 @media (max-width: 480px) {
   .footer-grid { gap: 1.3rem; }
