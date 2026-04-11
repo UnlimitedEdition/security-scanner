@@ -66,6 +66,19 @@ dostojanstvena komunikacija, prevencija kao ogledalo — ne kao strah**.
 - **Masking**: tokeni su skraćeni na prvih 24 char-a u izveštaju da ne bi zapisivali pune kredencijale
 - 13/13 unit testova: sva 4 tipa slabosti, HS384 varijanta, empty string secret, Authorization header detekcija, dedup, false positive rejection, mixed-issue aggregation, timing bound
 
+### WPScan-lite (bivša #14)
+- **Fajl**: `checks/wpscan_lite.py` (novo, 585 linija), `scanner.py` (registracija single-page samo — domain-level check, ne ide u multi-page pass)
+- **Commit**: `c8a4110`
+- **Pokriva**: 4 WordPress-specifične površine, sve pasivne HTTP GET (nula POST-ova, nula login pokušaja, nula eksploatacije):
+  - **Plugin enumeration** — paralelno (5 workers) probe `/wp-content/plugins/<slug>/readme.txt` za 20 najpopularnijih pluginova, parse `Stable tag:` za verziju, SPA guard preko `=== Plugin Name ===` marker-a, agregirani LOW nalaz sa listom svih detektovanih
+  - **CVE matching** — curated `KNOWN_VULN_PLUGINS` dict sa 3 konzervativna well-documented CVE-a: Contact Form 7 ≤5.3.1 (CVE-2020-35489, unrestricted file upload, HIGH), Slider Revolution ≤4.2 (CVE-2014-9735, arbitrary file download, CRITICAL), UpdraftPlus ≤1.22.2 (CVE-2022-23337, backup disclosure, HIGH)
+  - **User enumeration** — oba metoda kombinovana u jedan MEDIUM nalaz: `/wp-json/wp/v2/users` JSON parse + `/?author=1..3` 3xx Location header extraction
+  - **xmlrpc.php** — GET (ne POST) za default WP response "XML-RPC server accepts POST requests only", MEDIUM nalaz za attack surface
+- **Early exit**: `_is_wordpress(body)` gate pre bilo kog zahteva — non-WP sajtovi dobiju 0ms i 0 HTTP zahteva
+- **Zašto samo single-page**: plugin lista, REST users, xmlrpc su svi domain-level, isti rezultat bez obzira koja stranica se probuje — ne vredi 10× ponavljanja za 10 Pro stranica
+- 20 pluginova u listi, 3 CVE-a u dict-u, worst-case ~25 HTTP zahteva (20 plugin + 1 REST + 3 author + 1 xmlrpc)
+- 6/6 unit testova + 1 end-to-end integration test sa mock responses: verifikovano 5 tipova nalaza sa tačnim severity nivoima
+
 ---
 
 ## 📋 Next up — Easy wins (S, None/Low legal)
@@ -124,12 +137,6 @@ Male izmene, visoka vrednost. Redosled je okviran — biraj šta ti je najvažni
 - **Impact**: **HIGH**
 - **Obuhvat**: upit `https://crt.sh/?q=%.domain.com&output=json`, ekstraktuj sve istorijske subdomene iz izdatih sertifikata, spusti ih na `takeover_check.run()`. Rate-limit handling obavezan.
 - **Zašto**: statična lista od 51 subdomena hvata uobičajene; crt.sh hvata zaboravljene (`old-staging-2019`, `backup-db-migration`, itd.) — pravi biseri za takeover.
-
-### 14. WPScan-lite
-- **Fajl**: `checks/cms_check.py` (extend) ili novo `checks/wpscan_lite.py`
-- **Effort**: M · **Legal**: Low · **Impact**: **CRITICAL**
-- **Obuhvat**: enumeracija plugin-a preko `/wp-content/plugins/*/readme.txt`, match protiv lokalnog CVE feed-a, user enum preko `/?author=1..10`, `xmlrpc.php` exposure, `wp-json/wp/v2/users` enum
-- **Zašto**: WordPress je 40%+ srpskih sajtova. Jedan ranjiv plugin = potpuna kompromitacija. Ovo je najveći single-module ROI.
 
 ### 15. Banner grabbing na otvorenim portovima
 - **Fajl**: `checks/ports_check.py` (extend)
@@ -215,6 +222,7 @@ Male izmene, visoka vrednost. Redosled je okviran — biraj šta ti je najvažni
 - **2026-04-12** — Završene tri easy-win stavke u jednoj sesiji: #8 Git deep walker (`0a1bbee`), #1 Prošireni dangerous ports 10→25 (`941fef2`), #2 CSP strict analyzer (`dced3eb`). Go-to-market kontekst potvrđen: B2B outreach kroz hosting kuće, nikakav direktan kontakt sa vlasnicima sajtova.
 - **2026-04-12** — Sledeći planirani redosled po korisniku: #11 JWT exposure check, potom #14 WPScan-lite, pa ostale S/M stavke u pasivnim granicama. Izvan ROADMAP-a: potrebna nova `user-rights.html` legal stranica jer trenutni footer linkovi "Prava korisnika" vode na generic GDPR blog umesto na dedicated legal fajl.
 - **2026-04-12** — Završeno #11 JWT exposure & weakness check (`6791825`). Offline dictionary attack prihvaćen kao pasivna tehnika jer nema mreže — HMAC računanje nad već primljenim bajtovima je tehnički verifikacija a ne cracking. Push na space je odložen dok i #14 ne bude gotov, da se HF Space ne rebildje dva puta u kratkom roku.
+- **2026-04-12** — Završeno #14 WPScan-lite (`c8a4110`). Najveći single-module ROI po originalnoj proceni — pokriva 40%+ srpskih sajtova koji koriste WordPress. CVE dict drži se konzervativno (samo 3 entry-ja) jer je listanje netačnih CVE-ova gore od listanja nijednog. WPScan ide samo u single-page pass jer su sve 4 površine domain-level (plugin lista, REST users, xmlrpc su identični nezavisno od stranice). Non-WP sajtovi imaju nula dodatnih zahteva preko `_is_wordpress()` early-exit gate-a.
 
 ---
 
