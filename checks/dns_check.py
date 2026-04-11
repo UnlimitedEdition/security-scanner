@@ -6,7 +6,126 @@ Checks: SPF, DMARC, DNSSEC
 These protect against email spoofing and DNS attacks.
 """
 import dns.resolver
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
+
+
+# ── Roadmap #3: DMARC deep parser ──────────────────────────────────────────
+#
+# A DMARC TXT record is a semicolon-separated list of tag=value pairs:
+#   v=DMARC1; p=quarantine; pct=100; rua=mailto:dmarc@example.com; sp=reject
+#
+# The existing code only checked "p=none" as a substring, which missed
+# several other common weakness modes: pct<100 (partial enforcement),
+# missing rua (no aggregate reports — the site owner cannot monitor
+# whether the policy is actually working), and sp=none (subdomains
+# unprotected even when the main domain is). The parser below extracts
+# every tag the site owner might care about, and the analyzer emits a
+# list of weaknesses — aggregated into a single finding so the report
+# stays readable.
+
+
+def _parse_dmarc(txt: str) -> Dict[str, str]:
+    """Parse a DMARC TXT record into a {tag: value} dict, lowercased keys."""
+    tags: Dict[str, str] = {}
+    for chunk in txt.split(";"):
+        chunk = chunk.strip()
+        if "=" not in chunk:
+            continue
+        key, _, value = chunk.partition("=")
+        tags[key.strip().lower()] = value.strip()
+    return tags
+
+
+def _analyze_dmarc(tags: Dict[str, str]) -> List[Dict[str, str]]:
+    """
+    Return a list of weakness entries for a parsed DMARC record. Empty
+    list means the policy passes all deep checks.
+    """
+    issues: List[Dict[str, str]] = []
+
+    p = tags.get("p", "").lower()
+    if p == "none":
+        issues.append({
+            "severity": "MEDIUM",
+            "desc_sr": "Policy 'p=none' — DMARC samo monitoring, ne blokira spoofovane email-ove. Receiver serveri vide DMARC rezultat ali ga ne koriste za odluku šta raditi sa porukom.",
+            "desc_en": "Policy 'p=none' — DMARC only monitors, does not block spoofed emails. Receiving servers see the DMARC result but do not use it to decide what to do with the message.",
+        })
+    elif p == "":
+        issues.append({
+            "severity": "HIGH",
+            "desc_sr": "DMARC record postoji ali 'p=' tag nedostaje — policy je nedefinisana.",
+            "desc_en": "DMARC record exists but the 'p=' tag is missing — the policy is undefined.",
+        })
+
+    pct_raw = tags.get("pct", "100")
+    try:
+        pct_int = int(pct_raw)
+        if pct_int < 100 and p not in ("none", ""):
+            issues.append({
+                "severity": "LOW",
+                "desc_sr": f"Samo {pct_int}% email-ova je pod DMARC enforcement-om (pct={pct_int}). Ostatak prolazi bez provere.",
+                "desc_en": f"Only {pct_int}% of emails are under DMARC enforcement (pct={pct_int}). The rest pass through unchecked.",
+            })
+    except ValueError:
+        pass
+
+    if "rua" not in tags or not tags.get("rua"):
+        issues.append({
+            "severity": "LOW",
+            "desc_sr": "Nema 'rua' taga (aggregate reports URI) — ne možete pratiti efikasnost DMARC politike niti videti ko šalje poruke u vaše ime.",
+            "desc_en": "No 'rua' tag (aggregate reports URI) — you cannot monitor DMARC effectiveness or see who is sending messages in your name.",
+        })
+
+    sp = tags.get("sp", "").lower()
+    if sp == "none":
+        issues.append({
+            "severity": "LOW",
+            "desc_sr": "Subdomain policy 'sp=none' — subdomeni nisu zaštićeni. Napadač može spoofovati 'mail.yourdomain.com' iako 'yourdomain.com' ima reject policy.",
+            "desc_en": "Subdomain policy 'sp=none' — subdomains are not protected. An attacker can spoof 'mail.yourdomain.com' even though 'yourdomain.com' has a reject policy.",
+        })
+
+    return issues
+
+
+def _build_dmarc_weak_finding(
+    txt: str, tags: Dict[str, str], issues: List[Dict[str, str]]
+) -> Dict[str, Any]:
+    """Aggregate DMARC weaknesses into a single finding."""
+    rank = {"CRITICAL": 4, "HIGH": 3, "MEDIUM": 2, "LOW": 1}
+    top_sev = max(issues, key=lambda i: rank.get(i["severity"], 0))["severity"]
+
+    issues_sr = "\n".join(f"• {i['desc_sr']}" for i in issues)
+    issues_en = "\n".join(f"• {i['desc_en']}" for i in issues)
+    truncated = txt if len(txt) <= 200 else txt[:200] + "…"
+
+    return {
+        "id": "dns_dmarc_weak",
+        "category": "DNS Security",
+        "severity": top_sev,
+        "passed": False,
+        "title": f"DMARC je definisan ali slab ({len(issues)} problema)",
+        "title_en": f"DMARC is defined but weak ({len(issues)} issues)",
+        "description": (
+            "DMARC record postoji ali sledeće slabosti ga čine manje efikasnim:\n\n"
+            f"{issues_sr}\n\nTrenutna vrednost: {truncated}"
+        ),
+        "description_en": (
+            "DMARC record exists but the following weaknesses reduce its effectiveness:\n\n"
+            f"{issues_en}\n\nCurrent value: {truncated}"
+        ),
+        "recommendation": (
+            "Strog DMARC za produkcioni domen treba: (1) p=quarantine ili p=reject (ne 'none'), "
+            "(2) pct=100 (pun enforcement), (3) rua=mailto:dmarc@yourdomain.com za aggregate "
+            "izveštaje, (4) sp=quarantine ili sp=reject za subdomene. "
+            "Primer: 'v=DMARC1; p=quarantine; pct=100; rua=mailto:dmarc@example.com; sp=reject'"
+        ),
+        "recommendation_en": (
+            "A strict production DMARC should: (1) p=quarantine or p=reject (not 'none'), "
+            "(2) pct=100 (full enforcement), (3) rua=mailto:dmarc@yourdomain.com for aggregate "
+            "reports, (4) sp=quarantine or sp=reject for subdomains. "
+            "Example: 'v=DMARC1; p=quarantine; pct=100; rua=mailto:dmarc@example.com; sp=reject'"
+        ),
+    }
 
 
 PLATFORM_DOMAINS = [
@@ -170,20 +289,11 @@ def run(domain: str) -> List[Dict[str, Any]]:
             txt = str(rdata).strip('"')
             if txt.startswith("v=DMARC1"):
                 dmarc_found = True
-                # Check policy
-                if "p=none" in txt:
-                    results.append({
-                        "id": "dns_dmarc_weak",
-                        "category": "DNS Security",
-                        "severity": "MEDIUM",
-                        "passed": False,
-                        "title": "DMARC postoji ali samo nadgleda (p=none)",
-                        "title_en": "DMARC exists but only monitors (p=none)",
-                        "description": "DMARC je konfigurisan na p=none što samo loguje, ali ne blokira lažne emailove.",
-                        "description_en": "DMARC is configured with p=none which only logs, but does not block spoofed emails.",
-                        "recommendation": "Promenite na p=quarantine ili p=reject za aktivnu zaštitu.",
-                        "recommendation_en": "Change to p=quarantine or p=reject for active protection.",
-                    })
+                # Roadmap #3: deep parse instead of the old p=none substring.
+                tags = _parse_dmarc(txt)
+                issues = _analyze_dmarc(tags)
+                if issues:
+                    results.append(_build_dmarc_weak_finding(txt, tags, issues))
                 else:
                     results.append({
                         "id": "dns_dmarc_ok",

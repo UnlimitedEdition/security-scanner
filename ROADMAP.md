@@ -84,9 +84,22 @@ dostojanstvena komunikacija, prevencija kao ogledalo — ne kao strah**.
 - Silverlight je deprecated od 2021, Flash od 2020 — postojanje ovih fajlova na modernim sajtovima je skoro uvek konfiguracijska greska ili zaboravljen legacy
 - SENSITIVE_FILES: 21 → 23, CONTENT_SIGNATURES: 21 → 23
 
+### DMARC Deep Parser (bivša #3)
+- **Fajl**: `checks/dns_check.py` (extend — 3 nova helpera, replacement inline logike)
+- **Commit**: `__PLACEHOLDER__`
+- **Pokriva**: 4 nove klase slabosti u postojećem DMARC record-u (pored postojeće `p=none` provere):
+  - `p=none` → MEDIUM (monitoring only, ne blokira spoofing)
+  - `p=` missing → HIGH (record postoji ali policy nedefinisana)
+  - `pct<100` (sa p=quarantine/reject) → LOW (parcijalni enforcement)
+  - Missing `rua` tag → LOW (nema aggregate report-a, slepilo za efikasnost)
+  - `sp=none` → LOW (subdomeni nezaštićeni iako main domen jeste)
+- **Format**: jedan agregirani `dns_dmarc_weak` nalaz sa listom svih slabosti, severity = max pojedinačne
+- **Zašto je bitno po ROADMAP-u**: "80% srpskih .rs domena ima p=none (monitoring only) — to je DMARC samo na papiru". Sada osim p=none hvata i parcijalni pct, slepe politike bez rua, i subdomain fallback
+- 8/8 unit testova: parser, strict policy (0 issues), p=none, pct=50, missing rua, sp=none, kombinovane slabosti, finding builder
+
 ### HSTS Preload List Check (bivša #7)
 - **Fajl**: `checks/ssl_check.py` (extend)
-- **Commit**: `__PLACEHOLDER__`
+- **Commit**: `a6365cb`
 - **Pokriva**: lookup domena u Chromium HSTS preload listi kroz hstspreload.org API v2 — lightweight HTTP GET (read-only, unauthenticated)
 - **Tri stanja**:
   - `preloaded` → INFO pozitivni nalaz "domen je u preload listi, first-visit je automatski zaštićen od SSL stripping"
@@ -121,12 +134,6 @@ dostojanstvena komunikacija, prevencija kao ogledalo — ne kao strah**.
 ## 📋 Next up — Easy wins (S, None/Low legal)
 
 Male izmene, visoka vrednost. Redosled je okviran — biraj šta ti je najvažnije.
-
-### 3. DMARC policy parser
-- **Fajl**: `checks/dns_check.py` ili `checks/email_security_check.py` (extend)
-- **Effort**: S · **Legal**: None · **Impact**: MEDIUM
-- **Obuhvat**: ne samo "ima DMARC", parsiraj `p=none/quarantine/reject`, `pct=`, `rua=`, `sp=`, flaguj `p=none` kao slab
-- **Zašto**: 80% srpskih `.rs` domena ima `p=none` (monitoring only) — to je DMARC samo na papiru.
 
 ### 4. Modern email security (MTA-STS, TLS-RPT, BIMI, DANE)
 - **Fajl**: `checks/email_security_check.py` (extend)
