@@ -84,9 +84,22 @@ dostojanstvena komunikacija, prevencija kao ogledalo — ne kao strah**.
 - Silverlight je deprecated od 2021, Flash od 2020 — postojanje ovih fajlova na modernim sajtovima je skoro uvek konfiguracijska greska ili zaboravljen legacy
 - SENSITIVE_FILES: 21 → 23, CONTENT_SIGNATURES: 21 → 23
 
+### Source Map Deep Parser (bivša #10)
+- **Fajl**: `checks/js_check.py` (extend — 2 nova helpera + integracija u _check_source_maps)
+- **Commit**: `__PLACEHOLDER__`
+- **Pokriva**: kada se detektuje pristupačan `.map` fajl, sada se i **fetch-uje** i parsira JSON, i `sources` array se analizira za 5 klasa leak patterna:
+  - `/home/<user>/` → MEDIUM (Linux/macOS developer path)
+  - `/Users/<user>/` → MEDIUM (macOS developer path)
+  - `C:\Users\<user>\` ili `C:/Users/` → MEDIUM (Windows developer path)
+  - `/root/` → HIGH (build kao root, ceo sistem kompromitovan pri incidentu)
+  - `/var/www/` → LOW (build layout leak)
+- **Novi nalaz**: `js_source_map_leaks` (severity = max detektovanih leak patterna), odvojen od postojećeg `js_source_maps` MEDIUM-a
+- **Bezbednosno**: bomb guard (2 MB max), dedup po label klasi, SSRF-guarded preko `safe_get`
+- 5/5 leak pattern testova + edge case testovi (size bomb, non-JSON, empty, missing sources array)
+
 ### .well-known Endpoint Enumerator (bivša #6)
 - **Fajl**: `checks/wellknown_check.py` (novo, 205 linija), `scanner.py` (registracija na pct=55 posle extras_check)
-- **Commit**: `__PLACEHOLDER__`
+- **Commit**: `29b60f6`
 - **Pokriva**: 8 IETF/W3C registered .well-known endpoint-a (security.txt vec pokriven u extras_check):
   - `/change-password` (RFC 8615) — prihvata 200/302 redirect
   - `/assetlinks.json` — Android App Links (JSON validation)
@@ -159,11 +172,6 @@ dostojanstvena komunikacija, prevencija kao ogledalo — ne kao strah**.
 ## 📋 Next up — Easy wins (S, None/Low legal)
 
 Male izmene, visoka vrednost. Redosled je okviran — biraj šta ti je najvažnije.
-
-### 10. Source map deep parser
-- **Fajl**: `checks/js_check.py` (extend)
-- **Effort**: S-M · **Legal**: None · **Impact**: MEDIUM
-- **Obuhvat**: kada `.map` detektovan, fetch, parse `sources` array, flaguj leaked interne path-ove koji sadrže `/home/`, `C:\Users\`, imena programera, secret-like substringove
 
 ---
 

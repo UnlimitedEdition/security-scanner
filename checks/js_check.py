@@ -6,6 +6,7 @@ Checks: API keys in code, dangerous functions, inline event handlers,
 libraries with known CVEs, exposed API endpoints, source maps.
 """
 import re
+import json
 import sys
 import os
 import requests
@@ -13,9 +14,105 @@ from urllib.parse import urlparse
 from typing import List, Dict, Any
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from security_utils import safe_head, UnsafeTargetError
+from security_utils import safe_head, safe_get, UnsafeTargetError
 
 TIMEOUT = 7
+
+
+# ── Roadmap #10: source map deep parser ───────────────────────────────────
+#
+# When a .map file is detected as publicly accessible, fetch it, parse the
+# JSON, and inspect the "sources" array for paths that leak developer
+# identity, local filesystem layout, or internal project codenames. Every
+# entry in sources is a URL-like string that webpack / esbuild / vite use
+# to refer back to the pre-bundled file. Common leak patterns:
+#
+#   /home/<username>/        — Linux/macOS absolute developer path
+#   /Users/<username>/       — macOS absolute developer path
+#   C:\Users\<username>\     — Windows absolute developer path
+#   /root/                   — deployed-as-root environment
+#   /var/www/                — deployed-from-var-www developer rig
+#   webpack://./src/         — webpack internal prefix (usually benign)
+#
+# The check only runs against .map files we already know exist (detected
+# in _check_source_maps below). Each map file is GET'd once with a short
+# timeout and the body size capped to prevent adversarial huge files.
+
+_MAX_MAP_SIZE_BYTES = 2 * 1024 * 1024  # 2 MB — real source maps are much smaller
+
+_LEAK_PATTERNS = [
+    # (regex, severity, bilingual human label)
+    (r"/home/([^/\s]+)/",
+     "MEDIUM",
+     "Linux/macOS apsolutna putanja programera",
+     "Linux/macOS absolute developer path"),
+    (r"/Users/([^/\s]+)/",
+     "MEDIUM",
+     "macOS apsolutna putanja programera",
+     "macOS absolute developer path"),
+    (r"[Cc]:[\\/]Users[\\/]([^\\/\s]+)[\\/]",
+     "MEDIUM",
+     "Windows apsolutna putanja programera",
+     "Windows absolute developer path"),
+    (r"/root/",
+     "HIGH",
+     "Build je izvršen kao root — kompromitovan ceo sistem pri incidentu",
+     "Build was executed as root — full system compromise on incident"),
+    (r"/var/www/",
+     "LOW",
+     "Build putanja otkriva /var/www layout",
+     "Build path reveals /var/www layout"),
+]
+
+
+def _extract_sources(map_body: bytes) -> List[str]:
+    """
+    Parse a source map and return its 'sources' array. Returns empty list
+    on any parsing failure (not JSON, wrong shape, size bomb, etc).
+    """
+    if len(map_body) > _MAX_MAP_SIZE_BYTES:
+        return []
+    try:
+        text = map_body.decode("utf-8", errors="replace")
+        data = json.loads(text)
+    except Exception:
+        return []
+    if not isinstance(data, dict):
+        return []
+    sources = data.get("sources", [])
+    if not isinstance(sources, list):
+        return []
+    return [s for s in sources if isinstance(s, str)]
+
+
+def _analyze_sources(sources: List[str]) -> List[Dict[str, Any]]:
+    """
+    Scan a 'sources' array against _LEAK_PATTERNS and return a list of
+    leak findings. Each entry: {severity, label_sr, label_en, example}.
+    Only the first unique example per pattern is kept so a webpack bundle
+    with 800 files from the same developer home produces one finding,
+    not 800.
+    """
+    leaks: List[Dict[str, Any]] = []
+    seen_patterns: set = set()
+
+    for pattern, severity, label_sr, label_en in _LEAK_PATTERNS:
+        rx = re.compile(pattern)
+        for src in sources:
+            match = rx.search(src)
+            if match:
+                key = (pattern, match.group(0))
+                if key not in seen_patterns:
+                    seen_patterns.add(key)
+                    leaks.append({
+                        "severity": severity,
+                        "label_sr": label_sr,
+                        "label_en": label_en,
+                        "example": src[:120],
+                    })
+                break  # One example per pattern is enough
+
+    return leaks
 
 # Pattern for detecting doc.write usage (used in security scanning context)
 _DOC_WRITE_RE = r'document\.write\s*\('
@@ -280,7 +377,8 @@ def _check_source_maps(base_url, body, session):
             "No external scripts found on the page."))
         return results
 
-    accessible_maps = []
+    accessible_maps: List[str] = []
+    deep_leaks: List[Dict[str, Any]] = []  # Roadmap #10: merged across all maps
     checked = 0
     for src in script_srcs[:5]:  # Limit checks to avoid too many requests
         # Build absolute URL for the .map file
@@ -299,8 +397,25 @@ def _check_source_maps(base_url, body, session):
             # http://169.254.169.254/... via a fake <script src>.
             resp = safe_head(session, map_url, timeout=TIMEOUT)
             checked += 1
-            if resp.status_code == 200:
-                accessible_maps.append(map_url[:80])
+            if resp.status_code != 200:
+                continue
+            accessible_maps.append(map_url[:80])
+
+            # Roadmap #10: deep parse the map body for leaked absolute
+            # paths. Second request (GET) since the head check above only
+            # gave us status — safe_get is still SSRF-guarded on redirect.
+            try:
+                full_resp = safe_get(session, map_url, timeout=TIMEOUT, max_redirects=0)
+                if full_resp.status_code == 200:
+                    sources = _extract_sources(full_resp.content)
+                    if sources:
+                        leaks = _analyze_sources(sources)
+                        for leak in leaks:
+                            # Dedup by label — one example per leak class per scan
+                            if not any(d["label_en"] == leak["label_en"] for d in deep_leaks):
+                                deep_leaks.append(leak)
+            except (UnsafeTargetError, Exception):
+                pass
         except UnsafeTargetError:
             pass  # Script src pointed to a forbidden target — skip
         except Exception:
@@ -314,7 +429,47 @@ def _check_source_maps(base_url, body, session):
             f"Accessible .map files found: {', '.join(accessible_maps[:3])}. Source maps reveal the application source code.",
             "Uklonite .map fajlove sa produkcijskog servera ili ogranicite pristup njima.",
             "Remove .map files from the production server or restrict access to them."))
-    else:
+
+    # Roadmap #10: deep leak findings per pattern class. Separate finding
+    # from the base js_source_maps so the severity signal stays accurate
+    # (a /root/ leak is HIGH, a /home/user/ leak is MEDIUM).
+    if deep_leaks:
+        rank = {"CRITICAL": 4, "HIGH": 3, "MEDIUM": 2, "LOW": 1}
+        top_sev = max(deep_leaks, key=lambda l: rank.get(l["severity"], 0))["severity"]
+        leaks_sr = "\n".join(f"• {l['label_sr']}: {l['example']}" for l in deep_leaks)
+        leaks_en = "\n".join(f"• {l['label_en']}: {l['example']}" for l in deep_leaks)
+        results.append({
+            "id": "js_source_map_leaks",
+            "category": "JavaScript Security",
+            "severity": top_sev,
+            "passed": False,
+            "title": f"Source map fajlovi otkrivaju {len(deep_leaks)} lokalnih putanja programera",
+            "title_en": f"Source map files reveal {len(deep_leaks)} developer local paths",
+            "description": (
+                "Izloženi .map fajlovi sadrže apsolutne putanje iz razvojnog okruženja. "
+                "Ovo otkriva korisnička imena programera, host OS, i layout build servera:\n\n"
+                f"{leaks_sr}"
+            ),
+            "description_en": (
+                "The exposed .map files contain absolute paths from the development environment. "
+                "This reveals developer usernames, host OS, and the build server layout:\n\n"
+                f"{leaks_en}"
+            ),
+            "recommendation": (
+                "Konfigurišite build alat (webpack, esbuild, vite, rollup) da koristi "
+                "relativne putanje ili 'sourceRoot' mapping koji nema lokalne paths. "
+                "Webpack: 'output.devtoolModuleFilenameTemplate: \"webpack://[namespace]/[resource-path]\"'. "
+                "Još bolje — ne publikujte .map fajlove na produkciju uopšte."
+            ),
+            "recommendation_en": (
+                "Configure the build tool (webpack, esbuild, vite, rollup) to use "
+                "relative paths or a 'sourceRoot' mapping without local paths. "
+                "Webpack: 'output.devtoolModuleFilenameTemplate: \"webpack://[namespace]/[resource-path]\"'. "
+                "Better yet — do not publish .map files to production at all."
+            ),
+        })
+
+    if not accessible_maps:
         results.append(_pass("js_source_maps",
             "Source map fajlovi nisu javno dostupni",
             "Source map files are not publicly accessible",
