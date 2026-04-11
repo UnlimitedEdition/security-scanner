@@ -182,65 +182,36 @@ Male izmene, visoka vrednost. Redosled je okviran — biraj šta ti je najvažni
 - **Effort**: M · **Legal**: None (crt.sh je javan)
 - **Impact**: **HIGH**
 - **Obuhvat**: upit `https://crt.sh/?q=%.domain.com&output=json`, ekstraktuj sve istorijske subdomene iz izdatih sertifikata, spusti ih na `takeover_check.run()`. Rate-limit handling obavezan.
-- **Zašto**: statična lista od 51 subdomena hvata uobičajene; crt.sh hvata zaboravljene (`old-staging-2019`, `backup-db-migration`, itd.) — pravi biseri za takeover.
-
-### 15. Banner grabbing na otvorenim portovima
-- **Fajl**: `checks/ports_check.py` (extend)
-- **Effort**: M · **Legal**: Low (single read, no exploitation)
-- **Impact**: MEDIUM
-- **Obuhvat**: na detektovanim otvorenim portovima pročitaj prvih 1KB (SSH banner, HTTP Server header, Redis `INFO`, SMTP greeting), match protiv lokalnog vuln DB
-
-### 16. DNS zone transfer (AXFR) attempt
-- **Fajl**: `checks/dns_check.py` (extend)
-- **Effort**: S-M · **Legal**: Low (standardni DNS protokol)
-- **Impact**: **CRITICAL** kada prolazi (retko ali kad da, tarik)
-- **Obuhvat**: za svaki NS server, probaj AXFR. Ako uspe, flag CRITICAL + lista prvih N zapisa (anonimizovano u UI)
-
-### 17. Nuclei templates runner (safe subset)
-- **Fajl**: novo `checks/nuclei_check.py` + Docker binary
-- **Effort**: M-L · **Legal**: Medium (zavisi od izbora template-a)
-- **Impact**: **HIGH** (hiljade battle-tested provera besplatno)
-- **Obuhvat**: bundle nuclei binary u Docker image, kurirana lista template-a sa tagovima `exposure,misconfig,cve,panel,token-spray`. Strogo isključi bilo šta sa tagom `intrusive`, `dos`, `fuzz`, `sqli`, `rce`.
+- **Zašto**: statična lista od 51 subdomena hvata uobičajene; crt.sh hvata zaboravljene (`old-staging-2019`, `backup-db-migration`, itd.) — pravi biseri za takeover. **Stateless** — samo čita javnu CT bazu, ni jedan zahtev ne ide ka meti.
 
 ---
 
-## 💭 Hard / Philosophical (L / XL effort)
+## 🔴 Permanent skip — trajno odbačeno (2026-04-12)
 
-### 18. Prevention Receipts Database
-- **Fajlovi**: `migrations/NNN_scan_history.sql`, `db.py` (extend), `api.py` (extend), `index.html` (extend)
-- **Effort**: L · **Legal**: **Medium** — treba privacy policy update i GDPR retention policy
-- **Impact**: Strateški — ovo je šta čini Mythos narativ realnim ("rekao sam ti pre 90 dana")
-- **Obuhvat**:
-  - Nova `scan_history` tabela: `domain`, `scanned_at`, `score`, `findings_snapshot` (JSONB), `scan_id`
-  - Post-scan hook automatski upisuje snapshot
-  - Public `/history/:domain` endpoint sa timeline prikazom
-  - UI: "Ova nedelja vs pre 30/90/180 dana" diff
-  - Retention: agregirani score-ovi zauvek, detaljni findings 1 god, posle toga auto-anonimizacija
-  - Privacy policy: eksplicitna sekcija o istorijskim snapshot-ima, opt-out forma
-- **Gate**: ne kreći bez privacy policy update-a
+Sve stavke ispod ovog bloka su **eksplicitno odbačene** zbog hard red line-a o zero user data retention / stateless-by-design arhitekturi (vidi decision log 2026-04-12). Ne otvarati ponovo za diskusiju — trajno deferred bez obzira na tehničku vrednost.
 
-### 19. Continuous Monitoring (diff mode)
-- **Fajlovi**: novi worker (cron), `db.py`, notification sistem (email/webhook)
-- **Effort**: L · **Legal**: Low (samo za consented domene)
-- **Impact**: **HIGH** — ovo je kako prodaješ recurring subscription
-- **Obuhvat**: korisnik dodaje domen na "monitor list", weekly rescan, diff protiv poslednjeg, notifikacija ako se pojavi novi CRITICAL/HIGH
+### ~~15. Banner grabbing na otvorenim portovima~~ — SKIP
+- **Razlog**: korisnik može da dozivi kao agresivno iako je tehnički pasivno (SSH/SMTP banneri su "autovaljni", ali Redis `INFO` šalje komandu). Rizik percepcije > vrednost.
 
-### 20. AI Business Logic Anomaly Detection — Mythos core
-- **Fajlovi**: novo `mythos/` paket, Claude API integracija, prompt caching
-- **Effort**: XL · **Legal**: Medium (podaci idu do LLM provider-a)
-- **Impact**: Ovde se "Mythos pronalazi ono što iskusan developer nije predvideo" stvarno dešava
-- **Obuhvat**:
-  - Pipe scan findings + site structure + CMS kontekst u Claude API
-  - Prompt kaže: "identifikuj suspicious obrasce koje rule engine ne bi uhvatio"
-  - Cache-uj po domain+version ključu agresivno (prompt caching)
-  - Izbegni claim "100 grešaka"; ciljaj "3 kontekstualne pretnje sa exploit chain objašnjenjem"
-- **Filozofija**: ne broj nalaza, već **kvalitet insight-a**
+### ~~16. DNS zone transfer (AXFR) attempt~~ — SKIP
+- **Razlog**: pravno čist (standardni DNS protokol) ali se filozofski oseća kao napad — "zašto skener traži moju celu DNS zonu?". U 99% slučajeva ne prolazi ionako.
 
-### 21. Correlation Engine preko Scan DB
-- **Fajl**: `mythos/correlation.py`, cron jobs
-- **Effort**: L · **Legal**: Low
-- **Impact**: HIGH (zahteva #18 prvo)
-- **Obuhvat**: preko svih skenova u bazi, pronađi pattern-e tipa "90% sajtova sa WP 6.2 + plugin X imaju CVE Y"; prikaži po-scan: "tvoj profil se poklapa sa high-risk klasterom"
+### ~~17. Nuclei templates runner~~ — SKIP
+- **Razlog**: Nuclei je **klasifikovan kao vulnerability scanner** u većini jurisdikcija i reputacijski hosting kuće ga dožive kao hakerski alat bez obzira na "safe subset" tagove. Reputation cost > benefit.
+
+### ~~18. Prevention Receipts Database~~ — SKIP
+- **Razlog**: skladišti tuđu vulnerability info u persistentnoj bazi. Ako baza ikad procuri, korisnik je pravno izložen (GDPR) iako servis daje besplatno. Nedopustiv storage risk.
+
+### ~~19. Continuous Monitoring (diff mode)~~ — SKIP
+- **Razlog**: zahteva čuvanje scan baseline-a za diff, ista klasa storage rizika kao #18. Čak i opt-in ne smanjuje data breach risk — data je i dalje na serveru.
+
+### ~~20. AI Business Logic / Mythos core~~ — SKIP
+- **Razlog**: šalje scan findings do Anthropic Claude API-ja. Treća strana = treća površina za breach. Korisnik ne može garantovati šta Anthropic radi sa prosleđenim podacima na dugi rok, ne može kontrolisati njihove logove.
+
+### ~~21. Correlation Engine preko Scan DB~~ — SKIP
+- **Razlog**: zahteva #18 historijsku bazu, automatski pada sa #18.
+
+**Šta ovo znači:** Scanner ostaje **stateless by design** — svaki scan je efemeran, rezultat ide direktno korisniku, nista ne ostaje na serveru. To je jaci B2B argument prema hosting kucama: "ne čuvamo ono što ne možemo da izgubimo". Monetizacija ide kroz stateless modele (više provera po scan-u, bolji izveštaji), ne kroz storage feature-a.
 
 ---
 
@@ -269,6 +240,7 @@ Male izmene, visoka vrednost. Redosled je okviran — biraj šta ti je najvažni
 - **2026-04-12** — Sledeći planirani redosled po korisniku: #11 JWT exposure check, potom #14 WPScan-lite, pa ostale S/M stavke u pasivnim granicama. Izvan ROADMAP-a: potrebna nova `user-rights.html` legal stranica jer trenutni footer linkovi "Prava korisnika" vode na generic GDPR blog umesto na dedicated legal fajl.
 - **2026-04-12** — Završeno #11 JWT exposure & weakness check (`6791825`). Offline dictionary attack prihvaćen kao pasivna tehnika jer nema mreže — HMAC računanje nad već primljenim bajtovima je tehnički verifikacija a ne cracking. Push na space je odložen dok i #14 ne bude gotov, da se HF Space ne rebildje dva puta u kratkom roku.
 - **2026-04-12** — Završeno #14 WPScan-lite (`c8a4110`). Najveći single-module ROI po originalnoj proceni — pokriva 40%+ srpskih sajtova koji koriste WordPress. CVE dict drži se konzervativno (samo 3 entry-ja) jer je listanje netačnih CVE-ova gore od listanja nijednog. WPScan ide samo u single-page pass jer su sve 4 površine domain-level (plugin lista, REST users, xmlrpc su identični nezavisno od stranice). Non-WP sajtovi imaju nula dodatnih zahteva preko `_is_wordpress()` early-exit gate-a.
+- **2026-04-12** — **Zakljucana crvena linija: ZERO USER DATA RETENTION.** Skener ne sme (a) skladistiti scan rezultate u persistentnu bazu, (b) transmitovati scan podatke trecima (Claude API, bilo koji LLM/eksterni sistem), (c) pokretati provere koje korisnik moze da dozivi kao agresivno. Razlog: servis je FREE — korisnik ne moze da nosi pravnu odgovornost za data breach na besplatnom alatu koji skenira tudje sajtove. Trajno deferred (ne samo "posle pripreme"): **#18 Prevention Receipts DB**, **#19 Continuous Monitoring** (zahteva storage baseline-a za diff), **#20 Mythos AI core** (salje scan podatke trecoj strani), **#21 Correlation Engine** (zahteva #18), **#15 Banner grabbing** (cak i SSH banner korisnik moze pogresno da protumaci), **#16 AXFR zone transfer** (pasivno ali "oseca se" agresivno), **#17 Nuclei templates** (reputacijski rizik — hosting kuce ga dozivljavaju kao hakerski alat bez obzira na subset tagove). Novi arhitektonski princip: **stateless by design**. Jaci B2B argument prema hosting kucama: "ne cuvamo ono sto ne mozemo da izgubimo".
 
 ---
 
