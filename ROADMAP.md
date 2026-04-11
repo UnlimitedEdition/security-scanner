@@ -78,11 +78,19 @@ dostojanstvena komunikacija, prevencija kao ogledalo — ne kao strah**.
 
 ### Crossdomain / clientaccesspolicy check (bivša #12)
 - **Fajl**: `checks/files_check.py` (extend)
-- **Commit**: `__PLACEHOLDER__`
+- **Commit**: `5e03404`
 - **Pokriva**: 2 nova entry-ja — `/crossdomain.xml` (Flash policy) i `/clientaccesspolicy.xml` (Silverlight policy), oba MEDIUM severity
 - **Signatures**: `<cross-domain-policy>` / `<allow-access-from>` za Flash, `<access-policy>` / `<cross-domain-access>` / `<allow-from>` za Silverlight
 - Silverlight je deprecated od 2021, Flash od 2020 — postojanje ovih fajlova na modernim sajtovima je skoro uvek konfiguracijska greska ili zaboravljen legacy
 - SENSITIVE_FILES: 21 → 23, CONTENT_SIGNATURES: 21 → 23
+
+### Cookie Prefix Enforcement (bivša #5)
+- **Fajl**: `checks/cookies_check.py` (extend)
+- **Commit**: `__PLACEHOLDER__`
+- **Pokriva**: detekcija session/auth kolačića koji ne koriste `__Host-` ili `__Secure-` prefiks (LOW severity, samo na HTTPS)
+- **Selektivnost**: pattern match na imenu kolačića (session, sess, sid, auth, token, login, user, jwt, access, refresh, connect.sid, phpsessid, asp.net_sessionid) — non-session kolačići (analytics, consent, theme) se **ne** flaguju da se izbegne spam
+- **HTTPS-only gate**: prefiks enforcement se primjenjuje samo kad je konekcija HTTPS — HTTP sajtovi dobiju druga upozorenja (no-Secure) pa prefiks postaje besmisleni
+- 6/6 unit testova: session bez prefiksa, __Host- prihvaćen, __Secure- prihvaćen, analytics preskočeno, HTTP ignorisan, razni session nazivi (JSESSIONID, PHPSESSID, auth_token, jwt_refresh)
 
 ### WPScan-lite (bivša #14)
 - **Fajl**: `checks/wpscan_lite.py` (novo, 585 linija), `scanner.py` (registracija single-page samo — domain-level check, ne ide u multi-page pass)
@@ -114,11 +122,6 @@ Male izmene, visoka vrednost. Redosled je okviran — biraj šta ti je najvažni
 - **Effort**: S · **Legal**: None · **Impact**: MEDIUM
 - **Obuhvat**: probe `/.well-known/mta-sts.txt`, DNS TLS-RPT record, BIMI DNS record, DANE TLSA records
 - **Zašto**: moderni email security stack, niko u Srbiji ne proverava.
-
-### 5. Cookie prefix enforcement
-- **Fajl**: `checks/cookies_check.py` (extend)
-- **Effort**: S · **Legal**: None · **Impact**: LOW
-- **Obuhvat**: flaguj `session`/`auth` kolačiće koji ne koriste `__Host-` ili `__Secure-` prefikse
 
 ### 6. `.well-known` endpoint enumerator
 - **Fajl**: novo `checks/wellknown_check.py`
