@@ -160,6 +160,117 @@ SENSITIVE_FILES = [
         "recommendation": "Blokirajte pristup package.json u produkciji.",
         "recommendation_en": "Block access to package.json in production.",
     },
+    # ── Roadmap #9: IDE config leaks, OS metadata, env/backup variants ──
+    {
+        "id": "file_idea",
+        "path": "/.idea/workspace.xml",
+        "severity": "MEDIUM",
+        "title": "JetBrains IDE konfiguracija (.idea) javno dostupna",
+        "title_en": "JetBrains IDE config (.idea) is publicly accessible",
+        "description": ".idea/workspace.xml je metadata JetBrains IDE-a (PyCharm, IntelliJ, WebStorm) — otkriva strukturu projekta, otvorene fajlove, bookmarkove, SCM podatke i lokalne putanje programera.",
+        "description_en": ".idea/workspace.xml is JetBrains IDE metadata (PyCharm, IntelliJ, WebStorm) — reveals project structure, open files, bookmarks, SCM data and local developer paths.",
+        "recommendation": "Obrišite .idea/ direktorijum sa produkcije. Dodajte '.idea/' u .gitignore i blokirajte pristup u web server konfiguraciji.",
+        "recommendation_en": "Delete the .idea/ directory from production. Add '.idea/' to .gitignore and block access in web server config.",
+    },
+    {
+        "id": "file_vscode",
+        "path": "/.vscode/settings.json",
+        "severity": "MEDIUM",
+        "title": "VS Code konfiguracija (.vscode) javno dostupna",
+        "title_en": "VS Code config (.vscode) is publicly accessible",
+        "description": ".vscode/settings.json otkriva programerske preferencije, ekstenzije, custom task-ove i često sadrži lokalne putanje ili imena interpreter-a.",
+        "description_en": ".vscode/settings.json reveals developer preferences, extensions, custom tasks, and often contains local paths or interpreter names.",
+        "recommendation": "Obrišite .vscode/ sa produkcije. Dodajte '.vscode/' u .gitignore.",
+        "recommendation_en": "Delete .vscode/ from production. Add '.vscode/' to .gitignore.",
+    },
+    {
+        "id": "file_thumbs_db",
+        "path": "/Thumbs.db",
+        "severity": "LOW",
+        "title": "Thumbs.db dostupan — otkriva Windows metadata direktorijuma",
+        "title_en": "Thumbs.db accessible — reveals Windows directory metadata",
+        "description": "Thumbs.db je Windows cache thumbnail-a koji sadrži naziv i minijature svih fajlova u direktorijumu — koristan napadaču za mapiranje strukture.",
+        "description_en": "Thumbs.db is a Windows thumbnail cache that contains names and thumbnails of every file in the directory — useful for attacker directory mapping.",
+        "recommendation": "Obrišite Thumbs.db sa servera. Dodajte ga u deploy ignore liste (.gitignore, robocopy XD).",
+        "recommendation_en": "Delete Thumbs.db from the server. Add it to deploy ignore lists (.gitignore, robocopy XD).",
+    },
+    {
+        "id": "file_desktop_ini",
+        "path": "/desktop.ini",
+        "severity": "LOW",
+        "title": "desktop.ini dostupan — Windows folder metadata",
+        "title_en": "desktop.ini accessible — Windows folder metadata",
+        "description": "desktop.ini je Windows konfiguracija folder-a koja može otkriti lokalne putanje, custom ikonice i Shell klase.",
+        "description_en": "desktop.ini is Windows folder configuration that may reveal local paths, custom icons, and Shell classes.",
+        "recommendation": "Obrišite sve desktop.ini fajlove sa produkcije i dodajte ih u deploy ignore listu.",
+        "recommendation_en": "Delete all desktop.ini files from production and add them to the deploy ignore list.",
+    },
+    {
+        "id": "file_env_local",
+        "path": "/.env.local",
+        "severity": "CRITICAL",
+        "title": ".env.local je javno dostupan — lokalni environment secrets!",
+        "title_en": ".env.local is publicly accessible — local environment secrets!",
+        "description": ".env.local sadrži lokalne overrides za environment varijable — često razvojne kredencijale, API ključeve i database URL-ove koje programeri greškom puste na produkciju.",
+        "description_en": ".env.local contains local environment variable overrides — often dev credentials, API keys and database URLs that developers accidentally push to production.",
+        "recommendation": "ODMAH uklonite .env.local sa produkcije. Rotirajte sve kredencijale koje su bile u fajlu — smatrajte ih kompromitovanim.",
+        "recommendation_en": "IMMEDIATELY remove .env.local from production. Rotate all credentials that were in the file — treat them as compromised.",
+    },
+    {
+        "id": "file_env_backup",
+        "path": "/.env.backup",
+        "severity": "CRITICAL",
+        "title": ".env.backup je javno dostupan — backup environment fajla!",
+        "title_en": ".env.backup is publicly accessible — environment file backup!",
+        "description": ".env.backup je manual backup fajla .env — sadrži iste kredencijale, API ključeve i tajne tokene kao original. Backup fajlovi se cesto zaborave pri deploy-u.",
+        "description_en": ".env.backup is a manual backup of .env — contains the same credentials, API keys and secret tokens as the original. Backup files are often forgotten during deployment.",
+        "recommendation": "ODMAH uklonite .env.backup sa servera. Rotirajte sve kredencijale koje su bile u fajlu.",
+        "recommendation_en": "IMMEDIATELY remove .env.backup from the server. Rotate all credentials that were in the file.",
+    },
+    {
+        "id": "file_env_production",
+        "path": "/.env.production",
+        "severity": "CRITICAL",
+        "title": ".env.production je javno dostupan — produkcijski secrets!",
+        "title_en": ".env.production is publicly accessible — production secrets!",
+        "description": ".env.production sadrži LIVE produkcijske kredencijale, API ključeve, database URL-ove i tajne tokene. Najopasniji environment fajl koji moze biti izložen.",
+        "description_en": ".env.production contains LIVE production credentials, API keys, database URLs and secret tokens. The most dangerous environment file that can be exposed.",
+        "recommendation": "HITNO uklonite .env.production sa web root-a. Pretpostavite potpun kompromitaciju — rotirajte SVE kredencijale i proverite audit logove.",
+        "recommendation_en": "URGENTLY remove .env.production from the web root. Assume full compromise — rotate ALL credentials and review audit logs.",
+    },
+    {
+        "id": "file_dump_sql",
+        "path": "/dump.sql",
+        "severity": "CRITICAL",
+        "title": "dump.sql je javno dostupan — database dump!",
+        "title_en": "dump.sql is publicly accessible — database dump!",
+        "description": "dump.sql je tipičan naziv za mysqldump ili pg_dump output — sadrži ceo sadržaj baze podataka (sve tabele, podatke, hash-ove lozinki).",
+        "description_en": "dump.sql is a typical name for mysqldump or pg_dump output — contains the entire database content (all tables, data, password hashes).",
+        "recommendation": "ODMAH uklonite dump.sql sa web root-a. Smatrajte bazu kompromitovanom — rotirajte lozinke korisnika i proverite audit log.",
+        "recommendation_en": "IMMEDIATELY remove dump.sql from the web root. Treat the database as compromised — rotate user passwords and review audit logs.",
+    },
+    {
+        "id": "file_users_csv",
+        "path": "/users.csv",
+        "severity": "CRITICAL",
+        "title": "users.csv je javno dostupan — lista korisnika!",
+        "title_en": "users.csv is publicly accessible — user list!",
+        "description": "users.csv tipično sadrži listu korisnika sa email adresama, ponekad i hash-ovima lozinki ili PII podacima. Eksport iz admin panela često završi na web root-u greškom.",
+        "description_en": "users.csv typically contains a list of users with email addresses, sometimes password hashes or PII data. Admin panel exports often end up on the web root by mistake.",
+        "recommendation": "ODMAH uklonite users.csv. GDPR/zakon o zaštiti podataka zahteva prijavu incidenta ako je bio javno dostupan.",
+        "recommendation_en": "IMMEDIATELY remove users.csv. GDPR/data protection law requires incident notification if it was publicly accessible.",
+    },
+    {
+        "id": "file_site_zip",
+        "path": "/site.zip",
+        "severity": "CRITICAL",
+        "title": "site.zip je javno dostupan — arhiva celog sajta!",
+        "title_en": "site.zip is publicly accessible — full site archive!",
+        "description": "site.zip je tipičan naziv za backup/eksport celog sajta — sadrži sav source kod, konfiguracije, možda i bazu podataka. Jedan od najopasnijih leak-ova.",
+        "description_en": "site.zip is a typical name for a full-site backup/export — contains all source code, configs, possibly the database. One of the most dangerous leaks.",
+        "recommendation": "HITNO uklonite site.zip sa web root-a. Ako je bio dostupan javno, pretpostavite da je source code u javnom vlasništvu — rotirajte sve tajne vrednosti iz koda.",
+        "recommendation_en": "URGENTLY remove site.zip from the web root. If it was publicly accessible, assume source code is now public — rotate all secrets embedded in the code.",
+    },
 ]
 
 
@@ -256,6 +367,91 @@ CONTENT_SIGNATURES: Dict[str, Dict[str, Any]] = {
             "\"main\":", "\"version\":", "\"engines\"",
         ],
         "reject_html": True,
+    },
+    # ── Roadmap #9 signatures ────────────────────────────────────────────
+    "file_idea": {
+        # JetBrains workspace.xml always starts with XML declaration and has
+        # <project> + <component> tags near the top. These reject any SPA
+        # shell that happens to 200 OK on /.idea/workspace.xml.
+        "signatures_any": [
+            "<?xml", "<project", "<component",
+            "ProjectRootManager", "ProjectModuleManager", "VcsDirectoryMappings",
+        ],
+    },
+    "file_vscode": {
+        "signatures_any": [
+            "\"editor.", "\"files.", "\"workbench.", "\"terminal.",
+            "\"explorer.", "\"python.", "\"[json]\"", "\"[python]\"",
+        ],
+        "reject_html": True,
+    },
+    "file_thumbs_db": {
+        # Windows Compound File Binary Format magic — the same header as
+        # legacy .doc / .xls files. Thumbs.db always starts with this
+        # 8-byte sequence.
+        "signatures_magic": [b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1"],
+    },
+    "file_desktop_ini": {
+        "signatures_any": [
+            "[.ShellClassInfo]", "[ViewState]", "[DeleteOnCopy]",
+            "[LocalizedFileNames]", "IconResource=", "InfoTip=",
+        ],
+        "reject_html": True,
+    },
+    # The three .env variants share file_env's substring set — duplicated
+    # inline so _content_matches() can find them by spec_id without an
+    # alias layer. All three care about the same secret markers.
+    "file_env_local": {
+        "signatures_any": [
+            "DB_HOST", "DB_USER", "DB_NAME", "DB_PASSWORD", "DB_CONNECTION",
+            "APP_ENV", "APP_KEY", "APP_SECRET", "APP_DEBUG",
+            "NODE_ENV", "DATABASE_URL", "REDIS_URL", "MAIL_HOST",
+            "_KEY=", "_SECRET=", "_TOKEN=", "API_KEY", "SECRET_KEY",
+        ],
+        "reject_html": True,
+    },
+    "file_env_backup": {
+        "signatures_any": [
+            "DB_HOST", "DB_USER", "DB_NAME", "DB_PASSWORD", "DB_CONNECTION",
+            "APP_ENV", "APP_KEY", "APP_SECRET", "APP_DEBUG",
+            "NODE_ENV", "DATABASE_URL", "REDIS_URL", "MAIL_HOST",
+            "_KEY=", "_SECRET=", "_TOKEN=", "API_KEY", "SECRET_KEY",
+        ],
+        "reject_html": True,
+    },
+    "file_env_production": {
+        "signatures_any": [
+            "DB_HOST", "DB_USER", "DB_NAME", "DB_PASSWORD", "DB_CONNECTION",
+            "APP_ENV", "APP_KEY", "APP_SECRET", "APP_DEBUG",
+            "NODE_ENV", "DATABASE_URL", "REDIS_URL", "MAIL_HOST",
+            "_KEY=", "_SECRET=", "_TOKEN=", "API_KEY", "SECRET_KEY",
+        ],
+        "reject_html": True,
+    },
+    "file_dump_sql": {
+        # Same marker set as file_sql_backup — mysqldump / pg_dump / SQLite.
+        "signatures_any": [
+            "CREATE TABLE", "INSERT INTO", "DROP TABLE",
+            "-- MySQL dump", "-- PostgreSQL", "-- SQLite",
+            "-- Dump of", "-- Database:",
+            "SET SQL_MODE", "LOCK TABLES", "PRAGMA foreign_keys",
+        ],
+        "reject_html": True,
+    },
+    "file_users_csv": {
+        # CSV with a recognizable header line. Requires one of these
+        # field name patterns near the top of the file, rejecting HTML
+        # bodies outright to avoid SPA false positives.
+        "signatures_any": [
+            "email,", "username,", "password,", "user_email",
+            ",email", ",username", ",password",
+            "id,email", "id,username", "\"email\"",
+        ],
+        "reject_html": True,
+    },
+    "file_site_zip": {
+        # ZIP magic numbers (local file header / central directory).
+        "signatures_magic": [b"PK\x03\x04", b"PK\x05\x06", b"PK\x07\x08"],
     },
 }
 

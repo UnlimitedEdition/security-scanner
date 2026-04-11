@@ -66,6 +66,16 @@ dostojanstvena komunikacija, prevencija kao ogledalo — ne kao strah**.
 - **Masking**: tokeni su skraćeni na prvih 24 char-a u izveštaju da ne bi zapisivali pune kredencijale
 - 13/13 unit testova: sva 4 tipa slabosti, HS384 varijanta, empty string secret, Authorization header detekcija, dedup, false positive rejection, mixed-issue aggregation, timing bound
 
+### DS_Store / IDE / backup leak check (bivša #9)
+- **Fajl**: `checks/files_check.py` (extend)
+- **Commit**: `__PLACEHOLDER__`
+- **Pokriva**: 10 novih osetljivih fajlova podeljenih u 3 kategorije (SENSITIVE_FILES sa 11 → 21 entry-ja, CONTENT_SIGNATURES sa 11 → 21 signatures):
+  - **IDE/OS metadata** (MEDIUM/LOW): `.idea/workspace.xml` (JetBrains), `.vscode/settings.json` (VS Code), `Thumbs.db` (Windows binary magic), `desktop.ini` (Windows INI)
+  - **Environment variants** (CRITICAL): `.env.local`, `.env.backup`, `.env.production` — istih signature kao postojeći `.env`
+  - **Backups/eksporti** (CRITICAL): `dump.sql` (isto sig kao `backup.sql`), `users.csv` (CSV header pattern sa reject_html guard-om), `site.zip` (ZIP magic isti kao `backup.zip`)
+- Svaki entry ima specifican content signature — SPA catch-all 200 OK responses se odbijaju
+- 9/9 signature unit testova: thumbs.db binary magic, desktop.ini INI headers, VSCode JSON keys, idea XML, env substrings, users.csv CSV header, site.zip ZIP magic, dump.sql SQL markers, SPA rejection
+
 ### WPScan-lite (bivša #14)
 - **Fajl**: `checks/wpscan_lite.py` (novo, 585 linija), `scanner.py` (registracija single-page samo — domain-level check, ne ide u multi-page pass)
 - **Commit**: `c8a4110`
@@ -111,11 +121,6 @@ Male izmene, visoka vrednost. Redosled je okviran — biraj šta ti je najvažni
 - **Fajl**: `checks/ssl_check.py` ili `checks/headers_check.py` (extend)
 - **Effort**: S · **Legal**: None · **Impact**: LOW
 - **Obuhvat**: proveri da li je domen u Chromium HSTS preload listi (cache-ovana statička lista)
-
-### 9. DS_Store / IDE / backup leak check
-- **Fajl**: `checks/files_check.py` (extend)
-- **Effort**: S · **Legal**: None · **Impact**: MEDIUM
-- **Obuhvat**: `/.DS_Store`, `/.idea/workspace.xml`, `/.vscode/settings.json`, `/Thumbs.db`, `/desktop.ini`, `/.env.local`, `/.env.backup`, `/.env.production`, `/backup.sql`, `/dump.sql`, `/users.csv`, `/site.zip`
 
 ### 10. Source map deep parser
 - **Fajl**: `checks/js_check.py` (extend)
