@@ -113,12 +113,14 @@ def run(domain: str) -> List[Dict[str, Any]]:
             pass
 
     # Check BIMI record (Brand Indicators for Message Identification)
+    bimi_found = False
     try:
         bimi_domain = f"default._bimi.{domain}"
         answers = dns.resolver.resolve(bimi_domain, "TXT", lifetime=TIMEOUT)
         for rdata in answers:
             txt = str(rdata).strip('"')
             if "v=BIMI1" in txt:
+                bimi_found = True
                 results.append(_pass("email_bimi",
                     "BIMI record pronadjen — brend logo u email klijentima",
                     "BIMI record found — brand logo in email clients",
@@ -128,21 +130,99 @@ def run(domain: str) -> List[Dict[str, Any]]:
     except Exception:
         pass
 
-    # Check MTA-STS
+    # Check MTA-STS DNS record + HTTPS policy file (Roadmap #4)
+    mta_sts_dns_found = False
     try:
         mta_sts_domain = f"_mta-sts.{domain}"
         answers = dns.resolver.resolve(mta_sts_domain, "TXT", lifetime=TIMEOUT)
         for rdata in answers:
             txt = str(rdata).strip('"')
             if "v=STSv1" in txt:
-                results.append(_pass("email_mta_sts",
-                    "MTA-STS konfigurisan — zastita od downgrade napada",
-                    "MTA-STS configured — protection against downgrade attacks",
-                    "MTA-STS sprecava napadaca da presretne email komunikaciju uklanjanjem STARTTLS (downgrade napad).",
-                    "MTA-STS prevents attackers from intercepting email by stripping STARTTLS (downgrade attack)."))
+                mta_sts_dns_found = True
                 break
     except Exception:
         pass
+
+    # MTA-STS requires BOTH a DNS record AND a policy file hosted at
+    # https://mta-sts.<domain>/.well-known/mta-sts.txt. The DNS record
+    # alone is not enough — mail servers fetch the actual policy to
+    # decide which hosts to accept TLS from.
+    mta_sts_policy_ok = False
+    if mta_sts_dns_found:
+        try:
+            import urllib.request as _urlreq
+            import urllib.parse as _urlparse
+            url = f"https://mta-sts.{_urlparse.quote(domain)}/.well-known/mta-sts.txt"
+            req = _urlreq.Request(
+                url,
+                headers={
+                    "User-Agent": "WebSecurityScanner/1.0",
+                    "Accept": "text/plain",
+                },
+            )
+            with _urlreq.urlopen(req, timeout=6) as resp:
+                if resp.status == 200:
+                    body = resp.read(4096).decode("utf-8", errors="replace").lower()
+                    if "version: stsv1" in body and "mode:" in body:
+                        mta_sts_policy_ok = True
+        except Exception:
+            pass
+
+    if mta_sts_policy_ok:
+        results.append(_pass("email_mta_sts",
+            "MTA-STS konfigurisan (DNS + policy fajl) — zastita od downgrade napada",
+            "MTA-STS configured (DNS + policy file) — protection against downgrade attacks",
+            "MTA-STS sprecava napadaca da presretne email komunikaciju uklanjanjem STARTTLS-a. DNS record i policy fajl su oba pravilno postavljeni.",
+            "MTA-STS prevents attackers from intercepting email by stripping STARTTLS. Both the DNS record and the policy file are correctly configured."))
+    elif mta_sts_dns_found and not mta_sts_policy_ok:
+        results.append(_fail("email_mta_sts_policy_missing", "MEDIUM",
+            "MTA-STS DNS postoji ali policy fajl nije dostupan",
+            "MTA-STS DNS exists but policy file is unreachable",
+            f"DNS record _mta-sts.{domain} postoji, ali policy fajl na https://mta-sts.{domain}/.well-known/mta-sts.txt se ne može preuzeti (ili ne sadrži validne 'version: STSv1' i 'mode:' polja). MTA-STS radi samo kad su oba prisutna.",
+            f"DNS record _mta-sts.{domain} exists, but the policy file at https://mta-sts.{domain}/.well-known/mta-sts.txt cannot be fetched (or lacks valid 'version: STSv1' and 'mode:' fields). MTA-STS only works when both are present.",
+            "Postavite policy fajl na https://mta-sts.<domain>/.well-known/mta-sts.txt sa sadržajem: 'version: STSv1\\nmode: enforce\\nmx: mail.example.com\\nmax_age: 604800'",
+            "Place a policy file at https://mta-sts.<domain>/.well-known/mta-sts.txt with content: 'version: STSv1\\nmode: enforce\\nmx: mail.example.com\\nmax_age: 604800'"))
+
+    # TLS-RPT (SMTP TLS Reporting) — Roadmap #4
+    # TXT record at _smtp._tls.<domain> that specifies where SMTP TLS
+    # failure reports should be sent. Gives the domain owner visibility
+    # into whether STARTTLS negotiations are actually succeeding.
+    try:
+        tlsrpt_domain = f"_smtp._tls.{domain}"
+        tlsrpt_found = False
+        answers = dns.resolver.resolve(tlsrpt_domain, "TXT", lifetime=TIMEOUT)
+        for rdata in answers:
+            txt = str(rdata).strip('"')
+            if "v=TLSRPTv1" in txt:
+                tlsrpt_found = True
+                results.append(_pass("email_tls_rpt",
+                    "TLS-RPT konfigurisan — izvestaji o neuspehu STARTTLS-a",
+                    "TLS-RPT configured — STARTTLS failure reporting",
+                    "TLS-RPT daje vlasniku domena uvid u to koje su TLS konekcije ka vasem mail serveru propale i zasto (downgrade napad, istekao sertifikat, loš cipher).",
+                    "TLS-RPT gives the domain owner visibility into failed TLS connections to your mail server and why (downgrade attack, expired cert, bad cipher)."))
+                break
+    except Exception:
+        pass
+
+    # DANE TLSA check — Roadmap #4
+    # TLSA record at _25._tcp.<primary_mx> proves the expected certificate
+    # or public key via DNSSEC. Resistant to MITM even if CA is compromised.
+    if mx_records:
+        try:
+            mx_host = mx_records[0]["server"]
+            tlsa_domain = f"_25._tcp.{mx_host}"
+            answers = dns.resolver.resolve(tlsa_domain, "TLSA", lifetime=TIMEOUT)
+            tlsa_count = sum(1 for _ in answers)
+            if tlsa_count > 0:
+                results.append(_pass("email_dane",
+                    f"DANE TLSA zapisi postoje ({tlsa_count} zapisa)",
+                    f"DANE TLSA records present ({tlsa_count} records)",
+                    f"DANE omogucava mail serveru posiljaoca da verifikuje sertifikat vaseg mail servera direktno kroz DNSSEC — zaobilazi se CA infrastruktura u potpunosti, sto je otporno na kompromitaciju CA-a.",
+                    f"DANE allows the sending mail server to verify your mail server's certificate directly through DNSSEC — bypassing the CA infrastructure entirely, which is resistant to CA compromise."))
+        except (dns.resolver.NoAnswer, dns.resolver.NXDOMAIN, dns.exception.Timeout):
+            pass
+        except Exception:
+            pass
 
     return results
 

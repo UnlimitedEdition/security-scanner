@@ -84,9 +84,19 @@ dostojanstvena komunikacija, prevencija kao ogledalo — ne kao strah**.
 - Silverlight je deprecated od 2021, Flash od 2020 — postojanje ovih fajlova na modernim sajtovima je skoro uvek konfiguracijska greska ili zaboravljen legacy
 - SENSITIVE_FILES: 21 → 23, CONTENT_SIGNATURES: 21 → 23
 
+### Modern Email Security (bivša #4)
+- **Fajl**: `checks/email_security_check.py` (extend)
+- **Commit**: `__PLACEHOLDER__`
+- **Pokriva**: 3 nove email-security provere + 1 fix postojeće:
+  - **MTA-STS full verify** (MEDIUM if policy missing) — proverava i DNS record i HTTP policy fajl na `https://mta-sts.<domain>/.well-known/mta-sts.txt`. DNS record sam nije dovoljan; postojeća provera je ranije flagovala "pozitivno" i za domene sa samo DNS-om bez policy-ja
+  - **TLS-RPT** — `_smtp._tls.<domain>` TXT record sa `v=TLSRPTv1`, INFO pozitivan nalaz
+  - **DANE TLSA** — `_25._tcp.<primary_mx>` TLSA records, INFO pozitivan nalaz (resistant na CA kompromitaciju preko DNSSEC)
+  - **MTA-STS missing policy** — novi MEDIUM fail finding kada DNS record postoji ali policy fajl nije dostupan ili malformiran
+- Live verifikovano: gmail.com pravilno detektovan MTA-STS (DNS + policy) i TLS-RPT
+
 ### DMARC Deep Parser (bivša #3)
 - **Fajl**: `checks/dns_check.py` (extend — 3 nova helpera, replacement inline logike)
-- **Commit**: `__PLACEHOLDER__`
+- **Commit**: `fb35b90`
 - **Pokriva**: 4 nove klase slabosti u postojećem DMARC record-u (pored postojeće `p=none` provere):
   - `p=none` → MEDIUM (monitoring only, ne blokira spoofing)
   - `p=` missing → HIGH (record postoji ali policy nedefinisana)
@@ -134,12 +144,6 @@ dostojanstvena komunikacija, prevencija kao ogledalo — ne kao strah**.
 ## 📋 Next up — Easy wins (S, None/Low legal)
 
 Male izmene, visoka vrednost. Redosled je okviran — biraj šta ti je najvažnije.
-
-### 4. Modern email security (MTA-STS, TLS-RPT, BIMI, DANE)
-- **Fajl**: `checks/email_security_check.py` (extend)
-- **Effort**: S · **Legal**: None · **Impact**: MEDIUM
-- **Obuhvat**: probe `/.well-known/mta-sts.txt`, DNS TLS-RPT record, BIMI DNS record, DANE TLSA records
-- **Zašto**: moderni email security stack, niko u Srbiji ne proverava.
 
 ### 6. `.well-known` endpoint enumerator
 - **Fajl**: novo `checks/wellknown_check.py`
