@@ -1363,6 +1363,9 @@ def set_scan_request_consent_endpoint(
     user_agent = request.headers.get("user-agent", "")[:500] or None
 
     row = _get_scan_request_or_404(request_id)
+    # Idempotent: if already finalized, consent is implicitly set
+    if row.get("status") in ("consent_recorded", "verified"):
+        return {"request_id": request_id, "consent_num": req.consent_num, "already_set": True}
     if row.get("status") != "pending_consent":
         raise HTTPException(
             status_code=409,
@@ -1406,10 +1409,19 @@ def finalize_scan_request_consent_endpoint(request_id: str, request: Request):
     user_agent = request.headers.get("user-agent", "")[:500] or None
 
     row = _get_scan_request_or_404(request_id)
+    # Idempotent: if already finalized (consent_recorded or verified),
+    # return success so resume flow works after page refresh
+    if row.get("status") in ("consent_recorded", "verified"):
+        return {
+            "request_id": request_id,
+            "status": row.get("status"),
+            "next_step": "verify" if row.get("status") == "consent_recorded" else "execute",
+            "already_finalized": True,
+        }
     if row.get("status") != "pending_consent":
         raise HTTPException(
             status_code=409,
-            detail="Wizard nije u stanju za finalizaciju saglasnosti.",
+            detail="Wizard nije u stanju za finalizaciju saglasnosti. Trenutno: " + str(row.get("status")),
         )
     if not (row.get("consent_1_given") and row.get("consent_2_given") and row.get("consent_3_given")):
         raise HTTPException(
