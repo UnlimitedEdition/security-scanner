@@ -33,4 +33,4 @@ Standards: GDPR-compliant, CSP, HSTS, SRI-ready, cookie consent v2
 /* LICENSE */
 
 Source code: MIT — see LICENSE
-Editorial content: CC BY-NC 4.0 — see LICENSE-CONTENT
+Editorial content: CC BY-NC 4.0 — see CONTENT-LICENSE.md

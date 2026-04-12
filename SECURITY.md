@@ -193,4 +193,4 @@ Out-of-scope:
 
 - **Source code** — MIT License, see [LICENSE](LICENSE)
 - **Editorial content** (blog articles, PRIRUCNIK, privacy/terms prose) —
-  CC BY-NC 4.0, see [LICENSE-CONTENT](LICENSE-CONTENT)
+  CC BY-NC 4.0, see [CONTENT-LICENSE.md](CONTENT-LICENSE.md)

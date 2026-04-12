@@ -16,7 +16,7 @@ The MIT License (see `LICENSE`) applies to the **source code**, including:
 ## What MIT does NOT cover
 
 - **Editorial content** (blog articles, PRIRUCNIK.md, privacy/terms prose)
-  → Licensed under CC BY-NC 4.0, see `LICENSE-CONTENT`
+  → Licensed under CC BY-NC 4.0, see `CONTENT-LICENSE.md`
 - **Project name** "Web Security Scanner" and shield logo
   → Trademark of Toske-Programer, NOT licensed
 - **Brand** "Toske-Programer"

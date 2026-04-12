@@ -72,7 +72,7 @@ By submitting a pull request, you agree that:
   License (see `LICENSE`).
 - Your **editorial content changes** (blog articles, handbook prose,
   privacy/terms copy) will be released under CC BY-NC 4.0 (see
-  `LICENSE-CONTENT`).
+  `CONTENT-LICENSE.md`).
 - You have the right to submit the work (either it is your own, or you
   have permission from the original author).
 

@@ -41,7 +41,7 @@ Scanner project, specifically:
     result labels, scan tab descriptions, verify-panel rationale and
     liability copy, method explanation content in VERIFY_METHOD_INFO)
   * README.md and migrations/README.md (documentation prose only)
-  * This LICENSE-CONTENT file itself
+  * This CONTENT-LICENSE.md file itself
 
 This license does NOT apply to:
 

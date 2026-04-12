@@ -11,7 +11,7 @@ short_description: Passive website security analysis - 240+ checks
 # 🛡️ Web Security Scanner
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Content License: CC BY-NC 4.0](https://img.shields.io/badge/Content-CC%20BY--NC%204.0-lightgrey.svg)](LICENSE-CONTENT)
+[![Content License: CC BY-NC 4.0](https://img.shields.io/badge/Content-CC%20BY--NC%204.0-lightgrey.svg)](CONTENT-LICENSE.md)
 [![Python](https://img.shields.io/badge/Python-3.11-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-async-009688.svg)](https://fastapi.tiangolo.com/)
 
@@ -122,7 +122,7 @@ This project uses a **dual licensing** model:
   preserved.
 
 - **Editorial content** — Creative Commons Attribution-NonCommercial
-  4.0 International → see [`LICENSE-CONTENT`](LICENSE-CONTENT)
+  4.0 International → see [`CONTENT-LICENSE.md`](CONTENT-LICENSE.md)
   Applies to blog articles, the operator handbook (`PRIRUCNIK.md`),
   privacy policy, terms of service, and other user-facing prose. You
   may share and adapt the content with attribution, but not for
