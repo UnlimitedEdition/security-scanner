@@ -620,11 +620,15 @@ def upsert_verified_domain(
     ip: str,
     method: str,
     ttl_days: int = 30,
+    fingerprint_hash: Optional[str] = None,
 ) -> None:
     """
     Insert or refresh a verified_domains row for (domain, ip_hash).
     The table has UNIQUE(domain, ip_hash), so we use ON CONFLICT via
     Supabase's upsert() to atomically extend the TTL on re-verification.
+
+    Also stores fingerprint_hash so users with dynamic IPs can still
+    be recognized by their browser fingerprint when the IP changes.
     """
     if not is_configured():
         return
@@ -638,6 +642,8 @@ def upsert_verified_domain(
             "verified_at": now_utc().isoformat(),
             "expires_at": future_utc(days=ttl_days).isoformat(),
         }
+        if fingerprint_hash:
+            row["fingerprint_hash"] = fingerprint_hash
         (
             client.table("verified_domains")
             .upsert(row, on_conflict="domain,ip_hash")
@@ -647,12 +653,20 @@ def upsert_verified_domain(
     _safe_db_call("upsert_verified_domain", _do)
 
 
-def is_domain_verified(domain: str, ip: str) -> bool:
+def is_domain_verified(
+    domain: str, ip: str, fingerprint_hash: Optional[str] = None
+) -> bool:
     """
-    Returns True if (domain, hash(ip)) has a non-expired row in
-    verified_domains. Fail-closed — if DB is unreachable or anything
-    raises, returns False, because the safe default for "is this user
-    authorized" is NO.
+    Returns True if (domain) has a non-expired row in verified_domains
+    matching EITHER the caller's ip_hash OR their fingerprint_hash.
+
+    This dual-check solves the dynamic IP problem: most home users get
+    a new IP on every router restart, but their browser fingerprint
+    stays the same. As long as either identifier matches a verified
+    row, the 30-day grant holds.
+
+    Fail-closed — if DB is unreachable or anything raises, returns
+    False, because the safe default for "is this user authorized" is NO.
     """
     if not is_configured():
         return False
@@ -660,16 +674,35 @@ def is_domain_verified(domain: str, ip: str) -> bool:
     def _do() -> bool:
         client = get_client()
         now_iso = now_utc().isoformat()
+
+        # Check 1: match by IP hash
         result = (
             client.table("verified_domains")
-            .select("id, expires_at")
+            .select("id")
             .eq("domain", domain)
             .eq("ip_hash", hash_ip(ip))
             .gte("expires_at", now_iso)
             .limit(1)
             .execute()
         )
-        return bool(result.data)
+        if result.data:
+            return True
+
+        # Check 2: match by fingerprint hash (if provided)
+        if fingerprint_hash:
+            result2 = (
+                client.table("verified_domains")
+                .select("id")
+                .eq("domain", domain)
+                .eq("fingerprint_hash", fingerprint_hash)
+                .gte("expires_at", now_iso)
+                .limit(1)
+                .execute()
+            )
+            if result2.data:
+                return True
+
+        return False
 
     out = _safe_db_call("is_domain_verified", _do)
     return bool(out) if out is not None else False
@@ -1146,3 +1179,67 @@ def count_active_scan_requests_for_ip(ip: str) -> int:
 
     out = _safe_db_call("count_active_scan_requests_for_ip", _do)
     return int(out) if isinstance(out, int) else 0
+
+
+def get_active_scan_request_for_domain_ip(
+    domain: str, ip_hash: str
+) -> Optional[Dict[str, Any]]:
+    """
+    Return the active wizard for this specific (domain, ip_hash) pair.
+
+    Used by POST /scan/request to implement idempotent resume: if the
+    user enters the same domain and clicks "Full Scan" again after
+    leaving to set up verification, the endpoint returns the existing
+    wizard instead of creating a duplicate.
+    """
+    if not is_configured():
+        return None
+
+    def _do() -> Optional[Dict[str, Any]]:
+        client = get_client()
+        result = (
+            client.table("scan_requests")
+            .select("*")
+            .eq("domain", domain)
+            .eq("client_ip_hash", ip_hash)
+            .in_("status", ["pending_consent", "consent_recorded", "verified"])
+            .order("created_date", desc=True)
+            .limit(1)
+            .execute()
+        )
+        if result.data:
+            return result.data[0]
+        return None
+
+    return _safe_db_call("get_active_scan_request_for_domain_ip", _do)
+
+
+def get_active_scan_requests_for_ip(ip_hash: str) -> List[Dict[str, Any]]:
+    """
+    Return ALL wizard rows for this IP that are still in an active
+    state (pending_consent, consent_recorded, verified).
+
+    Used by the GET /scan/request/active endpoint so the frontend can
+    show a list of in-progress wizards the user can resume. The user
+    may have started wizards for multiple domains (e.g. prepared meta
+    tags for 3 sites, came back to verify them one by one).
+
+    Returns empty list on DB failure or when not configured.
+    """
+    if not is_configured():
+        return []
+
+    def _do() -> List[Dict[str, Any]]:
+        client = get_client()
+        result = (
+            client.table("scan_requests")
+            .select("*")
+            .eq("client_ip_hash", ip_hash)
+            .in_("status", ["pending_consent", "consent_recorded", "verified"])
+            .order("created_date", desc=True)
+            .limit(10)
+            .execute()
+        )
+        return result.data or []
+
+    return _safe_db_call("get_active_scan_requests_for_ip", _do) or []

@@ -2203,12 +2203,14 @@ function _computeFingerprint() {
 
   var raw = components.join("|||");
   _sha256(raw).then(function(hash) {
-    el.textContent = hash.substring(0, 16) + "..." + hash.substring(48);
-    el.title = hash;
-    el.classList.remove("loading");
+    window._browserFingerprint = hash;
+    if (el) {
+      el.textContent = hash.substring(0, 16) + "..." + hash.substring(48);
+      el.title = hash;
+      el.classList.remove("loading");
+    }
   }).catch(function() {
-    el.textContent = "N/A";
-    el.classList.remove("loading");
+    if (el) { el.textContent = "N/A"; el.classList.remove("loading"); }
   });
 }
 
@@ -2499,7 +2501,7 @@ async function startScan() {
     var scanBody = {
       url: url,
       consent_accepted: true,
-      consent_version: "2026-04-10-v2"
+      consent_version: "2026-04-12-v3"
     };
     if (selectedPages && selectedPages.length > 0) {
       scanBody.selected_pages = selectedPages;
@@ -2528,7 +2530,9 @@ async function pollScan(scanId) {
   var btn = document.getElementById("scanBtn");
   while (true) {
     await sleep(800);
-    var resp = await fetch(API_BASE + "/scan/" + scanId);
+    var _ph = {};
+    if (window._browserFingerprint) _ph["X-Fingerprint-Hash"] = window._browserFingerprint;
+    var resp = await fetch(API_BASE + "/scan/" + scanId, { headers: _ph });
     var data = await resp.json();
 
     // Queue status
@@ -3807,6 +3811,52 @@ function _wizardBuildInstructions(method, domain) {
   container.classList.add("visible");
 }
 
+function _resumeWizard(data) {
+  // Restore wizard state from server data
+  wizardState = {
+    requestId: data.request_id,
+    domain: data.domain,
+    url: data.url,
+    consentsConfirmed: (data.consent_1_given ? 1 : 0) + (data.consent_2_given ? 1 : 0) + (data.consent_3_given ? 1 : 0),
+    selectedMethod: data.verify_method || null,
+    verifyToken: null,
+    verifyPassed: data.verify_passed || false,
+    countdownInterval: null,
+  };
+
+  // Set URL input
+  var urlInput = document.getElementById("urlInput");
+  if (urlInput) urlInput.value = data.url || "";
+
+  // Set domain pill
+  var pill = document.getElementById("wizardDomainPill");
+  if (pill) pill.textContent = data.domain;
+
+  // Restore UI state based on step
+  if (data.step === 1) {
+    // Consent step — restore checkbox states
+    document.getElementById("wizConsent1").checked = !!data.consent_1_given;
+    document.getElementById("wizConsent2").checked = !!data.consent_2_given;
+    document.getElementById("wizConsent3").checked = !!data.consent_3_given;
+    if (data.consent_1_given) document.getElementById("wizConsent1").disabled = true;
+    if (data.consent_2_given) document.getElementById("wizConsent2").disabled = true;
+    if (data.consent_3_given) document.getElementById("wizConsent3").disabled = true;
+    document.getElementById("wizStep1Next").disabled = (wizardState.consentsConfirmed < 3);
+    _wizardShowStep(1);
+  } else if (data.step === 2) {
+    // Verify step
+    _wizardShowStep(2);
+  } else if (data.step === 3) {
+    // Ready to execute
+    document.getElementById("wizExecuteBtn").disabled = false;
+    _wizardShowStep(3);
+  }
+
+  // Open wizard modal
+  document.getElementById("wizardBackdrop").classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+
 // ── Entry point: called by [🔓 Puni sken] button ───────────────────────
 async function startFullScanWizard() {
   var url = (document.getElementById("urlInput").value || "").trim();
@@ -3857,6 +3907,12 @@ async function startFullScanWizard() {
     wizardState.requestId = data.request_id;
     wizardState.domain = data.domain;
     document.getElementById("wizardDomainPill").textContent = data.domain;
+
+    // If backend found an existing wizard for this domain+IP, resume it
+    if (data.resumed) {
+      _resumeWizard(data);
+      return;
+    }
   } catch (e) {
     showToast(_wizardL10n().startError + " " + e.message, "error");
     return;
@@ -3962,7 +4018,7 @@ async function wizardCheckVerify() {
     var resp = await fetch(API_BASE + "/scan/request/" + wizardState.requestId + "/verify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ method: wizardState.selectedMethod }),
+      body: JSON.stringify({ method: wizardState.selectedMethod, fingerprint_hash: window._browserFingerprint || null }),
     });
     var data = await resp.json();
     if (resp.ok && data.verified) {
@@ -4015,8 +4071,11 @@ async function wizardExecute() {
   var btn = document.getElementById("wizExecuteBtn");
   btn.disabled = true;
   try {
+    var execHeaders = {};
+    if (window._browserFingerprint) execHeaders["X-Fingerprint-Hash"] = window._browserFingerprint;
     var resp = await fetch(API_BASE + "/scan/request/" + wizardState.requestId + "/execute", {
       method: "POST",
+      headers: execHeaders,
     });
     var data = await resp.json();
     if (!resp.ok) {
@@ -4108,7 +4167,9 @@ async function _wizardInlinePoll(scanId) {
   var fBtn = document.getElementById("fullScanBtn");
   while (true) {
     try {
-      var resp = await fetch(API_BASE + "/scan/" + scanId);
+      var pollHeaders = {};
+      if (window._browserFingerprint) pollHeaders["X-Fingerprint-Hash"] = window._browserFingerprint;
+      var resp = await fetch(API_BASE + "/scan/" + scanId, { headers: pollHeaders });
       var data = await resp.json();
       if (data.progress != null) {
         var pct = Math.max(0, Math.min(100, data.progress));

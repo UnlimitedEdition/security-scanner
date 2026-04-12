@@ -1162,6 +1162,7 @@ class ScanRequestConsent(BaseModel):
 
 class ScanRequestVerify(BaseModel):
     method: str
+    fingerprint_hash: Optional[str] = None
 
     @field_validator("method")
     @classmethod
@@ -1229,6 +1230,36 @@ def create_scan_request_endpoint(req: ScanRequestCreate, request: Request):
 
     if not domain:
         raise HTTPException(status_code=400, detail="Domen se nije mogao odrediti iz URL-a.")
+
+    # Resume check: if this IP already has an active wizard for this
+    # exact domain, return the existing one instead of creating a new
+    # row. This is what makes the "leave to add meta tag, come back,
+    # enter same domain, click Full Scan" flow work seamlessly.
+    ip_hash = db.hash_ip(client_ip)
+    existing = db.get_active_scan_request_for_domain_ip(domain, ip_hash)
+    if existing:
+        status = existing.get("status", "")
+        if status == "pending_consent":
+            step = 1
+        elif status == "consent_recorded":
+            step = 2
+        elif status == "verified":
+            step = 3
+        else:
+            step = 1
+        return {
+            "request_id": existing.get("id"),
+            "domain": domain,
+            "url": existing.get("url"),
+            "status": status,
+            "resumed": True,
+            "step": step,
+            "consent_1_given": bool(existing.get("consent_1_given")),
+            "consent_2_given": bool(existing.get("consent_2_given")),
+            "consent_3_given": bool(existing.get("consent_3_given")),
+            "verify_method": existing.get("verify_method"),
+            "verify_passed": bool(existing.get("verify_passed")),
+        }
 
     # Domain block check (consistent with /scan)
     if db.is_domain_blocked(domain):
@@ -1446,7 +1477,8 @@ def scan_request_verify_endpoint(
         # without going through another wizard.
         db.mark_token_verified(token)
         db.upsert_verified_domain(
-            domain=domain, ip=client_ip, method=req.method, ttl_days=30
+            domain=domain, ip=client_ip, method=req.method, ttl_days=30,
+            fingerprint_hash=req.fingerprint_hash,
         )
         db.log_audit_event(
             event="verify_success",
@@ -1550,16 +1582,18 @@ def execute_scan_request_endpoint(request_id: str, request: Request):
             detail="Domen je blokiran na osnovu prijave zloupotrebe.",
         )
 
-    # Cross-check verified_domains: the IP that ran verify must be the
-    # same IP that runs execute. Without this, an attacker could steal
-    # a request_id from another user mid-wizard.
-    if not db.is_domain_verified(domain, client_ip):
+    # Cross-check verified_domains: the IP or fingerprint that ran verify
+    # must match. This covers both static IP users (matched by ip_hash)
+    # and dynamic IP users (matched by fingerprint_hash after router restart).
+    caller_fingerprint = request.headers.get("x-fingerprint-hash", "")[:128] or None
+    if not db.is_domain_verified(domain, client_ip, fingerprint_hash=caller_fingerprint):
         raise HTTPException(
             status_code=403,
             detail=(
-                "Vasa IP adresa nije autorizovana za ovaj domen. "
-                "Verifikacija se mora pokrenuti sa iste IP adrese sa koje "
-                "pokrecete skener."
+                "Vasa IP adresa ili fingerprint nisu autorizovani za ovaj domen. "
+                "Verifikacija se mora pokrenuti sa istog uredjaja. / "
+                "Your IP or fingerprint is not authorized for this domain. "
+                "Verification must come from the same device."
             ),
         )
 
@@ -1618,7 +1652,7 @@ def execute_scan_request_endpoint(request_id: str, request: Request):
         ip=client_ip,
         user_agent=user_agent,
         consent_accepted=True,
-        consent_version="wizard-v1",
+        consent_version="2026-04-12-v3",
         status="queued" if queue_position > 0 else "running",
         subscription_id=(pro_sub.get("id") if pro_sub else None),
     )
@@ -1694,6 +1728,53 @@ def abandon_scan_request_endpoint(request_id: str, request: Request):
     )
 
     return {"request_id": request_id, "status": "abandoned"}
+
+
+@app.get("/scan/request/active")
+def get_active_scan_requests(request: Request):
+    """
+    Return ALL active (in-progress) wizards for the caller's IP.
+
+    Called by the frontend on every page load. The user may have started
+    wizards for multiple domains (e.g. prepared meta tags for 3 sites,
+    then came back to verify and scan them one by one). The frontend
+    shows a list with domain + current step + resume button for each.
+
+    Lookup is by ip_hash — the same IP that started the wizard must be
+    the one asking. Returns up to 10 active wizards.
+    """
+    client_ip = _client_ip(request)
+    ip_hash = db.hash_ip(client_ip)
+
+    rows = db.get_active_scan_requests_for_ip(ip_hash)
+    if not rows:
+        return {"active": False, "wizards": []}
+
+    wizards = []
+    for row in rows:
+        status = row.get("status", "")
+        if status == "pending_consent":
+            step = 1
+        elif status == "consent_recorded":
+            step = 2
+        elif status == "verified":
+            step = 3
+        else:
+            continue
+        wizards.append({
+            "request_id": row.get("id"),
+            "domain": row.get("domain"),
+            "url": row.get("url"),
+            "status": status,
+            "step": step,
+            "consent_1_given": bool(row.get("consent_1_given")),
+            "consent_2_given": bool(row.get("consent_2_given")),
+            "consent_3_given": bool(row.get("consent_3_given")),
+            "verify_method": row.get("verify_method"),
+            "verify_passed": bool(row.get("verify_passed")),
+        })
+
+    return {"active": len(wizards) > 0, "wizards": wizards}
 
 
 @app.get("/scan/request/{request_id}")
@@ -2127,7 +2208,8 @@ def get_scan(scan_id: str, request: Request):
         except Exception:
             cold_domain = db_row["url"]
 
-        verified = db.is_domain_verified(cold_domain, requester_ip)
+        req_fp = request.headers.get("x-fingerprint-hash", "")[:128] or None
+        verified = db.is_domain_verified(cold_domain, requester_ip, fingerprint_hash=req_fp)
         result_out = db_row.get("result") if verified else _redact_result(db_row.get("result"))
         return {
             "id": db_row["id"],
@@ -2151,7 +2233,8 @@ def get_scan(scan_id: str, request: Request):
             scan["queue_position"] = 0
 
     scan_domain = scan.get("domain") or ""
-    verified = bool(scan_domain) and db.is_domain_verified(scan_domain, requester_ip)
+    req_fp = request.headers.get("x-fingerprint-hash", "")[:128] or None
+    verified = bool(scan_domain) and db.is_domain_verified(scan_domain, requester_ip, fingerprint_hash=req_fp)
     raw_result = scan.get("result")
     result_out = raw_result if verified else _redact_result(raw_result)
 
@@ -2222,7 +2305,8 @@ def download_scan_pdf(scan_id: str, request: Request):
         except Exception:
             scan_domain = ""
 
-    verified = bool(scan_domain) and db.is_domain_verified(scan_domain, requester_ip)
+    pdf_fp = request.headers.get("x-fingerprint-hash", "")[:128] or None
+    verified = bool(scan_domain) and db.is_domain_verified(scan_domain, requester_ip, fingerprint_hash=pdf_fp)
     if not verified:
         raise HTTPException(
             status_code=403,
