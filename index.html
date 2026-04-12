@@ -2292,6 +2292,28 @@ function _fetchPublicIP() {
   tryNext(0);
 }
 
+// Get or generate per-session ID (persists across page refreshes in same tab)
+function _getSessionId() {
+  try {
+    var sid = sessionStorage.getItem("wss_session_id");
+    if (!sid) {
+      sid = "s" + Date.now().toString(36) + Math.random().toString(36).substring(2, 10);
+      sessionStorage.setItem("wss_session_id", sid);
+    }
+    return sid;
+  } catch (e) { return null; }
+}
+
+// Build headers for wizard API calls — includes tracking identifiers
+function _wizardHeaders(contentType) {
+  var h = {};
+  if (contentType) h["Content-Type"] = contentType;
+  if (window._browserFingerprint) h["X-Fingerprint-Hash"] = window._browserFingerprint;
+  var sid = _getSessionId();
+  if (sid) h["X-Session-Id"] = sid;
+  return h;
+}
+
 function _computeFingerprint() {
   var el = document.getElementById("sysinfo-fingerprint");
   if (!el) return;
@@ -2677,7 +2699,9 @@ async function startScan() {
       url: url,
       consent_accepted: true,
       consent_version: "2026-04-12-v3",
-      ad_blocked: isAdBlocked()
+      ad_blocked: isAdBlocked(),
+      session_id: _getSessionId(),
+      fingerprint_hash: window._browserFingerprint || null
     };
     if (selectedPages && selectedPages.length > 0) {
       scanBody.selected_pages = selectedPages;
@@ -4199,7 +4223,7 @@ async function startFullScanWizard() {
   try {
     var resp = await fetch(API_BASE + "/scan/request", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: _wizardHeaders("application/json"),
       body: JSON.stringify({ url: url }),
     });
     var data = await resp.json();
@@ -4242,7 +4266,7 @@ async function wizardSetConsent(consentNum) {
   try {
     var resp = await fetch(API_BASE + "/scan/request/" + wizardState.requestId + "/consent", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: _wizardHeaders("application/json"),
       body: JSON.stringify({ consent_num: consentNum }),
     });
     if (!resp.ok) {
@@ -4272,6 +4296,7 @@ async function wizardFinalizeConsents() {
   try {
     var resp = await fetch(API_BASE + "/scan/request/" + wizardState.requestId + "/consent/finalize", {
       method: "POST",
+    headers: _wizardHeaders(),
     });
     var data = await resp.json();
     if (!resp.ok) {
@@ -4315,7 +4340,7 @@ async function wizardSelectVerifyMethod(method) {
   try {
     var resp = await fetch(API_BASE + "/scan/request/" + wizardState.requestId + "/verify/token", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: _wizardHeaders("application/json"),
       body: JSON.stringify({ method: method, fingerprint_hash: window._browserFingerprint || null }),
     });
     var data = await resp.json();
@@ -4444,7 +4469,7 @@ async function wizardCheckVerify() {
   try {
     var resp = await fetch(API_BASE + "/scan/request/" + wizardState.requestId + "/verify", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: _wizardHeaders("application/json"),
       body: JSON.stringify({ method: wizardState.selectedMethod, fingerprint_hash: window._browserFingerprint || null }),
     });
     var data = await resp.json();
@@ -4499,8 +4524,7 @@ async function wizardExecute() {
   var btn = document.getElementById("wizExecuteBtn");
   btn.disabled = true;
   try {
-    var execHeaders = {};
-    if (window._browserFingerprint) execHeaders["X-Fingerprint-Hash"] = window._browserFingerprint;
+    var execHeaders = _wizardHeaders();
     var resp = await fetch(API_BASE + "/scan/request/" + wizardState.requestId + "/execute", {
       method: "POST",
       headers: execHeaders,
@@ -4528,6 +4552,7 @@ async function wizardAbandon() {
   try {
     await fetch(API_BASE + "/scan/request/" + wizardState.requestId + "/abandon", {
       method: "POST",
+      headers: _wizardHeaders(),
     });
   } catch (e) { /* ignore */ }
   _wizardClose();

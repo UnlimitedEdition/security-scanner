@@ -953,6 +953,18 @@ def _client_ip(request: Request) -> str:
     )
 
 
+def _client_fingerprint(request: Request) -> Optional[str]:
+    """Extract browser fingerprint from X-Fingerprint-Hash header."""
+    fp = request.headers.get("x-fingerprint-hash", "")[:128]
+    return fp if fp else None
+
+
+def _client_session(request: Request) -> Optional[str]:
+    """Extract session ID from X-Session-Id header."""
+    sid = request.headers.get("x-session-id", "")[:64]
+    return sid if sid else None
+
+
 def _get_pro_subscription(request: Request) -> Optional[Dict[str, Any]]:
     """
     Look up the active Pro subscription for this request, or None.
@@ -1104,6 +1116,8 @@ def verify_check_endpoint(req: VerifyCheckRequest, request: Request):
         db.log_audit_event(
             event="verify_success",
             ip=client_ip, ua=user_agent, domain=domain,
+        session_id=_client_session(request),
+        fingerprint_hash=_client_fingerprint(request),
             details={"method": method, "reason": result.reason},
         )
         return {
@@ -1331,6 +1345,8 @@ def create_scan_request_endpoint(req: ScanRequestCreate, request: Request):
     db.log_audit_event(
         event="scan_request_created",
         ip=client_ip, ua=user_agent, domain=domain,
+        session_id=_client_session(request),
+        fingerprint_hash=_client_fingerprint(request),
         details={"request_id": request_id, "url": req.url},
     )
 
@@ -1382,6 +1398,8 @@ def set_scan_request_consent_endpoint(
     db.log_audit_event(
         event="consent_set",
         ip=client_ip, ua=user_agent, domain=row.get("domain"),
+        session_id=_client_session(request),
+        fingerprint_hash=_client_fingerprint(request),
         details={"request_id": request_id, "consent_num": req.consent_num},
     )
 
@@ -1436,6 +1454,8 @@ def finalize_scan_request_consent_endpoint(request_id: str, request: Request):
     db.log_audit_event(
         event="consent_finalized",
         ip=client_ip, ua=user_agent, domain=row.get("domain"),
+        session_id=_client_session(request),
+        fingerprint_hash=_client_fingerprint(request),
         details={"request_id": request_id},
     )
 
@@ -1599,6 +1619,8 @@ def scan_request_verify_endpoint(
         db.log_audit_event(
             event="verify_success",
             ip=client_ip, ua=user_agent, domain=domain,
+        session_id=_client_session(request),
+        fingerprint_hash=_client_fingerprint(request),
             details={
                 "request_id": request_id,
                 "method": req.method,
@@ -1675,6 +1697,8 @@ def scan_request_verify_endpoint(
         db.log_audit_event(
             event="verify_success",
             ip=client_ip, ua=user_agent, domain=domain,
+        session_id=_client_session(request),
+        fingerprint_hash=_client_fingerprint(request),
             details={
                 "request_id": request_id,
                 "method": req.method,
@@ -1697,6 +1721,8 @@ def scan_request_verify_endpoint(
     db.log_audit_event(
         event="verify_failure",
         ip=client_ip, ua=user_agent, domain=domain,
+        session_id=_client_session(request),
+        fingerprint_hash=_client_fingerprint(request),
         details={
             "request_id": request_id,
             "method": req.method,
@@ -1861,6 +1887,8 @@ def execute_scan_request_endpoint(request_id: str, request: Request):
     db.log_audit_event(
         event="scan_request_executed",
         ip=client_ip, ua=user_agent, domain=domain,
+        session_id=_client_session(request),
+        fingerprint_hash=_client_fingerprint(request),
         scan_id=scan_id,
         details={
             "request_id": request_id,
@@ -1925,6 +1953,8 @@ def abandon_scan_request_endpoint(request_id: str, request: Request):
     db.log_audit_event(
         event="scan_request_abandoned",
         ip=client_ip, ua=user_agent, domain=row.get("domain"),
+        session_id=_client_session(request),
+        fingerprint_hash=_client_fingerprint(request),
         details={"request_id": request_id, "previous_status": row.get("status")},
     )
 
