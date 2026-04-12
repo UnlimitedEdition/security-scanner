@@ -1888,7 +1888,7 @@ Ako saznaš da je došlo do povrede zaštite podataka (data breach), pokreni ovu
 - Sadržaj obaveštenja (čl. 53 ZZPL):
   1. Opis povrede (šta se desilo)
   2. Kategorije i približan broj pogođenih lica
-  3. Kontakt email rukovaoca: kontakt@gradovi.rs
+  3. Kontakt email rukovaoca: security@gradovi.rs
   4. Verovatne posledice povrede
   5. Mere preduzete za otklanjanje posledica
 - **Ako ne možeš sve da utvrdiš u 72h** — pošalji preliminarno obaveštenje i dopuni naknadno
