@@ -209,6 +209,10 @@
   svg.appendChild(svgPath);
   brand.appendChild(svg);
   brand.appendChild(el('span', {}, ['Web Security Scanner']));
+  var verBadge = el('span', { className: 'header-version' });
+  verBadge.textContent = 'v3';
+  verBadge.title = '2026-04-12-v3';
+  brand.appendChild(verBadge);
   headerInner.appendChild(brand);
 
   // Hamburger

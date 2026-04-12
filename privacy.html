@@ -20,7 +20,7 @@
   <!-- SERBIAN -->
   <div class="sr">
     <h1>Politika privatnosti</h1>
-    <p class="subtitle">Verzija 2026-04-10-v2 &middot; Poslednje azuriranje: 10. april 2026. &middot; <em>v2: dodat Lemon Squeezy kao sub-processor (Merchant of Record za Pro pretplate, Delaware SAD); email cuvamo i za Pro korisnike pored abuse report-a.</em></p>
+    <p class="subtitle">Verzija <strong>2026-04-12-v3</strong> &middot; Poslednje azuriranje: 12. april 2026. &middot; <em>v3: ZZPL uskladjenost (cl. 23, 38, 52), kontakt email, automatizovano odlucivanje, data breach procedura, legitimni interes, cookie consent V2.</em></p>
 
     <h2 id="pp1">1. Ko smo mi</h2>
     <p>Web Security Scanner je besplatan online alat za pasivnu analizu bezbednosti veb sajtova. Operater sajta je <a href="https://toske-programer.web.app" target="_blank" rel="noopener">Toske-Programer</a>. Ova politika privatnosti objasnjava detaljno sta konkretno radimo sa vasim podacima, koliko dugo ih cuvamo, i kako ostvarujete svoja prava.</p>
@@ -144,7 +144,7 @@
     <p>Za vise detalja o tome kako funkcionisu uslovi koriscenja i ownership verifikacija, pogledajte <a href="./terms.html">Uslove koriscenja</a>.</p>
 
     <h2 id="pp10">10. Izmene politike, deca, i kontakt</h2>
-    <p><strong>Izmene politike:</strong> Zadrzavamo pravo da azuriramo ovu politiku. Verzija politike se bamp-uje kroz <code>consent_version</code> polje i svaki novi scan ce traziti od vas da potvrdite novu verziju. Vase prethodne saglasnosti ostaju vazece u audit_log-u ali se ne primenjuju retroaktivno na nove odredbe.</p>
+    <p><strong>Trenutna verzija politike: <code>2026-04-12-v3</code></strong> — ovo je ista verzija koja se belezi u sistemu kada pokrenete skeniranje. Zadrzavamo pravo da azuriramo ovu politiku. Verzija se menja sa svakim azuriranjem i svaki novi scan ce traziti od vas da potvrdite aktuelnu verziju. Vase prethodne saglasnosti ostaju vazece u audit_log-u ali se ne primenjuju retroaktivno na nove odredbe.</p>
     <p><strong>Deca:</strong> Ovaj servis nije namenjen osobama mladjim od 16 godina. Ne prikupljamo svesno podatke od maloletnika. Ako saznamo da je maloletnik nevoljno dostavio podatke, brisemo ih.</p>
     <p><strong>Kontakt rukovaoca (cl. 23 ZZPL):</strong></p>
     <ul>
@@ -174,12 +174,45 @@
       <li>Dokumentovati svaku povredu u internom registru (PRIRUCNIK.md §17)</li>
     </ul>
     <p>Kontakt Poverenika: <a href="https://www.poverenik.rs" target="_blank" rel="noopener">poverenik.rs</a></p>
+
+    <h2 id="pp14">14. Istorija verzija politike privatnosti</h2>
+    <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+      <thead>
+        <tr style="border-bottom:2px solid #252a4a;text-align:left;">
+          <th style="padding:0.5rem;">Verzija</th>
+          <th style="padding:0.5rem;">Datum</th>
+          <th style="padding:0.5rem;">Status</th>
+          <th style="padding:0.5rem;">Sta se promenilo</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #1a1e38;">
+          <td style="padding:0.5rem;"><code>2026-04-12-v3</code></td>
+          <td style="padding:0.5rem;">12. apr 2026.</td>
+          <td style="padding:0.5rem;color:#22c55e;font-weight:600;">AKTIVNA</td>
+          <td style="padding:0.5rem;">ZZPL uskladjenost: kontakt email rukovaoca (cl. 23), automatizovano odlucivanje (cl. 38), legitimni interes dokumentovan (cl. 12), procedura za povredu podataka (cl. 52), cookie consent V2 sa 3 kategorije, kontakt Poverenika sa adresama</td>
+        </tr>
+        <tr style="border-bottom:1px solid #1a1e38;">
+          <td style="padding:0.5rem;"><code>2026-04-10-v2</code></td>
+          <td style="padding:0.5rem;">10. apr 2026.</td>
+          <td style="padding:0.5rem;color:#9ca3af;">zamenjeno v3</td>
+          <td style="padding:0.5rem;">Dodat Lemon Squeezy kao sub-processor (Merchant of Record za Pro pretplate, Delaware SAD). Email se cuva i za Pro korisnike pored abuse report-a. Dodata scan_requests tabela (gate-before-scan wizard).</td>
+        </tr>
+        <tr>
+          <td style="padding:0.5rem;"><code>2026-04-10-v1</code></td>
+          <td style="padding:0.5rem;">10. apr 2026.</td>
+          <td style="padding:0.5rem;color:#9ca3af;">zamenjeno v2</td>
+          <td style="padding:0.5rem;">Prva verzija politike privatnosti. Pokriva: PII hashovanje (SHA-256), audit_log (append-only, 90 dana), verified_domains (30 dana), rate_limits, abuse_reports, backup (AES-256-GCM, R2). Supabase kao jedini sub-processor.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="font-size:0.75rem;color:#7b83a6;margin-top:0.5rem;">Svaka verzija je trajno sacuvana u <code>audit_log</code> tabeli — consent koji ste dali vazi za verziju koja je bila aktivna u tom trenutku.</p>
   </div>
 
   <!-- ENGLISH -->
   <div class="en">
     <h1>Privacy Policy</h1>
-    <p class="subtitle">Version 2026-04-10-v2 &middot; Last updated: April 10, 2026 &middot; <em>v2: added Lemon Squeezy as a sub-processor (Merchant of Record for Pro subscriptions, Delaware USA); email is now stored for Pro subscribers in addition to abuse reports.</em></p>
+    <p class="subtitle">Version <strong>2026-04-12-v3</strong> &middot; Last updated: April 12, 2026 &middot; <em>v3: ZZPL compliance (Art. 23, 38, 52), controller email, automated decision-making, data breach procedure, legitimate interest, cookie consent V2.</em></p>
 
     <h2 id="pp1e">1. Who we are</h2>
     <p>Web Security Scanner is a free online tool for passive security analysis of websites. The site operator is <a href="https://toske-programer.web.app" target="_blank" rel="noopener">Toske-Programer</a>. This privacy policy explains in detail what we do with your data, how long we keep it, and how to exercise your rights.</p>
@@ -303,7 +336,7 @@
     <p>For more details on how the terms of service and ownership verification work, see the <a href="./terms.html">Terms of Service</a>.</p>
 
     <h2 id="pp10e">10. Policy changes, children, and contact</h2>
-    <p><strong>Policy changes:</strong> we reserve the right to update this policy. The policy version is bumped through the <code>consent_version</code> field and every new scan will ask you to confirm the new version. Your prior consents remain valid in the audit_log but do not retroactively apply to new terms.</p>
+    <p><strong>Current policy version: <code>2026-04-12-v3</code></strong> — this is the same version recorded in the system when you run a scan. We reserve the right to update this policy. The version changes with each update and every new scan will ask you to confirm the current version. Your prior consents remain valid in the audit_log but do not retroactively apply to new terms.</p>
     <p><strong>Children:</strong> this service is not intended for persons under 16 years of age. We do not knowingly collect data from minors. If we learn that a minor has involuntarily submitted data, we delete it.</p>
     <p><strong>Controller contact (Art. 23 ZZPL):</strong></p>
     <ul>
@@ -333,6 +366,39 @@
       <li>Document every breach in an internal register</li>
     </ul>
     <p>Commissioner contact: <a href="https://www.poverenik.rs" target="_blank" rel="noopener">poverenik.rs</a></p>
+
+    <h2 id="pp14e">14. Privacy policy version history</h2>
+    <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+      <thead>
+        <tr style="border-bottom:2px solid #252a4a;text-align:left;">
+          <th style="padding:0.5rem;">Version</th>
+          <th style="padding:0.5rem;">Date</th>
+          <th style="padding:0.5rem;">Status</th>
+          <th style="padding:0.5rem;">Changes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #1a1e38;">
+          <td style="padding:0.5rem;"><code>2026-04-12-v3</code></td>
+          <td style="padding:0.5rem;">Apr 12, 2026</td>
+          <td style="padding:0.5rem;color:#22c55e;font-weight:600;">ACTIVE</td>
+          <td style="padding:0.5rem;">ZZPL compliance: controller email (Art. 23), automated decision-making (Art. 38), legitimate interest documented (Art. 12), data breach procedure (Art. 52), cookie consent V2 with 3 categories, Commissioner contact with addresses</td>
+        </tr>
+        <tr style="border-bottom:1px solid #1a1e38;">
+          <td style="padding:0.5rem;"><code>2026-04-10-v2</code></td>
+          <td style="padding:0.5rem;">Apr 10, 2026</td>
+          <td style="padding:0.5rem;color:#9ca3af;">replaced by v3</td>
+          <td style="padding:0.5rem;">Added Lemon Squeezy as sub-processor (Merchant of Record for Pro subscriptions, Delaware USA). Email now stored for Pro subscribers in addition to abuse reports. Added scan_requests table (gate-before-scan wizard).</td>
+        </tr>
+        <tr>
+          <td style="padding:0.5rem;"><code>2026-04-10-v1</code></td>
+          <td style="padding:0.5rem;">Apr 10, 2026</td>
+          <td style="padding:0.5rem;color:#9ca3af;">replaced by v2</td>
+          <td style="padding:0.5rem;">First version of privacy policy. Covers: PII hashing (SHA-256), audit_log (append-only, 90 days), verified_domains (30 days), rate_limits, abuse_reports, backup (AES-256-GCM, R2). Supabase as sole sub-processor.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="font-size:0.75rem;color:#7b83a6;margin-top:0.5rem;">Each version is permanently recorded in the <code>audit_log</code> table — the consent you gave applies to the version that was active at that moment.</p>
   </div>
 
   </main>
