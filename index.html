@@ -3503,16 +3503,33 @@ function printReport(mode) {
 }
 
 function _exportCSV(data) {
-  if (!data || !data.findings) { showToast("Nema rezultata za export.", "warning"); return; }
-  var rows = [["Category", "Check ID", "Severity", "Passed", "Title", "Description"]];
-  data.findings.forEach(function(f) {
+  if (!data) { showToast("Nema rezultata za export.", "warning"); return; }
+  var rows = [["Category", "Check ID", "Severity", "Passed", "Title", "Description", "Recommendation"]];
+  // Backend returns results as { category: [findings...] } object
+  var allFindings = [];
+  if (data.results && typeof data.results === "object") {
+    Object.keys(data.results).forEach(function(cat) {
+      var items = data.results[cat];
+      if (Array.isArray(items)) {
+        items.forEach(function(f) {
+          f._category = cat;
+          allFindings.push(f);
+        });
+      }
+    });
+  }
+  // Also support flat findings array if present
+  if (Array.isArray(data.findings)) allFindings = allFindings.concat(data.findings);
+  if (allFindings.length === 0) { showToast("Nema provera u rezultatu.", "warning"); return; }
+  allFindings.forEach(function(f) {
     rows.push([
-      f.category || "",
-      f.id || "",
+      f._category || f.category || "",
+      f.id || f.check_id || "",
       f.severity || "",
       f.passed ? "PASS" : "FAIL",
-      (f.title || "").replace(/"/g, '""'),
-      (f.description || "").replace(/"/g, '""').replace(/\n/g, ' ')
+      (f.title || f.message || "").replace(/"/g, '""'),
+      (f.description || "").replace(/"/g, '""').replace(/\n/g, ' '),
+      (f.recommendation || "").replace(/"/g, '""').replace(/\n/g, ' ')
     ]);
   });
   var csv = rows.map(function(r) { return r.map(function(c) { return '"' + c + '"'; }).join(","); }).join("\n");
@@ -3528,16 +3545,9 @@ function _exportCSV(data) {
 
 function _exportJSON(data) {
   if (!data) { showToast("Nema rezultata za export.", "warning"); return; }
-  var exportData = {
-    domain: data.domain,
-    url: data.url,
-    score: data.score,
-    grade: data.grade,
-    scan_mode: data.scan_mode,
-    findings: data.findings,
-    top_priorities: data.top_priorities,
-    exported_at: new Date().toISOString(),
-  };
+  // Export the ENTIRE result object so developers have complete data
+  var exportData = JSON.parse(JSON.stringify(data)); // deep clone
+  exportData.exported_at = new Date().toISOString();
   var json = JSON.stringify(exportData, null, 2);
   var blob = new Blob([json], { type: "application/json;charset=utf-8" });
   var url = URL.createObjectURL(blob);
