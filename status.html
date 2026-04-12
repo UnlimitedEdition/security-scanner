@@ -9,50 +9,92 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./blog-common.css">
   <style>
-    .status-page { max-width: 700px; margin: 0 auto; padding: 2rem 1rem; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 0;
+      background: #0a0c15; color: #e8eaf6;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+    }
+    .status-page {
+      max-width: 620px; margin: 0 auto;
+      padding: 2.5rem 1.2rem 3rem;
+    }
     .status-header { text-align: center; margin-bottom: 2rem; }
-    .status-header h1 { font-size: 1.6rem; margin-bottom: 0.3rem; }
+    .status-header h1 {
+      font-size: 1.5rem; margin: 0 0 0.3rem;
+      color: #e8eaf6; font-weight: 800;
+    }
+    .status-header p {
+      font-size: 0.8rem; color: #7b83a6; margin: 0;
+    }
     .status-overall {
       display: inline-flex; align-items: center; gap: 0.5rem;
-      padding: 0.5rem 1.2rem; border-radius: 20px;
-      font-size: 0.88rem; font-weight: 700; margin-top: 0.8rem;
+      padding: 0.55rem 1.3rem; border-radius: 20px;
+      font-size: 0.85rem; font-weight: 700; margin-top: 1rem;
     }
-    .status-overall.all-ok { background: rgba(34,197,94,0.12); color: #22c55e; border: 1px solid rgba(34,197,94,0.25); }
-    .status-overall.has-issue { background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.25); }
-    .status-overall.checking { background: rgba(59,130,246,0.12); color: #3b82f6; border: 1px solid rgba(59,130,246,0.25); }
+    .status-overall.all-ok { background: rgba(34,197,94,0.1); color: #22c55e; border: 1px solid rgba(34,197,94,0.2); }
+    .status-overall.has-issue { background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.2); }
+    .status-overall.checking { background: rgba(59,130,246,0.1); color: #3b82f6; border: 1px solid rgba(59,130,246,0.2); }
 
-    .status-grid { display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 2rem; }
+    .status-grid { display: flex; flex-direction: column; gap: 0.7rem; margin-bottom: 1.5rem; }
     .status-card {
       display: flex; align-items: center; gap: 0.8rem;
-      padding: 1rem 1.2rem; background: #11142a;
-      border: 1px solid #252a4a; border-radius: 10px;
+      padding: 0.9rem 1.1rem; background: #12142a;
+      border: 1px solid rgba(255,255,255,0.06); border-radius: 10px;
     }
     .status-dot {
-      width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0;
+      width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;
       background: #3b82f6; animation: pulse 1.5s infinite;
     }
     .status-dot.ok { background: #22c55e; animation: none; }
     .status-dot.err { background: #ef4444; animation: none; }
     @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
-    .status-info { flex: 1; }
-    .status-name { font-weight: 700; font-size: 0.9rem; color: #e8eaf6; }
-    .status-detail { font-size: 0.75rem; color: #7b83a6; margin-top: 0.15rem; }
+    .status-info { flex: 1; min-width: 0; }
+    .status-name { font-weight: 700; font-size: 0.85rem; color: #e8eaf6; }
+    .status-detail {
+      font-size: 0.73rem; color: #7b83a6; margin-top: 0.15rem;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
     .status-latency {
-      font-size: 0.72rem; color: #7b83a6; background: rgba(255,255,255,0.04);
+      font-size: 0.7rem; color: #7b83a6; background: rgba(255,255,255,0.04);
       padding: 0.2rem 0.5rem; border-radius: 6px; font-weight: 600;
+      flex-shrink: 0;
     }
 
-    .status-note {
-      text-align: center; font-size: 0.75rem; color: #7b83a6;
-      line-height: 1.5; padding: 1rem; border-top: 1px solid #1a1e38;
+    .status-uptimerobot {
+      display: flex; justify-content: center; margin-bottom: 1.5rem;
     }
-    .status-note a { color: #a78bfa; }
-    .status-timestamp { text-align: center; font-size: 0.7rem; color: #555; margin-top: 1rem; }
+    .status-uptimerobot a {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.55rem 1.1rem;
+      background: rgba(124,58,237,0.08); border: 1px solid rgba(124,58,237,0.2);
+      border-radius: 8px; color: #a78bfa; font-size: 0.8rem;
+      font-weight: 600; text-decoration: none;
+      transition: background 0.15s;
+    }
+    .status-uptimerobot a:hover { background: rgba(124,58,237,0.15); }
+
+    .status-note {
+      text-align: center; font-size: 0.73rem; color: #555;
+      line-height: 1.6; padding: 1rem 0;
+      border-top: 1px solid rgba(255,255,255,0.04);
+    }
+    .status-note a { color: #a78bfa; text-decoration: none; }
+    .status-note a:hover { text-decoration: underline; }
+    .status-timestamp {
+      text-align: center; font-size: 0.68rem; color: #444; margin-top: 0.5rem;
+    }
+
+    @media (max-width: 500px) {
+      .status-page { padding: 1.5rem 0.8rem 2rem; }
+      .status-header h1 { font-size: 1.25rem; }
+      .status-card { padding: 0.75rem 0.9rem; gap: 0.6rem; }
+      .status-detail { white-space: normal; }
+    }
   </style>
 </head>
 <body>
-<div class="blog-layout">
-  <main class="blog-content">
     <div class="status-page">
       <div class="status-header">
         <h1>
@@ -138,8 +180,6 @@
       </div>
       <div class="status-timestamp" id="statusTimestamp"></div>
     </div>
-  </main>
-</div>
 <script src="./cookie-consent.js" defer></script>
 <script src="./blog-common.js" defer></script>
 <script>
