@@ -2745,11 +2745,19 @@ async function pollScan(scanId) {
       return;
     }
     if (data.status === "error") {
+      try { sessionStorage.removeItem("active_scan_id"); } catch(e) {}
       showError("Greska: " + (data.error || "Nepoznata greska"));
       btn.disabled = false;
       btn.textContent = "Skeniraj sajt";
       document.getElementById("progressWrap").style.display = "none";
       document.getElementById("adSlotTop").classList.remove("visible");
+      return;
+    }
+    // Scan not found or unknown status — stop polling
+    if (!data.status || data.status === "not_found") {
+      try { sessionStorage.removeItem("active_scan_id"); } catch(e) {}
+      btn.disabled = false;
+      document.getElementById("progressWrap").style.display = "none";
       return;
     }
   }
@@ -3816,13 +3824,27 @@ document.addEventListener("DOMContentLoaded", function() {
     chk.addEventListener("change", _updateVerifyCheckButtonState);
   }
   _populateSysinfo();
-  // Resume scan after page refresh
+  // Resume scan after page refresh — verify it's still running first
   try {
     var activeScanId = sessionStorage.getItem("active_scan_id");
     if (activeScanId) {
-      document.getElementById("progressWrap").style.display = "block";
-      document.getElementById("scanBtn").disabled = true;
-      pollScan(activeScanId);
+      fetch(API_BASE + "/scan/" + activeScanId)
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.status === "running" || d.status === "queued") {
+            document.getElementById("progressWrap").style.display = "block";
+            document.getElementById("scanBtn").disabled = true;
+            pollScan(activeScanId);
+          } else {
+            // Scan is done/error/not found — clean up
+            sessionStorage.removeItem("active_scan_id");
+            if (d.status === "completed" && d.result) {
+              currentResults = d.result;
+              renderResults(d.result);
+            }
+          }
+        })
+        .catch(function() { sessionStorage.removeItem("active_scan_id"); });
     }
   } catch(e) {}
 });
