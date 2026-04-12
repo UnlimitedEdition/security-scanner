@@ -360,6 +360,11 @@
   cookieLink.appendChild(srSpan('Podesavanja kolacica', 'Cookie Settings'));
   legalRow.appendChild(cookieLink);
 
+  // System status
+  var statusLink = el('a', { href: './status.html' });
+  statusLink.appendChild(srSpan('Stanje sistema', 'System Status'));
+  legalRow.appendChild(statusLink);
+
   // Data protection badge in footer
   var badgeRow = el('div');
   badgeRow.style.cssText = 'display:flex;justify-content:center;padding:0.8rem 0;';

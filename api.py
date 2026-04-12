@@ -557,6 +557,15 @@ def cookie_consent_js():
     raise HTTPException(status_code=404, detail="File not found")
 
 
+@app.api_route("/status.html", methods=["GET", "HEAD"])
+def status_page():
+    """System status page — real-time health of frontend, backend, database."""
+    path = os.path.join(os.path.dirname(__file__), "status.html")
+    if os.path.exists(path):
+        return FileResponse(path, media_type="text/html")
+    raise HTTPException(status_code=404, detail="File not found")
+
+
 @app.api_route("/data-protection-badge.png", methods=["GET", "HEAD"])
 def data_protection_badge():
     """Data protection trust badge image."""
@@ -2685,7 +2694,7 @@ async def lemon_webhook(request: Request):
     )
 
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 def health():
     return {
         "status": "ok",
