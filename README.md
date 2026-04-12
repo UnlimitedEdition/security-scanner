@@ -19,6 +19,16 @@ Passive security analysis for websites — **110+ checks**, no site modification
 
 Live: https://security-scanner-ruddy.vercel.app
 
+## Two scan modes — gate-before-scan model
+
+The scanner enforces a strict server-side gate between two modes:
+
+- **🟢 Quick public scan** (default, no verification) — runs **20 passive checks** using only information any visitor of the site already knows: TLS, HTTP headers, public DNS, homepage HTML, robots.txt, security.txt, well-known endpoints, SEO/performance/GDPR/accessibility, WHOIS, CT logs. Three additional checks (Information Disclosure, JavaScript Security, JWT) run but redact specific values. **Sends ZERO probes** against private surface — the target server never sees a request for `/.env`, `/wp-admin/`, port scans, or anything that resembles recon.
+
+- **🔓 Full scan (owners only, via wizard)** — adds **10 active checks** (sensitive files, admin panels, vulnerability scan, port scan, API security, CORS, dependency CVEs, subdomain enumeration, takeover detection, WordPress deep-pass). Requires walking through a 3-step wizard: (1) three explicit consent checkboxes recorded server-side, (2) ownership verification via meta tag / file / DNS TXT, (3) recap screen with 3-second anti-reflex delay before final POKRENI button. Successful verification grants 30 days of unredacted scans for the same (domain, IP hash) pair.
+
+The wizard uses `created_date DATE` (no timestamp) for the consent state — even a complete database leak cannot reveal what time of day the user clicked which checkbox.
+
 ## What it checks
 
 - **TLS / Certificates** — validity, expiry, chain, cipher strength

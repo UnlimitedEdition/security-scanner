@@ -74,6 +74,7 @@
       <li><strong>audit_log</strong> (forenzicki trag): <strong>90 dana</strong> za redovne zapise, zatim automatsko brisanje. Flagovani redovi (povezani sa abuse report-om) se <strong>cuvaju zauvek</strong> kao pravni dokaz.</li>
       <li><strong>verified_domains</strong> (grantovi za punu vidljivost): <strong>30 dana</strong> po kombinaciji (domen, IP hash), zatim istice.</li>
       <li><strong>verification_tokens</strong> (pending challenge-i): <strong>1 sat</strong> za pending, zatim istice automatski.</li>
+      <li><strong>scan_requests</strong> (wizard za puni sken): cuva samo <strong>created_date</strong> kao DATE (NE timestamp) — privacy-by-design, ne moze da otkrije tacno vreme klika na consent. Wizardi koji nisu izvrseni u <strong>24 sata</strong> automatski se brisu cron-om. Zavrseni wizardi cuvaju samo state machine flag-ove (consent dat: da/ne, verifikacija prosla: da/ne) bez timestamp-a.</li>
       <li><strong>rate_limits</strong>: rolling prozor, cisti se automatski kad prodje vremenski interval.</li>
       <li><strong>abuse_reports</strong>: zauvek, kao pravni trag, osim ako reporter ne povuce prijavu.</li>
       <li><strong>Backup-ovi</strong>: dnevni enkriptovani backup se cuva na Cloudflare R2 <strong>90 dana</strong> po R2 lifecycle pravilu. Metadata o backup-ima se cuva 180 dana.</li>
@@ -203,6 +204,7 @@
       <li><strong>audit_log</strong> (forensic trail): <strong>90 days</strong> for regular entries, then automatic deletion. Flagged entries (linked to an abuse report) are <strong>kept indefinitely</strong> as legal evidence.</li>
       <li><strong>verified_domains</strong> (full-visibility grants): <strong>30 days</strong> per (domain, IP hash) combination, then expires.</li>
       <li><strong>verification_tokens</strong> (pending challenges): <strong>1 hour</strong> for pending, then expires automatically.</li>
+      <li><strong>scan_requests</strong> (full-scan wizard): stores only <strong>created_date</strong> as DATE (NOT timestamp) — privacy-by-design, cannot reveal the exact time you clicked consent. Wizards not executed within <strong>24 hours</strong> are auto-deleted by cron. Completed wizards keep only state-machine flags (consent given: yes/no, verify passed: yes/no) without any timestamp.</li>
       <li><strong>rate_limits</strong>: rolling window, auto-pruned when the interval passes.</li>
       <li><strong>abuse_reports</strong>: indefinitely, as legal evidence, unless the reporter withdraws the report.</li>
       <li><strong>Backups</strong>: daily encrypted backups are stored on Cloudflare R2 for <strong>90 days</strong> per the R2 lifecycle rule. Backup metadata is kept 180 days.</li>

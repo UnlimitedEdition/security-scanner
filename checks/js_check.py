@@ -4,6 +4,23 @@
 JavaScript Security Check
 Checks: API keys in code, dangerous functions, inline event handlers,
 libraries with known CVEs, exposed API endpoints, source maps.
+
+mode parameter (gate-before-scan model from migrations 014/015):
+  * 'full' (default) — Every sub-check runs at full fidelity. The source
+                       map probe sends HTTP requests for .map files. The
+                       findings include exact API key class names, exact
+                       library version numbers, exact endpoint strings,
+                       and exact developer paths from source maps.
+  * 'safe'           — _check_source_maps is skipped entirely (it would
+                       send HTTP requests to /.map files which an
+                       unverified caller has no business probing). The
+                       other 5 sub-checks still run because they only
+                       read inline scripts from the already-received
+                       homepage HTML, but their findings strip the
+                       specific exploited details: API key class names
+                       become a count, exact library versions become
+                       "vulnerable library detected", endpoint strings
+                       are hidden.
 """
 import re
 import json
@@ -117,20 +134,36 @@ def _analyze_sources(sources: List[str]) -> List[Dict[str, Any]]:
 # Pattern for detecting doc.write usage (used in security scanning context)
 _DOC_WRITE_RE = r'document\.write\s*\('
 
+# Sentinel labels used in safe-mode findings.
+_REDACTED_LABEL_SR = "[verifikujte vlasnistvo da vidite tacne podatke]"
+_REDACTED_LABEL_EN = "[verify ownership to see exact data]"
+
 
 def run(base_url: str, response_body: str,
-        session: requests.Session) -> List[Dict[str, Any]]:
+        session: requests.Session,
+        mode: str = "full") -> List[Dict[str, Any]]:
+    """
+    JavaScript security analysis. mode='full' runs all 6 sub-checks
+    including the source map HTTP probes; mode='safe' skips
+    _check_source_maps (which would send HTTP requests) and runs the
+    5 passive sub-checks with redacted output.
+    """
+    safe_mode = (mode == "safe")
     results = []
 
     # Extract inline scripts (skip those with src= attribute)
     inline_scripts = _extract_inline_scripts(response_body)
 
-    results.extend(_check_api_keys(inline_scripts))
-    results.extend(_check_dangerous_functions(inline_scripts))
-    results.extend(_check_inline_event_handlers(response_body))
-    results.extend(_check_vulnerable_libraries(response_body, inline_scripts))
-    results.extend(_check_exposed_api_endpoints(inline_scripts))
-    results.extend(_check_source_maps(base_url, response_body, session))
+    results.extend(_check_api_keys(inline_scripts, safe_mode=safe_mode))
+    results.extend(_check_dangerous_functions(inline_scripts, safe_mode=safe_mode))
+    results.extend(_check_inline_event_handlers(response_body, safe_mode=safe_mode))
+    results.extend(_check_vulnerable_libraries(response_body, inline_scripts, safe_mode=safe_mode))
+    results.extend(_check_exposed_api_endpoints(inline_scripts, safe_mode=safe_mode))
+    if not safe_mode:
+        # Source map probing makes HTTP requests to /.map files. In safe
+        # mode we never send those probes — an unverified caller cannot
+        # cause our scanner to enumerate source maps on a target site.
+        results.extend(_check_source_maps(base_url, response_body, session))
 
     return results
 
@@ -148,7 +181,7 @@ def _extract_inline_scripts(body):
 
 
 # ── API keys in code ────────────────────────────────────────────────────────────
-def _check_api_keys(inline_scripts):
+def _check_api_keys(inline_scripts, safe_mode: bool = False):
     results = []
     all_script_text = "\n".join(inline_scripts)
 
@@ -177,13 +210,37 @@ def _check_api_keys(inline_scripts):
             found_keys.append(name)
 
     if found_keys:
-        results.append(_fail("js_api_keys", "CRITICAL",
-            f"Potencijalni API kljucevi pronadjeni u kodu ({', '.join(found_keys[:3])})",
-            f"Potential API keys found in code ({', '.join(found_keys[:3])})",
-            f"Detektovani su obrasci koji ukazuju na izlozene API kljuceve u inline JavaScript kodu: {', '.join(found_keys)}. Ovo je kritican bezbednosni propust.",
-            f"Patterns indicating exposed API keys detected in inline JavaScript code: {', '.join(found_keys)}. This is a critical security vulnerability.",
+        # In safe mode the *names* of the leaked key classes (AWS Access
+        # Key, Stripe Secret Key, etc.) are themselves the cheat sheet —
+        # an attacker who knows AWS keys are exposed knows exactly which
+        # API to start hammering. Hide the names but still report that
+        # SOMETHING was found, with the count, so the owner knows there
+        # is work to do.
+        title_sr = (
+            f"Potencijalni API kljucevi pronadjeni u kodu ({_REDACTED_LABEL_SR})"
+            if safe_mode
+            else f"Potencijalni API kljucevi pronadjeni u kodu ({', '.join(found_keys[:3])})"
+        )
+        title_en = (
+            f"Potential API keys found in code ({_REDACTED_LABEL_EN})"
+            if safe_mode
+            else f"Potential API keys found in code ({', '.join(found_keys[:3])})"
+        )
+        desc_sr = (
+            f"Detektovano {len(found_keys)} obrazaca koji ukazuju na izlozene API kljuceve u inline JavaScript kodu. Ovo je kritican bezbednosni propust. {_REDACTED_LABEL_SR}"
+            if safe_mode
+            else f"Detektovani su obrasci koji ukazuju na izlozene API kljuceve u inline JavaScript kodu: {', '.join(found_keys)}. Ovo je kritican bezbednosni propust."
+        )
+        desc_en = (
+            f"Detected {len(found_keys)} patterns indicating exposed API keys in inline JavaScript code. This is a critical security vulnerability. {_REDACTED_LABEL_EN}"
+            if safe_mode
+            else f"Patterns indicating exposed API keys detected in inline JavaScript code: {', '.join(found_keys)}. This is a critical security vulnerability."
+        )
+        f = _fail("js_api_keys", "CRITICAL", title_sr, title_en, desc_sr, desc_en,
             "Odmah uklonite API kljuceve iz klijentskog koda. Koristite server-side proxy za API pozive.",
-            "Immediately remove API keys from client-side code. Use a server-side proxy for API calls."))
+            "Immediately remove API keys from client-side code. Use a server-side proxy for API calls.")
+        f["_redacted"] = safe_mode
+        results.append(f)
     else:
         results.append(_pass("js_api_keys",
             "Nisu pronadjeni API kljucevi u inline kodu",
@@ -194,7 +251,7 @@ def _check_api_keys(inline_scripts):
 
 
 # ── Dangerous functions ─────────────────────────────────────────────────────────
-def _check_dangerous_functions(inline_scripts):
+def _check_dangerous_functions(inline_scripts, safe_mode: bool = False):
     results = []
     all_script_text = "\n".join(inline_scripts)
 
@@ -219,13 +276,27 @@ def _check_dangerous_functions(inline_scripts):
             found_dangerous.append(name)
 
     if found_dangerous:
-        results.append(_fail("js_dangerous_funcs", "MEDIUM",
-            f"Detektovani opasni obrasci u JavaScript kodu",
-            f"Dangerous function patterns detected in JavaScript code",
-            f"Pronadjeni su potencijalno opasni obrasci: {', '.join(found_dangerous)}. Ovi obrasci mogu omoguciti XSS napade ako se koriste sa korisnickim unosom.",
-            f"Potentially dangerous patterns found: {', '.join(found_dangerous)}. These patterns can enable XSS attacks if used with user input.",
+        # The names of the dangerous patterns map directly to specific
+        # XSS injection points an attacker would target. Hide them in
+        # safe mode but report the count so the owner can act on it.
+        desc_sr = (
+            f"Pronadjeno {len(found_dangerous)} potencijalno opasnih obrazaca. {_REDACTED_LABEL_SR}"
+            if safe_mode
+            else f"Pronadjeni su potencijalno opasni obrasci: {', '.join(found_dangerous)}. Ovi obrasci mogu omoguciti XSS napade ako se koriste sa korisnickim unosom."
+        )
+        desc_en = (
+            f"Found {len(found_dangerous)} potentially dangerous patterns. {_REDACTED_LABEL_EN}"
+            if safe_mode
+            else f"Potentially dangerous patterns found: {', '.join(found_dangerous)}. These patterns can enable XSS attacks if used with user input."
+        )
+        f = _fail("js_dangerous_funcs", "MEDIUM",
+            "Detektovani opasni obrasci u JavaScript kodu",
+            "Dangerous function patterns detected in JavaScript code",
+            desc_sr, desc_en,
             "Koristite bezbednije alternative: textContent umesto innerHTML, izbegavajte DOM write operacije i string argumente u tajmerima.",
-            "Use safer alternatives: textContent instead of innerHTML, avoid DOM write operations and string arguments in timers."))
+            "Use safer alternatives: textContent instead of innerHTML, avoid DOM write operations and string arguments in timers.")
+        f["_redacted"] = safe_mode
+        results.append(f)
     else:
         results.append(_pass("js_dangerous_funcs",
             "Nisu detektovani opasni obrasci u JavaScript kodu",
@@ -236,7 +307,7 @@ def _check_dangerous_functions(inline_scripts):
 
 
 # ── Inline event handlers ──────────────────────────────────────────────────────
-def _check_inline_event_handlers(body):
+def _check_inline_event_handlers(body, safe_mode: bool = False):
     results = []
     # Match onclick/onerror/onload with javascript: protocol
     handler_pattern = r'(?:onclick|onerror|onload)\s*=\s*["\'][^"\']*javascript:'
@@ -244,13 +315,17 @@ def _check_inline_event_handlers(body):
     count = len(matches)
 
     if count > 5:
-        results.append(_fail("js_inline_handlers", "LOW",
+        # The count itself is harmless aggregate info — keep it visible
+        # in both modes. There's no specific value to redact here.
+        f = _fail("js_inline_handlers", "LOW",
             f"Veliki broj inline event handlera sa javascript: ({count})",
             f"High number of inline event handlers with javascript: ({count})",
             f"Pronadjeno {count} inline event handlera (onclick, onerror, onload) koji koriste javascript: protokol. Ovo otezava primenu CSP politike.",
             f"Found {count} inline event handlers (onclick, onerror, onload) using javascript: protocol. This makes CSP policy enforcement difficult.",
             "Premestite JavaScript logiku u eksterne fajlove i koristite addEventListener umesto inline handlera.",
-            "Move JavaScript logic to external files and use addEventListener instead of inline handlers."))
+            "Move JavaScript logic to external files and use addEventListener instead of inline handlers.")
+        f["_redacted"] = safe_mode
+        results.append(f)
     else:
         results.append(_pass("js_inline_handlers",
             "Inline event handleri su u prihvatljivom opsegu",
@@ -261,7 +336,7 @@ def _check_inline_event_handlers(body):
 
 
 # ── Libraries with known CVEs ──────────────────────────────────────────────────
-def _check_vulnerable_libraries(body, inline_scripts):
+def _check_vulnerable_libraries(body, inline_scripts, safe_mode: bool = False):
     results = []
     all_text = body + "\n".join(inline_scripts)
     found_vulns = []
@@ -299,13 +374,26 @@ def _check_vulnerable_libraries(body, inline_scripts):
             found_vulns.append(f"Lodash {lodash_version.group(1)} (<4.17.21, poznate ranjivosti)")
 
     if found_vulns:
-        results.append(_fail("js_vuln_libs", "HIGH",
-            f"Detektovane biblioteke sa poznatim ranjivostima",
-            f"Libraries with known vulnerabilities detected",
-            f"Pronadjene ranjive verzije: {'; '.join(found_vulns)}. Ove verzije imaju poznate bezbednosne propuste (CVE).",
-            f"Vulnerable versions found: {'; '.join(found_vulns)}. These versions have known security vulnerabilities (CVEs).",
+        # Specific library + version + CVE = direct exploit lookup. In
+        # safe mode, hide all of those and report only the count.
+        desc_sr = (
+            f"Pronadjeno {len(found_vulns)} ranjivih biblioteka sa poznatim CVE propustima. {_REDACTED_LABEL_SR}"
+            if safe_mode
+            else f"Pronadjene ranjive verzije: {'; '.join(found_vulns)}. Ove verzije imaju poznate bezbednosne propuste (CVE)."
+        )
+        desc_en = (
+            f"Found {len(found_vulns)} vulnerable libraries with known CVEs. {_REDACTED_LABEL_EN}"
+            if safe_mode
+            else f"Vulnerable versions found: {'; '.join(found_vulns)}. These versions have known security vulnerabilities (CVEs)."
+        )
+        f = _fail("js_vuln_libs", "HIGH",
+            "Detektovane biblioteke sa poznatim ranjivostima",
+            "Libraries with known vulnerabilities detected",
+            desc_sr, desc_en,
             "Azurirajte sve JavaScript biblioteke na najnovije verzije.",
-            "Update all JavaScript libraries to the latest versions."))
+            "Update all JavaScript libraries to the latest versions.")
+        f["_redacted"] = safe_mode
+        results.append(f)
     else:
         results.append(_pass("js_vuln_libs",
             "Nisu detektovane biblioteke sa poznatim ranjivostima",
@@ -316,7 +404,7 @@ def _check_vulnerable_libraries(body, inline_scripts):
 
 
 # ── Exposed API endpoints ──────────────────────────────────────────────────────
-def _check_exposed_api_endpoints(inline_scripts):
+def _check_exposed_api_endpoints(inline_scripts, safe_mode: bool = False):
     results = []
     all_script_text = "\n".join(inline_scripts)
 
@@ -344,13 +432,26 @@ def _check_exposed_api_endpoints(inline_scripts):
                 found_endpoints.append(endpoint)
 
     if found_endpoints:
-        results.append(_fail("js_api_endpoints", "LOW",
+        # The endpoint paths themselves are the API map an attacker uses
+        # to start probing — hide them in safe mode but report the count.
+        desc_sr = (
+            f"Pronadjeno {len(found_endpoints)} API endpoint-a u inline skriptama. {_REDACTED_LABEL_SR}"
+            if safe_mode
+            else f"Pronadjeni API endpoint-i u inline skriptama: {', '.join(found_endpoints[:5])}. Ove informacije mogu pomoci napadacu u mapiranju API-ja."
+        )
+        desc_en = (
+            f"Found {len(found_endpoints)} API endpoints in inline scripts. {_REDACTED_LABEL_EN}"
+            if safe_mode
+            else f"API endpoints found in inline scripts: {', '.join(found_endpoints[:5])}. This information can help an attacker map the API."
+        )
+        f = _fail("js_api_endpoints", "LOW",
             f"Izlozeni API endpoint-i u JavaScript kodu ({len(found_endpoints)})",
             f"Exposed API endpoints in JavaScript code ({len(found_endpoints)})",
-            f"Pronadjeni API endpoint-i u inline skriptama: {', '.join(found_endpoints[:5])}. Ove informacije mogu pomoci napadacu u mapiranju API-ja.",
-            f"API endpoints found in inline scripts: {', '.join(found_endpoints[:5])}. This information can help an attacker map the API.",
+            desc_sr, desc_en,
             "Razmotrite koriscenje API gateway-a i osigurajte da svi endpoint-i zahtevaju autentifikaciju.",
-            "Consider using an API gateway and ensure all endpoints require authentication."))
+            "Consider using an API gateway and ensure all endpoints require authentication.")
+        f["_redacted"] = safe_mode
+        results.append(f)
     else:
         results.append(_pass("js_api_endpoints",
             "Nisu pronadjeni izlozeni API endpoint-i",

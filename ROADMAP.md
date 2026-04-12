@@ -17,6 +17,19 @@ dostojanstvena komunikacija, prevencija kao ogledalo — ne kao strah**.
 
 ## ✅ Završeno
 
+### Gate-before-scan model (architectural rewrite, 2026-04-12)
+- **Fajlovi**: `migrations/013-016`, `db.py`, `scanner.py`, `checks/disclosure_check.py`, `checks/jwt_check.py`, `checks/js_check.py`, `api.py`, `index.html`, `privacy.html`, `terms.html`
+- **Commit**: TBD
+- **Problem koji rešava**: stari skener je pokretao SVIH 30 check-ova bezuslovno pa filtrirao osetljive nalaze TEK na display layer-u (`_redact_result()`). To znači da je target server PRIMIO probe-ove za `/.env`, `/wp-admin/`, `/backup.sql`, port scan, GraphQL introspection itd. čak i od neverifikovanih korisnika. Filter je bio prekasan — osetljivi podaci su već postojali u memoriji backenda i u bazi.
+- **Novi model**: dva moda skeniranja sa **gate-om PRE skena**, ne filterom POSLE.
+  - **`mode='safe'` (default)**: 17 SAFE check-ova + 3 SAFE+REDACTED (disclosure/js/jwt) koji rade ali sumarno bez tačnih vrednosti. Zero probe-ova ka privatnoj infrastrukturi. Nikad ne dira `/.env`, admin panele, vuln scan, port scan.
+  - **`mode='full'` (samo posle wizard-a)**: dodatnih 10 FULL check-ova (files, admin, vuln, ports, api, cors, dependency, subdomain, takeover, wpscan).
+- **Wizard flow** (`POST /scan/request` → `/consent` × 3 → `/consent/finalize` → `/verify` → `/execute`): 3 odvojene saglasnosti server-side, svaki klik audit-loguje, finalna recap strana sa 3-sekundnim anti-reflex delay-om pre `POKRENI`.
+- **Privacy by design**: `scan_requests` tabela koristi `created_date DATE` (NE `TIMESTAMPTZ`), API response-i nikad ne vraćaju vreme klika. Cak ni kompletan leak baze ne moze da otkrije kada je korisnik kliknuo consent.
+- **Defansivne mere u DB**: SVE state machine tranzicije su atomicne UPDATE-ove sa WHERE clausama koji re-validiraju izvorni state. `mark_scan_request_executed` ima 6-uslovni WHERE (status, sva 3 consent-a, verify_passed) tako da malicious frontend ne moze da preskoci ni jedan korak.
+- **Backward compat**: legacy `/scan` endpoint je hardkodovan na `mode='safe'` cak i ako frontend salje `mode:'full'` u body. Stari frontend dobija default ponasanje bez izmena.
+- **Test trail**: 17 curl test-ova + 16 Playwright browser test-ova prosli pre push-a, security advisori 0 lints na produkciji posle migracija.
+
 ### Subdomain Takeover Detection
 - **Fajlovi**: `checks/takeover_check.py` (novo), `scanner.py` (registracija)
 - **Commit**: `af6ff94`

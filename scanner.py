@@ -201,6 +201,7 @@ def scan(
     progress_callback=None,
     max_pages: int = 1,
     preselected_pages: Optional[List[str]] = None,
+    mode: str = "full",
 ) -> Dict[str, Any]:
     """
     Run all security checks on the given URL.
@@ -224,7 +225,42 @@ def scan(
             the list length does not exceed max_pages. Used by the
             /api/discover -> /scan two-phase flow so Pro users can
             pick exactly which pages they want analyzed.
+        mode: 'safe' or 'full'. Controls which checks run and how they
+            report. Gate-before-scan ownership flow (migrations 014/015):
+
+              * 'safe' (default for unverified callers): only the 18 checks
+                that are guaranteed not to send active probes against private
+                attack surface. SSL, headers, DNS, cookies, redirect, CMS
+                detection, tech-stack regex, robots.txt, SEO, performance,
+                accessibility, GDPR, CT logs, WHOIS, Mozilla Observatory,
+                email-security DNS, extras (security.txt/CAA), well-known
+                endpoints. Plus 3 SAFE+REDACTED checks (disclosure, js, jwt)
+                that run but redact specific values internally.
+
+              * 'full' (only after the user proves ownership through the
+                wizard in api.py): every check runs, including the 10
+                FULL-only ones — files, admin, vuln, ports, api, cors,
+                subdomain, takeover, dependency, wpscan_lite — that touch
+                private surface. Findings are not redacted.
+
+            The redaction in 'safe' mode is done INSIDE each SAFE+REDACTED
+            check (disclosure_check, js_check, jwt_check) by passing
+            mode=mode through the lambda. Compare with the legacy
+            _redact_result() in api.py: that filtered AFTER the scan ran;
+            this gates BEFORE the check sends bytes to the target.
+
+    Notes:
+        Free-tier scans always pass mode='safe' from api.py — the new
+        'Brzi javni sken' button does not require ownership verification.
+        Full scans go through the wizard flow which culminates in api.py
+        passing mode='full' to scanner.scan().
     """
+    if mode not in ("safe", "full"):
+        # Defensive: an unknown mode is treated as the safer option so
+        # a typo or stale frontend never accidentally triggers a full
+        # active scan.
+        mode = "safe"
+
     start_time = time.time()
     deadline = start_time + SCAN_DEADLINE_SECONDS
     all_results = []
@@ -238,9 +274,18 @@ def scan(
     def _deadline_exceeded() -> bool:
         return time.time() > deadline
 
-    def run_check(step_msg: str, pct: int, name: str, fn) -> None:
+    def run_check(step_msg: str, pct: int, name: str, fn, kind: str = "safe") -> None:
         """
         Deadline-aware wrapper around a single check.
+
+        kind classifies the check into the gate-before-scan model:
+          * 'safe'     — always runs (no private-surface probes)
+          * 'full'     — runs only when scan mode == 'full' (skipped silently
+                         in safe mode; the check is not just hidden, it does
+                         not send a single byte to the target)
+          * 'redacted' — always runs, but the lambda is responsible for
+                         passing mode=mode to the underlying check so it
+                         knows whether to expose specific values or sumary
 
         If the overall scan deadline has been exceeded, the check is skipped
         and a single truncation notice is added to errors. Otherwise the
@@ -248,6 +293,11 @@ def scan(
         never stops the rest of the scan.
         """
         nonlocal scan_truncated
+        if kind == "full" and mode == "safe":
+            # Gate-before-scan: do not send any probe to the target. The
+            # frontend will show a "verify ownership to unlock" hint for
+            # the missing categories.
+            return
         if _deadline_exceeded():
             if not scan_truncated:
                 scan_truncated = True
@@ -454,70 +504,83 @@ def scan(
     # Each call is independent: a crash or timeout in one check never stops
     # the rest, and once SCAN_DEADLINE_SECONDS is exceeded the remaining
     # checks are skipped entirely instead of piling on more wall-clock time.
+    # ─────────────────────────────────────────────────────────────────
+    # Check classification (Plan A — gate-before-scan model)
+    # ─────────────────────────────────────────────────────────────────
+    # kind="safe"     → always runs. Pure passive (DNS, sertifikat, javni
+    #                   header-i, vec dobijeni HTML body, well-known
+    #                   IETF/W3C endpoints).
+    # kind="full"     → runs only with verified ownership. Touches private
+    #                   attack surface (probe-uje /.env, /wp-admin/, port
+    #                   scan, vuln/CVE checks, GraphQL introspection).
+    # kind="redacted" → runs in both modes BUT the underlying check
+    #                   accepts mode=... and redacts specific values
+    #                   (server version, JWT contents, exposed API key
+    #                   names, source-map developer paths) when mode='safe'.
     run_check("Proveravam SSL/TLS sertifikat...", 7, "SSL",
-              lambda: ssl_check.run(domain))
+              lambda: ssl_check.run(domain), kind="safe")
     run_check("Proveravam sigurnosne HTTP headere...", 11, "Headers",
-              lambda: headers_check.run(response_headers))
+              lambda: headers_check.run(response_headers), kind="safe")
     run_check("Proveravam DNS sigurnost (SPF, DMARC)...", 15, "DNS",
-              lambda: dns_check.run(domain))
+              lambda: dns_check.run(domain), kind="safe")
     run_check("Tražim osetljive fajlove...", 19, "Files",
-              lambda: files_check.run(base_url, session))
+              lambda: files_check.run(base_url, session), kind="full")
     run_check("Analiziram otkrivanje informacija o sistemu...", 23, "Disclosure",
-              lambda: disclosure_check.run(response_headers, response_body))
+              lambda: disclosure_check.run(response_headers, response_body, mode=mode), kind="redacted")
     run_check("Proveravam sigurnost kolačića...", 27, "Cookie",
-              lambda: cookies_check.run(response_headers, is_https))
+              lambda: cookies_check.run(response_headers, is_https), kind="safe")
     run_check("Proveravam HTTPS preusmeravanja...", 31, "Redirect",
-              lambda: redirect_check.run(domain, session))
+              lambda: redirect_check.run(domain, session), kind="safe")
     run_check("Detektujem CMS i tehnologije...", 35, "CMS",
-              lambda: cms_check.run(base_url, response_body, session))
+              lambda: cms_check.run(base_url, response_body, session), kind="safe")
     run_check("WordPress deep-pass (plugini, useri, xmlrpc)...", 37, "WPScan",
-              lambda: wpscan_lite.run(base_url, response_body, session))
+              lambda: wpscan_lite.run(base_url, response_body, session), kind="full")
     run_check("Tražim izložene admin stranice...", 39, "Admin",
-              lambda: admin_check.run(base_url, session))
+              lambda: admin_check.run(base_url, session), kind="full")
     run_check("Analiziram robots.txt...", 43, "Robots",
-              lambda: robots_check.run(base_url, session))
+              lambda: robots_check.run(base_url, session), kind="safe")
     run_check("Proveravam opasne otvorene portove...", 47, "Ports",
-              lambda: ports_check.run(domain))
+              lambda: ports_check.run(domain), kind="full")
     run_check("Proveravam CORS politiku...", 50, "CORS",
-              lambda: cors_check.run(base_url, response_headers, session))
+              lambda: cors_check.run(base_url, response_headers, session), kind="full")
     run_check("Proveravam security.txt, CAA, SRI...", 54, "Extras",
-              lambda: extras_check.run(base_url, domain, response_body, session))
+              lambda: extras_check.run(base_url, domain, response_body, session), kind="safe")
     run_check("Enumerišem .well-known endpointe...", 55, "WellKnown",
-              lambda: wellknown_check.run(base_url, session))
+              lambda: wellknown_check.run(base_url, session), kind="safe")
     run_check("Skeniram ranjivosti (pasivno)...", 58, "Vuln",
-              lambda: vuln_check.run(base_url, response_body, response_headers, session))
+              lambda: vuln_check.run(base_url, response_body, response_headers, session), kind="full")
     run_check("Analiziram JavaScript bezbednost...", 62, "JS",
-              lambda: js_check.run(base_url, response_body, session))
+              lambda: js_check.run(base_url, response_body, session, mode=mode), kind="redacted")
     run_check("Analiziram JWT tokene u odgovoru...", 64, "JWT",
-              lambda: jwt_check.run(response_body, response_headers, session))
+              lambda: jwt_check.run(response_body, response_headers, session, mode=mode), kind="redacted")
     run_check("Proveravam API bezbednost...", 65, "API",
-              lambda: api_check.run(base_url, session))
+              lambda: api_check.run(base_url, session), kind="full")
     run_check("Proveravam zavisnosti i biblioteke...", 69, "Dependency",
-              lambda: dependency_check.run(base_url, response_body, session))
+              lambda: dependency_check.run(base_url, response_body, session), kind="full")
     run_check("Analiziram SEO...", 73, "SEO",
-              lambda: seo_check.run(base_url, response_body, response_headers, session))
+              lambda: seo_check.run(base_url, response_body, response_headers, session), kind="safe")
     run_check("Analiziram performanse sajta...", 77, "Performance",
               lambda: performance_check.run(
                   base_url, response_body, response_headers, session,
-                  response_time_ms, page_size_bytes))
+                  response_time_ms, page_size_bytes), kind="safe")
     run_check("Proveravam GDPR usklađenost...", 80, "GDPR",
-              lambda: gdpr_check.run(base_url, response_body, response_headers, session))
+              lambda: gdpr_check.run(base_url, response_body, response_headers, session), kind="safe")
     run_check("Proveravam pristupačnost (a11y)...", 84, "Accessibility",
-              lambda: accessibility_check.run(response_body))
+              lambda: accessibility_check.run(response_body), kind="safe")
     run_check("Proveravam WHOIS podatke domena...", 87, "WHOIS",
-              lambda: whois_check.run(domain))
+              lambda: whois_check.run(domain), kind="safe")
     run_check("Detektujem tehnoloski stek...", 89, "Tech stack",
-              lambda: tech_stack_check.run(response_body, response_headers))
+              lambda: tech_stack_check.run(response_body, response_headers), kind="safe")
     run_check("Proveravam email bezbednost...", 91, "Email",
-              lambda: email_security_check.run(domain))
+              lambda: email_security_check.run(domain), kind="safe")
     run_check("Mozilla Observatory analiza...", 93, "Observatory",
-              lambda: observatory_check.run(domain))
+              lambda: observatory_check.run(domain), kind="safe")
     run_check("Proveravam Certificate Transparency logove...", 97, "CT",
-              lambda: ct_check.run(domain))
+              lambda: ct_check.run(domain), kind="safe")
     run_check("Skeniram subdomene...", 98, "Subdomain",
-              lambda: subdomain_check.run(domain))
+              lambda: subdomain_check.run(domain), kind="full")
     run_check("Proveravam dangling CNAME zapise (subdomain takeover)...", 98, "Takeover",
-              lambda: takeover_check.run(domain))
+              lambda: takeover_check.run(domain), kind="full")
 
     # ─────────────────────────────────────────────────────────────────
     # Multi-page pass (Pro plan only — max_pages > 1)
@@ -578,17 +641,27 @@ def scan(
             # Run the page-level check subset. Any crash here does not
             # stop the rest of the multi-page loop — matches the
             # single-page run_check() behaviour.
+            #
+            # The same kind classification applies here:
+            #   * Headers, SEO       — safe (always run)
+            #   * Disclosure, JS, JWT — redacted (mode-aware)
+            #   * Vuln               — full (skipped in safe mode — but
+            #                          multi-page pass only happens for Pro
+            #                          users who already have a verified
+            #                          full scan, so this is mostly defensive)
             page_level_checks = [
-                ("Headers",    lambda: headers_check.run(page_headers)),
-                ("Disclosure", lambda: disclosure_check.run(page_headers, page_body)),
-                ("Vuln",       lambda: vuln_check.run(page_url, page_body, page_headers, session)),
-                ("JS",         lambda: js_check.run(page_url, page_body, session)),
-                ("JWT",        lambda: jwt_check.run(page_body, page_headers, session)),
-                ("SEO",        lambda: seo_check.run(page_url, page_body, page_headers, session)),
+                ("Headers",    "safe",     lambda: headers_check.run(page_headers)),
+                ("Disclosure", "redacted", lambda: disclosure_check.run(page_headers, page_body, mode=mode)),
+                ("Vuln",       "full",     lambda: vuln_check.run(page_url, page_body, page_headers, session)),
+                ("JS",         "redacted", lambda: js_check.run(page_url, page_body, session, mode=mode)),
+                ("JWT",        "redacted", lambda: jwt_check.run(page_body, page_headers, session, mode=mode)),
+                ("SEO",        "safe",     lambda: seo_check.run(page_url, page_body, page_headers, session)),
             ]
-            for check_name, check_fn in page_level_checks:
+            for check_name, check_kind, check_fn in page_level_checks:
                 if _deadline_exceeded():
                     break
+                if check_kind == "full" and mode == "safe":
+                    continue
                 try:
                     page_results = check_fn() or []
                     # Tag each result with the page URL so the UI can
@@ -632,4 +705,10 @@ def scan(
         "failed_checks": len([r for r in all_results if not r.get("passed")]),
         "top_priorities": top_priorities,
         "pages_found": pages_found,
+        # Gate-before-scan model marker. The frontend reads this to decide
+        # whether to render the "Verify ownership to unlock more checks"
+        # banner and which check categories to show as locked. api.py uses
+        # it as part of the response payload so the result endpoint never
+        # mislabels a safe scan as a full one.
+        "scan_mode": mode,
     }

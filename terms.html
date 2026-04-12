@@ -77,14 +77,35 @@
       <li>Ako ostavite kontakt email, obavestavamo vas o ishodu</li>
     </ul>
 
-    <h2 id="tos7">7. Verifikacija vlasnistva (Function 6)</h2>
-    <p>Po podrazumevanom podesavanju, scan rezultati za neprovereno vlasnistvo pokazuju samo osnovni grejd i kategorijske brojeve. Specificni pronalazci (izlozeni fajlovi, admin panel URL-ovi, ranjivosti) su sakriveni i zamenjeni placeholder-om sa pozivom na verifikaciju. Da biste otkljucali punu listu za svoj domen, dokazite vlasnistvo kroz jednu od tri metode:</p>
-    <ul>
-      <li><strong>Meta tag</strong> na pocetnoj stranici</li>
-      <li><strong>Fajl</strong> u <code>/.well-known/scanner-verify.txt</code></li>
-      <li><strong>DNS TXT zapis</strong> na <code>_scanner-verify.vasdomen.com</code></li>
-    </ul>
-    <p>Uspesna verifikacija vazi 30 dana po kombinaciji (domen, IP hash). Posle isteka, mozete je ponovo izvrsiti. Ova politika postoji da bi se sprecilo zlonamerno koriscenje Servisa kao exploit cheat-sheet-a za tudje sajtove.</p>
+    <h2 id="tos7">7. Dva moda skeniranja — gate-before-scan model</h2>
+    <p>Servis nudi <strong>dva moda skeniranja</strong>, odvojena strogim gate-om na backend-u:</p>
+
+    <h3>7.1. Brzi javni sken (default, bez verifikacije)</h3>
+    <p>Pokrece se klikom na dugme <strong>Brzi javni sken</strong>. Pokrece <strong>20 pasivnih provera</strong> koje koriste samo informacije koje je vec poznat svaki javni posetilac sajta: SSL/TLS sertifikat, HTTP header-i, javni DNS zapisi (SPF, DMARC, DNSSEC), homepage HTML, robots.txt, security.txt, well-known endpoint-i, performanse, accessibility, GDPR detekcija, WHOIS, CT logovi, Mozilla Observatory. Tri SAFE+REDACTED check-a (Information Disclosure, JavaScript Security, JWT Security) takodje rade ali zamenjuju tacne vrednosti placeholder-om <em>"verifikujte vlasnistvo da vidite tacne podatke"</em>.</p>
+    <p>U ovom modu skener <strong>NE SALJE NIJEDAN PROBE</strong> ka privatnoj infrastrukturi sajta. Target server nece naci nijedan GET zahtev za <code>/.env</code>, <code>/.git/config</code>, <code>/wp-admin/</code>, <code>/phpmyadmin/</code>, port scan, ili bilo sta sto bi legitiman vlasnik tretirao kao recon. Cilj je: brza, stateless, ne-kompromitujuca provera koju moze da pokrene bilo ko bez pravnog rizika.</p>
+
+    <h3>7.2. Puni sken (samo za vlasnike, kroz wizard)</h3>
+    <p>Pokrece se klikom na dugme <strong>🔓 Puni sken (vlasnici sajta)</strong>. Otvara se wizard koji vodi kroz 3 koraka:</p>
+    <ol>
+      <li><strong>Tri eksplicitne saglasnosti</strong> — svaki klik se zapisuje u nas audit log uz pseudonimizovani IP hash:
+        <ul>
+          <li>Vlasnistvo / pisano ovlascenje od vlasnika</li>
+          <li>Razumevanje da scanner pokrece aktivne probe ka osetljivim fajlovima, admin panelima, portovima baze podataka i ranjivostima — sa punom pravnom odgovornoscu</li>
+          <li>Saglasnost sa 30-dnevnim cuvanjem nalaza vezanim za vas IP hash</li>
+        </ul>
+      </li>
+      <li><strong>Verifikacija vlasnistva</strong> — dokazite da kontrolisete domen kroz jednu od tri metode:
+        <ul>
+          <li><strong>Meta tag</strong> u <code>&lt;head&gt;</code> pocetne stranice</li>
+          <li><strong>Fajl</strong> u <code>/.well-known/scanner-verify.txt</code></li>
+          <li><strong>DNS TXT zapis</strong> na <code>_scanner-verify.vasdomen.com</code></li>
+        </ul>
+      </li>
+      <li><strong>Recap i finalna potvrda</strong> — wizard prikazuje sumarno sve sto ste odobrili. Dugme za pokretanje punog skena ima 3-sekundni delay (anti-reflex mera) tako da recap stvarno bude procitan pre klika.</li>
+    </ol>
+    <p>Tek nakon sto sve 3 saglasnosti prodju, vlasnistvo bude verifikovano, i finalna potvrda bude data, scanner pokrece <strong>dodatnih 10 aktivnih check-ova</strong>: scan osetljivih fajlova, admin panel detekciju, vulnerability scan, port scan, API security (GraphQL introspection, swagger), CORS analizu, dependency CVE check, subdomain enumeration, takeover detekciju, WordPress deep-pass.</p>
+    <p>Uspesna verifikacija vazi <strong>30 dana</strong> po kombinaciji (domen, IP hash). Posle isteka, ponovo prolazite kroz wizard. Ova politika postoji da bi se sprecilo zlonamerno koriscenje Servisa kao exploit cheat-sheet-a za tudje sajtove.</p>
+    <p><strong>Privacy-by-design:</strong> wizard tabela <code>scan_requests</code> cuva samo datum kreiranja (DATE), bez timestamp-a, tako da cak ni potpuni leak baze ne moze da otkrije tacno vreme kad ste klikali consent checkbox-e.</p>
 
     <h2 id="tos8">8. Ogranicenja odgovornosti</h2>
     <p>Servis se pruza <strong>&quot;kako jeste&quot;</strong>, bez ikakvih garancija, izriciitih ili implicitnih. Konkretno:</p>
@@ -215,14 +236,35 @@
       <li>If you leave contact email, we will notify you of the outcome</li>
     </ul>
 
-    <h2 id="tos7e">7. Ownership verification (Function 6)</h2>
-    <p>By default, scan results for unverified ownership show only the overall grade and category counts. Specific findings (exposed files, admin panel URLs, vulnerabilities) are hidden and replaced with a placeholder prompting verification. To unlock the full list for your domain, prove ownership through one of three methods:</p>
-    <ul>
-      <li><strong>Meta tag</strong> on the homepage</li>
-      <li><strong>File</strong> at <code>/.well-known/scanner-verify.txt</code></li>
-      <li><strong>DNS TXT record</strong> at <code>_scanner-verify.yourdomain.com</code></li>
-    </ul>
-    <p>Successful verification is valid for 30 days per (domain, IP hash) combination. After expiry, you can re-verify. This policy exists to prevent the Service from being used as an exploit cheat sheet against sites owned by someone else.</p>
+    <h2 id="tos7e">7. Two scan modes — gate-before-scan model</h2>
+    <p>The Service offers <strong>two scan modes</strong>, separated by a strict server-side gate:</p>
+
+    <h3>7.1. Quick public scan (default, no verification)</h3>
+    <p>Triggered by clicking <strong>Quick public scan</strong>. Runs <strong>20 passive checks</strong> using only information any public visitor of the site already knows: SSL/TLS certificate, HTTP headers, public DNS records (SPF, DMARC, DNSSEC), homepage HTML, robots.txt, security.txt, well-known endpoints, performance, accessibility, GDPR detection, WHOIS, CT logs, Mozilla Observatory. Three SAFE+REDACTED checks (Information Disclosure, JavaScript Security, JWT Security) also run but replace exact values with the placeholder <em>"verify ownership to see exact data"</em>.</p>
+    <p>In this mode the scanner <strong>SENDS NO PROBES</strong> against private infrastructure. The target server will not see a single GET request for <code>/.env</code>, <code>/.git/config</code>, <code>/wp-admin/</code>, <code>/phpmyadmin/</code>, port scans, or anything a legitimate owner would treat as recon. Goal: a fast, stateless, non-compromising check that anyone can run without legal risk.</p>
+
+    <h3>7.2. Full scan (owners only, via wizard)</h3>
+    <p>Triggered by the <strong>🔓 Full scan (site owners)</strong> button. Opens a wizard with 3 steps:</p>
+    <ol>
+      <li><strong>Three explicit consents</strong> — every click is recorded in our audit log together with a pseudonymized IP hash:
+        <ul>
+          <li>Ownership / written authorization from the owner</li>
+          <li>Understanding that the scanner will send active probes against sensitive files, admin panels, database ports, and vulnerabilities — with full legal responsibility</li>
+          <li>Consent to 30-day storage of findings tied to your IP hash</li>
+        </ul>
+      </li>
+      <li><strong>Ownership verification</strong> — prove you control the domain through one of three methods:
+        <ul>
+          <li><strong>Meta tag</strong> in the <code>&lt;head&gt;</code> of the homepage</li>
+          <li><strong>File</strong> at <code>/.well-known/scanner-verify.txt</code></li>
+          <li><strong>DNS TXT record</strong> at <code>_scanner-verify.yourdomain.com</code></li>
+        </ul>
+      </li>
+      <li><strong>Recap and final confirmation</strong> — the wizard shows a summary of everything you approved. The button to start the full scan has a 3-second delay (anti-reflex measure) so the recap is actually read before clicking.</li>
+    </ol>
+    <p>Only after all 3 consents pass, ownership is verified, and the final confirmation is given does the scanner run <strong>10 additional active checks</strong>: sensitive files scan, admin panel detection, vulnerability scan, port scan, API security (GraphQL introspection, swagger), CORS analysis, dependency CVE check, subdomain enumeration, takeover detection, WordPress deep-pass.</p>
+    <p>Successful verification is valid for <strong>30 days</strong> per (domain, IP hash) combination. After expiry, you go through the wizard again. This policy exists to prevent the Service from being used as an exploit cheat sheet against sites owned by someone else.</p>
+    <p><strong>Privacy-by-design:</strong> the wizard table <code>scan_requests</code> only stores the creation date (DATE), with no timestamp, so even a complete database leak cannot reveal the exact time you clicked the consent checkboxes.</p>
 
     <h2 id="tos8e">8. Limitation of liability</h2>
     <p>The Service is provided <strong>&quot;as is&quot;</strong>, without warranties of any kind, express or implied. Specifically:</p>

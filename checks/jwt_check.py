@@ -16,6 +16,19 @@ The check is 100% passive: zero new HTTP requests, zero bytes sent to
 the target. The dictionary attack runs purely in-process against a
 curated wordlist of ~55 known-weak JWT secrets. Roughly 55 HMAC
 operations per token, well under a millisecond.
+
+mode parameter (gate-before-scan model from migrations 014/015):
+  * 'full' (default) — Findings include the token contents (masked first
+                       24 chars), the exact algorithm, and the cracked
+                       secret string. The owner needs all of this to fix
+                       the issue.
+  * 'safe'           — The detection still runs (it is in-process and
+                       cannot leak anything to the target by definition),
+                       but findings strip the masked token, the exact
+                       alg, the cracked secret, and the source. The
+                       summary becomes "JWT vulnerability detected
+                       (verify ownership to view details)" — the
+                       attacker learns nothing actionable.
 """
 import re
 import json
@@ -184,7 +197,20 @@ def _mask(token: str) -> str:
 # ── Finding constructors ───────────────────────────────────────────────────
 
 
-def _finding_alg_none(source: str, token: str) -> Dict[str, Any]:
+# Sentinel labels used in safe-mode findings. The token, source, alg, and
+# cracked secret are exactly the values an attacker needs — strip them all
+# to a single placeholder so the safe-mode summary tells the owner WHAT
+# was detected without telling an unverified caller WHERE.
+_REDACTED_LABEL_SR = "[verifikujte vlasnistvo da vidite tacne podatke]"
+_REDACTED_LABEL_EN = "[verify ownership to see exact data]"
+
+
+def _finding_alg_none(source: str, token: str, mode: str = "full") -> Dict[str, Any]:
+    safe_mode = (mode == "safe")
+    src_show = _REDACTED_LABEL_SR if safe_mode else source
+    src_show_en = _REDACTED_LABEL_EN if safe_mode else source
+    tok_show = _REDACTED_LABEL_SR if safe_mode else _mask(token)
+    tok_show_en = _REDACTED_LABEL_EN if safe_mode else _mask(token)
     return {
         "id": "jwt_alg_none",
         "category": "JWT Security",
@@ -193,16 +219,16 @@ def _finding_alg_none(source: str, token: str) -> Dict[str, Any]:
         "title": "JWT koristi 'alg: none' — autentikacija je trivijalno zaobidljiva",
         "title_en": "JWT uses 'alg: none' — authentication is trivially bypassable",
         "description": (
-            f"Detektovan JWT u {source} koji koristi 'alg: none'. Token nema "
+            f"Detektovan JWT u {src_show} koji koristi 'alg: none'. Token nema "
             "kriptografski potpis — napadač može u trenutku iskonstruisati "
             "proizvoljan token (promeniti korisničko ime, privilegije, role) "
-            f"i server će ga prihvatiti kao validan. Token: {_mask(token)}"
+            f"i server će ga prihvatiti kao validan. Token: {tok_show}"
         ),
         "description_en": (
-            f"JWT detected in {source} using 'alg: none'. The token has no "
+            f"JWT detected in {src_show_en} using 'alg: none'. The token has no "
             "cryptographic signature — an attacker can instantly forge any "
             "token (change username, privileges, roles) and the server will "
-            f"accept it as valid. Token: {_mask(token)}"
+            f"accept it as valid. Token: {tok_show_en}"
         ),
         "recommendation": (
             "HITNO onemogućite 'none' algoritam u JWT biblioteci. Koristite "
@@ -218,37 +244,46 @@ def _finding_alg_none(source: str, token: str) -> Dict[str, Any]:
             "(whitelist) in your library instead of trusting the 'alg' from "
             "the token header — the header is attacker-controlled."
         ),
+        "_redacted": safe_mode,
     }
 
 
 def _finding_weak_secret(
-    source: str, token: str, secret: str, alg: str
+    source: str, token: str, secret: str, alg: str, mode: str = "full"
 ) -> Dict[str, Any]:
+    safe_mode = (mode == "safe")
     shown = secret if secret else "(empty string)"
+    secret_show = _REDACTED_LABEL_SR if safe_mode else f"'{shown}'"
+    secret_show_en = _REDACTED_LABEL_EN if safe_mode else f"'{shown}'"
+    src_show = _REDACTED_LABEL_SR if safe_mode else source
+    src_show_en = _REDACTED_LABEL_EN if safe_mode else source
+    tok_show = _REDACTED_LABEL_SR if safe_mode else _mask(token)
+    tok_show_en = _REDACTED_LABEL_EN if safe_mode else _mask(token)
+    alg_show = "[REDACTED]" if safe_mode else alg
     return {
         "id": "jwt_weak_secret",
         "category": "JWT Security",
         "severity": "CRITICAL",
         "passed": False,
-        "title": f"JWT {alg} secret je pronadjen u listi slabih secrets ('{shown}')",
-        "title_en": f"JWT {alg} secret found in weak-secrets list ('{shown}')",
+        "title": f"JWT {alg_show} secret je pronadjen u listi slabih secrets ({secret_show})",
+        "title_en": f"JWT {alg_show} secret found in weak-secrets list ({secret_show_en})",
         "description": (
-            f"Detektovan JWT u {source} koji koristi {alg} sa slabim secretom. "
-            f"Secret '{shown}' pronadjen je u curated listi od ~55 javno "
+            f"Detektovan JWT u {src_show} koji koristi {alg_show} sa slabim secretom. "
+            f"Secret {secret_show} pronadjen je u curated listi od ~55 javno "
             "poznatih slabih JWT secrets i verifikacija je obavljena potpuno "
             "offline (nula mreznog saobracaja ka vasem serveru — samo HMAC "
             "racunanje nad vec primljenim token bajtovima). Sa ovim secretom "
             "napadac moze da falsifikuje bilo koji JWT koji ce vas server "
-            f"prihvatiti. Token: {_mask(token)}"
+            f"prihvatiti. Token: {tok_show}"
         ),
         "description_en": (
-            f"JWT detected in {source} using {alg} with a weak secret. The "
-            f"secret '{shown}' was found in a curated list of ~55 publicly "
+            f"JWT detected in {src_show_en} using {alg_show} with a weak secret. The "
+            f"secret {secret_show_en} was found in a curated list of ~55 publicly "
             "known weak JWT secrets, and the verification ran entirely "
             "offline (zero network traffic to your server — only HMAC "
             "computation over the already-received token bytes). With this "
             "secret, an attacker can forge any JWT your server will accept. "
-            f"Token: {_mask(token)}"
+            f"Token: {tok_show_en}"
         ),
         "recommendation": (
             "HITNO rotirajte JWT secret i invalidirajte postojece tokene. "
@@ -266,10 +301,16 @@ def _finding_weak_secret(
             "as a JWT secret — those are the first entries in every public "
             "attacker wordlist."
         ),
+        "_redacted": safe_mode,
     }
 
 
-def _finding_missing_exp(source: str, token: str) -> Dict[str, Any]:
+def _finding_missing_exp(source: str, token: str, mode: str = "full") -> Dict[str, Any]:
+    safe_mode = (mode == "safe")
+    src_show = _REDACTED_LABEL_SR if safe_mode else source
+    src_show_en = _REDACTED_LABEL_EN if safe_mode else source
+    tok_show = _REDACTED_LABEL_SR if safe_mode else _mask(token)
+    tok_show_en = _REDACTED_LABEL_EN if safe_mode else _mask(token)
     return {
         "id": "jwt_missing_exp",
         "category": "JWT Security",
@@ -278,18 +319,18 @@ def _finding_missing_exp(source: str, token: str) -> Dict[str, Any]:
         "title": "JWT nema 'exp' claim — token traje zauvek",
         "title_en": "JWT has no 'exp' claim — token lasts forever",
         "description": (
-            f"Detektovan JWT u {source} koji ne sadrži 'exp' claim. Token bez "
+            f"Detektovan JWT u {src_show} koji ne sadrži 'exp' claim. Token bez "
             "isteka je aktivan zauvek — ako napadač jednom dobije token (npr. "
             "kroz XSS, leaked log, ili kompromitovanu tastaturu), može ga "
             "koristiti do kraja vremena osim ako ga eksplicitno ne revokujete "
-            f"na backend strani. Token: {_mask(token)}"
+            f"na backend strani. Token: {tok_show}"
         ),
         "description_en": (
-            f"JWT detected in {source} with no 'exp' claim. A token without "
+            f"JWT detected in {src_show_en} with no 'exp' claim. A token without "
             "expiration is valid forever — if an attacker ever obtains the "
             "token (through XSS, leaked log, or a compromised device), they "
             "can use it indefinitely unless you explicitly revoke it "
-            f"server-side. Token: {_mask(token)}"
+            f"server-side. Token: {tok_show_en}"
         ),
         "recommendation": (
             "Dodajte 'exp' claim u sve JWT tokene. Za access token: 15–60 "
@@ -303,33 +344,41 @@ def _finding_missing_exp(source: str, token: str) -> Dict[str, Any]:
             "revocation support. A short lifetime means that a stolen token "
             "has a narrow usable window."
         ),
+        "_redacted": safe_mode,
     }
 
 
 def _finding_long_exp(
-    source: str, token: str, seconds_ahead: int
+    source: str, token: str, seconds_ahead: int, mode: str = "full"
 ) -> Dict[str, Any]:
+    safe_mode = (mode == "safe")
     days = seconds_ahead // 86400
+    days_show = _REDACTED_LABEL_SR if safe_mode else f"{days} dana"
+    days_show_en = _REDACTED_LABEL_EN if safe_mode else f"{days} days"
+    src_show = _REDACTED_LABEL_SR if safe_mode else source
+    src_show_en = _REDACTED_LABEL_EN if safe_mode else source
+    tok_show = _REDACTED_LABEL_SR if safe_mode else _mask(token)
+    tok_show_en = _REDACTED_LABEL_EN if safe_mode else _mask(token)
     return {
         "id": "jwt_exp_too_long",
         "category": "JWT Security",
         "severity": "LOW",
         "passed": False,
-        "title": f"JWT 'exp' je predug ({days} dana u buducnosti)",
-        "title_en": f"JWT 'exp' is too far in the future ({days} days ahead)",
+        "title": f"JWT 'exp' je predug ({days_show} u buducnosti)",
+        "title_en": f"JWT 'exp' is too far in the future ({days_show_en} ahead)",
         "description": (
-            f"Detektovan JWT u {source} ciji 'exp' claim istice za {days} "
-            "dana. Predugi tokeni su prakticno isto sto i tokeni bez "
+            f"Detektovan JWT u {src_show} ciji 'exp' claim istice za {days_show}. "
+            "Predugi tokeni su prakticno isto sto i tokeni bez "
             "isteka — ukraden token ostaje validan mesecima ili godinama, "
             f"sto znatno povecava posledice bilo kakvog leak-a. Token: "
-            f"{_mask(token)}"
+            f"{tok_show}"
         ),
         "description_en": (
-            f"JWT detected in {source} with an 'exp' claim {days} days in "
+            f"JWT detected in {src_show_en} with an 'exp' claim {days_show_en} in "
             "the future. Very long-lived tokens are effectively equivalent "
             "to tokens with no expiration — a stolen token stays valid for "
             "months or years, significantly amplifying the impact of any "
-            f"leak. Token: {_mask(token)}"
+            f"leak. Token: {tok_show_en}"
         ),
         "recommendation": (
             "Smanjite JWT lifetime na minimum potreban za funkciju: 15–60 "
@@ -341,6 +390,7 @@ def _finding_long_exp(
             "access tokens, 7–30 days for refresh tokens (with mandatory "
             "server-side revocation)."
         ),
+        "_redacted": safe_mode,
     }
 
 
@@ -351,12 +401,17 @@ def run(
     response_body: str,
     response_headers: Dict[str, Any],
     session: Any = None,
+    mode: str = "full",
 ) -> List[Dict[str, Any]]:
     """
     Scan the already-received response for exposed JWTs and analyze each
     one. Input: body, headers, session — all produced by the main scan,
     no new HTTP requests are made. The in-process dictionary attack on
     HS* secrets runs against the ~55-entry curated wordlist.
+
+    mode='safe' produces sumary findings that strip the masked token,
+    source location, alg name, and cracked secret. mode='full' returns
+    the legacy detailed findings.
 
     Returns a list of findings. Empty list means either no JWT was found
     or every JWT passed all four checks. Findings are de-duplicated per
@@ -389,7 +444,7 @@ def run(
 
         # Check 1 — alg:none (or empty alg) is instant forgery
         if alg == "NONE" or alg == "":
-            _once("alg_none", _finding_alg_none(source, token))
+            _once("alg_none", _finding_alg_none(source, token, mode=mode))
             continue
 
         # Check 2 — weak HS* secret cracked offline
@@ -398,19 +453,19 @@ def run(
             if cracked is not None:
                 _once(
                     f"weak_secret_{alg}",
-                    _finding_weak_secret(source, token, cracked, alg),
+                    _finding_weak_secret(source, token, cracked, alg, mode=mode),
                 )
                 continue
 
         # Check 3 — missing exp claim
         exp = payload.get("exp")
         if exp is None:
-            _once("missing_exp", _finding_missing_exp(source, token))
+            _once("missing_exp", _finding_missing_exp(source, token, mode=mode))
             continue
 
         # Check 4 — exp too far in the future
         if isinstance(exp, (int, float)) and exp > now + one_year:
             ahead = int(exp - now)
-            _once("long_exp", _finding_long_exp(source, token, ahead))
+            _once("long_exp", _finding_long_exp(source, token, ahead, mode=mode))
 
     return findings

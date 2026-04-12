@@ -140,10 +140,32 @@ Plus opcioni:
 |---|---|---|
 | `verification_tokens` | kratkotrajni token + dokaz vlasništva | 1h pending, pa expire |
 | `verified_domains` | "ovaj ip_hash je dokazao vlasništvo domena X" | 30 dana |
+| `scan_requests` | wizard za puni sken (3 consent flag-a, verify status) | 24h ako nije izvršen, posle cron briše |
 | `rate_limits` | brojači po IP-ju i po domenu | čisti se kad prođe window |
 | `abuse_reports` | prijave zloupotrebe | zauvek (dok ručno ne obrišeš) |
 | `backup_log` | audit backup pokušaja | 180 dana |
 | `schema_migrations` | history schema promena | zauvek |
+
+**Važno o `scan_requests`:** ova tabela koristi `created_date DATE` (NE `TIMESTAMPTZ`). Privacy-by-design: ako neko provali u bazu, NE MOŽE da vidi tačno vreme kad je korisnik kliknuo consent checkbox. Vidi samo "klik je bio negde tog dana". Audit_log ima precizan timestamp za pravnu obavezu, ali sama scan_requests tabela je timestamp-free.
+
+### Gate-before-scan model — wizard flow za "Puni sken"
+
+Skener ima **dva moda**, odvojena strogim server-side gate-om:
+
+- **`mode='safe'`** (default, bez verifikacije): pokrece se klikom na **"Brzi javni sken"**. 17 SAFE check-ova + 3 SAFE+REDACTED (disclosure, js, jwt) koji rade ali sumarno bez tačnih vrednosti. **NIKAD** ne salje probe za `/.env`, `/wp-admin/`, port scan, GraphQL introspection. Stateless, ne-kompromitujuće, bilo ko može pokrenuti.
+
+- **`mode='full'`** (samo posle wizard-a): klik na **"🔓 Puni sken (vlasnici sajta)"** otvara wizard. Tek posle ova **5 koraka koja sva moraju da prodju server-side**:
+  1. `POST /scan/request` kreira `scan_requests` row u status `pending_consent`
+  2. `POST /scan/request/{id}/consent` × 3 (svaki klik audit-loguje `consent_set` event)
+  3. `POST /scan/request/{id}/consent/finalize` flipuje na `consent_recorded`
+  4. `POST /scan/request/{id}/verify` proverava ownership (meta tag/file/DNS), na uspeh flipuje na `verified` i upisuje u `verified_domains` na 30 dana
+  5. `POST /scan/request/{id}/execute` re-validira SVE preconditions (sva 3 consent-a + verify_passed + is_domain_verified) pa flipuje na `executing`, kreira scans row sa `mode='full'`, pokrece scanner
+
+  Tek tada scanner pokrece **dodatnih 10 FULL check-ova**: files, admin, vuln, ports, api, cors, dependency, subdomain, takeover, wpscan_lite.
+
+**Defansiva**: legacy `POST /scan` endpoint (Brzi sken) je hardkodovan na `mode='safe'` cak i ako frontend posalje `mode:'full'` u body. Full mode se moze postaviti SAMO kroz wizard execute. To znaci da bilo koji curl prema `/scan` od bilo koga uvek pokrece samo safe scan.
+
+**Ako korisnik prijavi "skenirali ste mi sajt bez dozvole"**: prvo proveri u `audit_log` koji `mode` je zabelezen za `scan_start` event tog scana. Ako `mode='safe'`, vrlo si pokriven — skener nije slao nijedan probe ka privatnoj infrastrukturi. Ako `mode='full'`, mora postojati i `scan_request_executed` event pre toga sa istim `scan_id`, sto znaci da je korisnik prosao kroz wizard sa 3 saglasnosti i verifikacijom. Vidi `scan_requests` row za sve detalje.
 
 ---
 

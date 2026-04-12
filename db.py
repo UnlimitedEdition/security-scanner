@@ -808,3 +808,341 @@ def log_audit_event(
         client.table("audit_log").insert(row).execute()
 
     _safe_db_call("log_audit_event", _do)
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# scan_requests — gate-before-scan ownership flow (migration 014/015)
+# ─────────────────────────────────────────────────────────────────────────
+# These helpers back the new "Full Scan" wizard. The contract with api.py:
+#
+#   1. POST /scan/request                   → create_scan_request()
+#   2. POST /scan/request/{id}/consent      → set_scan_request_consent()
+#   3. POST /scan/request/{id}/consent/finalize → finalize_scan_request_consents()
+#   4. POST /verify/check (existing)        → attach_verify_to_scan_request()
+#                                              when called in the wizard context
+#   5. POST /scan/request/{id}/execute      → mark_scan_request_executed()
+#   6. abandon button / wizard timeout      → abandon_scan_request()
+#
+# Every state transition is audit-logged. The audit_log entries DO carry
+# wall-clock timestamps (compliance requirement), but the scan_requests
+# table itself stores only created_date (DATE) so the row data alone never
+# leaks consent click timing.
+#
+# All functions follow the same _safe_db_call pattern as the rest of this
+# module: silent on DB failure, return None / False, log a warning. The
+# api.py layer treats "DB returned None" as a hard failure and refuses to
+# advance the wizard — unlike best-effort writes (progress updates), this
+# table is the source of truth for the wizard state machine.
+
+def create_scan_request(
+    request_id: str,
+    domain: str,
+    url: str,
+    ip: str,
+    user_agent: Optional[str] = None,
+) -> Optional[Dict[str, Any]]:
+    """
+    INSERT a new scan_requests row in 'pending_consent' status.
+    Returns the inserted row dict on success, None on failure.
+
+    api.py is the only caller. It generates request_id (uuid4[:8], same
+    shape as scans.id) and the normalized domain. We hash IP and UA here
+    so callers don't need to know about PII handling.
+    """
+    if not is_configured():
+        return None
+
+    def _do():
+        client = get_client()
+        row = {
+            "id": request_id,
+            "domain": domain,
+            "url": url,
+            "status": "pending_consent",
+            "client_ip_hash": hash_ip(ip),
+            "user_agent_hash": hash_ua(user_agent) if user_agent else None,
+        }
+        result = client.table("scan_requests").insert(row).execute()
+        return (result.data or [None])[0]
+
+    return _safe_db_call("create_scan_request", _do)
+
+
+def get_scan_request(request_id: str) -> Optional[Dict[str, Any]]:
+    """
+    SELECT a single scan_requests row by id. Used by every wizard endpoint
+    to read the current state machine position before deciding what to do.
+    Returns None if the row does not exist (caller must 404 in that case).
+    """
+    if not is_configured():
+        return None
+
+    def _do():
+        client = get_client()
+        result = (
+            client.table("scan_requests")
+            .select("*")
+            .eq("id", request_id)
+            .limit(1)
+            .execute()
+        )
+        rows = result.data or []
+        return rows[0] if rows else None
+
+    return _safe_db_call("get_scan_request", _do)
+
+
+def set_scan_request_consent(
+    request_id: str,
+    consent_num: int,
+) -> bool:
+    """
+    Set consent_N_given = TRUE for one of the three consent checkboxes.
+
+    Validates consent_num is 1, 2 or 3 — anything else returns False
+    without touching the DB. Only updates rows still in 'pending_consent'
+    status; once a wizard has progressed to 'consent_recorded' or beyond,
+    further consent toggles are silently ignored (defensive: avoids a
+    rogue client trying to "uncheck" a consent after the fact).
+
+    Returns True on successful update, False on validation/db failure.
+    """
+    if consent_num not in (1, 2, 3):
+        return False
+    if not is_configured():
+        return False
+
+    def _do() -> bool:
+        client = get_client()
+        column = f"consent_{consent_num}_given"
+        result = (
+            client.table("scan_requests")
+            .update({column: True})
+            .eq("id", request_id)
+            .eq("status", "pending_consent")
+            .execute()
+        )
+        return bool(result.data)
+
+    out = _safe_db_call("set_scan_request_consent", _do)
+    return bool(out)
+
+
+def finalize_scan_request_consents(request_id: str) -> bool:
+    """
+    Transition status from 'pending_consent' to 'consent_recorded'.
+
+    Re-reads the row to verify ALL THREE consent_N_given flags are TRUE
+    (we don't trust the frontend to have hit /consent for each one).
+    If any consent is missing, the function returns False and the row
+    stays in 'pending_consent' so the wizard can show an error.
+
+    Atomicity: this is two operations (SELECT then UPDATE) but the UPDATE
+    has WHERE status='pending_consent' so a concurrent finalize attempt
+    can't double-flip the row.
+    """
+    if not is_configured():
+        return False
+
+    def _do() -> bool:
+        client = get_client()
+        # 1. Read current state
+        existing = (
+            client.table("scan_requests")
+            .select("consent_1_given, consent_2_given, consent_3_given, status")
+            .eq("id", request_id)
+            .limit(1)
+            .execute()
+        )
+        rows = existing.data or []
+        if not rows:
+            return False
+        row = rows[0]
+        if row.get("status") != "pending_consent":
+            return False
+        if not (row.get("consent_1_given") and row.get("consent_2_given") and row.get("consent_3_given")):
+            return False
+        # 2. Flip status
+        result = (
+            client.table("scan_requests")
+            .update({"status": "consent_recorded"})
+            .eq("id", request_id)
+            .eq("status", "pending_consent")
+            .execute()
+        )
+        return bool(result.data)
+
+    out = _safe_db_call("finalize_scan_request_consents", _do)
+    return bool(out)
+
+
+def attach_verify_to_scan_request(
+    request_id: str,
+    method: str,
+    token: str,
+    passed: bool,
+) -> bool:
+    """
+    Record the result of an ownership verification attempt against this
+    scan_request. On success (passed=True), transitions status to 'verified'.
+    On failure (passed=False), updates verify_method/verify_token but leaves
+    status as 'consent_recorded' so the user can retry.
+
+    Only operates on rows in 'consent_recorded' or 'verified' status —
+    the wizard cannot run verification before consents are finalized,
+    and once verified, re-running verification is a no-op state-wise
+    but still updates the verify_token (in case the user picked a new
+    method).
+    """
+    if method not in ("meta", "file", "dns"):
+        return False
+    if not is_configured():
+        return False
+
+    def _do() -> bool:
+        client = get_client()
+        update_fields: Dict[str, Any] = {
+            "verify_method": method,
+            "verify_token": token,
+            "verify_passed": bool(passed),
+        }
+        if passed:
+            update_fields["status"] = "verified"
+        result = (
+            client.table("scan_requests")
+            .update(update_fields)
+            .eq("id", request_id)
+            .in_("status", ["consent_recorded", "verified"])
+            .execute()
+        )
+        return bool(result.data)
+
+    out = _safe_db_call("attach_verify_to_scan_request", _do)
+    return bool(out)
+
+
+def mark_scan_request_executed(
+    request_id: str,
+    scan_id: str,
+) -> bool:
+    """
+    Transition 'verified' → 'executing' and link the scan_id FK.
+
+    Called by /scan/request/{id}/execute AFTER it has re-validated all
+    preconditions: status='verified', all 3 consents TRUE, verify_passed
+    TRUE, AND db.is_domain_verified() returns TRUE for the same
+    (domain, ip_hash) pair. The WHERE clause defends against a stale
+    request that somehow slipped past those checks.
+
+    Sets final_confirmed=TRUE in the same UPDATE so the gate is closed —
+    after this point the wizard cannot replay /execute on the same row
+    (the status check filters it out).
+    """
+    if not is_configured():
+        return False
+
+    def _do() -> bool:
+        client = get_client()
+        result = (
+            client.table("scan_requests")
+            .update({
+                "status": "executing",
+                "scan_id": scan_id,
+                "final_confirmed": True,
+            })
+            .eq("id", request_id)
+            .eq("status", "verified")
+            .eq("verify_passed", True)
+            .eq("consent_1_given", True)
+            .eq("consent_2_given", True)
+            .eq("consent_3_given", True)
+            .execute()
+        )
+        return bool(result.data)
+
+    out = _safe_db_call("mark_scan_request_executed", _do)
+    return bool(out)
+
+
+def mark_scan_request_completed(request_id: str) -> bool:
+    """
+    Transition 'executing' → 'completed' once the scanner.scan() call
+    returns. Separate from mark_scan_request_executed() so the wizard
+    state machine is observable: a row in 'executing' state for an
+    unusual length of time is a signal that the scan is hung.
+    """
+    if not is_configured():
+        return False
+
+    def _do() -> bool:
+        client = get_client()
+        result = (
+            client.table("scan_requests")
+            .update({"status": "completed"})
+            .eq("id", request_id)
+            .eq("status", "executing")
+            .execute()
+        )
+        return bool(result.data)
+
+    out = _safe_db_call("mark_scan_request_completed", _do)
+    return bool(out)
+
+
+def abandon_scan_request(request_id: str) -> bool:
+    """
+    Mark a scan_request as 'abandoned'. Called when the user hits
+    [Ponisti] in the wizard. The hourly cron job (migration 015)
+    physically deletes abandoned rows the next day, but flipping the
+    status here removes the row from active rate-limit counts immediately.
+
+    Only flips rows that are still in a wizard-active state — once a row
+    has reached 'executing' or 'completed' it cannot be abandoned anymore
+    (the scan is either running or done, and abandoning would invalidate
+    forensic state).
+    """
+    if not is_configured():
+        return False
+
+    def _do() -> bool:
+        client = get_client()
+        result = (
+            client.table("scan_requests")
+            .update({"status": "abandoned"})
+            .eq("id", request_id)
+            .in_("status", ["pending_consent", "consent_recorded", "verified"])
+            .execute()
+        )
+        return bool(result.data)
+
+    out = _safe_db_call("abandon_scan_request", _do)
+    return bool(out)
+
+
+def count_active_scan_requests_for_ip(ip: str) -> int:
+    """
+    Count how many scan_requests rows this IP currently has in a
+    wizard-active state ('pending_consent', 'consent_recorded',
+    'verified'). Used by api.py to rate-limit /scan/request creation
+    so a single IP cannot fill the table with abandoned wizards.
+
+    Returns 0 on DB failure or when not configured (fail-open: a DB
+    outage must not lock users out of starting a scan).
+    """
+    if not is_configured():
+        return 0
+
+    def _do() -> int:
+        client = get_client()
+        result = (
+            client.table("scan_requests")
+            .select("id", count="exact")
+            .eq("client_ip_hash", hash_ip(ip))
+            .in_("status", ["pending_consent", "consent_recorded", "verified"])
+            .execute()
+        )
+        # supabase-py returns count on the response object
+        return int(getattr(result, "count", 0) or 0)
+
+    out = _safe_db_call("count_active_scan_requests_for_ip", _do)
+    return int(out) if isinstance(out, int) else 0

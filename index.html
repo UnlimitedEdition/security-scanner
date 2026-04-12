@@ -1021,6 +1021,226 @@
       text-align: center; padding: 2rem 1rem;
       color: #9ca3af; font-size: 0.9rem;
     }
+
+    /* ─────────────────────────────────────────────────────────────────
+       FULL SCAN WIZARD (gate-before-scan model — migrations 014/015)
+       ─────────────────────────────────────────────────────────────── */
+    /* Backdrop covers the whole page so the user cannot click anywhere
+       outside the wizard. Esc / outer clicks do not close it — only the
+       explicit [Ponisti] button or completing the flow gets you out. */
+    .wizard-backdrop {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 9000;
+      overflow-y: auto;
+      padding: 2rem 1rem;
+    }
+    .wizard-backdrop.open { display: block; }
+    .wizard-modal {
+      max-width: 640px;
+      margin: 0 auto;
+      background: #131722;
+      border: 1px solid #facc15;
+      border-radius: 10px;
+      padding: 1.6rem;
+      color: var(--text);
+      box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+    }
+    .wizard-modal h3 {
+      margin: 0 0 1rem; color: #facc15;
+      font-size: 1.1rem; font-weight: 600;
+    }
+    .wizard-step-indicator {
+      display: flex; gap: 0.4rem; margin-bottom: 1.2rem;
+      font-size: 0.78rem; color: var(--text-dim);
+    }
+    .wizard-step-indicator span {
+      flex: 1; padding: 0.4rem 0.6rem;
+      background: #1f2330; border-radius: 6px; text-align: center;
+      border: 1px solid transparent;
+    }
+    .wizard-step-indicator span.active {
+      background: #2a2f40; color: #facc15; border-color: #facc15;
+      font-weight: 600;
+    }
+    .wizard-step-indicator span.done {
+      background: #1a3d2a; color: #6ee7b7; border-color: #166534;
+    }
+    .wizard-step { display: none; }
+    .wizard-step.active { display: block; }
+    .wizard-domain-pill {
+      display: inline-block;
+      background: #2a2f40; color: #facc15;
+      padding: 0.3rem 0.7rem; border-radius: 4px;
+      font-family: ui-monospace, "SF Mono", monospace;
+      font-size: 0.85rem; margin-bottom: 1rem;
+    }
+
+    /* Step 1 — 3 consent checkboxes */
+    .wizard-consent-list {
+      margin: 1rem 0;
+      display: flex; flex-direction: column; gap: 0.9rem;
+    }
+    .wizard-consent-item {
+      display: flex; gap: 0.7rem;
+      padding: 0.9rem; background: #1a1f2e;
+      border: 1px solid #2a2f40; border-radius: 6px;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .wizard-consent-item:hover {
+      border-color: #facc15;
+    }
+    .wizard-consent-item input[type="checkbox"] {
+      flex-shrink: 0; margin-top: 0.15rem;
+      width: 1.05rem; height: 1.05rem; cursor: pointer;
+      accent-color: #facc15;
+    }
+    .wizard-consent-item label {
+      flex: 1; cursor: pointer; line-height: 1.45;
+      font-size: 0.86rem; color: var(--text);
+    }
+    .wizard-consent-item label strong {
+      color: #facc15; display: block; margin-bottom: 0.2rem;
+    }
+
+    /* Step 2 — verify method picker (reuses existing verify CSS but
+       inside the wizard modal) */
+    .wizard-method-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 0.5rem; margin: 1rem 0;
+    }
+    .wizard-method-btn {
+      padding: 0.7rem 0.5rem; cursor: pointer;
+      background: #1a1f2e; color: var(--text);
+      border: 1px solid #2a2f40; border-radius: 6px;
+      font-size: 0.78rem; text-align: center;
+      transition: all 0.15s;
+    }
+    .wizard-method-btn:hover { border-color: #facc15; }
+    .wizard-method-btn.active {
+      background: #2a2f40; color: #facc15; border-color: #facc15;
+    }
+    .wizard-method-btn small {
+      display: block; color: var(--text-dim);
+      font-size: 0.7rem; margin-top: 0.3rem;
+    }
+    .wizard-instructions {
+      display: none;
+      background: #0a0c15; padding: 0.9rem;
+      border: 1px solid #2a2f40; border-radius: 6px;
+      font-size: 0.84rem; line-height: 1.5;
+    }
+    .wizard-instructions.visible { display: block; }
+    .wizard-instructions ol { margin: 0.4rem 0; padding-left: 1.2rem; }
+    .wizard-instructions code, .wizard-instructions pre {
+      background: #1a1f2e; padding: 0.15rem 0.4rem;
+      border-radius: 3px; font-size: 0.78rem;
+      font-family: ui-monospace, monospace;
+      word-break: break-all;
+    }
+    .wizard-instructions pre {
+      padding: 0.6rem; margin: 0.5rem 0;
+      white-space: pre-wrap;
+    }
+    .wizard-verify-result {
+      display: none; padding: 0.7rem;
+      border-radius: 6px; font-size: 0.83rem;
+      margin: 0.6rem 0;
+    }
+    .wizard-verify-result.visible { display: block; }
+    .wizard-verify-result.success {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid #16a34a; color: #6ee7b7;
+    }
+    .wizard-verify-result.error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid #dc2626; color: #fca5a5;
+    }
+
+    /* Step 3 — recap / final confirmation */
+    .wizard-recap {
+      background: #0a0c15; padding: 1rem;
+      border: 1px solid #2a2f40; border-radius: 6px;
+      margin: 0.9rem 0;
+    }
+    .wizard-recap-row {
+      padding: 0.4rem 0; font-size: 0.85rem;
+      display: flex; gap: 0.5rem; align-items: flex-start;
+    }
+    .wizard-recap-row:not(:last-child) {
+      border-bottom: 1px solid #1f2330;
+    }
+    .wizard-recap-check {
+      color: #6ee7b7; flex-shrink: 0;
+    }
+
+    /* Action buttons (shared across all 3 steps) */
+    .wizard-actions {
+      display: flex; gap: 0.6rem; margin-top: 1.2rem;
+      flex-wrap: wrap;
+    }
+    .wizard-btn {
+      padding: 0.65rem 1.1rem; cursor: pointer;
+      background: #facc15; color: #0a0c15;
+      border: 1px solid #facc15; border-radius: 6px;
+      font-weight: 600; font-size: 0.88rem;
+      transition: all 0.15s;
+    }
+    .wizard-btn:hover:not(:disabled) { background: #fde047; }
+    .wizard-btn:disabled {
+      opacity: 0.4; cursor: not-allowed; background: #2a2f40;
+      color: var(--text-dim); border-color: #2a2f40;
+    }
+    .wizard-btn.secondary {
+      background: transparent; color: var(--text-dim);
+      border-color: #2a2f40;
+    }
+    .wizard-btn.secondary:hover:not(:disabled) {
+      color: var(--text); border-color: #4b5563;
+    }
+    .wizard-btn.danger {
+      background: transparent; color: #f87171;
+      border-color: #7f1d1d;
+    }
+    .wizard-btn.danger:hover:not(:disabled) {
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    /* Inline countdown on the final POKRENI button (3-second
+       anti-reflex delay so the recap actually gets read). */
+    .wizard-countdown {
+      display: inline-block; min-width: 2.4rem;
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+    }
+
+    /* Info card shown above results when scan_mode === 'safe',
+       prompting the user to verify ownership for the locked checks. */
+    .safe-mode-cta {
+      display: none;
+      max-width: 880px; margin: 1rem auto;
+      padding: 1rem 1.2rem; gap: 0.9rem;
+      background: rgba(250, 204, 21, 0.07);
+      border: 1px solid #facc15; border-radius: 8px;
+      color: var(--text); font-size: 0.86rem;
+      line-height: 1.5;
+      align-items: flex-start;
+    }
+    .safe-mode-cta.visible { display: flex; }
+    .safe-mode-cta-icon { font-size: 1.5rem; flex-shrink: 0; }
+    .safe-mode-cta-body { flex: 1; }
+    .safe-mode-cta-body strong {
+      color: #facc15; display: block; margin-bottom: 0.3rem;
+    }
+    .safe-mode-cta-btn {
+      flex-shrink: 0; padding: 0.55rem 1rem;
+      background: #facc15; color: #0a0c15;
+      border: 1px solid #facc15; border-radius: 6px;
+      font-weight: 600; font-size: 0.84rem;
+      cursor: pointer; align-self: center;
+    }
+    .safe-mode-cta-btn:hover { background: #fde047; }
   </style>
 </head>
 <body>
@@ -1047,10 +1267,23 @@
       <input class="scan-input" type="text" id="urlInput"
         placeholder="vasajt.rs ili https://example.com" data-placeholder-sr="vasajt.rs ili https://example.com" data-placeholder-en="yoursite.com or https://example.com"
         autocomplete="off" autocorrect="off" spellcheck="false" aria-label="URL sajta za skeniranje" />
-      <button class="scan-btn" id="scanBtn" onclick="startScan()" data-sr="Skeniraj sajt" data-en="Scan site" aria-label="Pokreni skeniranje">Skeniraj sajt</button>
+      <button class="scan-btn" id="scanBtn" onclick="startScan()" data-sr="Brzi javni sken" data-en="Quick public scan" aria-label="Pokreni javni sken">Brzi javni sken</button>
     </div>
-    <div class="scan-note" id="scanNote" data-sr="Samo pasivno citanje javnih informacija — ne menjamo vas sajt" data-en="Passive reading of public information only — we do not modify your site">
-      Samo pasivno citanje javnih informacija — ne menjamo vas sajt
+    <!-- Two-mode scan model (gate-before-scan, migrations 014/015):
+         * "Brzi javni sken" — passive checks only, no probes against
+           private surface, no ownership verification needed.
+         * "Puni sken (vlasnici)" — opens the wizard modal which walks
+           through 3 consents → ownership verification → execute. Only
+           after all 5 server-side preconditions pass does scanner run
+           in mode='full'. -->
+    <div class="scan-row scan-row-secondary" style="margin-top:0.6rem;justify-content:center;">
+      <button class="scan-btn scan-btn-full" id="fullScanBtn" onclick="startFullScanWizard()"
+              data-sr="🔓 Puni sken (vlasnici sajta)" data-en="🔓 Full scan (site owners)"
+              aria-label="Pokreni puni sken sa verifikacijom vlasnistva"
+              style="background:#facc15;color:#0a0c15;">🔓 Puni sken (vlasnici sajta)</button>
+    </div>
+    <div class="scan-note" id="scanNote" data-sr="Brzi sken: 20 pasivnih provera bez verifikacije. Puni sken: dodatnih 10 provera (osetljivi fajlovi, admin panel, ranjivosti) — zahteva dokaz vlasnistva." data-en="Quick scan: 20 passive checks without verification. Full scan: 10 additional checks (sensitive files, admin panel, vulnerabilities) — requires ownership proof.">
+      Brzi sken: 20 pasivnih provera bez verifikacije. Puni sken: dodatnih 10 provera (osetljivi fajlovi, admin panel, ranjivosti) — zahteva dokaz vlasnistva.
     </div>
     <div class="consent-row">
       <input type="checkbox" id="consentCheckbox" />
@@ -1186,6 +1419,23 @@
     data-ad-slot="auto"
     data-ad-format="auto"
     data-full-width-responsive="true"></ins>
+</div>
+
+<!-- SAFE-MODE INFO CARD — shown above results when scan_mode === 'safe',
+     prompting the user to verify ownership for the locked checks. The
+     [Pokreni puni sken] button just opens the wizard. -->
+<div class="safe-mode-cta" id="safeModeCta">
+  <div class="safe-mode-cta-icon">🔒</div>
+  <div class="safe-mode-cta-body">
+    <strong>
+      <span class="sr">Brzi javni sken — 20 provera zavrseno</span>
+      <span class="en">Quick public scan — 20 checks complete</span>
+    </strong>
+    <span class="sr">Prikazano je sve sto je bezbedno bez potvrde vlasnistva. Da otkljucate dodatnih 10 provera (osetljivi fajlovi, admin paneli, ranjivosti, otvoreni portovi, dependency CVE) — potvrdite da ste vlasnik domena. Skener tada nece poslati nijedan probe ka privatnoj infrastrukturi sajta dok se vlasnistvo ne dokaze.</span>
+    <span class="en">Showing everything that's safe to check without ownership proof. To unlock 10 additional checks (sensitive files, admin panels, vulnerabilities, open ports, dependency CVEs) — verify you are the domain owner. The scanner will not send a single probe to private infrastructure until ownership is proven.</span>
+  </div>
+  <button class="safe-mode-cta-btn" onclick="startFullScanWizardFromCta()"
+          data-sr="🔓 Otkljucaj puni sken" data-en="🔓 Unlock full scan">🔓 Otkljucaj puni sken</button>
 </div>
 
 <!-- TAB: SECURITY -->
@@ -1333,6 +1583,186 @@
   <div class="verify-result" id="verifyResult"></div>
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════════════
+     FULL SCAN WIZARD MODAL — gate-before-scan flow (migrations 014/015)
+
+     Activated by the "🔓 Puni sken" button. Walks the user through:
+       Step 1 — 3 explicit consent checkboxes (each click hits the
+                backend; the [Nastavi] button only enables once all 3
+                are recorded server-side, NOT just clicked in the UI)
+       Step 2 — pick verify method (meta tag / file / DNS TXT) and
+                run /scan/request/{id}/verify
+       Step 3 — recap of everything the user agreed to + a 3-second
+                anti-reflex countdown on the final POKRENI button so
+                the recap actually gets read
+
+     The modal cannot be dismissed by clicking outside or pressing Esc.
+     The only ways out are: (a) [Ponisti i obrisi] which calls
+     /scan/request/{id}/abandon, or (b) successfully reaching the
+     final POKRENI which transitions the wizard row to 'executing'.
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="wizard-backdrop" id="wizardBackdrop" role="dialog" aria-modal="true" aria-labelledby="wizardTitle">
+  <div class="wizard-modal">
+    <h3 id="wizardTitle">
+      <span class="sr">Pokretanje punog skena sa verifikacijom</span>
+      <span class="en">Starting full scan with verification</span>
+    </h3>
+
+    <div class="wizard-step-indicator">
+      <span id="wizStep1Indicator" class="active">
+        <span class="sr">1. Saglasnosti</span>
+        <span class="en">1. Consents</span>
+      </span>
+      <span id="wizStep2Indicator">
+        <span class="sr">2. Verifikacija</span>
+        <span class="en">2. Verification</span>
+      </span>
+      <span id="wizStep3Indicator">
+        <span class="sr">3. Potvrda</span>
+        <span class="en">3. Confirmation</span>
+      </span>
+    </div>
+
+    <div class="wizard-domain-pill" id="wizardDomainPill"></div>
+
+    <!-- ═══ STEP 1: 3 consent checkboxes ═══ -->
+    <div class="wizard-step active" id="wizardStep1">
+      <p style="font-size:0.85rem;color:var(--text-dim);margin:0 0 0.5rem;">
+        <span class="sr">Pre nego pokrenemo puni sken nad vasim sajtom, potrebne su nam tri eksplicitne saglasnosti. Svaki klik se zapisuje u nas audit log uz pseudonimizovani IP hash.</span>
+        <span class="en">Before we run a full scan against your site, we need three explicit consents. Every click is recorded in our audit log together with a pseudonymized IP hash.</span>
+      </p>
+      <div class="wizard-consent-list">
+        <div class="wizard-consent-item">
+          <input type="checkbox" id="wizConsent1" onclick="wizardSetConsent(1)">
+          <label for="wizConsent1">
+            <strong>
+              <span class="sr">1. Vlasnistvo / pisano ovlascenje</span>
+              <span class="en">1. Ownership / written authorization</span>
+            </strong>
+            <span class="sr">Potvrdjujem da sam vlasnik ovog domena, ili da imam pismeno ovlascenje vlasnika domena da izvrsim bezbednosnu reviziju. Razumem da se ovo mora dokazati kroz verifikacioni token u sledecem koraku.</span>
+            <span class="en">I confirm that I am the owner of this domain, or I have written authorization from the domain owner to perform a security review. I understand this must be proven via a verification token in the next step.</span>
+          </label>
+        </div>
+        <div class="wizard-consent-item">
+          <input type="checkbox" id="wizConsent2" onclick="wizardSetConsent(2)">
+          <label for="wizConsent2">
+            <strong>
+              <span class="sr">2. Aktivni testovi nad privatnom infrastrukturom</span>
+              <span class="en">2. Active probes against private infrastructure</span>
+            </strong>
+            <span class="sr">Razumem da puni sken pokrece aktivne probe ka osetljivim fajlovima (.env, .git, backup), admin panelima (wp-admin, phpmyadmin), portovima baze podataka (3306, 5432, 27017), i ranjivostima (SQL injection, XSS, CSRF). Svi ovi upiti se logiraju u logove mog server-a. Prihvatam punu pravnu odgovornost za pokretanje ovih testova.</span>
+            <span class="en">I understand the full scan sends active probes against sensitive files (.env, .git, backups), admin panels (wp-admin, phpmyadmin), database ports (3306, 5432, 27017), and vulnerabilities (SQL injection, XSS, CSRF). All of these requests are logged in my server logs. I accept full legal responsibility for initiating these tests.</span>
+          </label>
+        </div>
+        <div class="wizard-consent-item">
+          <input type="checkbox" id="wizConsent3" onclick="wizardSetConsent(3)">
+          <label for="wizConsent3">
+            <strong>
+              <span class="sr">3. 30-dnevno cuvanje nalaza</span>
+              <span class="en">3. 30-day storage of findings</span>
+            </strong>
+            <span class="sr">Saglasan sam da se nalazi punog skena (URL-ovi izlozenih fajlova, verzije, tokeni, putanje) cuvaju u nasoj bazi 30 dana, vezani za moj pseudonimizovani IP hash. Ovo mi omogucava da ponovo pregledam nalaze kasnije bez ponovnog skena. Posle 30 dana, podaci se automatski brisu.</span>
+            <span class="en">I consent to the storage of full scan findings (exposed file URLs, versions, tokens, paths) in our database for 30 days, tied to my pseudonymized IP hash. This lets me re-view the findings later without re-running the scan. After 30 days, the data is automatically deleted.</span>
+          </label>
+        </div>
+      </div>
+      <div class="wizard-actions">
+        <button class="wizard-btn danger" onclick="wizardAbandon()"
+                data-sr="Ponisti i obrisi" data-en="Cancel and delete">Ponisti i obrisi</button>
+        <button class="wizard-btn" id="wizStep1Next" disabled onclick="wizardFinalizeConsents()"
+                data-sr="Nastavi →" data-en="Continue →">Nastavi →</button>
+      </div>
+    </div>
+
+    <!-- ═══ STEP 2: pick verify method + run check ═══ -->
+    <div class="wizard-step" id="wizardStep2">
+      <p style="font-size:0.85rem;color:var(--text-dim);margin:0 0 0.5rem;">
+        <span class="sr">Izaberite jednu od 3 metode verifikacije vlasnistva. Sve tri su jednako validne. DNS metoda je najjaca, fajl metoda je najbrza, meta tag metoda je najlaksa za podesavanje.</span>
+        <span class="en">Pick one of the 3 ownership verification methods. All three are equally valid. DNS is strongest, file is fastest, meta tag is easiest to set up.</span>
+      </p>
+      <div class="wizard-method-grid">
+        <button class="wizard-method-btn" data-method="meta" onclick="wizardSelectVerifyMethod('meta')">
+          <strong>Meta tag</strong>
+          <small data-sr="Dodaj <meta> u <head>" data-en="Add <meta> in <head>">Dodaj &lt;meta&gt; u &lt;head&gt;</small>
+        </button>
+        <button class="wizard-method-btn" data-method="file" onclick="wizardSelectVerifyMethod('file')">
+          <strong data-sr="Fajl" data-en="File">Fajl</strong>
+          <small data-sr=".well-known fajl" data-en=".well-known file">.well-known fajl</small>
+        </button>
+        <button class="wizard-method-btn" data-method="dns" onclick="wizardSelectVerifyMethod('dns')">
+          <strong data-sr="DNS TXT" data-en="DNS TXT">DNS TXT</strong>
+          <small data-sr="TXT zapis (najjaca)" data-en="TXT record (strongest)">TXT zapis (najjaca)</small>
+        </button>
+      </div>
+      <div class="wizard-instructions" id="wizardInstructions"></div>
+      <div class="wizard-verify-result" id="wizardVerifyResult"></div>
+      <div class="wizard-actions">
+        <button class="wizard-btn danger" onclick="wizardAbandon()"
+                data-sr="Ponisti" data-en="Cancel">Ponisti</button>
+        <button class="wizard-btn secondary" onclick="wizardBackToStep1()"
+                data-sr="← Nazad" data-en="← Back">← Nazad</button>
+        <button class="wizard-btn" id="wizVerifyCheckBtn" disabled onclick="wizardCheckVerify()"
+                data-sr="Proveri verifikaciju" data-en="Check verification">Proveri verifikaciju</button>
+      </div>
+    </div>
+
+    <!-- ═══ STEP 3: recap + final POKRENI ═══ -->
+    <div class="wizard-step" id="wizardStep3">
+      <p style="font-size:0.9rem;color:#6ee7b7;margin:0 0 0.6rem;">
+        ✓
+        <span class="sr">Verifikacija vlasnistva je uspesna. Procitajte sumarno sta ste odobrili pre pokretanja.</span>
+        <span class="en">Ownership verification successful. Read the summary of what you approved before starting.</span>
+      </p>
+      <div class="wizard-recap">
+        <div class="wizard-recap-row">
+          <span class="wizard-recap-check">✓</span>
+          <span>
+            <strong>
+              <span class="sr">Vlasnistvo dokazano:</span>
+              <span class="en">Ownership proven:</span>
+            </strong>
+            <span id="wizRecapMethod"></span>
+          </span>
+        </div>
+        <div class="wizard-recap-row">
+          <span class="wizard-recap-check">✓</span>
+          <span>
+            <span class="sr">Imam dozvolu da skeniram <span id="wizRecapDomain"></span></span>
+            <span class="en">I have permission to scan <span id="wizRecapDomainEn"></span></span>
+          </span>
+        </div>
+        <div class="wizard-recap-row">
+          <span class="wizard-recap-check">✓</span>
+          <span>
+            <span class="sr">Razumem da puni sken pokrece aktivne probe ka privatnoj infrastrukturi</span>
+            <span class="en">I understand the full scan will send active probes against private infrastructure</span>
+          </span>
+        </div>
+        <div class="wizard-recap-row">
+          <span class="wizard-recap-check">✓</span>
+          <span>
+            <span class="sr">Saglasan sam sa 30-dnevnim cuvanjem nalaza uz moj IP hash</span>
+            <span class="en">I consent to 30-day storage of findings with my IP hash</span>
+          </span>
+        </div>
+      </div>
+      <p style="font-size:0.82rem;color:var(--text-dim);margin:0.6rem 0;">
+        <span class="sr">Skener pokrece 30 provera. Procenjeno vreme: 2-3 minuta. Rezultati ce biti vidljivi samo vama (vezani su za vasu IP adresu 30 dana).</span>
+        <span class="en">The scanner will run 30 checks. Estimated time: 2-3 minutes. Results will be visible only to you (tied to your IP address for 30 days).</span>
+      </p>
+      <div class="wizard-actions">
+        <button class="wizard-btn danger" onclick="wizardAbandon()"
+                data-sr="Ponisti" data-en="Cancel">Ponisti</button>
+        <button class="wizard-btn" id="wizExecuteBtn" disabled onclick="wizardExecute()">
+          <span class="wizard-countdown" id="wizExecuteCountdown">3</span>
+          <span class="sr">POKRENI PUNI SKEN →</span>
+          <span class="en">RUN FULL SCAN →</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Abuse reporting lives on its own page: ./abuse-report.html
      (referenced from the footer in blog-common.js). -->
 
@@ -1343,8 +1773,13 @@
 
 <script src="./blog-common.js" defer></script>
 <script>
+// API_BASE: in local dev (localhost / 127.0.0.1), use the SAME origin
+// the page is served from. This way the dev port (whatever uvicorn is
+// running on — 8000, 8765, etc.) is automatically picked up, and the
+// calls go through CSP 'self' instead of needing a connect-src exception.
+// In production, point to the HF Space backend.
 const API_BASE = (location.hostname === "localhost" || location.hostname === "127.0.0.1")
-  ? "http://localhost:8000"
+  ? location.origin
   : "https://unlimitededition-web-security-scanner.hf.space";
 
 let currentLang = "sr";
@@ -1686,7 +2121,7 @@ async function pollScan(scanId) {
       currentResults = data.result;
       renderResults(data.result);
       btn.disabled = false;
-      btn.textContent = currentLang === "en" ? "Scan again" : "Skeniraj ponovo";
+      btn.textContent = currentLang === "en" ? "Quick scan again" : "Skeniraj opet";
       document.getElementById("progressWrap").style.display = "none";
       document.getElementById("adSlotTop").classList.remove("visible");
       document.getElementById("adSlotBottom").classList.add("visible");
@@ -1694,6 +2129,19 @@ async function pollScan(scanId) {
       // Show active tab's results
       var activeTab = document.querySelector(".result-tab.active");
       if (activeTab) switchTab(activeTab.dataset.tab);
+
+      // Gate-before-scan model: if the result came back in safe mode,
+      // surface the "verify ownership to unlock 10 more checks" CTA
+      // banner above the results. Full-mode scans (which already went
+      // through the wizard) do NOT show the CTA — everything is unlocked.
+      var cta = document.getElementById("safeModeCta");
+      if (cta) {
+        if (data.result && data.result.scan_mode === "safe") {
+          cta.classList.add("visible");
+        } else {
+          cta.classList.remove("visible");
+        }
+      }
       return;
     }
     if (data.status === "error") {
@@ -2799,6 +3247,471 @@ async function checkVerification() {
 
 // Abuse report submission moved to dedicated ./abuse-report.html page.
 // The form lives there with its own handler, so index.html stays leaner.
+
+// ═══════════════════════════════════════════════════════════════════════
+// FULL SCAN WIZARD — gate-before-scan client (migrations 014/015)
+// ═══════════════════════════════════════════════════════════════════════
+// Walks the user through 3 consents → ownership verification → execute.
+// Every state transition hits the backend so a malicious DOM cannot
+// fast-forward the wizard. The backend re-validates every precondition.
+//
+// Important UX rules:
+//   * The modal cannot be dismissed by Esc / outside-click. Only the
+//     [Ponisti] button (which calls /scan/request/{id}/abandon) or
+//     successfully reaching POKRENI ends the wizard.
+//   * The [Nastavi] button on Step 1 is disabled until ALL THREE
+//     consents have been confirmed by the BACKEND (not just clicked
+//     in the UI). Frontend tracks a count of successful /consent
+//     calls and only enables [Nastavi] when count === 3.
+//   * The final [POKRENI] button has a 3-second countdown so the
+//     recap actually gets read before the click.
+//
+// All DOM updates use textContent / createElement — never innerHTML —
+// so even if the backend ever returned malicious data in `domain` or
+// `reason`, we cannot accidentally execute injected HTML.
+
+var wizardState = {
+  requestId: null,
+  domain: null,
+  url: null,
+  consentsConfirmed: 0,
+  selectedMethod: null,
+  verifyToken: null,
+  verifyPassed: false,
+  countdownInterval: null,
+};
+
+function _wizardL10n() {
+  return currentLang === "en"
+    ? {
+        startError: "Could not start wizard. Try again.",
+        consentError: "Could not record consent. Try again.",
+        finalizeError: "Could not finalize consents. Try again.",
+        verifyError: "Verification failed: ",
+        verifyOk: "✓ Ownership verification successful",
+        executeError: "Could not start scan. ",
+      }
+    : {
+        startError: "Wizard nije mogao da se pokrene. Pokusajte ponovo.",
+        consentError: "Saglasnost nije zapisana. Pokusajte ponovo.",
+        finalizeError: "Finalizacija saglasnosti nije uspela. Pokusajte ponovo.",
+        verifyError: "Verifikacija neuspesna: ",
+        verifyOk: "✓ Verifikacija vlasnistva je uspesna",
+        executeError: "Sken nije mogao da se pokrene. ",
+      };
+}
+
+// Helper: build an instruction block as DOM elements (no innerHTML).
+// Each call resets the container, then appends a <strong> heading,
+// an <ol> with one <li> per step, and uses textContent everywhere
+// the domain or other variable strings appear.
+function _wizardBuildInstructions(method, domain) {
+  var container = document.getElementById("wizardInstructions");
+  // Wipe any previous content
+  while (container.firstChild) container.removeChild(container.firstChild);
+
+  var heading = document.createElement("strong");
+  var stepLines;
+  var en = (currentLang === "en");
+
+  if (method === "meta") {
+    heading.textContent = en ? "Method: meta tag" : "Metoda: meta tag";
+    stepLines = en ? [
+      "Click [Check verification] below to issue a token.",
+      'You will receive a snippet like <meta name="scanner-verify" content="...">',
+      ["Paste it inside the <head> of your homepage ", "https://" + domain + "/"],
+      "Click [Check verification] again to confirm.",
+    ] : [
+      "Kliknite [Proveri verifikaciju] dole da dobijete token.",
+      'Dobicete snippet kao <meta name="scanner-verify" content="...">',
+      ["Stavite ga unutar <head> vase pocetne strane ", "https://" + domain + "/"],
+      "Kliknite [Proveri verifikaciju] opet da potvrdite.",
+    ];
+  } else if (method === "file") {
+    heading.textContent = en ? "Method: file" : "Metoda: fajl";
+    stepLines = en ? [
+      "Click [Check verification] below to issue a token.",
+      ["Create the file ", "https://" + domain + "/.well-known/scanner-verify.txt", " with the token as its only content."],
+      "The file must be publicly accessible (HTTP 200).",
+      "Click [Check verification] again to confirm.",
+    ] : [
+      "Kliknite [Proveri verifikaciju] dole da dobijete token.",
+      ["Kreirajte fajl ", "https://" + domain + "/.well-known/scanner-verify.txt", " sa tokenom kao jedinim sadrzajem."],
+      "Fajl mora biti javno dostupan (HTTP 200).",
+      "Kliknite [Proveri verifikaciju] opet da potvrdite.",
+    ];
+  } else if (method === "dns") {
+    heading.textContent = en ? "Method: DNS TXT record" : "Metoda: DNS TXT zapis";
+    stepLines = en ? [
+      "Click [Check verification] below to issue a token.",
+      ["In your DNS provider, create a TXT record at ", "_scanner-verify." + domain, " with the token as the value."],
+      "TTL: 300 (or the lowest your provider allows).",
+      "Wait 1-5 minutes for propagation.",
+      "Click [Check verification] again to confirm.",
+    ] : [
+      "Kliknite [Proveri verifikaciju] dole da dobijete token.",
+      ["U vasem DNS provider-u, kreirajte TXT zapis na ", "_scanner-verify." + domain, " sa tokenom kao vrednoscu."],
+      "TTL: 300 (ili najmanje sto provider dozvoljava).",
+      "Sacekajte 1-5 minuta za propagaciju.",
+      "Kliknite [Proveri verifikaciju] opet da potvrdite.",
+    ];
+  } else {
+    return;
+  }
+
+  container.appendChild(heading);
+  var ol = document.createElement("ol");
+  stepLines.forEach(function(step) {
+    var li = document.createElement("li");
+    if (typeof step === "string") {
+      li.textContent = step;
+    } else {
+      // Array form: [plainPrefix, codeSpan, plainSuffix?]
+      li.appendChild(document.createTextNode(step[0]));
+      var code = document.createElement("code");
+      code.textContent = step[1];
+      li.appendChild(code);
+      if (step[2]) li.appendChild(document.createTextNode(step[2]));
+    }
+    ol.appendChild(li);
+  });
+  container.appendChild(ol);
+  container.classList.add("visible");
+}
+
+// ── Entry point: called by [🔓 Puni sken] button ───────────────────────
+async function startFullScanWizard() {
+  var url = (document.getElementById("urlInput").value || "").trim();
+  if (!url) {
+    alert(currentLang === "en" ? "Enter a URL first." : "Prvo unesite URL.");
+    return;
+  }
+
+  wizardState = {
+    requestId: null,
+    domain: null,
+    url: url,
+    consentsConfirmed: 0,
+    selectedMethod: null,
+    verifyToken: null,
+    verifyPassed: false,
+    countdownInterval: null,
+  };
+
+  // Reset UI
+  document.getElementById("wizConsent1").checked = false;
+  document.getElementById("wizConsent2").checked = false;
+  document.getElementById("wizConsent3").checked = false;
+  document.getElementById("wizStep1Next").disabled = true;
+  document.getElementById("wizVerifyCheckBtn").disabled = true;
+  document.getElementById("wizExecuteBtn").disabled = true;
+  var instr = document.getElementById("wizardInstructions");
+  while (instr.firstChild) instr.removeChild(instr.firstChild);
+  instr.className = "wizard-instructions";
+  var vRes = document.getElementById("wizardVerifyResult");
+  vRes.className = "wizard-verify-result";
+  vRes.textContent = "";
+  document.querySelectorAll(".wizard-method-btn").forEach(function(b) { b.classList.remove("active"); });
+  _wizardShowStep(1);
+
+  try {
+    var resp = await fetch(API_BASE + "/scan/request", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: url }),
+    });
+    var data = await resp.json();
+    if (!resp.ok) {
+      var msg = data && data.detail ? data.detail : _wizardL10n().startError;
+      alert(msg);
+      return;
+    }
+    wizardState.requestId = data.request_id;
+    wizardState.domain = data.domain;
+    document.getElementById("wizardDomainPill").textContent = data.domain;
+  } catch (e) {
+    alert(_wizardL10n().startError + " " + e.message);
+    return;
+  }
+
+  document.getElementById("wizardBackdrop").classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+
+function startFullScanWizardFromCta() {
+  startFullScanWizard();
+}
+
+// ── Step 1: handle each checkbox click ─────────────────────────────────
+async function wizardSetConsent(consentNum) {
+  if (!wizardState.requestId) return;
+  var checkbox = document.getElementById("wizConsent" + consentNum);
+  if (!checkbox.checked) {
+    checkbox.checked = true;
+    return;
+  }
+  checkbox.disabled = true;
+  try {
+    var resp = await fetch(API_BASE + "/scan/request/" + wizardState.requestId + "/consent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ consent_num: consentNum }),
+    });
+    if (!resp.ok) {
+      var data = await resp.json().catch(function(){ return {}; });
+      checkbox.checked = false;
+      alert(data.detail || _wizardL10n().consentError);
+      return;
+    }
+    wizardState.consentsConfirmed += 1;
+    if (wizardState.consentsConfirmed >= 3) {
+      document.getElementById("wizStep1Next").disabled = false;
+    }
+  } catch (e) {
+    checkbox.checked = false;
+    alert(_wizardL10n().consentError + " " + e.message);
+  } finally {
+    checkbox.disabled = false;
+  }
+}
+
+// ── Step 1 → Step 2 transition ─────────────────────────────────────────
+async function wizardFinalizeConsents() {
+  if (!wizardState.requestId) return;
+  if (wizardState.consentsConfirmed < 3) return;
+  var btn = document.getElementById("wizStep1Next");
+  btn.disabled = true;
+  try {
+    var resp = await fetch(API_BASE + "/scan/request/" + wizardState.requestId + "/consent/finalize", {
+      method: "POST",
+    });
+    var data = await resp.json();
+    if (!resp.ok) {
+      alert(data.detail || _wizardL10n().finalizeError);
+      btn.disabled = false;
+      return;
+    }
+    _wizardShowStep(2);
+  } catch (e) {
+    alert(_wizardL10n().finalizeError + " " + e.message);
+    btn.disabled = false;
+  }
+}
+
+function wizardBackToStep1() {
+  wizardState.selectedMethod = null;
+  wizardState.verifyToken = null;
+  document.querySelectorAll(".wizard-method-btn").forEach(function(b) { b.classList.remove("active"); });
+  var instr = document.getElementById("wizardInstructions");
+  while (instr.firstChild) instr.removeChild(instr.firstChild);
+  instr.className = "wizard-instructions";
+  var vRes = document.getElementById("wizardVerifyResult");
+  vRes.className = "wizard-verify-result";
+  vRes.textContent = "";
+  document.getElementById("wizVerifyCheckBtn").disabled = true;
+  _wizardShowStep(1);
+  document.getElementById("wizStep1Next").disabled = (wizardState.consentsConfirmed < 3);
+}
+
+// ── Step 2: pick verify method ─────────────────────────────────────────
+function wizardSelectVerifyMethod(method) {
+  wizardState.selectedMethod = method;
+  document.querySelectorAll(".wizard-method-btn").forEach(function(b) {
+    b.classList.toggle("active", b.dataset.method === method);
+  });
+  document.getElementById("wizVerifyCheckBtn").disabled = false;
+  _wizardBuildInstructions(method, wizardState.domain || "vasajt.rs");
+}
+
+// ── Step 2: run verification check ─────────────────────────────────────
+async function wizardCheckVerify() {
+  if (!wizardState.requestId || !wizardState.selectedMethod) return;
+  var btn = document.getElementById("wizVerifyCheckBtn");
+  var resultEl = document.getElementById("wizardVerifyResult");
+  btn.disabled = true;
+  btn.textContent = currentLang === "en" ? "Checking..." : "Proveravam...";
+  try {
+    var resp = await fetch(API_BASE + "/scan/request/" + wizardState.requestId + "/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ method: wizardState.selectedMethod }),
+    });
+    var data = await resp.json();
+    if (resp.ok && data.verified) {
+      wizardState.verifyPassed = true;
+      resultEl.className = "wizard-verify-result success visible";
+      resultEl.textContent = _wizardL10n().verifyOk;
+      var methodName = { meta: "Meta tag", file: currentLang === "en" ? "File" : "Fajl", dns: "DNS TXT" }[wizardState.selectedMethod];
+      document.getElementById("wizRecapMethod").textContent = methodName + " (" + wizardState.domain + ")";
+      document.getElementById("wizRecapDomain").textContent = wizardState.domain;
+      document.getElementById("wizRecapDomainEn").textContent = wizardState.domain;
+      setTimeout(function() { _wizardShowStep(3); _wizardStartCountdown(); }, 800);
+      return;
+    }
+    var reason = (data && data.reason) ? data.reason : "unknown";
+    resultEl.className = "wizard-verify-result error visible";
+    resultEl.textContent = _wizardL10n().verifyError + reason;
+  } catch (e) {
+    resultEl.className = "wizard-verify-result error visible";
+    resultEl.textContent = _wizardL10n().verifyError + e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = currentLang === "en" ? "Check verification" : "Proveri verifikaciju";
+  }
+}
+
+// ── Step 3: 3-second anti-reflex countdown ────────────────────────────
+function _wizardStartCountdown() {
+  var countdownEl = document.getElementById("wizExecuteCountdown");
+  var btn = document.getElementById("wizExecuteBtn");
+  btn.disabled = true;
+  var n = 3;
+  countdownEl.textContent = n;
+  if (wizardState.countdownInterval) clearInterval(wizardState.countdownInterval);
+  wizardState.countdownInterval = setInterval(function() {
+    n -= 1;
+    if (n <= 0) {
+      clearInterval(wizardState.countdownInterval);
+      wizardState.countdownInterval = null;
+      countdownEl.textContent = "→";
+      btn.disabled = false;
+    } else {
+      countdownEl.textContent = String(n);
+    }
+  }, 1000);
+}
+
+// ── Step 3: execute the actual full scan ─────────────────────────────
+async function wizardExecute() {
+  if (!wizardState.requestId || !wizardState.verifyPassed) return;
+  var btn = document.getElementById("wizExecuteBtn");
+  btn.disabled = true;
+  try {
+    var resp = await fetch(API_BASE + "/scan/request/" + wizardState.requestId + "/execute", {
+      method: "POST",
+    });
+    var data = await resp.json();
+    if (!resp.ok) {
+      alert(_wizardL10n().executeError + (data.detail || ""));
+      btn.disabled = false;
+      return;
+    }
+    _wizardClose();
+    _handoffToPollLoop(data.scan_id);
+  } catch (e) {
+    alert(_wizardL10n().executeError + e.message);
+    btn.disabled = false;
+  }
+}
+
+// ── Cancel the wizard ─────────────────────────────────────────────────
+async function wizardAbandon() {
+  if (!wizardState.requestId) {
+    _wizardClose();
+    return;
+  }
+  try {
+    await fetch(API_BASE + "/scan/request/" + wizardState.requestId + "/abandon", {
+      method: "POST",
+    });
+  } catch (e) { /* ignore */ }
+  _wizardClose();
+}
+
+function _wizardClose() {
+  if (wizardState.countdownInterval) {
+    clearInterval(wizardState.countdownInterval);
+    wizardState.countdownInterval = null;
+  }
+  document.getElementById("wizardBackdrop").classList.remove("open");
+  document.body.style.overflow = "";
+}
+
+function _wizardShowStep(stepNum) {
+  for (var i = 1; i <= 3; i++) {
+    var stepEl = document.getElementById("wizardStep" + i);
+    var indicatorEl = document.getElementById("wizStep" + i + "Indicator");
+    if (i < stepNum) {
+      stepEl.classList.remove("active");
+      indicatorEl.classList.add("done");
+      indicatorEl.classList.remove("active");
+    } else if (i === stepNum) {
+      stepEl.classList.add("active");
+      indicatorEl.classList.add("active");
+      indicatorEl.classList.remove("done");
+    } else {
+      stepEl.classList.remove("active");
+      indicatorEl.classList.remove("active", "done");
+    }
+  }
+}
+
+// ── Hand off the wizard's resulting scan_id to the existing scan
+//    poll/render pipeline. Reuses the same UI state machine so we
+//    don't duplicate the rendering logic. ─────────────────────────────
+function _handoffToPollLoop(scanId) {
+  document.getElementById("progressWrap").style.display = "block";
+  document.getElementById("resultsWrap").style.display = "none";
+  document.getElementById("safeModeCta").classList.remove("visible");
+  document.getElementById("resultTabs").classList.add("visible");
+
+  var modWrap = document.getElementById("progressModules");
+  if (modWrap) {
+    modWrap.textContent = "";
+    MODULES.forEach(function(m) {
+      var span = document.createElement("span");
+      span.className = "prog-mod";
+      span.id = "mod-" + m.replace(/[\/\s]/g, "");
+      span.textContent = m;
+      modWrap.appendChild(span);
+    });
+  }
+
+  var qBtn = document.getElementById("scanBtn");
+  var fBtn = document.getElementById("fullScanBtn");
+  if (qBtn) qBtn.disabled = true;
+  if (fBtn) fBtn.disabled = true;
+
+  _wizardInlinePoll(scanId);
+}
+
+async function _wizardInlinePoll(scanId) {
+  var qBtn = document.getElementById("scanBtn");
+  var fBtn = document.getElementById("fullScanBtn");
+  while (true) {
+    try {
+      var resp = await fetch(API_BASE + "/scan/" + scanId);
+      var data = await resp.json();
+      if (data.progress != null) {
+        var pct = Math.max(0, Math.min(100, data.progress));
+        var bar = document.getElementById("progressBar");
+        if (bar) bar.style.width = pct + "%";
+        var pctEl = document.getElementById("progressPct");
+        if (pctEl) pctEl.textContent = pct + "%";
+        var stepEl = document.getElementById("progressStep");
+        if (stepEl && data.step) stepEl.textContent = data.step;
+      }
+      if (data.status === "completed") {
+        currentResults = data.result;
+        if (typeof renderResults === "function") renderResults(currentResults);
+        document.getElementById("progressWrap").style.display = "none";
+        document.getElementById("resultsWrap").style.display = "block";
+        if (qBtn) qBtn.disabled = false;
+        if (fBtn) fBtn.disabled = false;
+        return;
+      }
+      if (data.status === "error") {
+        alert((currentLang === "en" ? "Scan error: " : "Greska skena: ") + (data.error || ""));
+        if (qBtn) qBtn.disabled = false;
+        if (fBtn) fBtn.disabled = false;
+        return;
+      }
+    } catch (e) {
+      // Network blip — keep polling
+    }
+    await new Promise(function(r) { setTimeout(r, 1500); });
+  }
+}
 </script>
 
 <!-- Pro discovery modal — hidden by default, shown by showDiscoveryModal() -->

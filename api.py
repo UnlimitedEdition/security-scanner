@@ -207,6 +207,8 @@ def _run_scan_inline(
     user_agent: Optional[str],
     max_pages: int = 1,
     preselected_pages: Optional[List[str]] = None,
+    mode: str = "safe",
+    scan_request_id: Optional[str] = None,
 ):
     """
     Executes a single scan. Shared between the "start immediately" path
@@ -221,6 +223,23 @@ def _run_scan_inline(
     preselected_pages, if provided, is a list of URLs the user already
     picked via the discovery flow. scanner.scan() will skip its internal
     crawler and scan exactly this list.
+
+    mode (gate-before-scan model from migrations 014/015):
+      - 'safe' (default): only the SAFE / SAFE+REDACTED checks run.
+        scanner.py refuses to send any probe to private surface
+        (no /.env, /wp-admin/, port scan, vuln scan, GraphQL
+        introspection, etc.). The 3 SAFE+REDACTED checks
+        (disclosure, js, jwt) emit sumary-only findings.
+      - 'full': every check runs at full fidelity. Only allowed
+        when the scan was authorized through the wizard flow
+        (POST /scan/request → consent → verify → execute) and the
+        caller's IP hash is recorded in verified_domains for the
+        target domain. The /scan/request/{id}/execute endpoint
+        is the only path that should pass mode='full'.
+
+    scan_request_id, if provided, links this scan back to the
+    scan_requests row that authorized it. Used to mark the wizard
+    state machine as 'completed' once the scanner finishes.
     """
     # Transition to running (both in-memory and DB)
     scans[scan_id]["status"] = "running"
@@ -232,6 +251,7 @@ def _run_scan_inline(
         ua=user_agent,
         scan_id=scan_id,
         domain=scans[scan_id].get("domain"),
+        details={"mode": mode, "scan_request_id": scan_request_id},
     )
 
     progress_cb = _make_progress_cb(scan_id)
@@ -241,11 +261,20 @@ def _run_scan_inline(
             progress_callback=progress_cb,
             max_pages=max_pages,
             preselected_pages=preselected_pages,
+            mode=mode,
         )
         scans[scan_id]["status"] = "completed"
         scans[scan_id]["progress"] = 100
         scans[scan_id]["result"] = result
         db.mark_scan_completed(scan_id, result)
+
+        # If this scan was authorized through the wizard flow, flip the
+        # scan_requests row from 'executing' to 'completed'. Best-effort:
+        # a DB outage here doesn't fail the scan, but it does mean the
+        # wizard row will sit in 'executing' until the next reconciliation
+        # (no functional impact — the user already has results).
+        if scan_request_id:
+            db.mark_scan_request_completed(scan_request_id)
 
         # Detect deadline truncation from scanner.py's errors list
         errors = (result or {}).get("errors") or []
@@ -308,6 +337,8 @@ def _process_queue():
             scan.get("user_agent"),
             int(scan.get("max_pages") or 1),
             scan.get("preselected_pages"),
+            scan.get("mode", "safe"),
+            scan.get("scan_request_id"),
         ),
         daemon=True,
     )
@@ -329,6 +360,14 @@ class ScanRequest(BaseModel):
     # this field. When present and caller is Pro, the scanner skips its
     # internal crawler and scans exactly these URLs.
     selected_pages: Optional[List[str]] = None
+    # Gate-before-scan model (migrations 014/015). When the frontend
+    # hits POST /scan directly (the legacy / "Brzi javni sken" path),
+    # mode is forced to 'safe' regardless of what the body says — full
+    # mode requires going through POST /scan/request → wizard → execute,
+    # which is the only place a server-side full mode flag gets set.
+    # Including the field in this model allows the legacy endpoint to
+    # accept and ignore it without raising a validation error.
+    mode: Optional[str] = None
 
     @field_validator("url")
     @classmethod
@@ -978,6 +1017,638 @@ def verify_check_endpoint(req: VerifyCheckRequest, request: Request):
     }
 
 
+# ═══════════════════════════════════════════════════════════════════════
+# Wizard endpoints — gate-before-scan ownership flow (migrations 014/015)
+# ═══════════════════════════════════════════════════════════════════════
+# The 6 endpoints below back the new "Puni sken (vlasnici)" button on
+# index.html. They walk a state machine stored in the scan_requests
+# table — every transition is server-validated, so a malicious frontend
+# cannot skip any step.
+#
+# State machine:
+#
+#   pending_consent ──set_consent×3──▶ pending_consent
+#                   ──finalize──▶ consent_recorded
+#                                ──verify (success)──▶ verified
+#                                                       ──execute──▶ executing
+#                                                                    ──scanner done──▶ completed
+#                   ──abandon──▶ abandoned
+#                   ──(24h, no execute)──▶ pruned by cron
+#
+# Why 6 endpoints instead of 1 monolithic /scan/full:
+#   1. Each step is auditable on its own (audit_log gets a row per click)
+#   2. The frontend wizard can show partial state if the user reloads
+#   3. Backend never trusts frontend to have done the previous step —
+#      every endpoint re-reads the row and validates the precondition
+#   4. Race conditions are bounded: each transition is one UPDATE with
+#      a WHERE clause that filters on the expected source state
+#
+# Privacy: scan_requests stores only DATE (no TIMESTAMPTZ), and the
+# /consent endpoint never returns timestamps. Even a full DB exfiltration
+# cannot reveal what time of day a user clicked which checkbox.
+
+# Per-IP rate limit on POST /scan/request — prevents one IP from filling
+# the table with abandoned wizards. Counted against the existing
+# `count_active_scan_requests_for_ip` query in db.py.
+_MAX_ACTIVE_SCAN_REQUESTS_PER_IP = 5
+
+
+class ScanRequestCreate(BaseModel):
+    url: str
+
+    @field_validator("url")
+    @classmethod
+    def validate_url(cls, v: str) -> str:
+        v = (v or "").strip()
+        if not v:
+            raise ValueError("URL ne sme biti prazan.")
+        if not v.startswith(("http://", "https://")):
+            v = "https://" + v
+        if not re.match(r"^https?://[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", v):
+            raise ValueError("Neispravan URL format.")
+        safe, reason = is_safe_target(v)
+        if not safe:
+            raise ValueError(
+                f"Ciljna adresa nije dozvoljena. / Target not allowed: {reason}"
+            )
+        return v
+
+
+class ScanRequestConsent(BaseModel):
+    consent_num: int
+
+    @field_validator("consent_num")
+    @classmethod
+    def validate_consent_num(cls, v: int) -> int:
+        if v not in (1, 2, 3):
+            raise ValueError("consent_num mora biti 1, 2 ili 3.")
+        return v
+
+
+class ScanRequestVerify(BaseModel):
+    method: str
+
+    @field_validator("method")
+    @classmethod
+    def validate_method(cls, v: str) -> str:
+        if v not in ("meta", "file", "dns"):
+            raise ValueError("Metoda mora biti meta, file ili dns.")
+        return v
+
+
+def _get_scan_request_or_404(request_id: str) -> Dict[str, Any]:
+    """
+    Common helper for the wizard endpoints. Loads the scan_requests row
+    by id and 404s if it does not exist. Returns the dict on success.
+    """
+    if not re.match(r"^[a-f0-9]{8}$", request_id or ""):
+        raise HTTPException(status_code=400, detail="Neispravan format ID-ja.")
+    row = db.get_scan_request(request_id)
+    if not row:
+        raise HTTPException(
+            status_code=404,
+            detail="Scan request ne postoji ili je istekao."
+        )
+    return row
+
+
+@app.post("/scan/request")
+def create_scan_request_endpoint(req: ScanRequestCreate, request: Request):
+    """
+    Step 1 of the Full Scan wizard: create a pending scan_requests row.
+
+    The user has clicked "Puni sken (vlasnici)" with a domain typed in.
+    We validate the URL, normalize the domain, check the per-IP active
+    request limit, create the row in 'pending_consent' status, and
+    return the request_id. The frontend then opens the consent wizard.
+
+    Audit: scan_request_created event with the URL and IP hash. Domain
+    block check applies here too — a domain on the abuse block list
+    cannot be scanned in any mode, including the wizard flow.
+    """
+    client_ip = _client_ip(request)
+    user_agent = request.headers.get("user-agent", "")[:500] or None
+
+    # Per-IP rate limit on active wizards
+    active = db.count_active_scan_requests_for_ip(client_ip)
+    if active >= _MAX_ACTIVE_SCAN_REQUESTS_PER_IP:
+        raise HTTPException(
+            status_code=429,
+            detail=(
+                f"Imate {active} aktivnih wizarda u toku. "
+                f"Maksimalno {_MAX_ACTIVE_SCAN_REQUESTS_PER_IP}. "
+                "Zavrsite ili ponistite jedan pre nego pokrenete novi. / "
+                f"You have {active} active wizards in progress. "
+                f"Maximum {_MAX_ACTIVE_SCAN_REQUESTS_PER_IP}. "
+                "Finish or cancel one before starting another."
+            ),
+        )
+
+    # Normalize domain
+    try:
+        from urllib.parse import urlparse as _urlparse
+        parsed = _urlparse(req.url)
+        domain = parsed.netloc.removeprefix("www.").lower()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Neispravan URL.")
+
+    if not domain:
+        raise HTTPException(status_code=400, detail="Domen se nije mogao odrediti iz URL-a.")
+
+    # Domain block check (consistent with /scan)
+    if db.is_domain_blocked(domain):
+        db.log_audit_event(
+            event="abuse_block_applied",
+            ip=client_ip, ua=user_agent, domain=domain,
+            details={"url": req.url, "reason": "confirmed_abuse_report", "via": "scan_request"},
+        )
+        raise HTTPException(
+            status_code=403,
+            detail="Domen je blokiran na osnovu prijave zloupotrebe.",
+        )
+
+    request_id = uuid.uuid4().hex[:8]
+    row = db.create_scan_request(
+        request_id=request_id,
+        domain=domain,
+        url=req.url,
+        ip=client_ip,
+        user_agent=user_agent,
+    )
+    if not row:
+        raise HTTPException(
+            status_code=503,
+            detail="Baza nije dostupna. Pokusajte ponovo za minut.",
+        )
+
+    db.log_audit_event(
+        event="scan_request_created",
+        ip=client_ip, ua=user_agent, domain=domain,
+        details={"request_id": request_id, "url": req.url},
+    )
+
+    return {
+        "request_id": request_id,
+        "domain": domain,
+        "url": req.url,
+        "status": "pending_consent",
+        "next_step": "consent",
+    }
+
+
+@app.post("/scan/request/{request_id}/consent")
+def set_scan_request_consent_endpoint(
+    request_id: str,
+    req: ScanRequestConsent,
+    request: Request,
+):
+    """
+    Step 2 of the Full Scan wizard: tick one consent checkbox.
+
+    The frontend sends one POST per checkbox click. The backend updates
+    the appropriate consent_N_given column to TRUE and audit-logs the
+    event. The wizard's [Nastavi →] button is disabled until all 3
+    consents are recorded server-side — frontend cannot lie about
+    state because the next endpoint (/consent/finalize) re-reads the
+    row.
+    """
+    client_ip = _client_ip(request)
+    user_agent = request.headers.get("user-agent", "")[:500] or None
+
+    row = _get_scan_request_or_404(request_id)
+    if row.get("status") != "pending_consent":
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Saglasnosti se mogu menjati samo dok je wizard u stanju "
+                "'pending_consent'. Trenutno: " + str(row.get("status"))
+            ),
+        )
+
+    ok = db.set_scan_request_consent(request_id, req.consent_num)
+    if not ok:
+        raise HTTPException(status_code=500, detail="Saglasnost nije zapisana.")
+
+    db.log_audit_event(
+        event="consent_set",
+        ip=client_ip, ua=user_agent, domain=row.get("domain"),
+        details={"request_id": request_id, "consent_num": req.consent_num},
+    )
+
+    # IMPORTANT: We deliberately DO NOT return a timestamp. The whole
+    # point of using DATE-only in scan_requests is that consent click
+    # timing is never exposed. The response is the new state, nothing
+    # more.
+    return {
+        "request_id": request_id,
+        "consent_num": req.consent_num,
+        "set": True,
+    }
+
+
+@app.post("/scan/request/{request_id}/consent/finalize")
+def finalize_scan_request_consent_endpoint(request_id: str, request: Request):
+    """
+    Step 3 of the Full Scan wizard: lock in all 3 consents.
+
+    Re-reads the row, verifies all 3 consent_N_given flags are TRUE,
+    and atomically transitions status from 'pending_consent' to
+    'consent_recorded'. Returns 400 if any consent is missing.
+    """
+    client_ip = _client_ip(request)
+    user_agent = request.headers.get("user-agent", "")[:500] or None
+
+    row = _get_scan_request_or_404(request_id)
+    if row.get("status") != "pending_consent":
+        raise HTTPException(
+            status_code=409,
+            detail="Wizard nije u stanju za finalizaciju saglasnosti.",
+        )
+    if not (row.get("consent_1_given") and row.get("consent_2_given") and row.get("consent_3_given")):
+        raise HTTPException(
+            status_code=400,
+            detail="Sva 3 polja saglasnosti moraju biti potvrdjena.",
+        )
+
+    ok = db.finalize_scan_request_consents(request_id)
+    if not ok:
+        raise HTTPException(status_code=500, detail="Finalizacija nije uspela.")
+
+    db.log_audit_event(
+        event="consent_finalized",
+        ip=client_ip, ua=user_agent, domain=row.get("domain"),
+        details={"request_id": request_id},
+    )
+
+    return {
+        "request_id": request_id,
+        "status": "consent_recorded",
+        "next_step": "verify",
+    }
+
+
+@app.post("/scan/request/{request_id}/verify")
+def scan_request_verify_endpoint(
+    request_id: str,
+    req: ScanRequestVerify,
+    request: Request,
+):
+    """
+    Step 4 of the Full Scan wizard: run ownership verification.
+
+    Pre-condition: scan_request must be in 'consent_recorded' status.
+    The wizard cannot run verification before consents are finalized.
+
+    Internally this composes the existing verification module:
+      1. db.create_verification_token(domain, method, ip) — issues a
+         random token bound to (domain, ip)
+      2. verification.run_verification(method, domain, token) — checks
+         the meta tag / file / DNS TXT
+      3. On success, also calls db.upsert_verified_domain so the
+         requester gets the standard 30-day cache for unrelated /scan
+         calls (consistent with the legacy verify flow)
+      4. Stores the verify result on the scan_request row via
+         db.attach_verify_to_scan_request
+
+    Returns the same shape as the legacy /verify/check endpoint plus
+    the request_id and a next_step hint for the wizard.
+    """
+    client_ip = _client_ip(request)
+    user_agent = request.headers.get("user-agent", "")[:500] or None
+
+    row = _get_scan_request_or_404(request_id)
+    status = row.get("status")
+    if status not in ("consent_recorded", "verified"):
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Verifikacija se moze pokrenuti samo nakon finalizacije "
+                "saglasnosti. Trenutno: " + str(status)
+            ),
+        )
+
+    domain = row.get("domain")
+    if not domain:
+        raise HTTPException(status_code=500, detail="Wizard row nema domain.")
+
+    # Issue a fresh verification token tied to this scan_request's domain
+    # and the requester's IP. The token is short-lived (1 hour) and is
+    # the actual cryptographic challenge the user has to place on their
+    # site. Caller-generated random hex matches the legacy /verify/request
+    # pattern.
+    token = _secrets.token_hex(16)  # 32 hex chars = 128 bits
+    token_row = db.create_verification_token(
+        token=token,
+        domain=domain,
+        method=req.method,
+        ip=client_ip,
+        ttl_seconds=3600,
+    )
+    if not token_row:
+        raise HTTPException(
+            status_code=503,
+            detail="Verifikacija nije mogla da se inicijalizuje.",
+        )
+
+    # Run the actual ownership check (HTTP fetch / DNS query — through
+    # safe_get / dnspython, both SSRF-protected)
+    db.increment_verification_attempts(token)
+    result = verification.run_verification(req.method, domain, token)
+
+    # Persist the outcome on the wizard row regardless of pass/fail —
+    # the user can retry on failure, the row stays in 'consent_recorded'.
+    db.attach_verify_to_scan_request(
+        request_id=request_id,
+        method=req.method,
+        token=token,
+        passed=bool(result.ok),
+    )
+
+    if result.ok:
+        # Mark the legacy token verified AND grant the 30-day cache
+        # entry — the latter so an owner who later hits POST /scan
+        # directly for the same domain still gets unredacted results
+        # without going through another wizard.
+        db.mark_token_verified(token)
+        db.upsert_verified_domain(
+            domain=domain, ip=client_ip, method=req.method, ttl_days=30
+        )
+        db.log_audit_event(
+            event="verify_success",
+            ip=client_ip, ua=user_agent, domain=domain,
+            details={
+                "request_id": request_id,
+                "method": req.method,
+                "via": "wizard",
+                "reason": result.reason,
+            },
+        )
+        return {
+            "request_id": request_id,
+            "verified": True,
+            "domain": domain,
+            "method": req.method,
+            "valid_for_days": 30,
+            "reason": result.reason,
+            "next_step": "execute",
+        }
+
+    # Verification failed — wizard stays in consent_recorded so the user
+    # can pick a different method or retry.
+    db.log_audit_event(
+        event="verify_failure",
+        ip=client_ip, ua=user_agent, domain=domain,
+        details={
+            "request_id": request_id,
+            "method": req.method,
+            "via": "wizard",
+            "reason": result.reason,
+        },
+    )
+    return {
+        "request_id": request_id,
+        "verified": False,
+        "domain": domain,
+        "method": req.method,
+        "reason": result.reason,
+        "next_step": "verify",  # try again
+    }
+
+
+@app.post("/scan/request/{request_id}/execute")
+def execute_scan_request_endpoint(request_id: str, request: Request):
+    """
+    Step 5 of the Full Scan wizard: kick off the actual full-mode scan.
+
+    Re-validates EVERY precondition server-side before launching the
+    scanner — even if the frontend has been compromised, this endpoint
+    will refuse unless:
+      * scan_request status == 'verified'
+      * all 3 consent_N_given == TRUE
+      * verify_passed == TRUE
+      * db.is_domain_verified(domain, client_ip) == TRUE
+      * created_date is today (rows older than 24h are abandoned by cron
+        but this is a defensive belt-and-suspenders check)
+
+    Only after all of those pass does it call db.mark_scan_request_executed
+    (which atomically transitions to 'executing' with the same WHERE
+    clause re-validation), creates a scans row, and starts the scanner
+    in mode='full'.
+    """
+    client_ip = _client_ip(request)
+    user_agent = request.headers.get("user-agent", "")[:500] or None
+
+    row = _get_scan_request_or_404(request_id)
+
+    # Server-side re-validation of every wizard precondition. The DB
+    # also re-validates these in mark_scan_request_executed's WHERE
+    # clause (race-condition safety), but checking here gives the user
+    # a clean error message instead of a 500.
+    if row.get("status") != "verified":
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Wizard nije u 'verified' stanju. Trenutno: "
+                + str(row.get("status"))
+            ),
+        )
+    if not (row.get("consent_1_given") and row.get("consent_2_given") and row.get("consent_3_given")):
+        raise HTTPException(
+            status_code=400,
+            detail="Sva 3 polja saglasnosti moraju biti aktivna.",
+        )
+    if not row.get("verify_passed"):
+        raise HTTPException(
+            status_code=400,
+            detail="Verifikacija vlasnistva nije zavrsena uspesno.",
+        )
+
+    domain = row.get("domain")
+    url = row.get("url")
+    if not domain or not url:
+        raise HTTPException(status_code=500, detail="Wizard row je nepotpun.")
+
+    # Domain block check — defensive (also done at /scan/request creation)
+    if db.is_domain_blocked(domain):
+        raise HTTPException(
+            status_code=403,
+            detail="Domen je blokiran na osnovu prijave zloupotrebe.",
+        )
+
+    # Cross-check verified_domains: the IP that ran verify must be the
+    # same IP that runs execute. Without this, an attacker could steal
+    # a request_id from another user mid-wizard.
+    if not db.is_domain_verified(domain, client_ip):
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "Vasa IP adresa nije autorizovana za ovaj domen. "
+                "Verifikacija se mora pokrenuti sa iste IP adrese sa koje "
+                "pokrecete skener."
+            ),
+        )
+
+    # Create a normal scan row + queue, but tagged with mode='full' and
+    # scan_request_id. From this point on, the wizard cannot reach
+    # /execute again because mark_scan_request_executed flips status
+    # to 'executing'.
+    scan_id = uuid.uuid4().hex[:8]
+    queue_position = len(_scan_queue) + (1 if _active_scan["id"] else 0)
+
+    # Pro plan multi-page support — wizard scans get full Pro budget if
+    # the caller has an active subscription. Otherwise homepage only,
+    # same as the free /scan path.
+    pro_sub = _get_pro_subscription(request)
+    max_pages = 10 if pro_sub else 1
+
+    # Atomically flip the wizard row to 'executing'. This is the
+    # last point at which the wizard can be aborted — once status is
+    # 'executing', the scanner thread is in flight.
+    flipped = db.mark_scan_request_executed(request_id, scan_id)
+    if not flipped:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Wizard ne moze da se pokrene — moguce je da je vec "
+                "izvrsen, ponisten, ili da neki uslov nije ispunjen."
+            ),
+        )
+
+    scans[scan_id] = {
+        "id": scan_id,
+        "url": url,
+        "domain": domain,
+        "status": "queued" if queue_position > 0 else "running",
+        "progress": 0,
+        "step": "",
+        "queue_position": queue_position,
+        "created_at": datetime.utcnow().isoformat(),
+        "result": None,
+        "error": None,
+        "client_ip": client_ip,
+        "user_agent": user_agent,
+        "max_pages": max_pages,
+        "is_pro": bool(pro_sub),
+        "preselected_pages": None,
+        # Wizard authorization — full mode is permitted because every
+        # precondition above has been re-validated server-side.
+        "mode": "full",
+        "scan_request_id": request_id,
+    }
+
+    db.create_scan(
+        scan_id=scan_id,
+        url=url,
+        domain=domain,
+        ip=client_ip,
+        user_agent=user_agent,
+        consent_accepted=True,
+        consent_version="wizard-v1",
+        status="queued" if queue_position > 0 else "running",
+        subscription_id=(pro_sub.get("id") if pro_sub else None),
+    )
+
+    db.log_audit_event(
+        event="scan_request_executed",
+        ip=client_ip, ua=user_agent, domain=domain,
+        scan_id=scan_id,
+        details={
+            "request_id": request_id,
+            "url": url,
+            "queue_position": queue_position,
+        },
+    )
+
+    if queue_position > 0:
+        scans[scan_id]["step"] = f"U redu za skeniranje... pozicija {queue_position}"
+        _scan_queue.append(scan_id)
+    else:
+        _active_scan["id"] = scan_id
+        scans[scan_id]["step"] = "Pokretanje punog skena..."
+        thread = threading.Thread(
+            target=_run_scan_inline,
+            args=(scan_id, url, client_ip, user_agent, max_pages, None, "full", request_id),
+            daemon=True,
+        )
+        thread.start()
+
+    return {
+        "request_id": request_id,
+        "scan_id": scan_id,
+        "status": scans[scan_id]["status"],
+        "queue_position": queue_position,
+        "mode": "full",
+    }
+
+
+@app.post("/scan/request/{request_id}/abandon")
+def abandon_scan_request_endpoint(request_id: str, request: Request):
+    """
+    Step 6 of the Full Scan wizard: explicit cancel by the user.
+
+    Backed by db.abandon_scan_request which only flips wizard-active
+    rows ('pending_consent', 'consent_recorded', 'verified') to
+    'abandoned'. Rows that already reached 'executing' or 'completed'
+    cannot be abandoned — at that point the scan is in flight or done
+    and the user has to wait it out (or contact support for a refund
+    if it's a Pro mistake, but that's out-of-band).
+
+    The hourly cron prune job (migration 015) deletes abandoned rows
+    the next day, but flipping the status here removes the row from
+    the active rate-limit count immediately so the user can start a
+    new wizard if they want to.
+    """
+    client_ip = _client_ip(request)
+    user_agent = request.headers.get("user-agent", "")[:500] or None
+
+    row = _get_scan_request_or_404(request_id)
+    ok = db.abandon_scan_request(request_id)
+    if not ok:
+        # Either the row was already terminal, or DB write failed.
+        # Return 409 in both cases — same user-facing meaning ("can't
+        # abandon now").
+        raise HTTPException(
+            status_code=409,
+            detail="Wizard se ne moze ponistiti u trenutnom stanju.",
+        )
+
+    db.log_audit_event(
+        event="scan_request_abandoned",
+        ip=client_ip, ua=user_agent, domain=row.get("domain"),
+        details={"request_id": request_id, "previous_status": row.get("status")},
+    )
+
+    return {"request_id": request_id, "status": "abandoned"}
+
+
+@app.get("/scan/request/{request_id}")
+def get_scan_request_endpoint(request_id: str):
+    """
+    Read the current state of a wizard. Used by the frontend on page
+    reload — if the user closes the tab mid-wizard and comes back, the
+    frontend can ask "where am I?" and resume from the right step.
+
+    Returns a deliberately small subset of the row: domain, url,
+    status, the 3 consent flags, verify_method, verify_passed, and
+    final_confirmed. Notably we do NOT return verify_token (it's
+    short-lived and the wizard re-issues a fresh one when the user
+    picks a method) and we do NOT return any timestamp.
+    """
+    row = _get_scan_request_or_404(request_id)
+    return {
+        "request_id": row.get("id"),
+        "domain": row.get("domain"),
+        "url": row.get("url"),
+        "status": row.get("status"),
+        "consent_1_given": bool(row.get("consent_1_given")),
+        "consent_2_given": bool(row.get("consent_2_given")),
+        "consent_3_given": bool(row.get("consent_3_given")),
+        "verify_method": row.get("verify_method"),
+        "verify_passed": bool(row.get("verify_passed")),
+        "final_confirmed": bool(row.get("final_confirmed")),
+    }
+
+
 # ─────────────────────────────────────────────────────────────────────────
 # Discovery endpoint — Pro two-phase scan flow (list pages first)
 # ─────────────────────────────────────────────────────────────────────────
@@ -1267,6 +1938,13 @@ def start_scan(req: ScanRequest, request: Request):
         "max_pages": max_pages,
         "is_pro": bool(pro_sub),
         "preselected_pages": validated_selected,
+        # Gate-before-scan: this endpoint is the LEGACY / "Brzi javni
+        # sken" path and ALWAYS runs in safe mode. Full mode requires
+        # going through POST /scan/request → wizard → execute. Even
+        # if the request body claims mode='full', it is ignored here:
+        # full mode is set server-side, only by /scan/request/{id}/execute.
+        "mode": "safe",
+        "scan_request_id": None,
     }
 
     # Persist the scan + log the request. Both are best-effort — DB
@@ -1309,7 +1987,7 @@ def start_scan(req: ScanRequest, request: Request):
         scans[scan_id]["step"] = "Pokretanje skeniranja..."
         thread = threading.Thread(
             target=_run_scan_inline,
-            args=(scan_id, req.url, client_ip, user_agent, max_pages, validated_selected),
+            args=(scan_id, req.url, client_ip, user_agent, max_pages, validated_selected, "safe", None),
             daemon=True,
         )
         thread.start()
