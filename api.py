@@ -2259,6 +2259,17 @@ def get_scan(scan_id: str, request: Request):
         if not db_row:
             raise HTTPException(status_code=404, detail="Skeniranje nije pronađeno.")
 
+        # Zombie detection: if DB says "running" or "queued" but the scan
+        # is not in our in-memory cache, the worker must have restarted.
+        # Mark it as error so the frontend stops polling forever.
+        if db_row.get("status") in ("running", "queued"):
+            db_row["status"] = "error"
+            db_row["error"] = "Skeniranje je prekinuto (server se restartovao)."
+            try:
+                db.mark_scan_error(scan_id, db_row["error"])
+            except Exception:
+                pass
+
         # Derive domain for the verification gate
         try:
             from urllib.parse import urlparse
