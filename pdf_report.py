@@ -124,7 +124,7 @@ class _ScanReport(FPDF):
         self.cell(0, 4, right, 0, 1, "R")
         self.set_font("Helvetica", "", 6)
         self.cell(0, 3, _ascii(f"Report generated {self.scan_date}"), 0, 0, "L")
-        self.cell(0, 3, _ascii("security-scanner-ruddy.vercel.app"), 0, 1, "R")
+        self.cell(0, 3, _ascii("security-skener.gradovi.rs"), 0, 1, "R")
 
 
 # ──────────────────────────────────────────────────────────────────────

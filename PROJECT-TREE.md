@@ -4,7 +4,7 @@
 > **Svrha:** Kompletna mapa projekta za code review / agent analysis.
 > **Git HEAD:** `76ffad5` (PRIRUCNIK.md update for gate-before-scan + frontend polish)
 > **Live deploys:**
-> - Frontend: https://security-scanner-ruddy.vercel.app
+> - Frontend: https://security-skener.gradovi.rs
 > - Backend API: https://unlimitededition-web-security-scanner.hf.space
 > - DB: Supabase project `wmerashfovgaugxpexqo`
 

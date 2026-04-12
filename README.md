@@ -17,7 +17,7 @@ short_description: Passive website security analysis - 240+ checks
 
 Passive security analysis for websites — **240+ checks**, no site modification, GDPR-compliant.
 
-Live: https://security-scanner-ruddy.vercel.app
+Live: https://security-skener.gradovi.rs
 
 ## Two scan modes — gate-before-scan model
 
@@ -68,7 +68,7 @@ the free tier with no account needed — enter a URL and scan. A paid
   `pricing.html` and `account.html` for the user-facing flow.
 
 Pricing, FAQ, and the refund policy live at
-[`/pricing`](https://security-scanner-ruddy.vercel.app/pricing).
+[`/pricing`](https://security-skener.gradovi.rs/pricing).
 
 ## Tech stack
 

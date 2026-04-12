@@ -1,6 +1,6 @@
-Contact: mailto:mtosic0450@gmail.com
+Contact: mailto:kontakt@gradovi.rs
 Contact: https://github.com/UnlimitedEdition/security-scanner/security/advisories/new
 Expires: 2027-12-31T23:59:00.000Z
 Preferred-Languages: sr, en
-Canonical: https://security-scanner-ruddy.vercel.app/.well-known/security.txt
-Policy: https://security-scanner-ruddy.vercel.app/SECURITY.md
+Canonical: https://security-skener.gradovi.rs/.well-known/security.txt
+Policy: https://security-skener.gradovi.rs/SECURITY.md

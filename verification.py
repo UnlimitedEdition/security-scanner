@@ -54,7 +54,7 @@ def _new_session() -> requests.Session:
     s.headers.update({
         "User-Agent": (
             "Mozilla/5.0 (compatible; WebSecurityScanner-Verifier/1.0; "
-            "+https://security-scanner-ruddy.vercel.app)"
+            "+https://security-skener.gradovi.rs)"
         ),
         "Accept": "text/html,application/xhtml+xml,text/plain,*/*;q=0.8",
     })
