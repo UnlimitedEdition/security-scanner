@@ -979,28 +979,16 @@ def finalize_scan_request_consents(request_id: str) -> bool:
 
     def _do() -> bool:
         client = get_client()
-        # 1. Read current state
-        existing = (
-            client.table("scan_requests")
-            .select("consent_1_given, consent_2_given, consent_3_given, status")
-            .eq("id", request_id)
-            .limit(1)
-            .execute()
-        )
-        rows = existing.data or []
-        if not rows:
-            return False
-        row = rows[0]
-        if row.get("status") != "pending_consent":
-            return False
-        if not (row.get("consent_1_given") and row.get("consent_2_given") and row.get("consent_3_given")):
-            return False
-        # 2. Flip status
+        # Single atomic UPDATE: all preconditions in WHERE clause
+        # Prevents race where consent flag flips between our SELECT and UPDATE
         result = (
             client.table("scan_requests")
             .update({"status": "consent_recorded"})
             .eq("id", request_id)
             .eq("status", "pending_consent")
+            .eq("consent_1_given", True)
+            .eq("consent_2_given", True)
+            .eq("consent_3_given", True)
             .execute()
         )
         return bool(result.data)

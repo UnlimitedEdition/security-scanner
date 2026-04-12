@@ -1490,16 +1490,72 @@ def scan_request_verify_endpoint(
     if not domain:
         raise HTTPException(status_code=500, detail="Wizard row nema domain.")
 
+    # Domain block check — consistent with /scan/request and /execute
+    if db.is_domain_blocked(domain):
+        raise HTTPException(
+            status_code=403,
+            detail="Domen je blokiran na osnovu prijave zloupotrebe.",
+        )
+
+    # SHORTCUT: if this domain is already verified for this IP or fingerprint
+    # (within 30-day window), skip ownership challenge entirely. User proved
+    # ownership before — no need to repeat it.
+    if db.is_domain_verified(domain, client_ip, fingerprint_hash=req.fingerprint_hash):
+        # Mark wizard as verified without running verification
+        db.attach_verify_to_scan_request(
+            request_id=request_id,
+            method=req.method,
+            token="CACHED",  # sentinel indicating cached verification
+            passed=True,
+        )
+        # Refresh the 30-day cache (extends expiration)
+        db.upsert_verified_domain(
+            domain=domain, ip=client_ip, method=req.method, ttl_days=30,
+            fingerprint_hash=req.fingerprint_hash,
+        )
+        db.log_audit_event(
+            event="verify_success",
+            ip=client_ip, ua=user_agent, domain=domain,
+            details={
+                "request_id": request_id,
+                "method": req.method,
+                "via": "wizard_cache",
+                "reason": "already_verified_within_30_days",
+            },
+        )
+        return {
+            "request_id": request_id,
+            "verified": True,
+            "domain": domain,
+            "method": req.method,
+            "valid_for_days": 30,
+            "reason": "already_verified",
+            "cached": True,
+            "next_step": "execute",
+        }
+
     # Reuse existing token if the wizard row already has one (user is
     # retrying after placing the meta tag / DNS record). Only issue a
     # new token if this is the first verify attempt for this wizard or
     # if the previous token has expired.
     existing_token = row.get("verify_token")
     token = None
-    if existing_token:
+    if existing_token and existing_token != "CACHED":
         existing_row = db.get_verification_token(existing_token)
         if existing_row and existing_row.get("status") == "pending":
-            token = existing_token  # reuse — user already placed this one
+            # Also verify token hasn't expired
+            from datetime import datetime as _dt, timezone as _tz
+            exp = existing_row.get("expires_at")
+            is_valid = True
+            if exp:
+                try:
+                    exp_dt = _dt.fromisoformat(str(exp).replace("Z", "+00:00"))
+                    if exp_dt < _dt.now(_tz.utc):
+                        is_valid = False  # expired, don't reuse
+                except Exception:
+                    pass
+            if is_valid:
+                token = existing_token  # reuse — user already placed this one
 
     if not token:
         token = _secrets.token_hex(16)  # 32 hex chars = 128 bits
@@ -1690,6 +1746,12 @@ def execute_scan_request_endpoint(request_id: str, request: Request):
     # aborted — once status is 'executing', the scanner thread is in flight.
     flipped = db.mark_scan_request_executed(request_id, scan_id)
     if not flipped:
+        # Another /execute call won the race and already created a scan.
+        # Delete our orphaned scan row so it doesn't pollute the DB.
+        try:
+            db.mark_scan_error(scan_id, "Orphaned — another /execute won the race")
+        except Exception:
+            pass
         raise HTTPException(
             status_code=409,
             detail=(
