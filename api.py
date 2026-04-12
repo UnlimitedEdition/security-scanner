@@ -983,6 +983,27 @@ def verify_check_endpoint(req: VerifyCheckRequest, request: Request):
     domain = token_row["domain"]
     method = token_row["method"]
 
+    # IP binding — token must be verified from the same IP that created it.
+    # Without this, an attacker who intercepts a token string could verify
+    # from their own IP and grant themselves 30 days of full scan access.
+    token_ip_hash = token_row.get("ip_hash")
+    caller_ip_hash = db.hash_ip(client_ip)
+    if token_ip_hash and token_ip_hash != caller_ip_hash:
+        db.log_audit_event(
+            event="verify_failure",
+            ip=client_ip, ua=user_agent, domain=domain,
+            details={"reason": "ip_mismatch", "token_prefix": req.token[:8]},
+        )
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "Verifikacija mora biti izvrsena sa iste IP adrese "
+                "sa koje je token zahteven. / "
+                "Verification must be performed from the same IP "
+                "that requested the token."
+            ),
+        )
+
     # Terminal states
     if token_row["status"] == "verified":
         return {

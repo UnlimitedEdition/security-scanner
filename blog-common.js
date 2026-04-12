@@ -340,13 +340,19 @@
   legalRow.appendChild(legalRights);
 
   // Prijavi zloupotrebu — dedicated page with form + FAQ + process details
-  // (earlier iteration was an inline panel on index.html, but cross-page
-  // navigation had timing bugs and the inline layout couldn't fit enough
-  // explanation. A standalone page is cleaner, more SEO-friendly, and
-  // works without JavaScript.)
   var abuseLink = el('a', { href: './abuse-report.html' });
   abuseLink.appendChild(srSpan('Prijavi zloupotrebu', 'Report abuse'));
   legalRow.appendChild(abuseLink);
+
+  // Podesavanja kolacica — reopens cookie consent banner
+  var cookieLink = el('a', { href: '#' });
+  cookieLink.style.cursor = 'pointer';
+  cookieLink.addEventListener('click', function(e) {
+    e.preventDefault();
+    if (typeof openCookieSettings === 'function') openCookieSettings();
+  });
+  cookieLink.appendChild(srSpan('Podesavanja kolacica', 'Cookie Settings'));
+  legalRow.appendChild(cookieLink);
 
   // Footer bottom — just copyright + CTA
   var footerBottom = el('div', { className: 'footer-bottom' });
@@ -363,6 +369,15 @@
   footerEl.appendChild(legalRow);
   footerEl.appendChild(footerBottom);
   document.body.appendChild(footerEl);
+
+  // --- GLOBAL COOKIE CONSENT ---
+  // Loads cookie-consent.js dynamically if not already present.
+  // This gives all blog pages the same full GDPR V2 panel as index.html.
+  if (!window._cookieConsentLoaded && !document.querySelector('script[src*="cookie-consent.js"]')) {
+    var ccScript = document.createElement('script');
+    ccScript.src = './cookie-consent.js';
+    document.head.appendChild(ccScript);
+  }
 
   // --- LANGUAGE TOGGLE ---
   function _blogSetLang(lang) {

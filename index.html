@@ -58,11 +58,34 @@
   }
   </script>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
-  <!-- Google AdSense -->
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6525862847461769" crossorigin="anonymous"></script>
-  <!-- Google Funding Choices (anti-adblock + consent) -->
-  <script async src="https://fundingchoicesmessages.google.com/i/pub-6525862847461769?ers=1"></script>
-  <script>(function(){function signalGooglefcPresent(){if(!window.frames['googlefcPresent']){if(document.body){var iframe=document.createElement('iframe');iframe.style='width:0;height:0;border:none;z-index:-1000;left:-1000px;top:-1000px;';iframe.style.display='none';iframe.name='googlefcPresent';document.body.appendChild(iframe);}else{setTimeout(signalGooglefcPresent,0);}}}signalGooglefcPresent();})();</script>
+  <!-- Cookie consent (GDPR) — shared across all pages -->
+  <script src="./cookie-consent.js" defer></script>
+  <!-- Google AdSense — loaded ONLY after cookie consent (ads=true).
+       Without consent, no ad scripts load and no tracking cookies are set.
+       This is required for GDPR/ePrivacy compliance. -->
+  <script>
+  (function() {
+    var consent;
+    try {
+      var raw = localStorage.getItem("cookie_consent_v2");
+      if (raw) consent = JSON.parse(raw);
+    } catch(e) {}
+    if (consent && consent.ads) {
+      // User has previously accepted all cookies — load AdSense immediately
+      var s = document.createElement("script");
+      s.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6525862847461769";
+      s.async = true; s.crossOrigin = "anonymous";
+      document.head.appendChild(s);
+      var fc = document.createElement("script");
+      fc.src = "https://fundingchoicesmessages.google.com/i/pub-6525862847461769?ers=1";
+      fc.async = true;
+      document.head.appendChild(fc);
+    }
+    // Funding Choices signal frame (harmless, no cookies)
+    function signalGooglefcPresent(){if(!window.frames['googlefcPresent']){if(document.body){var iframe=document.createElement('iframe');iframe.style='width:0;height:0;border:none;z-index:-1000;left:-1000px;top:-1000px;';iframe.style.display='none';iframe.name='googlefcPresent';document.body.appendChild(iframe);}else{setTimeout(signalGooglefcPresent,0);}}}
+    signalGooglefcPresent();
+  })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./blog-common.css">
@@ -1401,6 +1424,10 @@
       word-break: break-all;
     }
     .sysinfo-value.loading { color: rgba(255,255,255,0.2); }
+    .sysinfo-value.mono {
+      font-family: 'Courier New', monospace; font-size: 0.72rem;
+      color: rgba(255,255,255,0.5); letter-spacing: 0.02em;
+    }
     .sysinfo-note {
       margin-top: 0.7rem; font-size: 0.7rem;
       color: rgba(255,255,255,0.25); line-height: 1.4;
@@ -1457,6 +1484,9 @@
 </head>
 <body>
 <div class="toast-container" id="toastContainer"></div>
+
+<!-- Cookie consent banner is injected by cookie-consent.js -->
+
 <div class="page-wrap">
 <div class="page-content">
 
@@ -1917,6 +1947,8 @@
 
 <script src="./blog-common.js" defer></script>
 <script>
+// Cookie consent is handled by cookie-consent.js (shared with blog pages)
+
 // API_BASE: in local dev (localhost / 127.0.0.1), use the SAME origin
 // the page is served from. This way the dev port (whatever uvicorn is
 // running on — 8000, 8765, etc.) is automatically picked up, and the
@@ -1991,15 +2023,15 @@ document.addEventListener("keydown", function(e) {
 function _populateSysinfo() {
   var grid = document.getElementById("sysinfoGrid");
   var ua = navigator.userAgent || "";
+  var cookieStatus = _detectCookieStatus();
   var items = [
     { sr: "Pregledac", en: "Browser", value: _parseBrowser(ua) },
     { sr: "Operativni sistem", en: "Operating System", value: _parseOS(ua) },
     { sr: "Rezolucija ekrana", en: "Screen Resolution", value: screen.width + " x " + screen.height },
-    { sr: "Kolacici", en: "Cookies", value: navigator.cookieEnabled
-        ? (currentLang === "en" ? "Enabled" : "Omoguceni")
-        : (currentLang === "en" ? "Disabled" : "Onemoguceni") },
+    { sr: "Kolacici pregledaca", en: "Browser Cookies", value: cookieStatus },
     { sr: "Javna IP adresa", en: "Public IP", value: null, id: "sysinfo-ip" },
-    { sr: "Lokalna IP (LAN)", en: "Local IP (LAN)", value: null, id: "sysinfo-lan" },
+    { sr: "Hash IP (sta mi vidimo)", en: "IP Hash (what we see)", value: null, id: "sysinfo-iphash", mono: true },
+    { sr: "Browser Fingerprint", en: "Browser Fingerprint", value: null, id: "sysinfo-fingerprint", mono: true },
     { sr: "Vremenska zona", en: "Timezone", value: Intl.DateTimeFormat().resolvedOptions().timeZone || "N/A" },
     { sr: "Jezik", en: "Language", value: navigator.language || "N/A" },
     { sr: "Platforma", en: "Platform", value: navigator.platform || "N/A" },
@@ -2023,6 +2055,7 @@ function _populateSysinfo() {
 
     var val = document.createElement("div");
     val.className = "sysinfo-value";
+    if (item.mono) val.classList.add("mono");
     if (item.id) val.id = item.id;
     if (item.value !== null) {
       val.textContent = item.value;
@@ -2037,7 +2070,7 @@ function _populateSysinfo() {
   });
 
   _fetchPublicIP();
-  _detectLanIP();
+  _computeFingerprint();
 }
 
 function _parseBrowser(ua) {
@@ -2060,8 +2093,41 @@ function _parseOS(ua) {
   return navigator.platform || "N/A";
 }
 
+function _detectCookieStatus() {
+  var parts = [];
+  if (navigator.cookieEnabled) {
+    parts.push(currentLang === "en" ? "Enabled" : "Omoguceni");
+  } else {
+    return currentLang === "en" ? "Disabled" : "Onemoguceni";
+  }
+  // Check third-party cookie support
+  try {
+    var tp = document.cookie.indexOf("_") >= 0 || navigator.cookieEnabled;
+    if (tp) parts.push(currentLang === "en" ? "1st party" : "1st party");
+  } catch(e) {}
+  // Check Do Not Track
+  if (navigator.doNotTrack === "1" || window.doNotTrack === "1") {
+    parts.push("DNT: ON");
+  }
+  // Check Global Privacy Control
+  if (navigator.globalPrivacyControl) {
+    parts.push("GPC: ON");
+  }
+  return parts.join(" | ");
+}
+
+function _sha256(str) {
+  var encoder = new TextEncoder();
+  var data = encoder.encode(str);
+  return crypto.subtle.digest("SHA-256", data).then(function(buf) {
+    var arr = Array.from(new Uint8Array(buf));
+    return arr.map(function(b) { return b.toString(16).padStart(2, "0"); }).join("");
+  });
+}
+
 function _fetchPublicIP() {
   var el = document.getElementById("sysinfo-ip");
+  var hashEl = document.getElementById("sysinfo-iphash");
   if (!el) return;
   var apis = [
     { url: "https://api.ipify.org?format=json", parse: function(r) { return r.json().then(function(d) { return d.ip; }); } },
@@ -2072,54 +2138,78 @@ function _fetchPublicIP() {
     if (i >= apis.length) {
       el.textContent = currentLang === "en" ? "Not available (blocked)" : "Nije dostupno (blokirano)";
       el.classList.remove("loading");
+      if (hashEl) { hashEl.textContent = "—"; hashEl.classList.remove("loading"); }
       return;
     }
     fetch(apis[i].url).then(apis[i].parse).then(function(ip) {
       if (ip && /^[\d.:a-fA-F]+$/.test(ip)) {
         el.textContent = ip;
         el.classList.remove("loading");
+        // Compute SHA-256 hash to show what we store
+        if (hashEl) {
+          _sha256(ip).then(function(hash) {
+            hashEl.textContent = hash.substring(0, 16) + "..." + hash.substring(48);
+            hashEl.title = hash;
+            hashEl.classList.remove("loading");
+          });
+        }
       } else { tryNext(i + 1); }
     }).catch(function() { tryNext(i + 1); });
   }
   tryNext(0);
 }
 
-function _detectLanIP() {
-  var el = document.getElementById("sysinfo-lan");
+function _computeFingerprint() {
+  var el = document.getElementById("sysinfo-fingerprint");
   if (!el) return;
+  // Build fingerprint from stable browser properties
+  var components = [
+    navigator.userAgent,
+    navigator.language,
+    screen.width + "x" + screen.height,
+    screen.colorDepth,
+    new Date().getTimezoneOffset(),
+    navigator.hardwareConcurrency || "",
+    navigator.platform,
+  ];
+  // Canvas fingerprint
   try {
-    var pc = new RTCPeerConnection({ iceServers: [] });
-    pc.createDataChannel("");
-    pc.createOffer().then(function(offer) { return pc.setLocalDescription(offer); });
-    var found = false;
-    pc.onicecandidate = function(e) {
-      if (found) return;
-      if (!e || !e.candidate || !e.candidate.candidate) {
-        if (!found) {
-          el.textContent = currentLang === "en" ? "Not available" : "Nije dostupno";
-          el.classList.remove("loading");
-        }
-        return;
-      }
-      var match = e.candidate.candidate.match(/([0-9]{1,3}(\.[0-9]{1,3}){3})/);
-      if (match && match[1] && !match[1].startsWith("0.")) {
-        found = true;
-        el.textContent = match[1];
-        el.classList.remove("loading");
-        pc.close();
-      }
-    };
-    setTimeout(function() {
-      if (!found) {
-        el.textContent = currentLang === "en" ? "Not available" : "Nije dostupno";
-        el.classList.remove("loading");
-        try { pc.close(); } catch(x) {}
-      }
-    }, 3000);
+    var canvas = document.createElement("canvas");
+    canvas.width = 200; canvas.height = 50;
+    var ctx = canvas.getContext("2d");
+    ctx.textBaseline = "top";
+    ctx.font = "14px Arial";
+    ctx.fillStyle = "#f60";
+    ctx.fillRect(50, 0, 100, 30);
+    ctx.fillStyle = "#069";
+    ctx.fillText("WSS fingerprint", 2, 15);
+    ctx.fillStyle = "rgba(102,204,0,0.7)";
+    ctx.fillText("WSS fingerprint", 4, 17);
+    components.push(canvas.toDataURL());
   } catch (e) {
-    el.textContent = currentLang === "en" ? "Not available" : "Nije dostupno";
-    el.classList.remove("loading");
+    components.push("no-canvas");
   }
+  // WebGL renderer
+  try {
+    var gl = document.createElement("canvas").getContext("webgl");
+    if (gl) {
+      var dbg = gl.getExtension("WEBGL_debug_renderer_info");
+      if (dbg) {
+        components.push(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL));
+        components.push(gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL));
+      }
+    }
+  } catch (e) {}
+
+  var raw = components.join("|||");
+  _sha256(raw).then(function(hash) {
+    el.textContent = hash.substring(0, 16) + "..." + hash.substring(48);
+    el.title = hash;
+    el.classList.remove("loading");
+  }).catch(function() {
+    el.textContent = "N/A";
+    el.classList.remove("loading");
+  });
 }
 
 const MODULES = ["SSL/TLS","Headers","DNS","Files","Cookies","Redirects","CMS","Vuln","JS","API","Deps","SEO","Perf","GDPR","A11y","WHOIS","Tech","Email","Mozilla","CT","Subs"];
