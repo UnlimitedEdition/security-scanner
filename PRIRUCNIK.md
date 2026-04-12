@@ -1703,7 +1703,7 @@ Prikazuje: Browser, OS, Screen Resolution, Cookies (sa DNT/GPC detekcijom), Publ
 
 Kolapsibilni sidebar na **levoj** strani ekrana sa punom listom provera po kategorijama (Bezbednost 60+, SEO 12, Performanse 16, GDPR 7). Zamenjuje stare "Šta proveravamo" kartice koje su uklonjene sa homepage-a.
 
-Otvara se klikom na fiksirano dugme "Provere" sa badge-om "110+". Zatvara se klikom na X, overlay, ili Escape. SR+EN bilingvalan.
+Otvara se klikom na fiksirano dugme "Provere" sa badge-om "240+". Zatvara se klikom na X, overlay, ili Escape. SR+EN bilingvalan.
 
 ### Cookie Consent — GDPR (cookie-consent.js)
 

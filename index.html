@@ -4,10 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Web Security Scanner — Besplatna provera sajta</title>
-  <meta name="description" content="Besplatan skener bezbednosti sajta sa 110+ provera. SSL, HTTP headeri, DNS, SEO, GDPR, performanse, ranjivosti, API security. Jedini alat koji sve radi na jednom mestu.">
+  <meta name="description" content="Besplatan skener bezbednosti sajta sa 240+ provera. SSL, HTTP headeri, DNS, SEO, GDPR, performanse, ranjivosti, API security. Jedini alat koji sve radi na jednom mestu.">
   <meta name="keywords" content="security scanner, web security, website scanner, provera sajta, bezbednost sajta, SSL checker, SEO analiza, GDPR provera, vulnerability scanner, besplatno, free, Srbija, online security tool">
   <meta name="author" content="Toske-Programer">
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <meta name="theme-color" content="#6c63ff">
+  <meta name="format-detection" content="telephone=no">
   <meta name="scanner-verify" content="f3955559c6cfaf3699a786b33c9afd59">
   <link rel="canonical" href="https://security-scanner-ruddy.vercel.app/">
   <link rel="alternate" hreflang="sr" href="https://security-scanner-ruddy.vercel.app/">
@@ -15,17 +17,19 @@
   <link rel="alternate" hreflang="x-default" href="https://security-scanner-ruddy.vercel.app/">
   <!-- Open Graph -->
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Web Security Scanner — 110+ provera besplatno">
-  <meta property="og:description" content="Jedini besplatni alat koji na jednom mestu proverava bezbednost, SEO, performanse i GDPR uskladjenost vaseg sajta. 110+ automatskih provera.">
+  <meta property="og:title" content="Web Security Scanner — 240+ provera besplatno">
+  <meta property="og:description" content="Jedini besplatni alat koji na jednom mestu proverava bezbednost, SEO, performanse i GDPR uskladjenost vaseg sajta. 240+ automatskih provera.">
   <meta property="og:url" content="https://security-scanner-ruddy.vercel.app/">
   <meta property="og:image" content="https://security-scanner-ruddy.vercel.app/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   <meta property="og:site_name" content="Web Security Scanner">
   <meta property="og:locale" content="sr_RS">
   <meta property="og:locale:alternate" content="en_US">
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Web Security Scanner — 110+ provera besplatno">
-  <meta name="twitter:description" content="Bezbednost, SEO, performanse, GDPR — sve na jednom mestu. 110+ automatskih provera. Besplatno.">
+  <meta name="twitter:title" content="Web Security Scanner — 240+ provera besplatno">
+  <meta name="twitter:description" content="Bezbednost, SEO, performanse, GDPR — sve na jednom mestu. 240+ automatskih provera. Besplatno.">
   <meta name="twitter:image" content="https://security-scanner-ruddy.vercel.app/og-image.png">
   <!-- Structured Data: WebApplication -->
   <script type="application/ld+json">
@@ -35,7 +39,7 @@
     "name": "Web Security Scanner",
     "alternateName": ["Website Security Checker", "Provera bezbednosti sajta", "Skener sajta"],
     "url": "https://security-scanner-ruddy.vercel.app/",
-    "description": "Free online tool for comprehensive website security, SEO, performance and GDPR analysis with 110+ automated checks.",
+    "description": "Free online tool for comprehensive website security, SEO, performance and GDPR analysis with 240+ automated checks.",
     "applicationCategory": "SecurityApplication",
     "operatingSystem": "Web",
     "inLanguage": ["sr", "en"],
@@ -51,8 +55,8 @@
     "@context": "https://schema.org",
     "@type": "FAQPage",
     "mainEntity": [
-      {"@type": "Question", "name": "How to check website security for free?", "acceptedAnswer": {"@type": "Answer", "text": "Use Web Security Scanner at security-scanner-ruddy.vercel.app. It performs 110+ automated security checks including SSL, headers, DNS, vulnerabilities, and more. Completely free, no registration required."}},
-      {"@type": "Question", "name": "Kako besplatno proveriti bezbednost sajta?", "acceptedAnswer": {"@type": "Answer", "text": "Koristite Web Security Scanner koji izvrsava 110+ automatskih provera bezbednosti ukljucujuci SSL, HTTP headere, DNS, ranjivosti i jos mnogo toga. Potpuno besplatno, bez registracije."}},
+      {"@type": "Question", "name": "How to check website security for free?", "acceptedAnswer": {"@type": "Answer", "text": "Use Web Security Scanner at security-scanner-ruddy.vercel.app. It performs 240+ automated security checks including SSL, headers, DNS, vulnerabilities, and more. Completely free, no registration required."}},
+      {"@type": "Question", "name": "Kako besplatno proveriti bezbednost sajta?", "acceptedAnswer": {"@type": "Answer", "text": "Koristite Web Security Scanner koji izvrsava 240+ automatskih provera bezbednosti ukljucujuci SSL, HTTP headere, DNS, ranjivosti i jos mnogo toga. Potpuno besplatno, bez registracije."}},
       {"@type": "Question", "name": "What does a website security scanner check?", "acceptedAnswer": {"@type": "Answer", "text": "Our scanner checks SSL/TLS certificates, HTTP security headers, DNS security (SPF/DMARC/DNSSEC), sensitive file exposure, vulnerability patterns, JavaScript security, API security, SEO optimization, performance metrics, GDPR compliance, accessibility, and dependency vulnerabilities."}},
       {"@type": "Question", "name": "Is this website security scanner safe to use?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, the scanner is completely passive. It only reads publicly available information and never modifies or attacks the target website. It works like a browser visiting your site."}}
     ]
@@ -88,9 +92,18 @@
   })();
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./blog-common.css">
   <style>
+    /* Skip navigation link (accessibility) */
+    .skip-link {
+      position: absolute; top: -100px; left: 0;
+      background: #7c3aed; color: #fff; padding: 0.5rem 1rem;
+      z-index: 100001; font-size: 0.9rem; font-weight: 600;
+      text-decoration: none; border-radius: 0 0 8px 0;
+    }
+    .skip-link:focus { top: 0; }
     :root {
       --bg: #0a0c15;
       --surface: #12152a;
@@ -434,6 +447,8 @@
       margin: 1.5rem auto;
       max-width: 900px;
       padding: 0 1rem;
+      min-height: 90px; /* Reserve space to prevent CLS */
+      contain: layout;
     }
     .ad-slot.visible { display: block; }
     .ad-placeholder {
@@ -1484,6 +1499,7 @@
   </style>
 </head>
 <body>
+<a href="#main" class="skip-link">Preskoči na sadržaj / Skip to content</a>
 <div class="toast-container" id="toastContainer"></div>
 
 <!-- Cookie consent banner is injected by cookie-consent.js -->
@@ -1495,12 +1511,12 @@
 <nav aria-label="Main navigation"></nav>
 
 <!-- HERO -->
-<main>
+<main id="main">
 <section class="hero">
   <div class="hero-glow"></div>
-  <div class="hero-badge" data-sr="110+ provera na jednom mestu" data-en="110+ checks in one place" id="heroBadge">110+ provera na jednom mestu</div>
+  <div class="hero-badge" data-sr="240+ provera na jednom mestu" data-en="240+ checks in one place" id="heroBadge">240+ provera na jednom mestu</div>
   <h1>Web <span class="grad">Security</span> Scanner</h1>
-  <p id="heroDesc" data-sr="Bezbednost, SEO, performanse, GDPR, email, WHOIS, tech stack — 110+ provera besplatno" data-en="Security, SEO, performance, GDPR, email, WHOIS, tech stack — 110+ checks for free">Bezbednost, SEO, performanse, GDPR, email, WHOIS, tech stack — 110+ provera besplatno</p>
+  <p id="heroDesc" data-sr="Bezbednost, SEO, performanse, GDPR, email, WHOIS, tech stack — 240+ provera besplatno" data-en="Security, SEO, performance, GDPR, email, WHOIS, tech stack — 240+ checks for free">Bezbednost, SEO, performanse, GDPR, email, WHOIS, tech stack — 240+ provera besplatno</p>
 </section>
 
 <!-- SCAN BOX -->
@@ -1526,8 +1542,8 @@
               aria-label="Pokreni puni sken sa verifikacijom vlasnistva"
               style="background:#facc15;color:#0a0c15;">🔓 Puni sken (vlasnici sajta)</button>
     </div>
-    <div class="scan-note" id="scanNote" data-sr="Brzi sken: 20 pasivnih provera bez verifikacije. Puni sken: dodatnih 10 provera (osetljivi fajlovi, admin panel, ranjivosti) — zahteva dokaz vlasnistva." data-en="Quick scan: 20 passive checks without verification. Full scan: 10 additional checks (sensitive files, admin panel, vulnerabilities) — requires ownership proof.">
-      Brzi sken: 20 pasivnih provera bez verifikacije. Puni sken: dodatnih 10 provera (osetljivi fajlovi, admin panel, ranjivosti) — zahteva dokaz vlasnistva.
+    <div class="scan-note" id="scanNote" data-sr="Brzi sken: 21 modul (167+ provera) bez verifikacije. Puni sken: dodatnih 10 modula (74+ provera — osetljivi fajlovi, admin panel, portovi, ranjivosti, API, CORS, zavisnosti) — zahteva dokaz vlasnistva." data-en="Quick scan: 21 modules (167+ checks) without verification. Full scan: 10 additional modules (74+ checks — sensitive files, admin panel, ports, vulnerabilities, API, CORS, dependencies) — requires ownership proof.">
+      Brzi sken: 21 modul (167+ provera) bez verifikacije. Puni sken: dodatnih 10 modula (74+ provera) — zahteva dokaz vlasnistva.
     </div>
     <div class="consent-row">
       <input type="checkbox" id="consentCheckbox" />
@@ -1574,10 +1590,10 @@
 
 <!-- RESULT TABS (shown after scan starts) -->
 <div class="result-tabs" id="resultTabs" role="tablist" aria-label="Rezultati skeniranja">
-  <button class="result-tab active" data-tab="security" onclick="switchTab('security')" data-sr="Bezbednost" data-en="Security" role="tab" aria-selected="true">Bezbednost</button>
-  <button class="result-tab" data-tab="seo" onclick="switchTab('seo')" role="tab" aria-selected="false">SEO</button>
-  <button class="result-tab" data-tab="performance" onclick="switchTab('performance')" data-sr="Performanse" data-en="Performance" role="tab" aria-selected="false">Performanse</button>
-  <button class="result-tab" data-tab="gdpr" onclick="switchTab('gdpr')" role="tab" aria-selected="false">GDPR</button>
+  <button class="result-tab active" data-tab="security" onclick="switchTab('security')" data-sr="Bezbednost" data-en="Security" role="tab" aria-selected="true" aria-controls="panel-security" id="tab-security">Bezbednost</button>
+  <button class="result-tab" data-tab="seo" onclick="switchTab('seo')" role="tab" aria-selected="false" aria-controls="panel-seo" id="tab-seo">SEO</button>
+  <button class="result-tab" data-tab="performance" onclick="switchTab('performance')" data-sr="Performanse" data-en="Performance" role="tab" aria-selected="false" aria-controls="panel-performance" id="tab-performance">Performanse</button>
+  <button class="result-tab" data-tab="gdpr" onclick="switchTab('gdpr')" role="tab" aria-selected="false" aria-controls="panel-gdpr" id="tab-gdpr">GDPR</button>
 </div>
 
 <!-- FEATURES LIST (moved to sidebar) -->
@@ -1614,7 +1630,7 @@
 </div>
 
 <!-- TAB: SECURITY -->
-<div class="tab-panel security-panel active" id="panel-security" role="tabpanel" aria-label="Security results">
+<div class="tab-panel security-panel active" id="panel-security" role="tabpanel" aria-labelledby="tab-security">
   <div class="print-header" id="printHeader">
     <h2>Web Security Scanner — Izvestaj</h2>
     <p id="printMeta"></p>
@@ -1623,19 +1639,19 @@
 </div>
 
 <!-- TAB: SEO -->
-<div class="tab-panel" id="panel-seo" role="tabpanel" aria-label="SEO results">
+<div class="tab-panel" id="panel-seo" role="tabpanel" aria-labelledby="tab-seo">
   <div class="print-header" style="display:none"><h2>SEO Analiza</h2><p class="print-tab-meta"></p></div>
   <div class="results-wrap" id="seoResultsWrap"></div>
 </div>
 
 <!-- TAB: PERFORMANCE -->
-<div class="tab-panel" id="panel-performance" role="tabpanel" aria-label="Performance results">
+<div class="tab-panel" id="panel-performance" role="tabpanel" aria-labelledby="tab-performance">
   <div class="print-header" style="display:none"><h2>Performanse i Pristupacnost</h2><p class="print-tab-meta"></p></div>
   <div class="results-wrap" id="perfResultsWrap"></div>
 </div>
 
 <!-- TAB: GDPR -->
-<div class="tab-panel" id="panel-gdpr" role="tabpanel" aria-label="GDPR results">
+<div class="tab-panel" id="panel-gdpr" role="tabpanel" aria-labelledby="tab-gdpr">
   <div class="print-header" style="display:none"><h2>GDPR / Privatnost</h2><p class="print-tab-meta"></p></div>
   <div class="results-wrap" id="gdprResultsWrap"></div>
 </div>
@@ -2792,6 +2808,20 @@ function renderResults(data) {
   pdfWrap.appendChild(pdfMenu);
   actions.appendChild(pdfWrap);
 
+  // CSV export button
+  var csvBtn = document.createElement("button");
+  csvBtn.className = "action-btn";
+  csvBtn.textContent = currentLang === "en" ? "Export CSV" : "Izvezi CSV";
+  csvBtn.onclick = function() { _exportCSV(data); };
+  actions.appendChild(csvBtn);
+
+  // JSON export button
+  var jsonBtn = document.createElement("button");
+  jsonBtn.className = "action-btn";
+  jsonBtn.textContent = currentLang === "en" ? "Export JSON" : "Izvezi JSON";
+  jsonBtn.onclick = function() { _exportJSON(data); };
+  actions.appendChild(jsonBtn);
+
   scoreCard.appendChild(actions);
   wrap.appendChild(scoreCard);
 
@@ -3309,6 +3339,53 @@ function printReport(mode) {
   Object.values(panels).forEach(function(p) { if (p) p.removeAttribute("data-print-show"); });
 }
 
+function _exportCSV(data) {
+  if (!data || !data.findings) { showToast("Nema rezultata za export.", "warning"); return; }
+  var rows = [["Category", "Check ID", "Severity", "Passed", "Title", "Description"]];
+  data.findings.forEach(function(f) {
+    rows.push([
+      f.category || "",
+      f.id || "",
+      f.severity || "",
+      f.passed ? "PASS" : "FAIL",
+      (f.title || "").replace(/"/g, '""'),
+      (f.description || "").replace(/"/g, '""').replace(/\n/g, ' ')
+    ]);
+  });
+  var csv = rows.map(function(r) { return r.map(function(c) { return '"' + c + '"'; }).join(","); }).join("\n");
+  var blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url;
+  a.download = "scan-" + (data.domain || "report") + ".csv";
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(currentLang === "en" ? "CSV downloaded" : "CSV preuzet", "success");
+}
+
+function _exportJSON(data) {
+  if (!data) { showToast("Nema rezultata za export.", "warning"); return; }
+  var exportData = {
+    domain: data.domain,
+    url: data.url,
+    score: data.score,
+    grade: data.grade,
+    scan_mode: data.scan_mode,
+    findings: data.findings,
+    top_priorities: data.top_priorities,
+    exported_at: new Date().toISOString(),
+  };
+  var json = JSON.stringify(exportData, null, 2);
+  var blob = new Blob([json], { type: "application/json;charset=utf-8" });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url;
+  a.download = "scan-" + (data.domain || "report") + ".json";
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(currentLang === "en" ? "JSON downloaded" : "JSON preuzet", "success");
+}
+
 function shareResults() {
   if (!currentResults) return;
   var s = currentResults.score || {};
@@ -3337,7 +3414,7 @@ function shareResults() {
       "Grade: " + grade + " (" + score + "/100)\n" +
       "Issues: " + failed + " findings across " + total + " checks" +
       (pages > 1 ? " on " + pages + " pages" : "") + "\n\n" +
-      "The scanner runs 110+ passive security checks: SSL/TLS, HTTP " +
+      "The scanner runs 240+ passive security checks: SSL/TLS, HTTP " +
       "security headers, DNS hygiene (SPF/DMARC/DNSSEC), sensitive file " +
       "exposure (.env, .git, backups), CMS detection, vulnerability " +
       "patterns (SQL/XSS/CSRF), CORS, admin panel exposure, JS security, " +
@@ -3353,7 +3430,7 @@ function shareResults() {
       "Ocena: " + grade + " (" + score + "/100)\n" +
       "Problemi: " + failed + " nalaza od " + total + " provera" +
       (pages > 1 ? " na " + pages + " stranica" : "") + "\n\n" +
-      "Scanner pokrece 110+ pasivnih bezbednosnih provera: SSL/TLS, HTTP " +
+      "Scanner pokrece 240+ pasivnih bezbednosnih provera: SSL/TLS, HTTP " +
       "sigurnosne headere, DNS higijenu (SPF/DMARC/DNSSEC), izlozene " +
       "osetljive fajlove (.env, .git, backup dumpovi), detekciju CMS-a, " +
       "obrasce ranjivosti (SQL/XSS/CSRF), CORS, izlozene admin panele, " +
@@ -4342,7 +4419,7 @@ async function _wizardInlinePoll(scanId) {
 
 <!-- ═══ CHECKS SIDEBAR ═══ -->
 <button class="checks-sidebar-btn" onclick="openChecksSidebar()" aria-label="Open checks list">
-  <span class="sidebar-badge">110+</span>
+  <span class="sidebar-badge">240+</span>
   <span data-sr="Provere" data-en="Checks">Provere</span>
 </button>
 
@@ -4350,7 +4427,7 @@ async function _wizardInlinePoll(scanId) {
   <div class="checks-sidebar" id="checksSidebar" onclick="event.stopPropagation()">
     <div class="checks-sidebar-header">
       <h3 data-sr="Sta proveravamo" data-en="What we check">Sta proveravamo</h3>
-      <small data-sr="110+ provera u 4 kategorije" data-en="110+ checks in 4 categories">110+ provera u 4 kategorije</small>
+      <small data-sr="240+ provera u 4 kategorije" data-en="240+ checks in 4 categories">240+ provera u 4 kategorije</small>
       <button class="checks-sidebar-close" onclick="closeChecksSidebar()" aria-label="Close">&times;</button>
     </div>
     <div class="checks-sidebar-scroll">
@@ -4360,7 +4437,7 @@ async function _wizardInlinePoll(scanId) {
         <button class="sb-cat-toggle" onclick="toggleSbCategory('sbSecurity')">
           <span class="sb-cat-icon">&#128272;</span>
           <span class="sb-cat-name" data-sr="Bezbednost" data-en="Security">Bezbednost</span>
-          <span class="sb-cat-count" data-sr="60+ provera" data-en="60+ checks">60+ provera</span>
+          <span class="sb-cat-count" data-sr="150+ provera" data-en="150+ checks">150+ provera</span>
           <span class="sb-cat-chevron">&#9654;</span>
         </button>
         <div class="sb-cat-body">
@@ -4381,7 +4458,11 @@ async function _wizardInlinePoll(scanId) {
           <div class="sb-check-item" data-sr="Information disclosure (verzije, debug)" data-en="Information disclosure (versions, debug)">Information disclosure (verzije, debug)</div>
           <div class="sb-check-item" data-sr=".well-known endpoint-ovi (8 IETF/W3C)" data-en=".well-known endpoints (8 IETF/W3C)">.well-known endpoint-ovi (8 IETF/W3C)</div>
           <div class="sb-check-item" data-sr="JavaScript bezbednost (inline, SRI, source maps)" data-en="JavaScript security (inline, SRI, source maps)">JavaScript bezbednost (inline, SRI, source maps)</div>
-          <div class="sb-cat-more" data-sr="+ port scan, admin paneli, subdomain enum, takeover detekcija (puni sken)" data-en="+ port scan, admin panels, subdomain enum, takeover detection (full scan)">+ port scan, admin paneli, subdomain enum, takeover detekcija (puni sken)</div>
+          <div class="sb-check-item" data-sr="WHOIS informacije i starost domena" data-en="WHOIS info &amp; domain age">WHOIS informacije i starost domena</div>
+          <div class="sb-check-item" data-sr="WPScan-lite (plugini, korisnici, xmlrpc)" data-en="WPScan-lite (plugins, users, xmlrpc)">WPScan-lite (plugini, korisnici, xmlrpc)</div>
+          <div class="sb-check-item" data-sr="Subdomain discovery (CT logovi)" data-en="Subdomain discovery (CT logs)">Subdomain discovery (CT logovi)</div>
+          <div class="sb-check-item" data-sr="Subdomain takeover detekcija (22 SaaS)" data-en="Subdomain takeover detection (22 SaaS)">Subdomain takeover detekcija (22 SaaS)</div>
+          <div class="sb-cat-more" data-sr="SAFE = bez verifikacije (20 modula). FULL = zahteva vlasnistvo (10 modula: files, admin, vuln, ports, api, cors, deps, subdomain, takeover, wpscan)" data-en="SAFE = no verification (20 modules). FULL = requires ownership (10 modules: files, admin, vuln, ports, api, cors, deps, subdomain, takeover, wpscan)">SAFE = bez verifikacije (20 modula). FULL = zahteva vlasnistvo (10 modula)</div>
           <a href="./blog-security.html" class="sb-cat-link" data-sr="Saznajte vise &rarr;" data-en="Learn more &rarr;">Saznajte vise &rarr;</a>
         </div>
       </div>
@@ -4391,7 +4472,7 @@ async function _wizardInlinePoll(scanId) {
         <button class="sb-cat-toggle" onclick="toggleSbCategory('sbSeo')">
           <span class="sb-cat-icon">&#128270;</span>
           <span class="sb-cat-name" data-sr="SEO Analiza" data-en="SEO Analysis">SEO Analiza</span>
-          <span class="sb-cat-count" data-sr="12 provera" data-en="12 checks">12 provera</span>
+          <span class="sb-cat-count" data-sr="37 provera" data-en="37 checks">37 provera</span>
           <span class="sb-cat-chevron">&#9654;</span>
         </button>
         <div class="sb-cat-body">
@@ -4413,7 +4494,7 @@ async function _wizardInlinePoll(scanId) {
         <button class="sb-cat-toggle" onclick="toggleSbCategory('sbPerf')">
           <span class="sb-cat-icon">&#9889;</span>
           <span class="sb-cat-name" data-sr="Performanse" data-en="Performance">Performanse</span>
-          <span class="sb-cat-count" data-sr="16 provera" data-en="16 checks">16 provera</span>
+          <span class="sb-cat-count" data-sr="37 provera" data-en="37 checks">37 provera</span>
           <span class="sb-cat-chevron">&#9654;</span>
         </button>
         <div class="sb-cat-body">
@@ -4453,7 +4534,7 @@ async function _wizardInlinePoll(scanId) {
     </div>
     <div class="sb-footer">
       <div class="sb-footer-extra" data-sr="+ Crawler (do 20 stranica) &bull; Risk Engine &bull; WHOIS &bull; Tech Stack &bull; Email &bull; Mozilla Observatory" data-en="+ Crawler (up to 20 pages) &bull; Risk Engine &bull; WHOIS &bull; Tech Stack &bull; Email &bull; Mozilla Observatory">+ Crawler (do 20 stranica) &bull; Risk Engine &bull; WHOIS &bull; Tech Stack &bull; Email &bull; Mozilla Observatory</div>
-      <a href="./blog-features.html" class="sb-footer-link" data-sr="Kompletna lista 110+ provera &rarr;" data-en="Full list of 110+ checks &rarr;">Kompletna lista 110+ provera &rarr;</a>
+      <a href="./blog-features.html" class="sb-footer-link" data-sr="Kompletna lista 240+ provera &rarr;" data-en="Full list of 240+ checks &rarr;">Kompletna lista 240+ provera &rarr;</a>
     </div>
   </div>
 </div>

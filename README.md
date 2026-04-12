@@ -5,7 +5,7 @@ colorFrom: blue
 colorTo: indigo
 sdk: docker
 app_port: 7860
-short_description: Passive website security analysis - 110+ checks
+short_description: Passive website security analysis - 240+ checks
 ---
 
 # 🛡️ Web Security Scanner
@@ -15,7 +15,7 @@ short_description: Passive website security analysis - 110+ checks
 [![Python](https://img.shields.io/badge/Python-3.11-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-async-009688.svg)](https://fastapi.tiangolo.com/)
 
-Passive security analysis for websites — **110+ checks**, no site modification, GDPR-compliant.
+Passive security analysis for websites — **240+ checks**, no site modification, GDPR-compliant.
 
 Live: https://security-scanner-ruddy.vercel.app
 

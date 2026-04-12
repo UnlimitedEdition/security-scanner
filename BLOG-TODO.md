@@ -14,7 +14,7 @@
 - ✅ api.py (blog-common.css/js rute + wildcard + GZip + /index.html ruta)
 - ✅ scanner.py fix: SSL retry verify=False, bot detection false-positive fix, Vercel challenge retry
 - ✅ GDPR check fix: fundingchoicesmessages detekcija, privacy.html pattern
-- ✅ index.html fix: h3→h2, static footer, semantic tags, ARIA, 110+ count
+- ✅ index.html fix: h3→h2, static footer, semantic tags, ARIA, 240+ count
 - ❌ PAID MULTI-PAGE SCANNING SYSTEM (nova faza — detalji ispod)
 - ❌ deploy Vercel radi ali challenge blokira — 3 IP-a allowovana u firewall
 
