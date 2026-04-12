@@ -2390,20 +2390,40 @@ function setLang(lang) {
   if (currentResults) renderResults(currentResults);
 }
 
-function isAdBlocked() {
-  // If user hasn't accepted ad cookies yet, AdSense won't be loaded
-  // That's NOT an ad blocker — that's our cookie consent working correctly
-  try {
-    var consent = localStorage.getItem("cookie_consent_v2");
-    if (!consent) return false; // No consent yet — not blocked, just waiting
-    var parsed = JSON.parse(consent);
-    if (!parsed || !parsed.ads) return false; // User rejected ads — not blocked, their choice
-  } catch(e) { return false; }
-
-  // User accepted ads but adsbygoogle didn't load — THAT's an ad blocker
-  if (typeof window.adsbygoogle === "undefined") return true;
-  return false;
+// Bait method: create a div that looks like an ad to ad blockers.
+// If ad blocker hides it → blocked. If visible → no blocker.
+// This works regardless of cookie consent or AdSense load timing.
+var _adBlockBait = null;
+var _adBlockResult = null;
+function _initAdBlockBait() {
+  if (_adBlockBait) return;
+  _adBlockBait = document.createElement("div");
+  _adBlockBait.className = "ad-banner textad adsbox ad_unit";
+  _adBlockBait.style.cssText = "position:absolute;top:-999px;left:-999px;width:1px;height:1px;opacity:0.01;pointer-events:none;";
+  _adBlockBait.textContent = "\u00a0";
+  document.body.appendChild(_adBlockBait);
 }
+function isAdBlocked() {
+  if (_adBlockResult !== null) return _adBlockResult;
+  if (!_adBlockBait) _initAdBlockBait();
+  if (!_adBlockBait) return false;
+  // Ad blockers hide elements by setting display:none, visibility:hidden,
+  // height:0, or removing from DOM entirely
+  if (!document.body.contains(_adBlockBait)) {
+    _adBlockResult = true;
+    return true;
+  }
+  var style = window.getComputedStyle(_adBlockBait);
+  var hidden = (style.display === "none" || style.visibility === "hidden");
+  _adBlockResult = hidden;
+  return hidden;
+}
+// Init bait early so ad blockers have time to act on it
+document.addEventListener("DOMContentLoaded", function() {
+  _initAdBlockBait();
+  // Re-check after 1s — some blockers act with delay
+  setTimeout(function() { _adBlockResult = null; }, 1000);
+});
 
 // Lazy ad loader — calls adsbygoogle.push({}) only when the slot is
 // actually visible. Calling it earlier (e.g. inline in HTML) fails with
