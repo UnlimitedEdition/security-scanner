@@ -1437,24 +1437,31 @@ def scan_request_verify_endpoint(
     if not domain:
         raise HTTPException(status_code=500, detail="Wizard row nema domain.")
 
-    # Issue a fresh verification token tied to this scan_request's domain
-    # and the requester's IP. The token is short-lived (1 hour) and is
-    # the actual cryptographic challenge the user has to place on their
-    # site. Caller-generated random hex matches the legacy /verify/request
-    # pattern.
-    token = _secrets.token_hex(16)  # 32 hex chars = 128 bits
-    token_row = db.create_verification_token(
-        token=token,
-        domain=domain,
-        method=req.method,
-        ip=client_ip,
-        ttl_seconds=3600,
-    )
-    if not token_row:
-        raise HTTPException(
-            status_code=503,
-            detail="Verifikacija nije mogla da se inicijalizuje.",
+    # Reuse existing token if the wizard row already has one (user is
+    # retrying after placing the meta tag / DNS record). Only issue a
+    # new token if this is the first verify attempt for this wizard or
+    # if the previous token has expired.
+    existing_token = row.get("verify_token")
+    token = None
+    if existing_token:
+        existing_row = db.get_verification_token(existing_token)
+        if existing_row and existing_row.get("status") == "pending":
+            token = existing_token  # reuse — user already placed this one
+
+    if not token:
+        token = _secrets.token_hex(16)  # 32 hex chars = 128 bits
+        token_row = db.create_verification_token(
+            token=token,
+            domain=domain,
+            method=req.method,
+            ip=client_ip,
+            ttl_seconds=3600,
         )
+        if not token_row:
+            raise HTTPException(
+                status_code=503,
+                detail="Verifikacija nije mogla da se inicijalizuje.",
+            )
 
     # Run the actual ownership check (HTTP fetch / DNS query — through
     # safe_get / dnspython, both SSRF-protected)
@@ -1517,6 +1524,7 @@ def scan_request_verify_endpoint(
         "verified": False,
         "domain": domain,
         "method": req.method,
+        "token": token,
         "reason": result.reason,
         "next_step": "verify",  # try again
     }

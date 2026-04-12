@@ -4007,6 +4007,90 @@ function wizardSelectVerifyMethod(method) {
   _wizardBuildInstructions(method, wizardState.domain || "vasajt.rs");
 }
 
+// ── Step 2: build instructions with actual token ──────────────────────
+function _wizardBuildInstructionsWithToken(method, domain, token, container) {
+  var isSr = currentLang !== "en";
+
+  var title = document.createElement("strong");
+  title.style.cssText = "display:block;margin-bottom:0.5rem;color:#facc15;font-size:0.85rem;";
+  title.textContent = isSr ? "Vas verifikacioni token:" : "Your verification token:";
+  container.appendChild(title);
+
+  var tokenBox = document.createElement("code");
+  tokenBox.style.cssText = "display:block;padding:0.6rem 0.8rem;background:#0a0c15;border:1px solid rgba(124,58,237,0.4);border-radius:6px;font-size:0.82rem;color:#22c55e;word-break:break-all;margin-bottom:0.8rem;cursor:pointer;user-select:all;";
+  tokenBox.textContent = token;
+  tokenBox.title = isSr ? "Kliknite da kopirate" : "Click to copy";
+  tokenBox.addEventListener("click", function() {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(token).then(function() {
+        showToast(isSr ? "Token kopiran!" : "Token copied!", "success");
+      });
+    }
+  });
+  container.appendChild(tokenBox);
+
+  var steps = document.createElement("div");
+  steps.style.cssText = "font-size:0.8rem;color:rgba(255,255,255,0.7);line-height:1.6;";
+
+  if (method === "meta") {
+    var s1 = document.createElement("p");
+    s1.textContent = isSr
+      ? "1. Dodajte ovaj tag u <head> vase pocetne strane:"
+      : "1. Add this tag to the <head> of your homepage:";
+    steps.appendChild(s1);
+    var metaCode = document.createElement("code");
+    metaCode.style.cssText = "display:block;padding:0.5rem;background:#0a0c15;border-radius:4px;font-size:0.78rem;color:#a78bfa;margin:0.3rem 0 0.5rem;word-break:break-all;";
+    metaCode.textContent = '<meta name="scanner-verify" content="' + token + '">';
+    steps.appendChild(metaCode);
+    var s2 = document.createElement("p");
+    s2.textContent = isSr
+      ? "2. Deploy-ujte promenu (commit + push). 3. Kliknite [Proveri verifikaciju] ponovo."
+      : "2. Deploy the change (commit + push). 3. Click [Check verification] again.";
+    steps.appendChild(s2);
+  } else if (method === "file") {
+    var s1f = document.createElement("p");
+    s1f.textContent = isSr
+      ? "1. Kreirajte fajl: /.well-known/scanner-verify.txt"
+      : "1. Create file: /.well-known/scanner-verify.txt";
+    steps.appendChild(s1f);
+    var s2f = document.createElement("p");
+    s2f.textContent = isSr
+      ? "2. Sadrzaj fajla mora da bude SAMO ovaj token (prvi red):"
+      : "2. File content must be ONLY this token (first line):";
+    steps.appendChild(s2f);
+    var fileCode = document.createElement("code");
+    fileCode.style.cssText = "display:block;padding:0.5rem;background:#0a0c15;border-radius:4px;font-size:0.78rem;color:#a78bfa;margin:0.3rem 0 0.5rem;";
+    fileCode.textContent = token;
+    steps.appendChild(fileCode);
+    var s3f = document.createElement("p");
+    s3f.textContent = isSr
+      ? "3. Deploy-ujte i kliknite [Proveri verifikaciju] ponovo."
+      : "3. Deploy and click [Check verification] again.";
+    steps.appendChild(s3f);
+  } else if (method === "dns") {
+    var s1d = document.createElement("p");
+    s1d.textContent = isSr
+      ? "1. Dodajte TXT record u DNS za vas domen:"
+      : "1. Add a TXT record to your domain's DNS:";
+    steps.appendChild(s1d);
+    var dnsHost = document.createElement("code");
+    dnsHost.style.cssText = "display:block;padding:0.5rem;background:#0a0c15;border-radius:4px;font-size:0.78rem;color:#a78bfa;margin:0.3rem 0;";
+    dnsHost.textContent = "Host: _scanner-verify." + domain;
+    steps.appendChild(dnsHost);
+    var dnsVal = document.createElement("code");
+    dnsVal.style.cssText = "display:block;padding:0.5rem;background:#0a0c15;border-radius:4px;font-size:0.78rem;color:#a78bfa;margin:0.3rem 0 0.5rem;";
+    dnsVal.textContent = "Value: " + token;
+    steps.appendChild(dnsVal);
+    var s2d = document.createElement("p");
+    s2d.textContent = isSr
+      ? "2. Sacekajte DNS propagaciju (1-5 min). 3. Kliknite [Proveri verifikaciju] ponovo."
+      : "2. Wait for DNS propagation (1-5 min). 3. Click [Check verification] again.";
+    steps.appendChild(s2d);
+  }
+
+  container.appendChild(steps);
+}
+
 // ── Step 2: run verification check ─────────────────────────────────────
 async function wizardCheckVerify() {
   if (!wizardState.requestId || !wizardState.selectedMethod) return;
@@ -4032,9 +4116,20 @@ async function wizardCheckVerify() {
       setTimeout(function() { _wizardShowStep(3); _wizardStartCountdown(); }, 800);
       return;
     }
+    // Verification failed — show the token so user can place it
     var reason = (data && data.reason) ? data.reason : "unknown";
-    resultEl.className = "wizard-verify-result error visible";
-    resultEl.textContent = _wizardL10n().verifyError + reason;
+    if (data && data.token) {
+      wizardState.verifyToken = data.token;
+      resultEl.className = "wizard-verify-result error visible";
+      resultEl.textContent = "";
+      var instr = document.getElementById("wizardInstructions");
+      while (instr.firstChild) instr.removeChild(instr.firstChild);
+      instr.className = "wizard-instructions visible";
+      _wizardBuildInstructionsWithToken(wizardState.selectedMethod, wizardState.domain, data.token, instr);
+    } else {
+      resultEl.className = "wizard-verify-result error visible";
+      resultEl.textContent = _wizardL10n().verifyError + reason;
+    }
   } catch (e) {
     resultEl.className = "wizard-verify-result error visible";
     resultEl.textContent = _wizardL10n().verifyError + e.message;
