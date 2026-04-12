@@ -2137,11 +2137,79 @@ function _populateSysinfo() {
 }
 
 function _parseBrowser(ua) {
-  if (/Edg\//.test(ua)) return "Microsoft Edge " + (ua.match(/Edg\/([\d.]+)/) || [])[1];
-  if (/OPR\//.test(ua)) return "Opera " + (ua.match(/OPR\/([\d.]+)/) || [])[1];
-  if (/Chrome\//.test(ua) && !/Chromium/.test(ua)) return "Google Chrome " + (ua.match(/Chrome\/([\d.]+)/) || [])[1];
-  if (/Firefox\//.test(ua)) return "Mozilla Firefox " + (ua.match(/Firefox\/([\d.]+)/) || [])[1];
-  if (/Safari\//.test(ua) && !/Chrome/.test(ua)) return "Safari " + (ua.match(/Version\/([\d.]+)/) || [])[1];
+  // Comprehensive browser detection — 40+ browsers
+  // Order matters: check specific browsers BEFORE generic Chrome/Safari
+  var v = function(re) { return (ua.match(re) || [])[1] || ""; };
+  var cv = v(/Chrome\/([\d.]+)/); // Chromium version fallback
+
+  // --- JS object detection for stealth browsers (no UA identifier) ---
+  try {
+    if (window.__pplx || window.pplx || document.querySelector('[data-pplx]')) return "Perplexity (Comet) " + cv;
+    if (window.__arc || window.arc) return "Arc " + cv;
+    if (window.brave && window.brave.isBrave) return "Brave " + cv;
+  } catch(e) {}
+
+  // --- AI / Modern browsers (UA string) ---
+  if (/Perplexity|Comet/i.test(ua)) return "Perplexity (Comet) " + cv;
+  if (/Arc\//i.test(ua)) return "Arc " + v(/Arc\/([\d.]+)/);
+  if (/Dia\//i.test(ua)) return "Dia Browser " + v(/Dia\/([\d.]+)/);
+  if (/Atlas\//i.test(ua)) return "Atlas " + v(/Atlas\/([\d.]+)/);
+
+  // --- Major Chromium forks (check BEFORE Chrome) ---
+  if (/Edg\//.test(ua)) return "Microsoft Edge " + v(/Edg\/([\d.]+)/);
+  if (/OPR\//.test(ua)) return "Opera " + v(/OPR\/([\d.]+)/);
+  if (/Brave\//.test(ua)) return "Brave " + v(/Brave\/([\d.]+)/);
+  if (/Vivaldi\//.test(ua)) return "Vivaldi " + v(/Vivaldi\/([\d.]+)/);
+  if (/YaBrowser\//.test(ua)) return "Yandex Browser " + v(/YaBrowser\/([\d.]+)/);
+  if (/SamsungBrowser\//.test(ua)) return "Samsung Internet " + v(/SamsungBrowser\/([\d.]+)/);
+  if (/UCBrowser\//.test(ua)) return "UC Browser " + v(/UCBrowser\/([\d.]+)/);
+  if (/DuckDuckGo\//.test(ua)) return "DuckDuckGo " + v(/DuckDuckGo\/([\d.]+)/);
+  if (/Whale\//.test(ua)) return "Naver Whale " + v(/Whale\/([\d.]+)/);
+  if (/MiuiBrowser\//.test(ua)) return "Mi Browser " + v(/MiuiBrowser\/([\d.]+)/);
+  if (/HuaweiBrowser\//.test(ua)) return "Huawei Browser " + v(/HuaweiBrowser\/([\d.]+)/);
+  if (/QQBrowser\//.test(ua)) return "QQ Browser " + v(/QQBrowser\/([\d.]+)/);
+  if (/CocCoc\//.test(ua)) return "Coc Coc " + v(/CocCoc\/([\d.]+)/);
+  if (/Puffin\//.test(ua)) return "Puffin " + v(/Puffin\/([\d.]+)/);
+  if (/Sleipnir\//.test(ua)) return "Sleipnir " + v(/Sleipnir\/([\d.]+)/);
+  if (/Maxthon\//.test(ua)) return "Maxthon " + v(/Maxthon\/([\d.]+)/);
+  if (/Falkon\//.test(ua)) return "Falkon " + v(/Falkon\/([\d.]+)/);
+  if (/Waterfox\//.test(ua)) return "Waterfox " + v(/Waterfox\/([\d.]+)/);
+  if (/PaleMoon\//.test(ua)) return "Pale Moon " + v(/PaleMoon\/([\d.]+)/);
+  if (/Basilisk\//.test(ua)) return "Basilisk " + v(/Basilisk\/([\d.]+)/);
+  if (/Midori\//.test(ua)) return "Midori " + v(/Midori\/([\d.]+)/);
+  if (/Epiphany\//.test(ua)) return "GNOME Web " + v(/Epiphany\/([\d.]+)/);
+  if (/Konqueror\//.test(ua)) return "Konqueror " + v(/Konqueror\/([\d.]+)/);
+  if (/SeaMonkey\//.test(ua)) return "SeaMonkey " + v(/SeaMonkey\/([\d.]+)/);
+  if (/Aloha/.test(ua)) return "Aloha Browser " + cv;
+  if (/Instabridge/.test(ua)) return "Instabridge " + cv;
+  if (/AVG\//.test(ua)) return "AVG Secure Browser " + v(/AVG\/([\d.]+)/);
+  if (/Avast\//.test(ua)) return "Avast Secure Browser " + v(/Avast\/([\d.]+)/);
+  if (/CCleaner\//.test(ua)) return "CCleaner Browser " + v(/CCleaner\/([\d.]+)/);
+  if (/Iron\//.test(ua) && /SRWare/.test(ua)) return "SRWare Iron " + v(/Iron\/([\d.]+)/);
+  if (/Comodo_Dragon/.test(ua)) return "Comodo Dragon " + cv;
+  if (/Sogou/.test(ua)) return "Sogou Browser " + cv;
+  if (/LBBROWSER/.test(ua)) return "Liebao Browser " + cv;
+  if (/2345Explorer/.test(ua)) return "2345 Explorer " + cv;
+
+  // --- Try userAgentData API for accurate Chromium version ---
+  if (navigator.userAgentData && navigator.userAgentData.brands) {
+    var brands = navigator.userAgentData.brands;
+    var cBrand = null;
+    for (var i = 0; i < brands.length; i++) {
+      var b = brands[i];
+      if (/Not/i.test(b.brand)) continue;
+      if (/Chrome/i.test(b.brand)) { cBrand = b; break; }
+      if (/Chromium/i.test(b.brand)) cBrand = b;
+    }
+    if (cBrand) return "Google Chrome " + cBrand.version;
+  }
+
+  // --- Generic fallbacks ---
+  if (/Chrome\//.test(ua) && !/Chromium/.test(ua)) return "Google Chrome " + cv;
+  if (/Chromium\//.test(ua)) return "Chromium " + v(/Chromium\/([\d.]+)/);
+  if (/Firefox\//.test(ua)) return "Mozilla Firefox " + v(/Firefox\/([\d.]+)/);
+  if (/Safari\//.test(ua) && !/Chrome/.test(ua)) return "Safari " + v(/Version\/([\d.]+)/);
+  if (/MSIE/.test(ua) || /Trident/.test(ua)) return "Internet Explorer " + (v(/MSIE ([\d.]+)/) || v(/rv:([\d.]+)/));
   return ua.split(" ").pop() || "N/A";
 }
 
@@ -2157,24 +2225,25 @@ function _parseOS(ua) {
 }
 
 function _detectCookieStatus() {
+  var en = currentLang === "en";
   var parts = [];
   if (navigator.cookieEnabled) {
-    parts.push(currentLang === "en" ? "Enabled" : "Omoguceni");
+    parts.push(en ? "Enabled" : "Omoguceni");
   } else {
-    return currentLang === "en" ? "Disabled" : "Onemoguceni";
+    return en ? "Disabled" : "Onemoguceni";
   }
   // Check third-party cookie support
   try {
     var tp = document.cookie.indexOf("_") >= 0 || navigator.cookieEnabled;
-    if (tp) parts.push(currentLang === "en" ? "1st party" : "1st party");
+    if (tp) parts.push(en ? "1st party OK" : "1. strana OK");
   } catch(e) {}
   // Check Do Not Track
   if (navigator.doNotTrack === "1" || window.doNotTrack === "1") {
-    parts.push("DNT: ON");
+    parts.push(en ? "DNT: ON" : "DNT: uklj.");
   }
   // Check Global Privacy Control
   if (navigator.globalPrivacyControl) {
-    parts.push("GPC: ON");
+    parts.push(en ? "GPC: ON" : "GPC: uklj.");
   }
   return parts.join(" | ");
 }
