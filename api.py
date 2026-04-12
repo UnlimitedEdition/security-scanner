@@ -557,6 +557,15 @@ def cookie_consent_js():
     raise HTTPException(status_code=404, detail="File not found")
 
 
+@app.api_route("/data-protection-badge.png", methods=["GET", "HEAD"])
+def data_protection_badge():
+    """Data protection trust badge image."""
+    path = os.path.join(os.path.dirname(__file__), "data-protection-badge.png")
+    if os.path.exists(path):
+        return FileResponse(path, media_type="image/png")
+    raise HTTPException(status_code=404, detail="File not found")
+
+
 @app.api_route("/blog-{page}.html", methods=["GET", "HEAD"])
 def blog_page(page: str):
     path = os.path.join(os.path.dirname(__file__), f"blog-{page}.html")

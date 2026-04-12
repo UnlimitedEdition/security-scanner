@@ -146,13 +146,34 @@
     <h2 id="pp10">10. Izmene politike, deca, i kontakt</h2>
     <p><strong>Izmene politike:</strong> Zadrzavamo pravo da azuriramo ovu politiku. Verzija politike se bamp-uje kroz <code>consent_version</code> polje i svaki novi scan ce traziti od vas da potvrdite novu verziju. Vase prethodne saglasnosti ostaju vazece u audit_log-u ali se ne primenjuju retroaktivno na nove odredbe.</p>
     <p><strong>Deca:</strong> Ovaj servis nije namenjen osobama mladjim od 16 godina. Ne prikupljamo svesno podatke od maloletnika. Ako saznamo da je maloletnik nevoljno dostavio podatke, brisemo ih.</p>
-    <p><strong>Kontakt:</strong> Za sva pitanja u vezi sa privatnoscu, kontaktirajte nas:</p>
+    <p><strong>Kontakt rukovaoca (cl. 23 ZZPL):</strong></p>
     <ul>
+      <li>Email: <a href="mailto:mtosic0450@gmail.com">mtosic0450@gmail.com</a></li>
       <li>Sigurnosni propusti: <a href="https://github.com/UnlimitedEdition/security-scanner/security/advisories/new" target="_blank" rel="noopener">GitHub Security Advisories</a> (privatno)</li>
       <li>Abuse prijave: <a href="./abuse-report.html">Prijavi zloupotrebu</a></li>
-      <li>GDPR zahtevi i ostala pitanja: <a href="https://github.com/UnlimitedEdition/security-scanner/issues" target="_blank" rel="noopener">GitHub Issues</a></li>
-      <li>Rok za odgovor: 30 dana od prijema zahteva (GDPR Art. 12)</li>
+      <li>Rok za odgovor: 30 dana od prijema zahteva (cl. 21 ZZPL / GDPR Art. 12)</li>
     </ul>
+
+    <h2 id="pp11">11. Automatizovano odlucivanje (cl. 38 ZZPL)</h2>
+    <p>Ovaj servis <strong>NE koristi automatizovano odlucivanje</strong> koje proizvodi pravne posledice po korisnika ili znacajno utice na njegov polozaj. Skeniranje je tehnicka analiza koja ne donosi odluke o korisnicima. Risk score (A-F ocena) je informativni alat, ne automatizovana odluka.</p>
+
+    <h2 id="pp12">12. Pravni osnov obrade — legitimni interes (cl. 12 st. 1 tac. 6 ZZPL)</h2>
+    <p>Pravni osnov za obradu podataka u audit_log tabeli je <strong>legitimni interes</strong> rukovaoca za:</p>
+    <ul>
+      <li>Forenzicki audit — zastita servisa od zloupotrebe</li>
+      <li>Pravna odbrana — dokaz da je korisnik dao saglasnost pre skeniranja</li>
+      <li>Bezbednost — detekcija zlonamernih obrazaca (mass-scanning, SSRF pokusaji)</li>
+    </ul>
+    <p>Procena: interes rukovaoca (zastita besplatnog servisa od zloupotrebe) preteze nad pravima lica jer se obradjuju samo <strong>pseudonimizovani podaci</strong> (SHA-256 hash IP-a i User-Agent-a), nikad sirovi podaci. Korisnik ima pravo da podnese <strong>prigovor</strong> na ovu obradu (cl. 37 ZZPL) putem email-a gore.</p>
+
+    <h2 id="pp13">13. Povreda podataka o licnosti (cl. 52 ZZPL)</h2>
+    <p>U slucaju povrede zastite podataka o licnosti (data breach), rukovalac ce:</p>
+    <ul>
+      <li>Obavestiti Poverenika u roku od <strong>72 sata</strong> od saznanja o povredi</li>
+      <li>Obavestiti lica na koja se podaci odnose <strong>bez nepotrebnog odlaganja</strong> ako povreda moze da prouzrokuje visok rizik za njihova prava</li>
+      <li>Dokumentovati svaku povredu u internom registru (PRIRUCNIK.md §17)</li>
+    </ul>
+    <p>Kontakt Poverenika: <a href="https://www.poverenik.rs" target="_blank" rel="noopener">poverenik.rs</a></p>
   </div>
 
   <!-- ENGLISH -->
@@ -284,13 +305,34 @@
     <h2 id="pp10e">10. Policy changes, children, and contact</h2>
     <p><strong>Policy changes:</strong> we reserve the right to update this policy. The policy version is bumped through the <code>consent_version</code> field and every new scan will ask you to confirm the new version. Your prior consents remain valid in the audit_log but do not retroactively apply to new terms.</p>
     <p><strong>Children:</strong> this service is not intended for persons under 16 years of age. We do not knowingly collect data from minors. If we learn that a minor has involuntarily submitted data, we delete it.</p>
-    <p><strong>Contact:</strong> for any privacy-related questions, contact us:</p>
+    <p><strong>Controller contact (Art. 23 ZZPL):</strong></p>
     <ul>
+      <li>Email: <a href="mailto:mtosic0450@gmail.com">mtosic0450@gmail.com</a></li>
       <li>Security vulnerabilities: <a href="https://github.com/UnlimitedEdition/security-scanner/security/advisories/new" target="_blank" rel="noopener">GitHub Security Advisories</a> (private)</li>
       <li>Abuse reports: <a href="./abuse-report.html">Report abuse</a></li>
-      <li>GDPR requests and other questions: <a href="https://github.com/UnlimitedEdition/security-scanner/issues" target="_blank" rel="noopener">GitHub Issues</a></li>
-      <li>Response time: within 30 days of receiving the request (GDPR Art. 12)</li>
+      <li>Response time: within 30 days of receiving the request (Art. 21 ZZPL / GDPR Art. 12)</li>
     </ul>
+
+    <h2 id="pp11e">11. Automated decision-making (Art. 38 ZZPL)</h2>
+    <p>This service <strong>does NOT use automated decision-making</strong> that produces legal effects or significantly affects the user. Scanning is a technical analysis that does not make decisions about users. The risk score (A-F grade) is an informational tool, not an automated decision.</p>
+
+    <h2 id="pp12e">12. Legal basis — legitimate interest (Art. 12(1)(6) ZZPL)</h2>
+    <p>The legal basis for processing data in the audit_log table is the controller's <strong>legitimate interest</strong> in:</p>
+    <ul>
+      <li>Forensic audit — protecting the service from abuse</li>
+      <li>Legal defense — proving that the user gave consent before scanning</li>
+      <li>Security — detecting malicious patterns (mass-scanning, SSRF attempts)</li>
+    </ul>
+    <p>Assessment: the controller's interest (protecting a free service from abuse) outweighs the rights of data subjects because only <strong>pseudonymized data</strong> is processed (SHA-256 hash of IP and User-Agent), never raw data. Users have the right to <strong>object</strong> to this processing (Art. 37 ZZPL) via the email above.</p>
+
+    <h2 id="pp13e">13. Personal data breach (Art. 52 ZZPL)</h2>
+    <p>In the event of a personal data breach, the controller will:</p>
+    <ul>
+      <li>Notify the Commissioner within <strong>72 hours</strong> of becoming aware of the breach</li>
+      <li>Notify affected data subjects <strong>without undue delay</strong> if the breach is likely to result in a high risk to their rights</li>
+      <li>Document every breach in an internal register</li>
+    </ul>
+    <p>Commissioner contact: <a href="https://www.poverenik.rs" target="_blank" rel="noopener">poverenik.rs</a></p>
   </div>
 
   </main>

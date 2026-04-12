@@ -356,6 +356,24 @@
   cookieLink.appendChild(srSpan('Podesavanja kolacica', 'Cookie Settings'));
   legalRow.appendChild(cookieLink);
 
+  // Data protection badge in footer
+  var badgeRow = el('div');
+  badgeRow.style.cssText = 'display:flex;justify-content:center;padding:0.8rem 0;';
+  var badgeLink = el('div');
+  badgeLink.style.cssText = 'display:flex;align-items:center;gap:0.6rem;padding:0.5rem 0.8rem;background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.15);border-radius:10px;';
+  var badgeImg = el('img', { src: './data-protection-badge.png', alt: 'Data Protection', width: '40', height: '40' });
+  badgeLink.appendChild(badgeImg);
+  var badgeText = el('span');
+  badgeText.style.cssText = 'font-size:0.68rem;color:rgba(255,255,255,0.45);line-height:1.3;';
+  var btSr = el('span', { className: 'sr' });
+  btSr.textContent = 'PII hashovan \u00b7 ZZPL uskladjen \u00b7 Enkriptovani backup-ovi';
+  var btEn = el('span', { className: 'en' });
+  btEn.textContent = 'PII hashed \u00b7 ZZPL compliant \u00b7 Encrypted backups';
+  badgeText.appendChild(btSr);
+  badgeText.appendChild(btEn);
+  badgeLink.appendChild(badgeText);
+  badgeRow.appendChild(badgeLink);
+
   // Footer bottom — just copyright + CTA
   var footerBottom = el('div', { className: 'footer-bottom' });
   var fbP = el('p');
@@ -368,6 +386,7 @@
 
   var footerEl = el('footer', { className: 'site-footer' });
   footerEl.appendChild(footerGrid);
+  footerEl.appendChild(badgeRow);
   footerEl.appendChild(legalRow);
   footerEl.appendChild(footerBottom);
   document.body.appendChild(footerEl);

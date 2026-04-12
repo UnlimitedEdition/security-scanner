@@ -1444,6 +1444,26 @@
       font-family: 'Courier New', monospace; font-size: 0.72rem;
       color: rgba(255,255,255,0.5); letter-spacing: 0.02em;
     }
+    /* ── Data protection badge ────────────────────────────────── */
+    .dp-badge {
+      display: flex; align-items: center; gap: 0.7rem;
+      padding: 0.6rem 0.9rem;
+      background: rgba(124,58,237,0.06);
+      border: 1px solid rgba(124,58,237,0.15);
+      border-radius: 10px; cursor: default;
+    }
+    .dp-badge img {
+      width: 48px; height: 48px; flex-shrink: 0;
+    }
+    .dp-badge-text {
+      font-size: 0.72rem; color: rgba(255,255,255,0.5);
+      line-height: 1.4;
+    }
+    .dp-badge-text strong {
+      color: rgba(255,255,255,0.8); font-size: 0.75rem;
+      display: block; margin-bottom: 0.1rem;
+    }
+
     .sysinfo-note {
       margin-top: 0.7rem; font-size: 0.7rem;
       color: rgba(255,255,255,0.25); line-height: 1.4;
@@ -1560,6 +1580,14 @@
         <span class="en">I confirm I have permission to scan this site (my own, a client's, or a publicly accessible site for educational purposes). I understand every scan is recorded in the audit log per the <a href="./terms.html" target="_blank" rel="noopener" onclick="event.stopPropagation()">Terms of Service</a> and <a href="./privacy.html" target="_blank" rel="noopener" onclick="event.stopPropagation()">Privacy Policy</a>.</span>
       </label>
     </div>
+    <div class="dp-badge" style="max-width:720px;margin:0.6rem auto 0;">
+      <img src="./data-protection-badge.png" alt="Data Protection Badge" width="48" height="48">
+      <div class="dp-badge-text">
+        <strong>Data Protection</strong>
+        <span class="sr">PII hashovan (SHA-256) · ZZPL uskladjen · Audit log · Enkriptovani backup-ovi</span>
+        <span class="en">PII hashed (SHA-256) · ZZPL compliant · Audit log · Encrypted backups</span>
+      </div>
+    </div>
     <div class="progress-wrap" id="progressWrap" role="status" aria-live="polite">
       <div class="progress-modules" id="progressModules"></div>
       <div class="progress-label">
@@ -1584,6 +1612,14 @@
     <div class="sysinfo-note">
       <span class="sr">Ovi podaci se prikazuju lokalno u vasem pregledacu. Nista se ne salje niti cuva na nasem serveru.</span>
       <span class="en">This data is displayed locally in your browser. Nothing is sent to or stored on our server.</span>
+    </div>
+    <div class="dp-badge" style="margin-top:0.7rem;">
+      <img src="./data-protection-badge.png" alt="Data Protection Badge" width="48" height="48">
+      <div class="dp-badge-text">
+        <strong>Data Protection</strong>
+        <span class="sr">Vasi podaci su zasticeni: hashovanje, audit log, enkriptovani backup-ovi</span>
+        <span class="en">Your data is protected: hashing, audit log, encrypted backups</span>
+      </div>
     </div>
   </div>
 </div>

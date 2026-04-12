@@ -1,3 +1,4 @@
+Contact: mailto:mtosic0450@gmail.com
 Contact: https://github.com/UnlimitedEdition/security-scanner/security/advisories/new
 Expires: 2027-12-31T23:59:00.000Z
 Preferred-Languages: sr, en

@@ -1867,6 +1867,61 @@ ORDER BY created_at DESC;
 
 ---
 
-*Poslednja verzija: 2026-04-12, dodana §16 zaštita od automatizovanog napada.*
+## 17. POVREDA PODATAKA O LIČNOSTI — procedura (čl. 52 ZZPL)
+
+Ako saznaš da je došlo do povrede zaštite podataka (data breach), pokreni ovu proceduru:
+
+### Korak 1 — Utvrdi šta se desilo (prvih 4 sata)
+- Koji podaci su kompromitovani? (audit_log, scans, verified_domains?)
+- Koliko korisnika je pogođeno?
+- Da li su sirovi podaci ili samo hashevi?
+- Da li je napadač i dalje aktivan?
+
+### Korak 2 — Zaustavi breach (odmah)
+- Rotiraj `SUPABASE_SERVICE_KEY` i `PII_HASH_SALT` (vidi §8)
+- Ako je Supabase kompromitovan: promeni DB lozinku
+- Ako je HF Space kompromitovan: promeni sve HF Secrets
+- Zabeleži sve korake u fajl sa timestampom
+
+### Korak 3 — Obavesti Poverenika (u roku od 72 sata)
+- Email: office@poverenik.rs
+- Sadržaj obaveštenja (čl. 53 ZZPL):
+  1. Opis povrede (šta se desilo)
+  2. Kategorije i približan broj pogođenih lica
+  3. Kontakt email rukovaoca: mtosic0450@gmail.com
+  4. Verovatne posledice povrede
+  5. Mere preduzete za otklanjanje posledica
+- **Ako ne možeš sve da utvrdiš u 72h** — pošalji preliminarno obaveštenje i dopuni naknadno
+
+### Korak 4 — Obavesti korisnike (ako je visok rizik)
+Ako povreda može da prouzrokuje **visok rizik** za prava korisnika (npr. procureli podaci koji nisu hashirani), obavesti ih:
+- Preko banera na sajtu
+- Ako imaš email-ove (Pro korisnici) — email obaveštenje
+- Jasno objasni: šta se desilo, šta preduzimamo, šta korisnik treba da uradi
+
+### Korak 5 — Dokumentuj u interni registar
+Zabeleži u PRIRUCNIK ili poseban fajl:
+- Datum i vreme saznanja
+- Opis povrede
+- Pogođeni podaci i broj korisnika
+- Preduzete mere
+- Datum obaveštavanja Poverenika
+- Datum obaveštavanja korisnika (ako je primenjivo)
+
+### Napomena o našem sistemu
+Naš sistem je dizajniran da minimizuje štetu od breach-a:
+- **PII je hashovan** — čak i kompletni dump baze ne otkriva IP adrese korisnika
+- **Audit log je append-only** — napadač ne može da obriše tragove
+- **Backup je enkriptovan** — R2 backup je AES-256-GCM, beskoristan bez ključa
+- **Scan rezultati ne sadrže PII** — samo tehničku analizu sajta
+
+Najrealističniji scenario breach-a: procurio `SUPABASE_SERVICE_KEY`. U tom slučaju:
+- Napadač vidi hashove IP-a i User-Agent-a (ne može da ih dekodira)
+- Napadač vidi URL-ove skeniranih sajtova i rezultate
+- Napadač NE vidi sirove IP adrese, imena, email-ove (osim Pro korisnika)
+
+---
+
+*Poslednja verzija: 2026-04-12, dodana §17 procedura za povredu podataka (ZZPL čl. 52).*
 *Sledeća revizija: kad završimo Fazu 4 (paid multi-page) ili kad se pojavi nova feature. DR drill cadence: 2026-07-10 (kvartalno).*
 
