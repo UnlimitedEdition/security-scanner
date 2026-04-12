@@ -176,37 +176,33 @@
     <p>Kontakt Poverenika: <a href="https://www.poverenik.rs" target="_blank" rel="noopener">poverenik.rs</a></p>
 
     <h2 id="pp14">14. Istorija verzija politike privatnosti</h2>
-    <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
-      <thead>
-        <tr style="border-bottom:2px solid #252a4a;text-align:left;">
-          <th style="padding:0.5rem;">Verzija</th>
-          <th style="padding:0.5rem;">Datum</th>
-          <th style="padding:0.5rem;">Status</th>
-          <th style="padding:0.5rem;">Sta se promenilo</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr style="border-bottom:1px solid #1a1e38;">
-          <td style="padding:0.5rem;"><code>2026-04-12-v3</code></td>
-          <td style="padding:0.5rem;">12. apr 2026.</td>
-          <td style="padding:0.5rem;color:#22c55e;font-weight:600;">AKTIVNA</td>
-          <td style="padding:0.5rem;">ZZPL uskladjenost: kontakt email rukovaoca (cl. 23), automatizovano odlucivanje (cl. 38), legitimni interes dokumentovan (cl. 12), procedura za povredu podataka (cl. 52), cookie consent V2 sa 3 kategorije, kontakt Poverenika sa adresama</td>
-        </tr>
-        <tr style="border-bottom:1px solid #1a1e38;">
-          <td style="padding:0.5rem;"><code>2026-04-10-v2</code></td>
-          <td style="padding:0.5rem;">10. apr 2026.</td>
-          <td style="padding:0.5rem;color:#9ca3af;">zamenjeno v3</td>
-          <td style="padding:0.5rem;">Dodat Lemon Squeezy kao sub-processor (Merchant of Record za Pro pretplate, Delaware SAD). Email se cuva i za Pro korisnike pored abuse report-a. Dodata scan_requests tabela (gate-before-scan wizard).</td>
-        </tr>
-        <tr>
-          <td style="padding:0.5rem;"><code>2026-04-10-v1</code></td>
-          <td style="padding:0.5rem;">10. apr 2026.</td>
-          <td style="padding:0.5rem;color:#9ca3af;">zamenjeno v2</td>
-          <td style="padding:0.5rem;">Prva verzija politike privatnosti. Pokriva: PII hashovanje (SHA-256), audit_log (append-only, 90 dana), verified_domains (30 dana), rate_limits, abuse_reports, backup (AES-256-GCM, R2). Supabase kao jedini sub-processor.</td>
-        </tr>
-      </tbody>
-    </table>
-    <p style="font-size:0.75rem;color:#7b83a6;margin-top:0.5rem;">Svaka verzija je trajno sacuvana u <code>audit_log</code> tabeli — consent koji ste dali vazi za verziju koja je bila aktivna u tom trenutku.</p>
+    <div style="display:flex;flex-direction:column;gap:0.8rem;">
+      <div style="padding:0.9rem 1rem;background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.2);border-radius:10px;">
+        <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.4rem;">
+          <code style="font-size:0.85rem;font-weight:700;">2026-04-12-v3</code>
+          <span style="font-size:0.68rem;background:#22c55e;color:#0a0c15;padding:0.1rem 0.45rem;border-radius:4px;font-weight:700;">AKTIVNA</span>
+          <span style="font-size:0.75rem;color:#7b83a6;">12. april 2026.</span>
+        </div>
+        <p style="font-size:0.78rem;color:#c0c4db;line-height:1.5;margin:0;">ZZPL uskladjenost: kontakt email rukovaoca (cl. 23), automatizovano odlucivanje (cl. 38), legitimni interes dokumentovan (cl. 12), procedura za povredu podataka (cl. 52), cookie consent V2 sa 3 kategorije, kontakt Poverenika sa adresama.</p>
+      </div>
+      <div style="padding:0.9rem 1rem;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:10px;">
+        <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.4rem;">
+          <code style="font-size:0.85rem;">2026-04-10-v2</code>
+          <span style="font-size:0.68rem;color:#7b83a6;">zamenjeno v3</span>
+          <span style="font-size:0.75rem;color:#7b83a6;">10. april 2026.</span>
+        </div>
+        <p style="font-size:0.78rem;color:#7b83a6;line-height:1.5;margin:0;">Dodat Lemon Squeezy kao sub-processor (Merchant of Record za Pro pretplate, Delaware SAD). Email se cuva i za Pro korisnike pored abuse report-a. Dodata scan_requests tabela (gate-before-scan wizard).</p>
+      </div>
+      <div style="padding:0.9rem 1rem;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:10px;">
+        <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.4rem;">
+          <code style="font-size:0.85rem;">2026-04-10-v1</code>
+          <span style="font-size:0.68rem;color:#7b83a6;">zamenjeno v2</span>
+          <span style="font-size:0.75rem;color:#7b83a6;">10. april 2026.</span>
+        </div>
+        <p style="font-size:0.78rem;color:#7b83a6;line-height:1.5;margin:0;">Prva verzija politike privatnosti. PII hashovanje (SHA-256), audit_log (append-only, 90 dana), verified_domains (30 dana), rate_limits, abuse_reports, backup (AES-256-GCM, R2). Supabase kao jedini sub-processor.</p>
+      </div>
+    </div>
+    <p style="font-size:0.75rem;color:#7b83a6;margin-top:0.7rem;">Svaka verzija je trajno sacuvana u <code>audit_log</code> tabeli — consent koji ste dali vazi za verziju koja je bila aktivna u tom trenutku.</p>
   </div>
 
   <!-- ENGLISH -->
@@ -368,37 +364,33 @@
     <p>Commissioner contact: <a href="https://www.poverenik.rs" target="_blank" rel="noopener">poverenik.rs</a></p>
 
     <h2 id="pp14e">14. Privacy policy version history</h2>
-    <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
-      <thead>
-        <tr style="border-bottom:2px solid #252a4a;text-align:left;">
-          <th style="padding:0.5rem;">Version</th>
-          <th style="padding:0.5rem;">Date</th>
-          <th style="padding:0.5rem;">Status</th>
-          <th style="padding:0.5rem;">Changes</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr style="border-bottom:1px solid #1a1e38;">
-          <td style="padding:0.5rem;"><code>2026-04-12-v3</code></td>
-          <td style="padding:0.5rem;">Apr 12, 2026</td>
-          <td style="padding:0.5rem;color:#22c55e;font-weight:600;">ACTIVE</td>
-          <td style="padding:0.5rem;">ZZPL compliance: controller email (Art. 23), automated decision-making (Art. 38), legitimate interest documented (Art. 12), data breach procedure (Art. 52), cookie consent V2 with 3 categories, Commissioner contact with addresses</td>
-        </tr>
-        <tr style="border-bottom:1px solid #1a1e38;">
-          <td style="padding:0.5rem;"><code>2026-04-10-v2</code></td>
-          <td style="padding:0.5rem;">Apr 10, 2026</td>
-          <td style="padding:0.5rem;color:#9ca3af;">replaced by v3</td>
-          <td style="padding:0.5rem;">Added Lemon Squeezy as sub-processor (Merchant of Record for Pro subscriptions, Delaware USA). Email now stored for Pro subscribers in addition to abuse reports. Added scan_requests table (gate-before-scan wizard).</td>
-        </tr>
-        <tr>
-          <td style="padding:0.5rem;"><code>2026-04-10-v1</code></td>
-          <td style="padding:0.5rem;">Apr 10, 2026</td>
-          <td style="padding:0.5rem;color:#9ca3af;">replaced by v2</td>
-          <td style="padding:0.5rem;">First version of privacy policy. Covers: PII hashing (SHA-256), audit_log (append-only, 90 days), verified_domains (30 days), rate_limits, abuse_reports, backup (AES-256-GCM, R2). Supabase as sole sub-processor.</td>
-        </tr>
-      </tbody>
-    </table>
-    <p style="font-size:0.75rem;color:#7b83a6;margin-top:0.5rem;">Each version is permanently recorded in the <code>audit_log</code> table — the consent you gave applies to the version that was active at that moment.</p>
+    <div style="display:flex;flex-direction:column;gap:0.8rem;">
+      <div style="padding:0.9rem 1rem;background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.2);border-radius:10px;">
+        <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.4rem;">
+          <code style="font-size:0.85rem;font-weight:700;">2026-04-12-v3</code>
+          <span style="font-size:0.68rem;background:#22c55e;color:#0a0c15;padding:0.1rem 0.45rem;border-radius:4px;font-weight:700;">ACTIVE</span>
+          <span style="font-size:0.75rem;color:#7b83a6;">April 12, 2026</span>
+        </div>
+        <p style="font-size:0.78rem;color:#c0c4db;line-height:1.5;margin:0;">ZZPL compliance: controller email (Art. 23), automated decision-making (Art. 38), legitimate interest documented (Art. 12), data breach procedure (Art. 52), cookie consent V2 with 3 categories, Commissioner contact with addresses.</p>
+      </div>
+      <div style="padding:0.9rem 1rem;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:10px;">
+        <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.4rem;">
+          <code style="font-size:0.85rem;">2026-04-10-v2</code>
+          <span style="font-size:0.68rem;color:#7b83a6;">replaced by v3</span>
+          <span style="font-size:0.75rem;color:#7b83a6;">April 10, 2026</span>
+        </div>
+        <p style="font-size:0.78rem;color:#7b83a6;line-height:1.5;margin:0;">Added Lemon Squeezy as sub-processor (Merchant of Record for Pro subscriptions, Delaware USA). Email now stored for Pro subscribers in addition to abuse reports. Added scan_requests table (gate-before-scan wizard).</p>
+      </div>
+      <div style="padding:0.9rem 1rem;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:10px;">
+        <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.4rem;">
+          <code style="font-size:0.85rem;">2026-04-10-v1</code>
+          <span style="font-size:0.68rem;color:#7b83a6;">replaced by v2</span>
+          <span style="font-size:0.75rem;color:#7b83a6;">April 10, 2026</span>
+        </div>
+        <p style="font-size:0.78rem;color:#7b83a6;line-height:1.5;margin:0;">First version of privacy policy. PII hashing (SHA-256), audit_log (append-only, 90 days), verified_domains (30 days), rate_limits, abuse_reports, backup (AES-256-GCM, R2). Supabase as sole sub-processor.</p>
+      </div>
+    </div>
+    <p style="font-size:0.75rem;color:#7b83a6;margin-top:0.7rem;">Each version is permanently recorded in the <code>audit_log</code> table — the consent you gave applies to the version that was active at that moment.</p>
   </div>
 
   </main>

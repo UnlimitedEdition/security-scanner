@@ -44,8 +44,16 @@ Kad menjas verziju, MORAS da azuriras SVA ova mesta:
 - Sekcija 14 EN: tabela — novi red sa statusom ACTIVE, stari red zameni status
 
 ### 4. Uslovi koriscenja (terms.html)
-- Subtitle SR: `Version 2026-04-12-v3`
-- Subtitle EN: `Version 2026-04-12-v3`
+- Subtitle SR + EN: `Version 2026-04-12-v3`
+
+### 4b. Politika refundacije (refund-policy.html)
+- Subtitle SR + EN: `Verzija/Version 2026-04-12-v3`
+
+### 4c. Prava korisnika (user-rights.html)
+- Subtitle SR + EN: `Verzija/Version 2026-04-12-v3`
+
+### 4d. Prijava zloupotrebe (abuse-report.html)
+- Subtitle SR + EN: `Verzija/Version 2026-04-12-v3`
 
 ### 5. Header sajta (blog-common.js)
 - `verBadge.textContent = 'v3'` — kratka oznaka u navbar-u
