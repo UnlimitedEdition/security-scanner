@@ -310,7 +310,7 @@ def _run_scan_inline(
         details={"mode": mode, "scan_request_id": scan_request_id},
     )
 
-    progress_cb = _make_progress_cb(scan_id, _ad_throttle)
+    progress_cb = _make_progress_cb(scan_id)
     try:
         result = scanner.scan(
             url,

@@ -2398,31 +2398,34 @@ var _adBlockResult = null;
 function _initAdBlockBait() {
   if (_adBlockBait) return;
   _adBlockBait = document.createElement("div");
-  _adBlockBait.className = "ad-banner textad adsbox ad_unit";
-  _adBlockBait.style.cssText = "position:absolute;top:-999px;left:-999px;width:1px;height:1px;opacity:0.01;pointer-events:none;";
+  _adBlockBait.className = "adsbox pub_300x250 pub_300x250m pub_728x90 text-ad textAd text_ad text_ads text-ads text-ad-links";
   _adBlockBait.textContent = "\u00a0";
+  _adBlockBait.style.cssText = "display:block !important;position:absolute !important;top:-9999px !important;left:-9999px !important;width:10px !important;height:10px !important;";
   document.body.appendChild(_adBlockBait);
 }
 function isAdBlocked() {
   if (_adBlockResult !== null) return _adBlockResult;
   if (!_adBlockBait) _initAdBlockBait();
   if (!_adBlockBait) return false;
-  // Ad blockers hide elements by setting display:none, visibility:hidden,
-  // height:0, or removing from DOM entirely
+  // Ad blockers hide elements via: display:none, visibility:hidden,
+  // height:0, removed from DOM, or aggressive CSS overrides
   if (!document.body.contains(_adBlockBait)) {
     _adBlockResult = true;
     return true;
   }
   var style = window.getComputedStyle(_adBlockBait);
+  // Only trust strong signals — display:none or visibility:hidden
+  // offsetHeight=0 is unreliable for absolutely-positioned elements
   var hidden = (style.display === "none" || style.visibility === "hidden");
-  _adBlockResult = hidden;
+  // Only cache if we're confident — initial check may be too early
+  if (hidden) _adBlockResult = true;
   return hidden;
 }
 // Init bait early so ad blockers have time to act on it
 document.addEventListener("DOMContentLoaded", function() {
   _initAdBlockBait();
-  // Re-check after 1s — some blockers act with delay
-  setTimeout(function() { _adBlockResult = null; }, 1000);
+  // Reset cached result so next check is fresh after blockers have had time to act
+  setTimeout(function() { _adBlockResult = null; }, 500);
 });
 
 // Lazy ad loader — calls adsbygoogle.push({}) only when the slot is
