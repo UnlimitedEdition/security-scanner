@@ -1,6 +1,8 @@
-/* =============================================
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 Toske-Programer (Web Security Scanner contributors)
+ * =============================================
    BLOG COMMON JS — Web Security Scanner
-   Version: 2026-04-10-v2 (self-XSS console warning)
+   Version: 2026-04-12-v3 (cookie consent loader + user-rights link)
    Last change: 2026-04-10 14:40 UTC
    Injects header, footer, timeline + lang toggle
    All content is static/trusted (no user input)
@@ -335,7 +337,7 @@
   legalRow.appendChild(legalRefund);
 
   // Prava korisnika — the user-rights blog article is the canonical source
-  var legalRights = el('a', { href: './blog-gdpr-rights.html' });
+  var legalRights = el('a', { href: './user-rights.html' });
   legalRights.appendChild(srSpan('Prava korisnika', 'User Rights'));
   legalRow.appendChild(legalRights);
 

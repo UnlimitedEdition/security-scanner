@@ -1,8 +1,8 @@
 # Web Security Scanner — Project Tree
 
-> **Generisano:** 2026-04-10
+> **Generisano:** 2026-04-12
 > **Svrha:** Kompletna mapa projekta za code review / agent analysis.
-> **Git HEAD:** `efbc526` (Phase 7.16 — cache-bust version marker)
+> **Git HEAD:** `76ffad5` (PRIRUCNIK.md update for gate-before-scan + frontend polish)
 > **Live deploys:**
 > - Frontend: https://security-scanner-ruddy.vercel.app
 > - Backend API: https://unlimitededition-web-security-scanner.hf.space
@@ -17,10 +17,10 @@
 | Python (backend) | 28 | ~7,500 |
 | HTML (frontend + blog) | 36 | ~15,000 |
 | CSS | 1 standalone + inline u HTML-u | ~274 standalone |
-| JavaScript | 1 standalone + inline u HTML-u | ~441 standalone |
-| SQL (migrations) | 10 | ~820 |
+| JavaScript | 2 standalone + inline u HTML-u | ~700 standalone |
+| SQL (migrations) | 16 | ~1,100 |
 | TypeScript (Supabase Edge Function) | 4 | ~622 |
-| Markdown docs | 6 | ~3,400 |
+| Markdown docs | 10 | ~5,500 |
 | Config (Dockerfile, vercel.json, fly.toml, .gitignore, itd.) | ~8 | — |
 
 ---
@@ -31,9 +31,9 @@
 security-scanner/
 │
 ├── 📄 BACKEND — Python (FastAPI + scanner core)
-│   ├── api.py                       1062 lines — FastAPI app, routes, middleware, endpoints
-│   ├── scanner.py                    494 lines — Scan orchestrator, deadline, check runner
-│   ├── db.py                         731 lines — Supabase wrapper + PII hashing + lifecycle helpers
+│   ├── api.py                       ~2100 lines — FastAPI app, routes, middleware, wizard endpoints
+│   ├── scanner.py                    ~530 lines — Scan orchestrator, deadline, check runner (safe/full modes)
+│   ├── db.py                         ~900 lines — Supabase wrapper + PII hashing + scan_requests helpers
 │   ├── security_utils.py             283 lines — SSRF protection (safe_get/safe_head/safe_post)
 │   ├── verification.py               375 lines — Function 6 ownership verification (meta/file/dns)
 │   ├── risk_engine.py                188 lines — Score -> grade -> top-5 priorities + fix difficulty
@@ -83,7 +83,13 @@ security-scanner/
 │   ├── 007_explicit_deny_policies.sql           48 lines — USING (false) for anon/authenticated
 │   ├── 008_backup_infrastructure.sql           135 lines — pg_net + backup_log + daily-backup cron
 │   ├── 009_backup_secrets_rpc.sql               58 lines — get_backup_secrets() RPC
-│   └── 010_flag_audit_rows_rpc.sql              63 lines — flag_audit_rows_for_scan_ids() RPC
+│   ├── 010_flag_audit_rows_rpc.sql              63 lines — flag_audit_rows_for_scan_ids() RPC
+│   ├── 011_subscriptions.sql                   ~90 lines — Pro plan: subscriptions + webhook + magic_links
+│   ├── 012_scans_subscription_fk.sql           ~20 lines — subscription_id FK on scans
+│   ├── 013_subscriptions_explicit_deny_policies.sql ~30 lines — Explicit deny RLS for Pro tables
+│   ├── 014_scan_requests_table.sql             ~60 lines — scan_requests (wizard state machine, DATE not TIMESTAMPTZ)
+│   ├── 015_scan_requests_cron.sql              ~30 lines — prune_abandoned_scan_requests() hourly cron
+│   └── 016_audit_log_scan_request_events.sql   ~20 lines — Extend CHECK constraint with 5 wizard events
 │
 ├── 📁 supabase/functions/backup/    Supabase Edge Function (TypeScript / Deno)
 │   ├── index.ts                      207 lines — Main handler: verify webhook, export, encrypt, upload
@@ -96,8 +102,9 @@ security-scanner/
 │   └── dr_drill_bootstrap.sql        892 lines — Concatenated migrations 001-010 for DR drill
 │
 ├── 📄 FRONTEND — HTML pages (static, no build step)
-│   ├── index.html                    2145 lines — Main scanner UI + consent + verify + scan logic
-│   ├── blog-common.js                 441 lines — Shared header/footer/timeline/lang toggle + STOP banner
+│   ├── index.html                   ~3800 lines — Scanner UI + wizard + toast + sysinfo + sidebar
+│   ├── cookie-consent.js              ~250 lines — GDPR cookie consent V2 (shared across all pages)
+│   ├── blog-common.js                 ~500 lines — Shared header/footer/timeline/lang toggle + cookie loader
 │   ├── blog-common.css                274 lines — Shared styles for blog layout
 │   │
 │   ├── 🔒 Legal / Policy Pages
@@ -183,33 +190,41 @@ security-scanner/
 
 ## 🔑 Backend module purpose map
 
-### `api.py` (1062 lines) — FastAPI application root
+### `api.py` (~2100 lines) — FastAPI application root
 - **Imports:** `fastapi`, `scanner`, `db`, `verification`, `security_utils`
 - **Middleware:** `GZipMiddleware`, `CORSMiddleware`, `SecurityHeadersMiddleware` (custom CSP)
 - **Routes:**
-  - `GET /` + `/index.html`, `/privacy.html`, `/terms.html`, `/abuse-report.html`, `/blog-*.html`, `/blog-common.{css,js}`, `/ads.txt`, `/robots.txt`, `/sitemap.xml`, `/.well-known/security.txt` — all `[GET, HEAD]` for crawler compat
-  - `POST /scan` — start scan with consent_accepted + rate limit + SSRF guard + domain block check
+  - `GET /` + `/index.html`, `/privacy.html`, `/terms.html`, `/abuse-report.html`, `/blog-*.html`, `/blog-common.{css,js}`, `/cookie-consent.js`, `/ads.txt`, `/robots.txt`, `/sitemap.xml`, `/.well-known/security.txt` — all `[GET, HEAD]` for crawler compat
+  - `POST /scan` — start safe scan (hardcoded mode='safe') + rate limit + SSRF guard + domain block
   - `GET /scan/{scan_id}` — poll scan state, with redaction gate for unverified users
-  - `POST /verify/request` — generate ownership verification token
-  - `POST /verify/check` — validate ownership proof (meta/file/dns)
-  - `POST /abuse-report` — submit abuse report (domain, email, description, scan_ids)
+  - `POST /scan/request` — create wizard row for full scan
+  - `POST /scan/request/{id}/consent` — record individual consent checkbox
+  - `POST /scan/request/{id}/consent/finalize` — lock all 3 consents
+  - `POST /scan/request/{id}/verify` — run ownership verification
+  - `POST /scan/request/{id}/execute` — start full scan (6-condition WHERE gate)
+  - `POST /scan/request/{id}/abandon` — cancel wizard
+  - `GET /scan/request/{id}` — wizard state (no timestamps/tokens)
+  - `POST /verify/request` — generate ownership verification token (legacy)
+  - `POST /verify/check` — validate ownership proof with IP binding
+  - `POST /abuse-report` — submit abuse report
   - `GET /health` — health check + db reachability
+- **SSRF audit:** `RequestValidationError` handler catches SSRF blocks from Pydantic validators
 - **State:** in-memory `scans` dict as cache (DB is authoritative), `_scan_queue`, `_rate_store` backstop
-- **Constants:** `MAX_VERIFY_ATTEMPTS=5`, `REDACTED_CHECK_PREFIXES`, `SENSITIVE_CHECK_PREFIXES`
 
-### `scanner.py` (494 lines) — Scan orchestrator
-- Runs all 23+ check modules in sequence
+### `scanner.py` (~530 lines) — Scan orchestrator
+- Runs 30 check modules with kind-aware gating (safe/full/redacted)
+- `mode='safe'`: 17 SAFE + 3 REDACTED checks, zero probes to private infrastructure
+- `mode='full'`: additional 10 FULL checks (files, admin, vuln, ports, api, cors, deps, subdomain, takeover, wpscan)
 - Hard 180s deadline via `SCAN_DEADLINE_SECONDS`
-- `run_check()` wrapper handles per-check exceptions
 - Bot protection detection (Cloudflare, DataDome, Perimeter)
-- SSL verify ALWAYS on (security scanner cannot skip cert validation)
 - Progress callback for real-time UI updates
 
-### `db.py` (731 lines) — Supabase wrapper
+### `db.py` (~900 lines) — Supabase wrapper
 - **PII hashing:** `hash_pii()`, `hash_ip()`, `hash_ua()` with server-side salt
 - **Scan lifecycle:** `create_scan`, `update_scan_progress`, `mark_scan_running/completed/error`, `get_scan_from_db`
+- **Scan requests (wizard):** `create_scan_request`, `set_scan_request_consent`, `finalize_scan_request_consents`, `attach_verify_to_scan_request`, `mark_scan_request_executed/completed`, `abandon_scan_request`
 - **Rate limiting:** `check_rate_limit()` (fixed-window counter in rate_limits table)
-- **Audit:** `log_audit_event()` with 12 valid event types
+- **Audit:** `log_audit_event()` with 17 valid event types (incl. session_id + fingerprint_hash)
 - **Verification:** `create_verification_token`, `get_verification_token`, `mark_token_verified`, `upsert_verified_domain`, `is_domain_verified`
 - **Abuse:** `create_abuse_report`, `flag_audit_rows_for_scans` (via RPC), `is_domain_blocked`
 - **Graceful degradation:** everything wrapped in `_safe_db_call()` — DB outage logs warning but doesn't crash scans
@@ -234,7 +249,7 @@ security-scanner/
 - `get_top_priorities()` — top 5 by risk score
 - `CATEGORY_DEFAULT_DIFFICULTY` — prefix-based fallback for unknown check IDs
 
-### `checks/*.py` (23 modules, ~4,300 lines total) — Individual scan implementations
+### `checks/*.py` (30 modules, ~5,500 lines total) — Individual scan implementations
 Each module exports a `check_*()` function that takes `(url, session, response, base_domain)` and returns a list of finding dicts with standardized schema:
 ```
 {
@@ -255,16 +270,20 @@ Each module exports a `check_*()` function that takes `(url, session, response, 
 
 ## 🗄️ Database schema (Supabase PostgreSQL)
 
-### Tables (7 application + 1 backup log + 1 migrations)
+### Tables (10 application + 1 backup log + 1 migrations)
 | Table | Rows store | Retention | Special |
 |---|---|---|---|
 | `schema_migrations` | Applied migrations with checksums | Forever | UPDATE/DELETE revoked from service_role |
-| `scans` | URL, domain, result JSONB, ip_hash, ua_hash, consent | Manual cleanup | RLS default-deny |
+| `scans` | URL, domain, result JSONB, ip_hash, ua_hash, consent, mode | Manual cleanup | RLS default-deny |
+| `scan_requests` | Wizard state machine (3 consents, verify, execute) | 24h (cron) | DATE not TIMESTAMPTZ (privacy) |
 | `verification_tokens` | Pending challenges | 1h | Auto-expired by pg_cron |
 | `verified_domains` | Successful (domain, ip_hash) grants | 30 days | UNIQUE (domain, ip_hash) |
-| `audit_log` | All events | 90 days (unflagged) | APPEND-ONLY (UPDATE/DELETE revoked) |
+| `audit_log` | All events (17 types) | 90 days (unflagged) | APPEND-ONLY (UPDATE/DELETE revoked) |
 | `rate_limits` | Fixed-window counters | Rolling window | Key = `ip:<hash>` or `domain:<d>` |
 | `abuse_reports` | User complaints | Forever | Operator-managed lifecycle |
+| `subscriptions` | Pro plan license keys | Forever | Lemon Squeezy integration |
+| `lemon_webhook_events` | Webhook audit trail | Forever | RLS explicit deny |
+| `magic_links` | License key recovery | Short-lived | RLS explicit deny |
 | `backup_log` | Daily backup audit | 180 days | Populated by edge function |
 
 ### RPC functions (SECURITY DEFINER)
@@ -276,14 +295,15 @@ Each module exports a `check_*()` function that takes `(url, session, response, 
 - `prune_stale_rate_limits()` — rolling window cleanup
 - `prune_old_backup_log()` — 180-day retention
 
-### pg_cron jobs (6 scheduled)
+### pg_cron jobs (7 scheduled)
 ```
-expire-verification-tokens  */5 * * * *   # every 5 min
-prune-rate-limits           0 * * * *     # every hour
-prune-audit-log             0 3 * * *     # daily 03:00 UTC
-prune-verified-domains      5 3 * * *     # daily 03:05 UTC
-prune-backup-log            10 3 * * *    # daily 03:10 UTC
-daily-backup                0 4 * * *     # daily 04:00 UTC (triggers edge fn)
+expire-verification-tokens     */5 * * * *   # every 5 min
+prune-rate-limits              0 * * * *     # every hour
+prune-abandoned-scan-requests  0 * * * *     # every hour (24h TTL)
+prune-audit-log                0 3 * * *     # daily 03:00 UTC
+prune-verified-domains         5 3 * * *     # daily 03:05 UTC
+prune-backup-log               10 3 * * *   # daily 03:10 UTC
+daily-backup                   0 4 * * *     # daily 04:00 UTC (triggers edge fn)
 ```
 
 ---
@@ -304,7 +324,7 @@ daily-backup                0 4 * * *     # daily 04:00 UTC (triggers edge fn)
 │  frontend       │                    │  Python 3.11 + FastAPI    │
 │  (index.html +  │  /verify/* /abuse  │                            │
 │   blog-*.html)  │                    │  api.py → scanner.py →    │
-└─────────────────┘                    │  23× checks/*.py           │
+└─────────────────┘                    │  30× checks/*.py           │
                                         │                            │
                                         │  db.py (Supabase client)   │
                                         └─────────┬──────────────────┘
@@ -340,6 +360,9 @@ daily-backup                0 4 * * *     # daily 04:00 UTC (triggers edge fn)
 | **PII protection** | SHA-256 hash with server-side salt, raw IP/UA never in DB (GDPR Art. 4(5) pseudonymization) |
 | **Audit trail** | Append-only `audit_log`, UPDATE/DELETE revoked from service_role, 90-day retention + legal hold flagging |
 | **Row-Level Security** | Enabled on every table, default deny, service_role only |
+| **Gate-before-scan** | Two modes (safe/full), wizard with 3 consents + ownership verification required for active probes |
+| **Cookie consent** | GDPR V2 granular consent (essential/analytics/ads), AdSense gated behind explicit approval |
+| **IP binding** | Verification tokens must be verified from the same IP that created them |
 | **Consent capture** | Every scan records `consent_accepted` + `consent_version` |
 | **Encrypted backups** | Daily AES-256-GCM to Cloudflare R2 (offsite provider), 90-day retention |
 | **Disaster recovery** | Tested restore via `scripts/restore_backup.py` against isolated staging (2026-04-10 drill passed) |
@@ -359,7 +382,7 @@ daily-backup                0 4 * * *     # daily 04:00 UTC (triggers edge fn)
 ### `CLAUDE.md` (32 lines)
 Claude Code project configuration. Defines workflow rules (in Serbian), auto-plugin triggers, and git conventions.
 
-### `PRIRUCNIK.md` (1644 lines)
+### `PRIRUCNIK.md` (~1730 lines)
 Operator handbook in Serbian. Written as a "things to do when something breaks" reference, not a tutorial. Covers:
 - §1-3: Architecture + what's stored + what's NOT stored
 - §4: PII hashing rationale + GDPR posture
@@ -369,10 +392,12 @@ Operator handbook in Serbian. Written as a "things to do when something breaks" 
 - §8: Secret rotation with blast-radius matrix
 - §9: "Never touch these"
 - §10: Contact escalation
-- §11: Ownership verification workflow
+- §11: Ownership verification workflow + IP binding
 - §12: Abuse report triage playbook + reply templates
 - §13: Deploy + live monitoring procedures
 - §14: DR drill procedure + measured baseline (20 min)
+- §15: Frontend polish (toast, sysinfo panel, sidebar, cookie consent)
+- §16: Script/automation attack resistance (10-layer defense analysis)
 
 ### `SECURITY.md` (156 lines)
 Public-facing security policy for vulnerability reporting. Lists in-scope/out-of-scope, commitment to audit trail, encryption, RLS, PII hashing.
@@ -431,7 +456,7 @@ CLI tool: `--list`, `--inspect KEY`, `--latest`, `--apply`. Downloads from R2, d
 ```
 Branch: master
 Remote: space (HF) + origin (GitHub)
-HEAD: efbc526  Cache-bust blog-common.js + add visible version marker
+HEAD: 76ffad5  Update PRIRUCNIK.md for gate-before-scan + frontend polish
 ```
 
 Last ~21 commits (this session):

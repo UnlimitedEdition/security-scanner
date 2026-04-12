@@ -90,3 +90,10 @@ The runner:
 | `007_explicit_deny_policies.sql` | Explicit `USING (false)` policies for anon/authenticated on every table |
 | `008_backup_infrastructure.sql` | pg_net extension + `backup_log` table + daily-backup cron |
 | `009_backup_secrets_rpc.sql` | `get_backup_secrets()` RPC so the edge function can read Vault |
+| `010_flag_audit_rows_rpc.sql` | `flag_audit_rows_for_scan_ids()` RPC for abuse legal holds |
+| `011_subscriptions.sql` | Pro plan tables: `subscriptions`, `lemon_webhook_events`, `magic_links` |
+| `012_scans_subscription_fk.sql` | Add `subscription_id` FK to `scans` table |
+| `013_subscriptions_explicit_deny_policies.sql` | Explicit deny RLS for Pro tables (fixes 3 security INFO lints) |
+| `014_scan_requests_table.sql` | `scan_requests` table for gate-before-scan wizard (DATE, not TIMESTAMPTZ) |
+| `015_scan_requests_cron.sql` | `prune_abandoned_scan_requests()` cron (hourly, 24h TTL) |
+| `016_audit_log_scan_request_events.sql` | Extend audit_log CHECK constraint with 5 wizard events |

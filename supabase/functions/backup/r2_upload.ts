@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Toske-Programer (Web Security Scanner contributors)
 // ============================================================================
 // r2_upload.ts — AWS SigV4 signing + PUT to Cloudflare R2
 // ============================================================================

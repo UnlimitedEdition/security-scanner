@@ -1,8 +1,9 @@
 # Blog Stranice — TODO Lista sa Specifikacijama
 
-## STANJE PROJEKTA (ažurirano 9. april 2026.)
-- ✅ blog-common.css + blog-common.js — globalni header, footer, timeline
-- ✅ index.html — header/footer iz blog-common, result tabs ispod skenera
+## STANJE PROJEKTA (ažurirano 12. april 2026.)
+- ✅ blog-common.css + blog-common.js — globalni header, footer, timeline, cookie consent loader
+- ✅ cookie-consent.js — GDPR V2 granularan cookie consent (shared across all pages)
+- ✅ index.html — scanner UI + wizard + toast + sysinfo panel + checks sidebar
 - ✅ 8/8 SECURITY clanaka + hub stranica + timeline fix (EN h2 id-jevi)
 - ✅ 7/7 SEO clanaka + hub stranica (meta, schema, sitemap, local, opengraph, headings, mobile)
 - ✅ 6/6 PERFORMANCE clanaka + hub stranica (cwv, images, cache, compression, cdn, lazy)

@@ -33,8 +33,8 @@ project, including but not limited to:
   * All SQL migration files (migrations/*.sql)
   * All TypeScript Supabase Edge Function files
     (supabase/functions/backup/*.ts)
-  * JavaScript files in the frontend (blog-common.js, inline scripts
-    in index.html and other HTML files)
+  * JavaScript files in the frontend (blog-common.js, cookie-consent.js,
+    inline scripts in index.html and other HTML files)
   * CSS files (blog-common.css, inline styles)
   * Configuration files (Dockerfile, vercel.json, fly.toml, etc.)
   * Build tooling and utility scripts

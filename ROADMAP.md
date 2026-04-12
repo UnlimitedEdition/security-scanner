@@ -19,7 +19,7 @@ dostojanstvena komunikacija, prevencija kao ogledalo — ne kao strah**.
 
 ### Gate-before-scan model (architectural rewrite, 2026-04-12)
 - **Fajlovi**: `migrations/013-016`, `db.py`, `scanner.py`, `checks/disclosure_check.py`, `checks/jwt_check.py`, `checks/js_check.py`, `api.py`, `index.html`, `privacy.html`, `terms.html`
-- **Commit**: TBD
+- **Commit**: `7edaa88` (gate-before-scan), `6aa25a2` (toast/sysinfo/sidebar/audit), `8849b31` (cookie consent/IP binding)
 - **Problem koji rešava**: stari skener je pokretao SVIH 30 check-ova bezuslovno pa filtrirao osetljive nalaze TEK na display layer-u (`_redact_result()`). To znači da je target server PRIMIO probe-ove za `/.env`, `/wp-admin/`, `/backup.sql`, port scan, GraphQL introspection itd. čak i od neverifikovanih korisnika. Filter je bio prekasan — osetljivi podaci su već postojali u memoriji backenda i u bazi.
 - **Novi model**: dva moda skeniranja sa **gate-om PRE skena**, ne filterom POSLE.
   - **`mode='safe'` (default)**: 17 SAFE check-ova + 3 SAFE+REDACTED (disclosure/js/jwt) koji rade ali sumarno bez tačnih vrednosti. Zero probe-ova ka privatnoj infrastrukturi. Nikad ne dira `/.env`, admin panele, vuln scan, port scan.
@@ -199,32 +199,39 @@ Male izmene, visoka vrednost. Redosled je okviran — biraj šta ti je najvažni
 
 ---
 
-## 🔴 Permanent skip — trajno odbačeno (2026-04-12)
+## ⚠️ Gated behind wizard — moguci u FULL mode-u (revizija 2026-04-12)
 
-Sve stavke ispod ovog bloka su **eksplicitno odbačene** zbog hard red line-a o zero user data retention / stateless-by-design arhitekturi (vidi decision log 2026-04-12). Ne otvarati ponovo za diskusiju — trajno deferred bez obzira na tehničku vrednost.
+Sledeće stavke su ranije bile "trajno odbačene" ali su sada **moguće** za vlasnike koji prođu 3-step wizard (3 saglasnosti + ownership verifikacija). Neverifikovani korisnici ih nikad neće videti — gate je PRE skena, ne posle.
 
-### ~~15. Banner grabbing na otvorenim portovima~~ — SKIP
-- **Razlog**: korisnik može da dozivi kao agresivno iako je tehnički pasivno (SSH/SMTP banneri su "autovaljni", ali Redis `INFO` šalje komandu). Rizik percepcije > vrednost.
+### 15. Banner grabbing na otvorenim portovima — MOGUC (FULL mode)
+- **Status**: ⚠️ Moguć za verified scan-ove
+- **Uslov**: owner mora proći wizard, banneri se prikazuju samo u full scan rezultatima
 
-### ~~16. DNS zone transfer (AXFR) attempt~~ — SKIP
-- **Razlog**: pravno čist (standardni DNS protokol) ali se filozofski oseća kao napad — "zašto skener traži moju celu DNS zonu?". U 99% slučajeva ne prolazi ionako.
+### 16. DNS zone transfer (AXFR) attempt — MOGUC (FULL mode)
+- **Status**: ⚠️ Moguć za verified scan-ove
+- **Uslov**: owner-authorized, AXFR je standardni DNS protokol
 
-### ~~17. Nuclei templates runner~~ — SKIP
-- **Razlog**: Nuclei je **klasifikovan kao vulnerability scanner** u većini jurisdikcija i reputacijski hosting kuće ga dožive kao hakerski alat bez obzira na "safe subset" tagove. Reputation cost > benefit.
+### 17. Nuclei templates runner — MOGUC (FULL mode)
+- **Status**: ⚠️ Moguć za verified scan-ove (safe subset)
+- **Uslov**: samo u FULL mode-u sa dokazanim vlasništvom
 
-### ~~18. Prevention Receipts Database~~ — SKIP
-- **Razlog**: skladišti tuđu vulnerability info u persistentnoj bazi. Ako baza ikad procuri, korisnik je pravno izložen (GDPR) iako servis daje besplatno. Nedopustiv storage risk.
+### 18. Prevention Receipts Database — MOGUC (gated)
+- **Status**: ⚠️ Moguć za verified scan-ove sa explicit 3rd consent
+- **Uslov**: 30-dnevno čuvanje vezano za pseudonimizovani IP hash, sa pristankom vlasnika
 
-### ~~19. Continuous Monitoring (diff mode)~~ — SKIP
-- **Razlog**: zahteva čuvanje scan baseline-a za diff, ista klasa storage rizika kao #18. Čak i opt-in ne smanjuje data breach risk — data je i dalje na serveru.
+### 19. Continuous Monitoring (diff mode) — MOGUC (gated)
+- **Status**: ⚠️ Moguć za verified scan-ove sa owner consent
+- **Uslov**: zahteva #18 + explicit opt-in
 
-### ~~20. AI Business Logic / Mythos core~~ — SKIP
-- **Razlog**: šalje scan findings do Anthropic Claude API-ja. Treća strana = treća površina za breach. Korisnik ne može garantovati šta Anthropic radi sa prosleđenim podacima na dugi rok, ne može kontrolisati njihove logove.
+### 20. AI Business Logic / Mythos core — MOGUC (gated)
+- **Status**: ⚠️ Moguć za verified scan-ove sa explicit 3rd party consent
+- **Uslov**: treća saglasnost u wizardu eksplicitno pokriva slanje podataka trećoj strani
 
-### ~~21. Correlation Engine preko Scan DB~~ — SKIP
-- **Razlog**: zahteva #18 historijsku bazu, automatski pada sa #18.
+### 21. Correlation Engine preko Scan DB — MOGUC (gated)
+- **Status**: ⚠️ Moguć, zahteva #18
+- **Uslov**: zahteva Prevention Receipts DB
 
-**Šta ovo znači:** Scanner ostaje **stateless by design** — svaki scan je efemeran, rezultat ide direktno korisniku, nista ne ostaje na serveru. To je jaci B2B argument prema hosting kucama: "ne čuvamo ono što ne možemo da izgubimo". Monetizacija ide kroz stateless modele (više provera po scan-u, bolji izveštaji), ne kroz storage feature-a.
+**Princip:** neverifikovani korisnik NIKAD ne može da izazove probe ka privatnoj infrastrukturi niti da izazove čuvanje osetljivih podataka. Samo vlasnik koji je prošao 3 saglasnosti + verifikaciju može to da otključa.
 
 ---
 

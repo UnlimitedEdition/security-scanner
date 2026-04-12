@@ -1724,6 +1724,149 @@ Otvara se klikom na fiksirano dugme "Provere" sa badge-om "110+". Zatvara se kli
 
 ---
 
-*Poslednja verzija: 2026-04-12, po završetku gate-before-scan modela + frontend polish (toast, sysinfo, sidebar, cookie consent, audit_log popravke, verify IP binding).*
+## 16. ZAŠTITA OD AUTOMATIZOVANOG NAPADA (skripte, curl, botovi)
+
+Ovo je jedan od najvažnijih delova ove dokumentacije. Ako ti neko kaže "vaš skener se može zloupotrebiti skriptom", evo tačno šta se dešava.
+
+### Scenarij 1: Napadač pokušava FULL SCAN preko curl-a
+
+```bash
+# Napadač misli da može da pošalje mode=full i dobije sve
+curl -X POST https://backend/scan \
+  -H "Content-Type: application/json" \
+  -d '{"url":"victim.com", "consent_accepted": true, "mode": "full"}'
+```
+
+**REZULTAT: NEMOGUĆE.** Backend na liniji gde kreira scan dict ima:
+```python
+"mode": "safe",  # HARDKODOVANO — mode iz body-a se IGNORISE
+```
+Čak i ako napadač pošalje `mode: "full"`, `mode: "nuclear"`, ili bilo šta — backend uvek stavlja `"safe"`. Full mode se može postaviti SAMO kroz wizard execute endpoint, nikad kroz `/scan`.
+
+### Scenarij 2: Napadač pokušava direktno da pozove /execute
+
+```bash
+curl -X POST https://backend/scan/request/abc12345/execute
+```
+
+**REZULTAT: BLOKIRAN.** Endpoint ima **7 server-side provera** pre nego što dozvoli full scan:
+
+| # | Provera | Šta proverava | Može li napadač da lažira? |
+|---|---|---|---|
+| 1 | `status == 'verified'` | Wizard row mora biti u verified stanju | NE — zahteva prethodne korake |
+| 2 | `consent_1_given == true` | Prva saglasnost zabeležena server-side | NE — mora proći /consent endpoint |
+| 3 | `consent_2_given == true` | Druga saglasnost | NE — ista zaštita |
+| 4 | `consent_3_given == true` | Treća saglasnost | NE — ista zaštita |
+| 5 | `verify_passed == true` | Ownership verifikacija prošla | NE — zahteva pristup ciljnom serveru |
+| 6 | `is_domain_blocked()` | Domen nije na abuse block listi | NE — ne kontroliše |
+| 7 | `is_domain_verified(domain, IP)` | Isti IP koji je verifikovao | NE — IP se ne može lažirati kroz HTTP |
+
+**Plus:** `mark_scan_request_executed()` u bazi ima **6-uslovni WHERE** koji SVE ponovo atomično proverava. Čak i ako bi napadač nekako zaobišao Python kod (nemoguće bez pristupa serveru), baza bi ga blokirala.
+
+### Scenarij 3: Napadač pokušava ceo wizard sa curl-om
+
+```bash
+# 1. Kreira row — OK, to može svako
+curl -X POST /scan/request -d '{"url":"victim.com"}'
+# Dobija: request_id = "abc12345"
+
+# 2. Šalje 3 consent-a — OK, to su samo klikovi
+curl -X POST /scan/request/abc12345/consent -d '{"consent_num":1}'
+curl -X POST /scan/request/abc12345/consent -d '{"consent_num":2}'
+curl -X POST /scan/request/abc12345/consent -d '{"consent_num":3}'
+curl -X POST /scan/request/abc12345/consent/finalize
+
+# 3. OVDE SE ZAGLAVLJUJE — verifikacija vlasništva
+curl -X POST /scan/request/abc12345/verify -d '{"method":"meta"}'
+```
+
+**Na koraku 3 mora da dokaže vlasništvo.** To znači da mora:
+- **Meta tag**: da doda `<meta name="scanner-verify" content="TOKEN">` u HTML ciljnog sajta
+- **Fajl**: da upload-uje fajl na `/.well-known/scanner-verify.txt` ciljnog sajta
+- **DNS TXT**: da doda TXT record u DNS zone ciljnog sajta
+
+**Ako nije vlasnik sajta — ne može nijednu od ove tri stvari da uradi.** Kraj napada.
+
+### Scenarij 4: Napadač mass-skenira 1000 sajtova safe modom
+
+```bash
+for site in $(cat lista.txt); do
+  curl -X POST /scan -d "{\"url\":\"$site\",\"consent_accepted\":true}"
+done
+```
+
+**REZULTAT: Rate limit ga blokira posle 5. skeniranja.** Plus:
+- Svih 5 skenova su SAFE mode — zero agresivnih proba
+- Svaki sken je audit-logovan sa IP hashom
+- Ako neko prijavi abuse — domen se blokira, napadačev IP se flaguje
+
+### Scenarij 5: Napadač krade tuđi wizard request_id
+
+Napadač nekako sazna ID wizarda koji je drugi korisnik započeo.
+
+```bash
+curl -X POST /scan/request/STOLEN_ID/execute
+```
+
+**REZULTAT: BLOKIRAN.** `is_domain_verified(domain, napadačev_IP)` vraća `false` jer je verifikacija vezana za IP originalnog korisnika. Plus, verify token ima IP binding — token kreiran sa IP_A ne može se verifikovati sa IP_B.
+
+### Scenarij 6: Napadač pokušava bez consent checkbox-a
+
+```bash
+curl -X POST /scan -d '{"url":"example.com","consent_accepted":false}'
+```
+
+**REZULTAT: 400 Bad Request.** Server-side provera (api.py) odbija scan ako `consent_accepted != true`.
+
+### Rezime svih zaštitnih slojeva
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  SLOJ 1: Rate limit (5 skenova / 30 min po IP)                │
+│  SLOJ 2: Consent provera (server-side, ne samo frontend)       │
+│  SLOJ 3: SSRF zaštita (ne može skenirati localhost/privatne)   │
+│  SLOJ 4: Domain block lista (abuse report → 403)               │
+│  SLOJ 5: Mode hardkodovan (POST /scan = UVEK safe)             │
+│  SLOJ 6: Wizard state machine (5 koraka, server-validated)     │
+│  SLOJ 7: Ownership verifikacija (meta/file/DNS)                │
+│  SLOJ 8: IP binding (isti IP za ceo wizard flow)               │
+│  SLOJ 9: 6-uslovni WHERE u bazi (atomični gate)                │
+│  SLOJ 10: Audit log (svaki zahtev zabeležen, append-only)      │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Ako ti neko kaže "ali skripte mogu..."** — pokaži im ovu sekciju. 10 slojeva zaštite, nijedan nije samo frontend JavaScript koji se može zaobići. Svaki je server-side ili database-level.
+
+### SQL za proveru sumnjive aktivnosti
+
+```sql
+-- Ko je pokušao puno wizarda u kratkom roku (moguć napad)
+SELECT ip_hash, COUNT(*) as wizard_count
+FROM audit_log
+WHERE event = 'scan_request_created'
+  AND created_at > NOW() - INTERVAL '1 hour'
+GROUP BY ip_hash
+HAVING COUNT(*) > 5
+ORDER BY wizard_count DESC;
+
+-- Ko je dobio verify_failure sa ip_mismatch (krađa tokena)
+SELECT ip_hash, details->>'domain' as domain, created_at
+FROM audit_log
+WHERE event = 'verify_failure'
+  AND details->>'reason' = 'ip_mismatch'
+ORDER BY created_at DESC
+LIMIT 20;
+
+-- Ko šalje consent_accepted=false (skripte bez frontenda)
+SELECT ip_hash, details->>'url' as url, created_at
+FROM audit_log
+WHERE event = 'scan_request'
+  AND (details->>'consent_accepted')::boolean = false
+ORDER BY created_at DESC;
+```
+
+---
+
+*Poslednja verzija: 2026-04-12, dodana §16 zaštita od automatizovanog napada.*
 *Sledeća revizija: kad završimo Fazu 4 (paid multi-page) ili kad se pojavi nova feature. DR drill cadence: 2026-07-10 (kvartalno).*
 

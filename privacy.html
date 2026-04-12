@@ -94,7 +94,14 @@
     </ul>
 
     <h2 id="pp7">7. Kolacici, oglasavanje, i trece strane</h2>
-    <p>Koristimo Google AdSense za prikazivanje oglasa. Google i njegovi partneri mogu koristiti kolacice za personalizaciju oglasa na osnovu poseta ovom i drugim sajtovima. Vise informacija na <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener">Google Ads politika</a>. Mozete upravljati podesavanjima na <a href="https://adssettings.google.com" target="_blank" rel="noopener">Google Ads podesavanja</a>.</p>
+    <p>Koristimo <strong>granularni cookie consent</strong> (GDPR/ePrivacy compliant) sa tri kategorije:</p>
+    <ul>
+      <li><strong>Neophodni</strong> (uvek aktivni, ne mogu se iskljuciti): <code>cookie_consent_v2</code> (localStorage — vasa saglasnost), <code>wss-lang</code> (izbor jezika), scan session ID</li>
+      <li><strong>Analiticki</strong> (opcioni): Google Analytics (<code>_ga</code>, <code>_gid</code>) — trajanje do 2 godine. Ovi kolacici se NE postavljaju dok eksplicitno ne odobrite</li>
+      <li><strong>Reklamni</strong> (opcioni): Google AdSense (<code>_gcl_*</code>, <code>IDE</code>, <code>NID</code>, <code>DSID</code>, <code>FLC</code>, <code>AID</code>, <code>TAID</code>) — trece lice: Google LLC, trajanje do 2 godine. Ovi kolacici se NE postavljaju dok eksplicitno ne odobrite</li>
+    </ul>
+    <p><strong>AdSense skripta se ne ucitava</strong> dok ne kliknete "Prihvati sve" ili "Sacuvaj izbor" sa cekiranimreklamnim kolacicima. Ako odbijete, nikakvi tracking kolacici se ne postavljaju i nikakvi podaci se ne salju Google-u.</p>
+    <p>Mozete u svakom trenutku promeniti svoju odluku klikom na <strong>"Podesavanja kolacica"</strong> u footer-u bilo koje stranice. Vise informacija na <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener">Google Ads politika</a>.</p>
     <p>Koristimo sledece servise trecih strana:</p>
     <ul>
       <li><strong>Supabase</strong> (EU region) — primarna PostgreSQL baza + Edge Functions + Vault</li>
@@ -141,8 +148,9 @@
     <p><strong>Deca:</strong> Ovaj servis nije namenjen osobama mladjim od 16 godina. Ne prikupljamo svesno podatke od maloletnika. Ako saznamo da je maloletnik nevoljno dostavio podatke, brisemo ih.</p>
     <p><strong>Kontakt:</strong> Za sva pitanja u vezi sa privatnoscu, kontaktirajte nas:</p>
     <ul>
-      <li>Veb stranica: <a href="https://toske-programer.web.app" target="_blank" rel="noopener">toske-programer.web.app</a></li>
-      <li>Abuse prijave: kroz footer link &quot;Prijavi zloupotrebu&quot; ili <a href="./index.html#abuse">./index.html#abuse</a></li>
+      <li>Sigurnosni propusti: <a href="https://github.com/UnlimitedEdition/security-scanner/security/advisories/new" target="_blank" rel="noopener">GitHub Security Advisories</a> (privatno)</li>
+      <li>Abuse prijave: <a href="./abuse-report.html">Prijavi zloupotrebu</a></li>
+      <li>GDPR zahtevi i ostala pitanja: <a href="https://github.com/UnlimitedEdition/security-scanner/issues" target="_blank" rel="noopener">GitHub Issues</a></li>
       <li>Rok za odgovor: 30 dana od prijema zahteva (GDPR Art. 12)</li>
     </ul>
   </div>
@@ -224,7 +232,14 @@
     </ul>
 
     <h2 id="pp7e">7. Cookies, advertising, and third parties</h2>
-    <p>We use Google AdSense to display ads. Google and its partners may use cookies to personalize ads based on visits to this and other websites. More information at <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener">Google Ads Policy</a>. You can manage ad personalization at <a href="https://adssettings.google.com" target="_blank" rel="noopener">Google Ads Settings</a>.</p>
+    <p>We use a <strong>granular cookie consent</strong> system (GDPR/ePrivacy compliant) with three categories:</p>
+    <ul>
+      <li><strong>Essential</strong> (always active, cannot be disabled): <code>cookie_consent_v2</code> (localStorage — your consent choice), <code>wss-lang</code> (language preference), scan session ID</li>
+      <li><strong>Analytics</strong> (optional): Google Analytics (<code>_ga</code>, <code>_gid</code>) — duration up to 2 years. These cookies are NOT set until you explicitly approve them</li>
+      <li><strong>Advertising</strong> (optional): Google AdSense (<code>_gcl_*</code>, <code>IDE</code>, <code>NID</code>, <code>DSID</code>, <code>FLC</code>, <code>AID</code>, <code>TAID</code>) — third party: Google LLC, duration up to 2 years. These cookies are NOT set until you explicitly approve them</li>
+    </ul>
+    <p><strong>The AdSense script does not load</strong> until you click "Accept All" or "Save Choices" with the advertising category checked. If you reject, no tracking cookies are set and no data is sent to Google.</p>
+    <p>You can change your decision at any time by clicking <strong>"Cookie Settings"</strong> in the footer of any page. More information at <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener">Google Ads Policy</a>.</p>
     <p>We use the following third-party services:</p>
     <ul>
       <li><strong>Supabase</strong> (EU region) — primary PostgreSQL database + Edge Functions + Vault</li>
@@ -271,8 +286,9 @@
     <p><strong>Children:</strong> this service is not intended for persons under 16 years of age. We do not knowingly collect data from minors. If we learn that a minor has involuntarily submitted data, we delete it.</p>
     <p><strong>Contact:</strong> for any privacy-related questions, contact us:</p>
     <ul>
-      <li>Website: <a href="https://toske-programer.web.app" target="_blank" rel="noopener">toske-programer.web.app</a></li>
-      <li>Abuse reports: via the &quot;Report abuse&quot; footer link or <a href="./index.html#abuse">./index.html#abuse</a></li>
+      <li>Security vulnerabilities: <a href="https://github.com/UnlimitedEdition/security-scanner/security/advisories/new" target="_blank" rel="noopener">GitHub Security Advisories</a> (private)</li>
+      <li>Abuse reports: <a href="./abuse-report.html">Report abuse</a></li>
+      <li>GDPR requests and other questions: <a href="https://github.com/UnlimitedEdition/security-scanner/issues" target="_blank" rel="noopener">GitHub Issues</a></li>
       <li>Response time: within 30 days of receiving the request (GDPR Art. 12)</li>
     </ul>
   </div>

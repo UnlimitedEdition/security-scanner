@@ -1,3 +1,5 @@
-Contact: https://toske-programer.web.app
+Contact: https://github.com/UnlimitedEdition/security-scanner/security/advisories/new
 Expires: 2027-12-31T23:59:00.000Z
 Preferred-Languages: sr, en
+Canonical: https://security-scanner-ruddy.vercel.app/.well-known/security.txt
+Policy: https://security-scanner-ruddy.vercel.app/SECURITY.md

@@ -479,6 +479,14 @@ def refund_policy_page():
         return FileResponse(path, media_type="text/html")
 
 
+@app.api_route("/user-rights.html", methods=["GET", "HEAD"])
+def user_rights_page():
+    """Dedicated user rights page (GDPR rights specific to this service)."""
+    path = os.path.join(os.path.dirname(__file__), "user-rights.html")
+    if os.path.exists(path):
+        return FileResponse(path, media_type="text/html")
+
+
 @app.api_route("/pricing.html", methods=["GET", "HEAD"])
 def pricing_page():
     """Dedicated pricing page (Pro plan feature comparison, buy buttons, FAQ)."""
@@ -1771,6 +1779,15 @@ def api_discover(req: DiscoverRequest, request: Request):
     but scanner.scan() itself does not read this cache — it re-validates
     each URL in `selected_pages` at scan time.
     """
+    if not req.consent_accepted:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Morate prihvatiti uslove koriscenja. / "
+                "You must accept the terms of service."
+            ),
+        )
+
     pro_sub = _get_pro_subscription(request)
     if not pro_sub:
         raise HTTPException(
@@ -1894,6 +1911,18 @@ def start_scan(req: ScanRequest, request: Request):
                 "Pretplatite se na Pro za neograničene skenove. / "
                 "Too many requests. Max 5 scans per 30 minutes. "
                 "Upgrade to Pro for unlimited scans."
+            ),
+        )
+
+    # Server-side consent check — reject scans without explicit consent.
+    # Without this, someone could POST /scan with consent_accepted=false
+    # via curl/script and bypass the frontend checkbox entirely.
+    if not req.consent_accepted:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Morate prihvatiti uslove koriscenja pre skeniranja. / "
+                "You must accept the terms of service before scanning."
             ),
         )
 

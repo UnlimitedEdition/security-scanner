@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Toske-Programer (Web Security Scanner contributors)
 // ============================================================================
 // crypto.ts — AES-256-GCM encryption via Web Crypto API
 // ============================================================================

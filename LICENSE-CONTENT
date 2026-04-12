@@ -29,6 +29,8 @@ Scanner project, specifically:
   * refund-policy.html — standalone Refund Policy document (both halves)
   * abuse-report.html — Abuse Report page (prose content only; the
     form logic and JavaScript are under the MIT License, see LICENSE)
+  * user-rights.html — User Rights page (GDPR rights specific to
+    this service, both Serbian and English halves)
   * pricing.html — Pro plan pricing page (feature comparison, plan
     descriptions, FAQ text; the JavaScript and CSS are under MIT)
   * account.html — Pro account dashboard (FAQ prose, help text,

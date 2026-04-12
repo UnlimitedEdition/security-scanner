@@ -1,4 +1,6 @@
-/* ═══════════════════════════════════════════════════════════════════
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 Toske-Programer (Web Security Scanner contributors)
+ * ═══════════════════════════════════════════════════════════════════
    COOKIE CONSENT — GDPR granular (v2)
    Shared across ALL pages (index.html + blog pages).
    Loaded via <script src="./cookie-consent.js" defer></script>

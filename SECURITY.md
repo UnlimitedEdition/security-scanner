@@ -31,13 +31,36 @@ project takes the following measures to protect itself and its users:
 - **TLS 1.2+** — enforced by Supabase for all connections.
 - **Offsite encrypted backups, daily.** See "Backup & restore" below.
 
+### Gate-before-scan model (2026-04-12)
+- **Two scan modes** enforced server-side: `safe` (20 passive checks,
+  zero probes against private infrastructure) and `full` (additional
+  10 active checks — sensitive files, admin panels, ports, etc.).
+- **Full scan requires a 5-step wizard:** three explicit consent
+  checkboxes (each server-logged), ownership verification (meta tag /
+  file / DNS TXT), and a recap screen with anti-reflex delay.
+- **IP binding on verification tokens** — the token must be verified
+  from the same IP that created it. Prevents token interception attacks.
+- **30-day verification cache** per (domain, ip_hash) in
+  `verified_domains` table with daily cron pruning.
+- **Legacy `/scan` endpoint** is hardcoded to `mode='safe'` regardless
+  of request body — full mode can ONLY be triggered through the wizard.
+
 ### Access control
-- **Ownership verification** required before exposing attack-useful
-  findings (sensitive file paths, admin URLs, vuln reproduction details).
-  Anonymous users see category counts and severity, not URLs.
+- **Ownership verification** required before running active probes.
+  Without verification, the target server never sees requests for
+  `/.env`, `/wp-admin/`, port scans, or anything resembling recon.
 - **Rate limits** per IP and per distinct-target-count to catch
   reconnaissance patterns.
+- **Script/automation resistance** — 10 layered defenses prevent
+  automated full-scan abuse: hardcoded safe mode on `/scan`, 7
+  server-side precondition checks + 6-condition atomic WHERE in
+  the database on `/execute`, IP binding on verification tokens,
+  and server-side consent validation. See PRIRUCNIK.md §16 for
+  the complete attack scenario analysis.
 - **Consent checkbox** required for every scan, versioned and logged.
+- **GDPR cookie consent** — granular 3-category banner (essential /
+  analytics / advertising) on all pages. AdSense does not load until
+  the user explicitly accepts advertising cookies.
 
 ## Backup & restore
 
@@ -53,7 +76,8 @@ and uploads to Cloudflare R2 via an IAM-scoped write-only token.
 - `verified_domains` — verification cache
 
 Not backed up (ephemeral or regenerable): `verification_tokens`,
-`rate_limits`, `schema_migrations`, `backup_log` itself.
+`scan_requests`, `rate_limits`, `schema_migrations`, `backup_log`
+itself.
 
 ### Where
 - **Destination:** Cloudflare R2 bucket `security-scanner-backups`

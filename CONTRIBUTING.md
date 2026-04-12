@@ -11,17 +11,18 @@ and what a good PR looks like.
     `verification.py`, `risk_engine.py`, `migration_runner.py`
   - Pro plan: `subscription.py` (Lemon Squeezy webhooks + queries),
     `pdf_report.py` (fpdf2-based report generator)
-  - Checks: `checks/*.py` (29 individual checks, one per feature)
+  - Checks: `checks/*.py` (30 individual checks, one per feature)
 - **Frontend:** Static HTML served via Vercel
-  - Scanner: `index.html` (+ inline CSS/JS, ~2700 lines)
+  - Scanner: `index.html` (+ inline CSS/JS, ~3800 lines)
   - Pro pages: `pricing.html`, `account.html`
   - Legal: `terms.html`, `privacy.html`, `refund-policy.html`
   - Error: `404.html`
   - Blog: `blog-*.html` (25+ articles, SR + EN bilingual)
-  - Shared: `blog-common.css`, `blog-common.js` (injected header/footer)
+  - Shared: `blog-common.css`, `blog-common.js` (injected header/footer),
+    `cookie-consent.js` (GDPR cookie consent, shared across all pages)
 - **Database:** Supabase Postgres with RLS, pg_cron, Vault
   - Core tables: `scans`, `audit_log`, `verified_domains`, `rate_limits`,
-    `abuse_reports`, `backup_log`
+    `abuse_reports`, `backup_log`, `scan_requests`
   - Pro tables: `subscriptions`, `lemon_webhook_events`, `magic_links`
   - Migrations in `migrations/` (applied via `migration_runner.py` or
     Supabase Studio / MCP)
@@ -153,8 +154,9 @@ See `SECURITY.md` for the full policy.
 - Dependency bumps without a reason. Use `pip-audit` output or a CVE
   reference as the reason.
 - Rewrites in another language or framework.
-- Removal of the consent gate, rate limits, or ownership verification
-  in the name of "convenience".
+- Removal of the consent gate, rate limits, ownership verification,
+  or cookie consent in the name of "convenience".
+- Loading AdSense or other tracking scripts before cookie consent.
 
 ## Questions
 
