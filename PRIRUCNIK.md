@@ -45,7 +45,9 @@ Scanner ima **3 glavna dela**:
                                      ▼                               ▼
                              ┌───────────────┐                 ┌──────────────┐
                              │  scanner.py   │                 │  Backup Edge │
-                             │  + 23 check-a │                 │  Function    │
+                             │  30 check-ova │                 │  Function    │
+                             │ (20 safe +    │                 │              │
+                             │  10 full-only)│                 │              │
                              └───────────────┘                 └──────┬───────┘
                                                                        │
                                                                        ▼
@@ -113,12 +115,19 @@ Svaki scan kreira **najmanje 3 reda**:
 
 Plus opcioni:
 - `scan_blocked_rate_limit` — rate limit ga je odbio
-- `scan_blocked_ssrf` — pokušao je localhost/privatnu IP
+- `scan_blocked_ssrf` — pokušao je localhost/privatnu IP (loguje se i iz Pydantic validatora)
 - `scan_truncated_deadline` — 180s timeout
 - `scan_error` — crash
 - `verify_request` / `verify_success` / `verify_failure` — ownership checks
 - `abuse_report_submitted` — neko prijavio
 - `abuse_block_applied` — mi blokirali domen
+- `scan_request_created` — korisnik kliknuo "Puni sken", kreiran wizard row
+- `consent_set` — korisnik čekirao jednu od 3 saglasnosti u wizardu
+- `consent_finalized` — sve 3 saglasnosti potvrđene, status → consent_recorded
+- `scan_request_executed` — korisnik pritisnuo POKRENI, full scan odobren
+- `scan_request_abandoned` — korisnik otkazao wizard ili cron obrisao stali row
+
+**Napomena o `session_id` i `fingerprint_hash`:** ova dva polja se sada prosleđuju u svim scan eventima (scan_start, scan_complete, scan_error, scan_truncated_deadline), ne samo u scan_request. Ovo je bitno za forenziku — ako trebaš da povežeš više skenova od istog korisnika, session_id je tvoj ključ.
 
 | Kolona | Šta znači |
 |---|---|
@@ -826,6 +835,17 @@ Korisnik                 api.py                 DB                   Target doma
 - `expires_at` — 30 dana od uspeha
 - pg_cron briše istekle svakog dana u 03:05 UTC
 
+### IP binding — zaštita od krađe tokena (commit 8849b31)
+
+Legacy endpoint `POST /verify/check` sada **proverava da IP koji verifikuje mora biti isti IP koji je kreirao token**. Bez ovoga, napadač koji bi nekako saznao token (npr. Man-in-the-Middle, ili korisnik slučajno podeli link) mogao bi da verifikuje sa svoje IP adrese i dobije 30 dana full scan pristupa za tuđi domen.
+
+Provera radi tako što:
+1. `POST /verify/request` zapisuje `ip_hash` u `verification_tokens` red
+2. `POST /verify/check` čita taj `ip_hash` i upoređuje ga sa `hash_ip(caller_ip)`
+3. Ako se ne poklapa → `403 Forbidden` + audit event `verify_failure` sa `reason: ip_mismatch`
+
+Wizard flow (`POST /scan/request/{id}/verify`) nema ovaj problem jer token nikad ne napušta server — kreira se i verifikuje u istom endpoint pozivu.
+
 ### Audit event-i u `audit_log`
 
 | event | kada | details JSONB |
@@ -833,6 +853,7 @@ Korisnik                 api.py                 DB                   Target doma
 | `verify_request` | POST /verify/request | `{method, token_prefix}` |
 | `verify_success` | uspešna verifikacija | `{method, reason}` |
 | `verify_failure` | neuspela verifikacija | `{method, reason, attempts_made, attempts_remaining}` |
+| `verify_failure` | IP mismatch (krađa tokena) | `{reason: "ip_mismatch", token_prefix}` |
 
 ### Korisne SQL komande za verifikaciju
 
@@ -1660,7 +1681,49 @@ ako ti zaista nešto treba pre sledećeg drill-a.
 
 ---
 
-*Poslednja verzija: 2026-04-10, po završetku Faze 6 (DR drill).*
-*Sledeća revizija: kad završimo Fazu 7 (frontend polish) ili Fazu 4
-(paid multi-page). Cadence za sledeći DR drill: 2026-07-10 (kvartalno).*
+## 15. FRONTEND PROMENE (commits 6aa25a2, 8849b31)
+
+### Toast notifikacije (zamena za alert())
+
+Svi `alert()` pozivi u `index.html` su zamenjeni modernim toast notifikacijama. Toast se prikazuje u gornjem desnom uglu sa slide-in animacijom i automatski nestaje.
+
+4 tipa: `error` (crveni, 6s), `warning` (narandžasti, 4s), `success` (zeleni, 4s), `info` (plavi, 4s).
+
+Funkcija: `showToast(message, type)` — poziva se svuda gde je pre bio `alert()`.
+
+### System Information panel
+
+Uvek vidljiv panel ispod scan box-a koji prikazuje posetiocu podatke o njegovom sistemu. 100% client-side, ništa se ne šalje na server.
+
+Prikazuje: Browser, OS, Screen Resolution, Cookies (sa DNT/GPC detekcijom), Public IP (sa 3-API fallback lancem: ipify → api64 → icanhazip), IP Hash (SHA-256 — demonstrira šta backend vidi), Browser Fingerprint (SHA-256 od canvas+WebGL+UA kompozita), Timezone, Language, Platform, User Agent.
+
+**CSP:** za IP lookup, `connect-src` u `vercel.json` i `api.py` prošireni sa `https://api.ipify.org https://api64.ipify.org https://icanhazip.com`.
+
+### Checks Sidebar
+
+Kolapsibilni sidebar na **levoj** strani ekrana sa punom listom provera po kategorijama (Bezbednost 60+, SEO 12, Performanse 16, GDPR 7). Zamenjuje stare "Šta proveravamo" kartice koje su uklonjene sa homepage-a.
+
+Otvara se klikom na fiksirano dugme "Provere" sa badge-om "110+". Zatvara se klikom na X, overlay, ili Escape. SR+EN bilingvalan.
+
+### Cookie Consent — GDPR (cookie-consent.js)
+
+**Ovo je kritično za AdSense i GDPR.** Zajednički fajl `cookie-consent.js` se učitava na **svim** stranicama (index.html direktno, blog stranice kroz blog-common.js).
+
+3 kategorije:
+- **Neophodni** (uvek aktivni, ne može se isključiti) — localStorage, lang, session
+- **Analitički** (opciono) — Google Analytics (_ga, _gid)
+- **Reklamni** (opciono) — Google AdSense (_gcl_*, IDE, NID, DSID...)
+
+3 dugmeta: "Prihvati sve" / "Sačuvaj izbor" / "Odbij sve osim neophodnih"
+
+Čuva se u `localStorage` kao `cookie_consent_v2` (JSON sa essential/analytics/ads/timestamp). Automatska migracija sa starog v1 formata.
+
+**AdSense se NE učitava** dok korisnik ne odobri reklamne kolačiće. Skripta u `<head>` čita localStorage pre DOM-a i učitava AdSense samo ako je `ads: true`. Ako korisnik odbije — nikakvi tracking kolačići se ne postavljaju.
+
+"Podesavanja kolacica" link u footer-u (sve stranice) ponovo otvara panel.
+
+---
+
+*Poslednja verzija: 2026-04-12, po završetku gate-before-scan modela + frontend polish (toast, sysinfo, sidebar, cookie consent, audit_log popravke, verify IP binding).*
+*Sledeća revizija: kad završimo Fazu 4 (paid multi-page) ili kad se pojavi nova feature. DR drill cadence: 2026-07-10 (kvartalno).*
 
