@@ -2823,7 +2823,7 @@ function renderResults(data) {
     var cta = document.createElement("button");
     cta.className = "redacted-cta";
     cta.textContent = currentLang === "en" ? "Verify ownership" : "Verifikuj vlasnistvo";
-    cta.onclick = function() { openVerifyPanel(data.domain); };
+    cta.onclick = function() { startFullScanWizardFromCta(); };
     body.appendChild(cta);
 
     banner.appendChild(body);
