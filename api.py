@@ -552,6 +552,15 @@ def blog_common_js():
     raise HTTPException(status_code=404, detail="File not found")
 
 
+@app.api_route("/cookie-consent.js", methods=["GET", "HEAD"])
+def cookie_consent_js():
+    """GDPR cookie consent script shared across all pages."""
+    path = os.path.join(os.path.dirname(__file__), "cookie-consent.js")
+    if os.path.exists(path):
+        return FileResponse(path, media_type="application/javascript")
+    raise HTTPException(status_code=404, detail="File not found")
+
+
 @app.api_route("/blog-{page}.html", methods=["GET", "HEAD"])
 def blog_page(page: str):
     path = os.path.join(os.path.dirname(__file__), f"blog-{page}.html")
@@ -1618,9 +1627,23 @@ def execute_scan_request_endpoint(request_id: str, request: Request):
     pro_sub = _get_pro_subscription(request)
     max_pages = 10 if pro_sub else 1
 
-    # Atomically flip the wizard row to 'executing'. This is the
-    # last point at which the wizard can be aborted — once status is
-    # 'executing', the scanner thread is in flight.
+    # Create the scans row FIRST — scan_requests.scan_id has a FK to
+    # scans.id, so the parent row must exist before we can set the FK.
+    db.create_scan(
+        scan_id=scan_id,
+        url=url,
+        domain=domain,
+        ip=client_ip,
+        user_agent=user_agent,
+        consent_accepted=True,
+        consent_version="2026-04-12-v3",
+        status="queued" if queue_position > 0 else "running",
+        subscription_id=(pro_sub.get("id") if pro_sub else None),
+    )
+
+    # NOW atomically flip the wizard row to 'executing' and link the
+    # scan_id FK. This is the last point at which the wizard can be
+    # aborted — once status is 'executing', the scanner thread is in flight.
     flipped = db.mark_scan_request_executed(request_id, scan_id)
     if not flipped:
         raise HTTPException(
@@ -1652,18 +1675,6 @@ def execute_scan_request_endpoint(request_id: str, request: Request):
         "mode": "full",
         "scan_request_id": request_id,
     }
-
-    db.create_scan(
-        scan_id=scan_id,
-        url=url,
-        domain=domain,
-        ip=client_ip,
-        user_agent=user_agent,
-        consent_accepted=True,
-        consent_version="2026-04-12-v3",
-        status="queued" if queue_position > 0 else "running",
-        subscription_id=(pro_sub.get("id") if pro_sub else None),
-    )
 
     db.log_audit_event(
         event="scan_request_executed",
