@@ -2390,42 +2390,50 @@ function setLang(lang) {
   if (currentResults) renderResults(currentResults);
 }
 
-// Bait method: create a div that looks like an ad to ad blockers.
-// If ad blocker hides it → blocked. If visible → no blocker.
-// This works regardless of cookie consent or AdSense load timing.
+// Dual detection: (1) bait div ad blockers hide, (2) fetch test to googlesyndication
 var _adBlockBait = null;
-var _adBlockResult = null;
+var _adBlockFetchResult = null; // true=blocked, false=not blocked, null=unknown
+
 function _initAdBlockBait() {
   if (_adBlockBait) return;
   _adBlockBait = document.createElement("div");
-  _adBlockBait.className = "adsbox pub_300x250 pub_300x250m pub_728x90 text-ad textAd text_ad text_ads text-ads text-ad-links";
+  _adBlockBait.className = "adsbox pub_300x250 pub_300x250m pub_728x90 text-ad textAd text_ad text_ads text-ads text-ad-links google-ad ad-container advertisement";
+  _adBlockBait.setAttribute("id", "ad-banner");
   _adBlockBait.textContent = "\u00a0";
-  _adBlockBait.style.cssText = "display:block !important;position:absolute !important;top:-9999px !important;left:-9999px !important;width:10px !important;height:10px !important;";
+  // Realistic dimensions — ad blockers ignore tiny elements
+  _adBlockBait.style.cssText = "display:block;position:absolute;left:-9999px;top:-9999px;width:300px;height:250px;";
   document.body.appendChild(_adBlockBait);
 }
-function isAdBlocked() {
-  if (_adBlockResult !== null) return _adBlockResult;
-  if (!_adBlockBait) _initAdBlockBait();
-  if (!_adBlockBait) return false;
-  // Ad blockers hide elements via: display:none, visibility:hidden,
-  // height:0, removed from DOM, or aggressive CSS overrides
-  if (!document.body.contains(_adBlockBait)) {
-    _adBlockResult = true;
-    return true;
-  }
-  var style = window.getComputedStyle(_adBlockBait);
-  // Only trust strong signals — display:none or visibility:hidden
-  // offsetHeight=0 is unreliable for absolutely-positioned elements
-  var hidden = (style.display === "none" || style.visibility === "hidden");
-  // Only cache if we're confident — initial check may be too early
-  if (hidden) _adBlockResult = true;
-  return hidden;
+
+// Run fetch test on load — ad blockers block requests to googlesyndication
+function _runAdBlockFetchTest() {
+  fetch("https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js", {
+    method: "HEAD", mode: "no-cors", cache: "no-store"
+  }).then(function() {
+    _adBlockFetchResult = false;
+  }).catch(function() {
+    _adBlockFetchResult = true;
+  });
 }
-// Init bait early so ad blockers have time to act on it
+
+function isAdBlocked() {
+  // Primary: fetch test (most reliable)
+  if (_adBlockFetchResult === true) return true;
+
+  // Secondary: bait element check
+  if (!_adBlockBait) _initAdBlockBait();
+  if (!_adBlockBait || !document.body.contains(_adBlockBait)) return true;
+  var style = window.getComputedStyle(_adBlockBait);
+  if (style.display === "none" || style.visibility === "hidden") return true;
+  if (_adBlockBait.offsetHeight === 0 || _adBlockBait.offsetWidth === 0) return true;
+
+  return false;
+}
+
+// Init on DOM ready
 document.addEventListener("DOMContentLoaded", function() {
   _initAdBlockBait();
-  // Reset cached result so next check is fresh after blockers have had time to act
-  setTimeout(function() { _adBlockResult = null; }, 500);
+  _runAdBlockFetchTest();
 });
 
 // Lazy ad loader — calls adsbygoogle.push({}) only when the slot is
