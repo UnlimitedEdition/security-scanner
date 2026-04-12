@@ -1446,6 +1446,89 @@ def finalize_scan_request_consent_endpoint(request_id: str, request: Request):
     }
 
 
+@app.post("/scan/request/{request_id}/verify/token")
+def scan_request_get_token_endpoint(
+    request_id: str,
+    req: ScanRequestVerify,
+    request: Request,
+):
+    """
+    Step 4a (separate from verification check): issue or return a token
+    for the wizard. User places this token on their site BEFORE calling
+    the actual verify endpoint.
+
+    Returns:
+      - Existing valid pending token for (request_id, method) if present
+      - New token otherwise
+
+    This endpoint does NOT check the site — it only gives the user the
+    token they need to place. The separate /verify endpoint does the check.
+    """
+    client_ip = _client_ip(request)
+    row = _get_scan_request_or_404(request_id)
+    status = row.get("status")
+    if status not in ("consent_recorded", "verified"):
+        raise HTTPException(
+            status_code=409,
+            detail="Token se moze uzeti samo nakon finalizacije saglasnosti.",
+        )
+    domain = row.get("domain")
+    if not domain:
+        raise HTTPException(status_code=500, detail="Wizard row nema domain.")
+
+    # Cached verification — no token needed
+    if db.is_domain_verified(domain, client_ip, fingerprint_hash=req.fingerprint_hash):
+        return {
+            "token": "CACHED",
+            "domain": domain,
+            "method": req.method,
+            "cached": True,
+            "message": "Domen je vec verifikovan (30-dnevni cache). Token nije potreban.",
+        }
+
+    # Try to reuse existing token if same method and still valid
+    existing_token = row.get("verify_token")
+    token = None
+    if existing_token and existing_token != "CACHED":
+        existing_method = row.get("verify_method")
+        if existing_method == req.method:  # only reuse if same method
+            existing_row = db.get_verification_token(existing_token)
+            if existing_row and existing_row.get("status") == "pending":
+                from datetime import datetime as _dt, timezone as _tz
+                exp = existing_row.get("expires_at")
+                is_valid = True
+                if exp:
+                    try:
+                        exp_dt = _dt.fromisoformat(str(exp).replace("Z", "+00:00"))
+                        if exp_dt < _dt.now(_tz.utc):
+                            is_valid = False
+                    except Exception:
+                        pass
+                if is_valid:
+                    token = existing_token
+
+    # Generate new token if none reusable
+    if not token:
+        token = _secrets.token_hex(16)
+        token_row = db.create_verification_token(
+            token=token, domain=domain, method=req.method,
+            ip=client_ip, ttl_seconds=3600,
+        )
+        if not token_row:
+            raise HTTPException(status_code=503, detail="Token nije mogao da se kreira.")
+        # Store the token on scan_requests so next call can reuse it
+        db.attach_verify_to_scan_request(
+            request_id=request_id, method=req.method, token=token, passed=False,
+        )
+
+    return {
+        "token": token,
+        "domain": domain,
+        "method": req.method,
+        "cached": False,
+    }
+
+
 @app.post("/scan/request/{request_id}/verify")
 def scan_request_verify_endpoint(
     request_id: str,
@@ -1534,43 +1617,36 @@ def scan_request_verify_endpoint(
             "next_step": "execute",
         }
 
-    # Reuse existing token if the wizard row already has one (user is
-    # retrying after placing the meta tag / DNS record). Only issue a
-    # new token if this is the first verify attempt for this wizard or
-    # if the previous token has expired.
+    # Verify uses the token that was issued via /verify/token.
+    # If no token exists on the row, user must call /verify/token first.
     existing_token = row.get("verify_token")
-    token = None
-    if existing_token and existing_token != "CACHED":
-        existing_row = db.get_verification_token(existing_token)
-        if existing_row and existing_row.get("status") == "pending":
-            # Also verify token hasn't expired
-            from datetime import datetime as _dt, timezone as _tz
-            exp = existing_row.get("expires_at")
-            is_valid = True
-            if exp:
-                try:
-                    exp_dt = _dt.fromisoformat(str(exp).replace("Z", "+00:00"))
-                    if exp_dt < _dt.now(_tz.utc):
-                        is_valid = False  # expired, don't reuse
-                except Exception:
-                    pass
-            if is_valid:
-                token = existing_token  # reuse — user already placed this one
-
-    if not token:
-        token = _secrets.token_hex(16)  # 32 hex chars = 128 bits
-        token_row = db.create_verification_token(
-            token=token,
-            domain=domain,
-            method=req.method,
-            ip=client_ip,
-            ttl_seconds=3600,
+    if not existing_token or existing_token == "CACHED":
+        raise HTTPException(
+            status_code=400,
+            detail="Prvo pozovite /verify/token da dobijete verifikacioni token.",
         )
-        if not token_row:
-            raise HTTPException(
-                status_code=503,
-                detail="Verifikacija nije mogla da se inicijalizuje.",
-            )
+    existing_row = db.get_verification_token(existing_token)
+    if not existing_row:
+        raise HTTPException(status_code=400, detail="Token ne postoji — uzmite novi.")
+    # Check token expiration
+    from datetime import datetime as _dt, timezone as _tz
+    exp = existing_row.get("expires_at")
+    if exp:
+        try:
+            exp_dt = _dt.fromisoformat(str(exp).replace("Z", "+00:00"))
+            if exp_dt < _dt.now(_tz.utc):
+                raise HTTPException(status_code=400, detail="Token je istekao — uzmite novi.")
+        except HTTPException:
+            raise
+        except Exception:
+            pass
+    if existing_row.get("status") == "verified":
+        # Already verified on a previous call — just return success
+        return {
+            "request_id": request_id, "verified": True, "domain": domain,
+            "method": req.method, "next_step": "execute",
+        }
+    token = existing_token
 
     # Run the actual ownership check (HTTP fetch / DNS query — through
     # safe_get / dnspython, both SSRF-protected)

@@ -4302,13 +4302,52 @@ function wizardBackToStep1() {
 }
 
 // ── Step 2: pick verify method ─────────────────────────────────────────
-function wizardSelectVerifyMethod(method) {
+async function wizardSelectVerifyMethod(method) {
   wizardState.selectedMethod = method;
   document.querySelectorAll(".wizard-method-btn").forEach(function(b) {
     b.classList.toggle("active", b.dataset.method === method);
   });
-  document.getElementById("wizVerifyCheckBtn").disabled = false;
-  _wizardBuildInstructions(method, wizardState.domain || "vasajt.rs");
+  var checkBtn = document.getElementById("wizVerifyCheckBtn");
+  checkBtn.disabled = true;
+  checkBtn.textContent = currentLang === "en" ? "Loading token..." : "Ucitavam token...";
+
+  // Immediately request token for this method — user gets it to place on site
+  try {
+    var resp = await fetch(API_BASE + "/scan/request/" + wizardState.requestId + "/verify/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ method: method, fingerprint_hash: window._browserFingerprint || null }),
+    });
+    var data = await resp.json();
+    if (!resp.ok) {
+      showToast(data.detail || "Greska pri dohvatanju tokena", "error");
+      checkBtn.disabled = false;
+      checkBtn.textContent = currentLang === "en" ? "Check verification" : "Proveri verifikaciju";
+      return;
+    }
+    // If already cached/verified, skip straight to recap
+    if (data.cached) {
+      wizardState.verifyPassed = true;
+      var methodName = { meta: "Meta tag", file: currentLang === "en" ? "File" : "Fajl", dns: "DNS TXT" }[method];
+      document.getElementById("wizRecapMethod").textContent = methodName + " (" + wizardState.domain + ") — " + (currentLang === "en" ? "cached" : "kesiran");
+      document.getElementById("wizRecapDomain").textContent = wizardState.domain;
+      document.getElementById("wizRecapDomainEn").textContent = wizardState.domain;
+      setTimeout(function() { _wizardShowStep(3); _wizardStartCountdown(); }, 300);
+      return;
+    }
+    // Show the token + instructions
+    wizardState.verifyToken = data.token;
+    var instr = document.getElementById("wizardInstructions");
+    while (instr.firstChild) instr.removeChild(instr.firstChild);
+    instr.className = "wizard-instructions visible";
+    _wizardBuildInstructionsWithToken(method, wizardState.domain, data.token, instr);
+    checkBtn.disabled = false;
+    checkBtn.textContent = currentLang === "en" ? "Check verification" : "Proveri verifikaciju";
+  } catch (e) {
+    showToast("Greska: " + e.message, "error");
+    checkBtn.disabled = false;
+    checkBtn.textContent = currentLang === "en" ? "Check verification" : "Proveri verifikaciju";
+  }
 }
 
 // ── Step 2: build instructions with actual token ──────────────────────
@@ -4420,20 +4459,10 @@ async function wizardCheckVerify() {
       setTimeout(function() { _wizardShowStep(3); _wizardStartCountdown(); }, 800);
       return;
     }
-    // Verification failed — show the token so user can place it
-    var reason = (data && data.reason) ? data.reason : "unknown";
-    if (data && data.token) {
-      wizardState.verifyToken = data.token;
-      resultEl.className = "wizard-verify-result";
-      resultEl.textContent = "";
-      var instr = document.getElementById("wizardInstructions");
-      while (instr.firstChild) instr.removeChild(instr.firstChild);
-      instr.className = "wizard-instructions visible";
-      _wizardBuildInstructionsWithToken(wizardState.selectedMethod, wizardState.domain, data.token, instr);
-    } else {
-      resultEl.className = "wizard-verify-result error visible";
-      resultEl.textContent = _wizardL10n().verifyError + reason;
-    }
+    // Verification failed — token was already shown when method was selected
+    var reason = (data && data.reason) ? data.reason : (data.detail || "unknown");
+    resultEl.className = "wizard-verify-result error visible";
+    resultEl.textContent = _wizardL10n().verifyError + reason;
   } catch (e) {
     resultEl.className = "wizard-verify-result error visible";
     resultEl.textContent = _wizardL10n().verifyError + e.message;
