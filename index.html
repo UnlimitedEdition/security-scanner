@@ -3980,6 +3980,18 @@ async function startFullScanWizard() {
     return;
   }
 
+  var consentCheckbox = document.getElementById("consentCheckbox");
+  if (!consentCheckbox || !consentCheckbox.checked) {
+    showToast(
+      currentLang === "en"
+        ? "You must confirm you have permission to scan this site before starting."
+        : "Morate potvrditi da imate dozvolu da skenirate sajt pre pokretanja.",
+      "warning"
+    );
+    if (consentCheckbox) consentCheckbox.focus();
+    return;
+  }
+
   wizardState = {
     requestId: null,
     domain: null,
