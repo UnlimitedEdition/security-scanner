@@ -393,11 +393,45 @@
   fbCta.appendChild(srSpan('Skeniraj svoj sajt \u2192', 'Scan your site \u2192'));
   footerBottom.appendChild(fbCta);
 
+  // Ad slot before footer — only visible after cookie consent (ads category)
+  var adSlot = el('div', { className: 'blog-ad-slot', id: 'blogAdSlot' });
+  adSlot.style.cssText = 'max-width:960px;margin:1.5rem auto;text-align:center;min-height:90px;display:none;';
+  var adIns = el('ins', { className: 'adsbygoogle' });
+  adIns.style.cssText = 'display:block';
+  adIns.setAttribute('data-ad-client', 'ca-pub-6525862847461769');
+  adIns.setAttribute('data-ad-slot', 'auto');
+  adIns.setAttribute('data-ad-format', 'auto');
+  adIns.setAttribute('data-full-width-responsive', 'true');
+  adSlot.appendChild(adIns);
+
+  // Show ad slot only if ads consent was given
+  function _showBlogAd() {
+    try {
+      var consent = localStorage.getItem('cookie_consent_v2');
+      if (consent) {
+        var parsed = JSON.parse(consent);
+        if (parsed && parsed.ads) {
+          adSlot.style.display = 'block';
+          // Push ad after AdSense script loads
+          setTimeout(function() {
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }, 2000);
+        }
+      }
+    } catch(e) {}
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _showBlogAd);
+  } else {
+    _showBlogAd();
+  }
+
   var footerEl = el('footer', { className: 'site-footer' });
   footerEl.appendChild(footerGrid);
   footerEl.appendChild(badgeRow);
   footerEl.appendChild(legalRow);
   footerEl.appendChild(footerBottom);
+  document.body.appendChild(adSlot);
   document.body.appendChild(footerEl);
 
   // --- GLOBAL COOKIE CONSENT ---

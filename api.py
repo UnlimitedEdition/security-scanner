@@ -218,16 +218,23 @@ def _check_rate_limit(ip: str) -> bool:
     return _check_rate_limit_in_memory(ip)
 
 
-def _make_progress_cb(scan_id: str):
+def _make_progress_cb(scan_id: str, _unused: float = 0.0):
     """
     Returns a progress callback closure that updates the in-memory cache
     on every tick but only writes to the DB when progress crosses a 10%
     threshold. This keeps DB write volume bounded to ~10 writes per scan
     instead of ~100+.
+
+    Ad-blocker throttle: reads scans[scan_id]["ad_blocked"] on every tick
+    so if the user disables their blocker mid-scan, it speeds up immediately.
     """
     last_db_pct = [0]  # mutable closure holder
 
     def cb(step: str, pct: int):
+        # Live throttle check — reads current state, not initial
+        if scans.get(scan_id, {}).get("ad_blocked"):
+            import time
+            time.sleep(8.0)
         scans[scan_id]["step"] = step
         scans[scan_id]["progress"] = pct
         # Debounced DB write: only on 10% thresholds
@@ -247,6 +254,7 @@ def _run_scan_inline(
     preselected_pages: Optional[List[str]] = None,
     mode: str = "safe",
     scan_request_id: Optional[str] = None,
+    ad_blocked: bool = False,
 ):
     """
     Executes a single scan. Shared between the "start immediately" path
@@ -279,6 +287,14 @@ def _run_scan_inline(
     scan_requests row that authorized it. Used to mark the wizard
     state machine as 'completed' once the scanner finishes.
     """
+    # Ad-blocker throttle: if the user is blocking ads, we slow down
+    # the scan by injecting delays between progress updates. Total scan
+    # time stretches from ~90s to ~300s (5 minutes). This is server-side
+    # so the user cannot bypass it by editing frontend code.
+    # Store ad_blocked in scan dict so it can be updated mid-scan
+    # when the user disables their ad blocker during polling
+    scans[scan_id]["ad_blocked"] = ad_blocked
+
     # Transition to running (both in-memory and DB)
     scans[scan_id]["status"] = "running"
     scans[scan_id]["step"] = "Pokretanje skeniranja..."
@@ -294,7 +310,7 @@ def _run_scan_inline(
         details={"mode": mode, "scan_request_id": scan_request_id},
     )
 
-    progress_cb = _make_progress_cb(scan_id)
+    progress_cb = _make_progress_cb(scan_id, _ad_throttle)
     try:
         result = scanner.scan(
             url,
@@ -381,6 +397,7 @@ def _process_queue():
                 scan.get("preselected_pages"),
                 scan.get("mode", "safe"),
                 scan.get("scan_request_id"),
+                bool(scan.get("ad_blocked")),
             ),
             daemon=True,
         )
@@ -397,6 +414,7 @@ class ScanRequest(BaseModel):
     consent_version: Optional[str] = None
     session_id: Optional[str] = None
     fingerprint_hash: Optional[str] = None
+    ad_blocked: bool = False
     # Pro two-phase flow: frontend calls POST /api/discover first to get
     # a list of pages, user ticks up to 10, frontend sends them back in
     # this field. When present and caller is Pro, the scanner skips its
@@ -1709,7 +1727,7 @@ def execute_scan_request_endpoint(request_id: str, request: Request):
         scans[scan_id]["step"] = "Pokretanje punog skena..."
         thread = threading.Thread(
             target=_run_scan_inline,
-            args=(scan_id, url, client_ip, user_agent, max_pages, None, "full", request_id),
+            args=(scan_id, url, client_ip, user_agent, max_pages, None, "full", request_id, False),
             daemon=True,
         )
         thread.start()
@@ -2160,6 +2178,7 @@ def start_scan(req: ScanRequest, request: Request):
         # full mode is set server-side, only by /scan/request/{id}/execute.
         "mode": "safe",
         "scan_request_id": None,
+        "ad_blocked": bool(req.ad_blocked),
     }
 
     # Persist the scan + log the request. Both are best-effort — DB
@@ -2202,7 +2221,7 @@ def start_scan(req: ScanRequest, request: Request):
         scans[scan_id]["step"] = "Pokretanje skeniranja..."
         thread = threading.Thread(
             target=_run_scan_inline,
-            args=(scan_id, req.url, client_ip, user_agent, max_pages, validated_selected, "safe", None),
+            args=(scan_id, req.url, client_ip, user_agent, max_pages, validated_selected, "safe", None, bool(req.ad_blocked)),
             daemon=True,
         )
         thread.start()
@@ -2225,6 +2244,13 @@ def get_scan(scan_id: str, request: Request):
     visible — those are the public summary anyone gets to see.
     """
     requester_ip = _client_ip(request)
+
+    # Live ad-blocker update: frontend sends current status on every poll
+    # If user disabled blocker mid-scan, throttle stops immediately
+    ad_blocked_header = request.headers.get("x-ad-blocked", "")
+    if scan_id in scans and ad_blocked_header in ("true", "false"):
+        scans[scan_id]["ad_blocked"] = (ad_blocked_header == "true")
+
     scan = scans.get(scan_id)
 
     if not scan:

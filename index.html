@@ -2391,8 +2391,16 @@ function setLang(lang) {
 }
 
 function isAdBlocked() {
-  // Check: did the main adsbygoogle script load?
-  // Note: googlefc (funding choices) may not load until AdSense approves the site
+  // If user hasn't accepted ad cookies yet, AdSense won't be loaded
+  // That's NOT an ad blocker — that's our cookie consent working correctly
+  try {
+    var consent = localStorage.getItem("cookie_consent_v2");
+    if (!consent) return false; // No consent yet — not blocked, just waiting
+    var parsed = JSON.parse(consent);
+    if (!parsed || !parsed.ads) return false; // User rejected ads — not blocked, their choice
+  } catch(e) { return false; }
+
+  // User accepted ads but adsbygoogle didn't load — THAT's an ad blocker
   if (typeof window.adsbygoogle === "undefined") return true;
   return false;
 }
@@ -2557,11 +2565,13 @@ async function startScan() {
   }
 
   if (isAdBlocked()) {
-    var msg = currentLang === "en"
-      ? "Please disable your ad blocker to use the scanner. This free service is supported by ads."
-      : "Molimo iskljucite blokator reklama da biste koristili skener. Ovaj besplatni servis je podrzan reklamama.";
-    showToast(msg, "warning");
-    return;
+    showToast(
+      currentLang === "en"
+        ? "Ad blocker detected. Scan will take ~5 minutes instead of ~90 seconds. Disable the ad blocker for full speed — this free service is funded by ads."
+        : "Detektovan blokator reklama. Skeniranje ce trajati ~5 minuta umesto ~90 sekundi. Iskljucite blokator za punu brzinu — ovaj besplatni servis se finansira reklamama.",
+      "warning"
+    );
+    // Don't block scanning — just inform
   }
 
   var btn = document.getElementById("scanBtn");
@@ -2635,7 +2645,8 @@ async function startScan() {
     var scanBody = {
       url: url,
       consent_accepted: true,
-      consent_version: "2026-04-12-v3"
+      consent_version: "2026-04-12-v3",
+      ad_blocked: isAdBlocked()
     };
     if (selectedPages && selectedPages.length > 0) {
       scanBody.selected_pages = selectedPages;
@@ -2662,10 +2673,13 @@ async function startScan() {
 
 async function pollScan(scanId) {
   var btn = document.getElementById("scanBtn");
+  // Save scan_id so user can resume after page refresh
+  try { sessionStorage.setItem("active_scan_id", scanId); } catch(e) {}
   while (true) {
     await sleep(800);
     var _ph = {};
     if (window._browserFingerprint) _ph["X-Fingerprint-Hash"] = window._browserFingerprint;
+    _ph["X-Ad-Blocked"] = isAdBlocked() ? "true" : "false";
     var resp = await fetch(API_BASE + "/scan/" + scanId, { headers: _ph });
     var data = await resp.json();
 
@@ -2683,6 +2697,7 @@ async function pollScan(scanId) {
     updateModules(data.step || "", data.progress || 0);
 
     if (data.status === "completed") {
+      try { sessionStorage.removeItem("active_scan_id"); } catch(e) {}
       currentResults = data.result;
       renderResults(data.result);
       btn.disabled = false;
@@ -3781,6 +3796,15 @@ document.addEventListener("DOMContentLoaded", function() {
     chk.addEventListener("change", _updateVerifyCheckButtonState);
   }
   _populateSysinfo();
+  // Resume scan after page refresh
+  try {
+    var activeScanId = sessionStorage.getItem("active_scan_id");
+    if (activeScanId) {
+      document.getElementById("progressWrap").style.display = "block";
+      document.getElementById("scanBtn").disabled = true;
+      pollScan(activeScanId);
+    }
+  } catch(e) {}
 });
 
 function _verifyAppendKV(parent, keyLabel, value) {
@@ -4075,11 +4099,11 @@ async function startFullScanWizard() {
   if (isAdBlocked()) {
     showToast(
       currentLang === "en"
-        ? "Please disable your ad blocker to use the scanner. This free service is supported by ads."
-        : "Molimo iskljucite blokator reklama da biste koristili skener. Ovaj besplatni servis je podrzan reklamama.",
+        ? "Ad blocker detected. Scan will take ~5 minutes instead of ~90 seconds. Disable the ad blocker for full speed — this free service is funded by ads."
+        : "Detektovan blokator reklama. Skeniranje ce trajati ~5 minuta umesto ~90 sekundi. Iskljucite blokator za punu brzinu — ovaj besplatni servis se finansira reklamama.",
       "warning"
     );
-    return;
+    // Don't block scanning — just inform
   }
 
   wizardState = {
@@ -4481,6 +4505,7 @@ async function _wizardInlinePoll(scanId) {
     try {
       var pollHeaders = {};
       if (window._browserFingerprint) pollHeaders["X-Fingerprint-Hash"] = window._browserFingerprint;
+      pollHeaders["X-Ad-Blocked"] = isAdBlocked() ? "true" : "false";
       var resp = await fetch(API_BASE + "/scan/" + scanId, { headers: pollHeaders });
       var data = await resp.json();
       if (data.progress != null) {
