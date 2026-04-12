@@ -2462,13 +2462,6 @@ function showDiscoveryModal(pages, homeUrl, maxSelect) {
 }
 
 async function startScan() {
-  if (isAdBlocked()) {
-    var msg = currentLang === "en"
-      ? "Please disable your ad blocker to use the scanner. This free service is supported by ads."
-      : "Molimo iskljucite blokator reklama da biste koristili skener. Ovaj besplatni servis je podrzan reklamama.";
-    showToast(msg, "warning");
-    return;
-  }
   var url = document.getElementById("urlInput").value.trim();
   if (!url) { showToast(currentLang === "en" ? "Enter a URL first." : "Unesite URL sajta.", "warning"); return; }
 
@@ -2480,6 +2473,14 @@ async function startScan() {
       : "Morate potvrditi da imate dozvolu da skenirate sajt pre pokretanja.";
     showToast(consentMsg, "warning");
     if (consentCheckbox) consentCheckbox.focus();
+    return;
+  }
+
+  if (isAdBlocked()) {
+    var msg = currentLang === "en"
+      ? "Please disable your ad blocker to use the scanner. This free service is supported by ads."
+      : "Molimo iskljucite blokator reklama da biste koristili skener. Ovaj besplatni servis je podrzan reklamama.";
+    showToast(msg, "warning");
     return;
   }
 
