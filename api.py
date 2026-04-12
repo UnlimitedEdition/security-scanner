@@ -183,8 +183,8 @@ _rate_store: Dict[str, list] = defaultdict(list)
 
 # Queue system: max 1 concurrent scan
 _scan_queue: list = []
-_active_scan: Dict[str, Any] = {"id": None}
-_MAX_CONCURRENT = 1
+_active_scans: set = set()  # Track multiple concurrent scans
+_MAX_CONCURRENT = 3
 
 
 def _check_rate_limit_in_memory(ip: str) -> bool:
@@ -350,45 +350,41 @@ def _run_scan_inline(
             details={"error": msg},
         )
     finally:
-        _active_scan["id"] = None
+        _active_scans.discard(scan_id)
         _process_queue()
 
 
 def _process_queue():
-    """Process the next scan in queue if no active scan."""
-    if _active_scan["id"] is not None:
-        # Check if active scan is still running
-        active = scans.get(_active_scan["id"])
-        if active and active["status"] in ("completed", "error"):
-            _active_scan["id"] = None
-        else:
-            return
+    """Process queued scans up to _MAX_CONCURRENT slots."""
+    # Clean up finished scans from active set
+    finished = {sid for sid in _active_scans
+                if sid in scans and scans[sid]["status"] in ("completed", "error")}
+    _active_scans.difference_update(finished)
 
-    if not _scan_queue:
-        return
+    # Fill available slots
+    while len(_active_scans) < _MAX_CONCURRENT and _scan_queue:
+        scan_id = _scan_queue.pop(0)
+        scan = scans.get(scan_id)
+        if not scan:
+            continue
 
-    scan_id = _scan_queue.pop(0)
-    scan = scans.get(scan_id)
-    if not scan:
-        return
+        _active_scans.add(scan_id)
 
-    _active_scan["id"] = scan_id
-
-    thread = threading.Thread(
-        target=_run_scan_inline,
-        args=(
-            scan_id,
-            scan["url"],
-            scan.get("client_ip", "unknown"),
-            scan.get("user_agent"),
-            int(scan.get("max_pages") or 1),
-            scan.get("preselected_pages"),
-            scan.get("mode", "safe"),
-            scan.get("scan_request_id"),
-        ),
-        daemon=True,
-    )
-    thread.start()
+        thread = threading.Thread(
+            target=_run_scan_inline,
+            args=(
+                scan_id,
+                scan["url"],
+                scan.get("client_ip", "unknown"),
+                scan.get("user_agent"),
+                int(scan.get("max_pages") or 1),
+                scan.get("preselected_pages"),
+                scan.get("mode", "safe"),
+                scan.get("scan_request_id"),
+            ),
+            daemon=True,
+        )
+        thread.start()
 
 
 class ScanRequest(BaseModel):
@@ -1619,7 +1615,7 @@ def execute_scan_request_endpoint(request_id: str, request: Request):
     # /execute again because mark_scan_request_executed flips status
     # to 'executing'.
     scan_id = uuid.uuid4().hex[:8]
-    queue_position = len(_scan_queue) + (1 if _active_scan["id"] else 0)
+    queue_position = len(_scan_queue) + len(_active_scans)
 
     # Pro plan multi-page support — wizard scans get full Pro budget if
     # the caller has an active subscription. Otherwise homepage only,
@@ -1691,7 +1687,7 @@ def execute_scan_request_endpoint(request_id: str, request: Request):
         scans[scan_id]["step"] = f"U redu za skeniranje... pozicija {queue_position}"
         _scan_queue.append(scan_id)
     else:
-        _active_scan["id"] = scan_id
+        _active_scans.add(scan_id)
         scans[scan_id]["step"] = "Pokretanje punog skena..."
         thread = threading.Thread(
             target=_run_scan_inline,
@@ -2056,7 +2052,7 @@ def start_scan(req: ScanRequest, request: Request):
         )
 
     # Determine queue position
-    queue_position = len(_scan_queue) + (1 if _active_scan["id"] else 0)
+    queue_position = len(_scan_queue) + len(_active_scans)
 
     # Pro plan page budget: Pro subscribers scan up to 10 pages per
     # request, free tier scans only the homepage. If the request body
@@ -2184,7 +2180,7 @@ def start_scan(req: ScanRequest, request: Request):
         _scan_queue.append(scan_id)
     else:
         # Start immediately
-        _active_scan["id"] = scan_id
+        _active_scans.add(scan_id)
         scans[scan_id]["step"] = "Pokretanje skeniranja..."
         thread = threading.Thread(
             target=_run_scan_inline,
@@ -2686,7 +2682,8 @@ def health():
         "status": "ok",
         "scans_in_memory": len(scans),
         "queue_length": len(_scan_queue),
-        "active_scan": _active_scan["id"] is not None,
+        "active_scans": len(_active_scans),
+        "max_concurrent": _MAX_CONCURRENT,
         "db": db.health_check(),
         "lemon": subscription.health_check(),
     }
