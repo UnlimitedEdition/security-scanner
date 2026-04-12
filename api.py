@@ -107,6 +107,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             "font-src https://fonts.gstatic.com; "
             "img-src 'self' data: https:; "
             "connect-src 'self' https://unlimitededition-web-security-scanner.hf.space "
+            "https://api.ipify.org https://api64.ipify.org https://icanhazip.com "
             "https://*.googlesyndication.com https://*.g.doubleclick.net "
             "https://*.adtrafficquality.google "
             # Funding Choices (Google consent framework) fetches
@@ -132,6 +133,43 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 
 app.add_middleware(SecurityHeadersMiddleware)
+
+
+# ── SSRF audit logging for Pydantic validation errors ────────────────
+# Pydantic validators run before the handler, so SSRF blocks from
+# is_safe_target() surface as 422 ValidationError. We intercept these
+# to log scan_blocked_ssrf events with the caller's IP.
+from fastapi.exceptions import RequestValidationError
+from starlette.responses import JSONResponse
+
+
+@app.exception_handler(RequestValidationError)
+async def _validation_error_handler(request: Request, exc: RequestValidationError):
+    # Check if any error message contains our SSRF marker
+    ssrf_markers = ("Target not allowed", "nije dozvoljena")
+    is_ssrf = any(
+        any(m in str(e.get("msg", "")) for m in ssrf_markers)
+        for e in exc.errors()
+    )
+    if is_ssrf:
+        client_ip = _client_ip(request)
+        user_agent = request.headers.get("user-agent", "")[:500] or None
+        url_value = None
+        try:
+            body = await request.json()
+            url_value = body.get("url", "")[:200]
+        except Exception:
+            pass
+        db.log_audit_event(
+            event="scan_blocked_ssrf",
+            ip=client_ip, ua=user_agent,
+            details={"url": url_value, "errors": [str(e) for e in exc.errors()[:3]]},
+        )
+    return JSONResponse(
+        status_code=422,
+        content={"detail": exc.errors()},
+    )
+
 
 # In-memory scan cache — fast path for the hot /scan/{id} polling loop.
 # The authoritative copy of each scan lives in the Supabase `scans` table
@@ -251,6 +289,8 @@ def _run_scan_inline(
         ua=user_agent,
         scan_id=scan_id,
         domain=scans[scan_id].get("domain"),
+        session_id=scans[scan_id].get("session_id"),
+        fingerprint_hash=scans[scan_id].get("fingerprint_hash"),
         details={"mode": mode, "scan_request_id": scan_request_id},
     )
 
@@ -279,17 +319,21 @@ def _run_scan_inline(
         # Detect deadline truncation from scanner.py's errors list
         errors = (result or {}).get("errors") or []
         truncated = any("vremenski limit" in (e or "").lower() or "prekoracio" in (e or "").lower() for e in errors)
+        _sid = scans[scan_id].get("session_id")
+        _fph = scans[scan_id].get("fingerprint_hash")
         if truncated:
             db.log_audit_event(
                 event="scan_truncated_deadline",
                 ip=client_ip, ua=user_agent,
                 scan_id=scan_id, domain=scans[scan_id].get("domain"),
+                session_id=_sid, fingerprint_hash=_fph,
                 details={"errors": errors[:5]},
             )
         db.log_audit_event(
             event="scan_complete",
             ip=client_ip, ua=user_agent,
             scan_id=scan_id, domain=scans[scan_id].get("domain"),
+            session_id=_sid, fingerprint_hash=_fph,
             details={"score": (result or {}).get("score"), "truncated": truncated},
         )
     except Exception as e:
@@ -301,6 +345,8 @@ def _run_scan_inline(
             event="scan_error",
             ip=client_ip, ua=user_agent,
             scan_id=scan_id, domain=scans[scan_id].get("domain"),
+            session_id=scans[scan_id].get("session_id"),
+            fingerprint_hash=scans[scan_id].get("fingerprint_hash"),
             details={"error": msg},
         )
     finally:
@@ -1913,6 +1959,11 @@ def start_scan(req: ScanRequest, request: Request):
             # but we fail fast here for a cleaner error.
             safe, reason = is_safe_target(page)
             if not safe:
+                db.log_audit_event(
+                    event="scan_blocked_ssrf",
+                    ip=client_ip, ua=user_agent, domain=domain,
+                    details={"url": page, "reason": reason, "via": "selected_pages"},
+                )
                 raise HTTPException(
                     status_code=400,
                     detail=f"Page {page} failed safety check: {reason}",

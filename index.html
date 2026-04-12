@@ -1241,9 +1241,222 @@
       cursor: pointer; align-self: center;
     }
     .safe-mode-cta-btn:hover { background: #fde047; }
+
+    /* ── Checks sidebar ────────────────────────────────────────── */
+    .checks-sidebar-btn {
+      position: fixed; left: 0; top: 50%;
+      transform: translateY(-50%);
+      writing-mode: vertical-rl; text-orientation: mixed;
+      background: linear-gradient(135deg, #7c3aed, #6d28d9);
+      color: #fff; border: none; border-radius: 0 10px 10px 0;
+      padding: 1.2rem 0.7rem; font-size: 0.9rem; font-weight: 700;
+      cursor: pointer; z-index: 9998; letter-spacing: 0.04em;
+      box-shadow: 2px 0 16px rgba(0,0,0,0.4);
+      transition: background 0.2s;
+    }
+    .checks-sidebar-btn:hover { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+    .checks-sidebar-btn .sidebar-badge {
+      display: block; writing-mode: horizontal-tb;
+      background: #facc15; color: #0a0c15; border-radius: 10px;
+      font-size: 0.72rem; font-weight: 800; padding: 0.2rem 0.5rem;
+      margin-bottom: 0.5rem; text-align: center;
+    }
+
+    .checks-sidebar-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+      z-index: 9999; opacity: 0; pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .checks-sidebar-overlay.open { opacity: 1; pointer-events: auto; }
+
+    .checks-sidebar {
+      position: fixed; top: 0; left: 0; bottom: 0;
+      width: min(420px, 88vw);
+      background: #0f1126; border-right: 1px solid rgba(255,255,255,0.08);
+      z-index: 10000; transform: translateX(-100%);
+      transition: transform 0.35s cubic-bezier(0.22,0.61,0.36,1);
+      display: flex; flex-direction: column;
+      box-shadow: 4px 0 30px rgba(0,0,0,0.5);
+    }
+    .checks-sidebar-overlay.open .checks-sidebar { transform: translateX(0); }
+
+    .checks-sidebar-header {
+      display: flex; align-items: center; gap: 0.7rem;
+      padding: 1rem 1.2rem; border-bottom: 1px solid rgba(255,255,255,0.06);
+      flex-shrink: 0;
+    }
+    .checks-sidebar-header h3 {
+      margin: 0; font-size: 1rem; color: #e2e8f0; flex: 1;
+    }
+    .checks-sidebar-header small {
+      color: rgba(255,255,255,0.35); font-size: 0.75rem;
+    }
+    .checks-sidebar-close {
+      background: none; border: none; color: rgba(255,255,255,0.4);
+      font-size: 1.3rem; cursor: pointer; padding: 0.2rem;
+    }
+    .checks-sidebar-close:hover { color: #fff; }
+
+    .checks-sidebar-scroll {
+      flex: 1; overflow-y: auto; padding: 0.6rem 0;
+    }
+    .checks-sidebar-scroll::-webkit-scrollbar { width: 5px; }
+    .checks-sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
+    .checks-sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+    .sb-category {
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .sb-category:last-child { border-bottom: none; }
+
+    .sb-cat-toggle {
+      width: 100%; display: flex; align-items: center; gap: 0.6rem;
+      padding: 0.75rem 1.2rem; background: none; border: none;
+      color: #e2e8f0; cursor: pointer; text-align: left;
+      font-family: inherit; transition: background 0.15s;
+    }
+    .sb-cat-toggle:hover { background: rgba(255,255,255,0.03); }
+    .sb-cat-icon { font-size: 1.1rem; flex-shrink: 0; }
+    .sb-cat-name { font-size: 0.88rem; font-weight: 600; flex: 1; }
+    .sb-cat-count {
+      font-size: 0.7rem; color: rgba(255,255,255,0.35);
+      background: rgba(255,255,255,0.06); padding: 0.15rem 0.5rem;
+      border-radius: 10px;
+    }
+    .sb-cat-chevron {
+      font-size: 0.6rem; color: rgba(255,255,255,0.3);
+      transition: transform 0.25s ease;
+    }
+    .sb-category.open .sb-cat-chevron { transform: rotate(90deg); }
+
+    .sb-cat-body {
+      display: none; padding: 0 1.2rem 0.7rem 2.8rem;
+    }
+    .sb-category.open .sb-cat-body { display: block; }
+
+    .sb-check-item {
+      display: flex; align-items: baseline; gap: 0.4rem;
+      padding: 0.3rem 0; font-size: 0.8rem; color: rgba(255,255,255,0.7);
+      line-height: 1.4;
+    }
+    .sb-check-item::before {
+      content: "✓"; color: #22c55e; font-size: 0.7rem; flex-shrink: 0;
+    }
+    .sb-cat-more {
+      font-size: 0.75rem; color: rgba(255,255,255,0.3);
+      padding: 0.3rem 0 0; font-style: italic;
+    }
+    .sb-cat-link {
+      display: inline-block; margin-top: 0.4rem;
+      font-size: 0.75rem; color: var(--accent2, #a78bfa);
+      text-decoration: none; font-weight: 600;
+    }
+    .sb-cat-link:hover { text-decoration: underline; }
+
+    .sb-footer {
+      padding: 0.8rem 1.2rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      text-align: center; flex-shrink: 0;
+    }
+    .sb-footer-extra {
+      font-size: 0.72rem; color: rgba(255,255,255,0.3);
+      margin-bottom: 0.5rem; line-height: 1.4;
+    }
+    .sb-footer-link {
+      display: inline-block; color: var(--accent2, #a78bfa);
+      font-size: 0.8rem; font-weight: 700; text-decoration: none;
+    }
+    .sb-footer-link:hover { text-decoration: underline; }
+
+    /* ── System Information panel ─────────────────────────────── */
+    .sysinfo-card {
+      max-width: 720px; margin: 1.5rem auto 0;
+      background: #12142a; border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px; overflow: hidden;
+    }
+    .sysinfo-header {
+      display: flex; align-items: center; gap: 0.6rem;
+      padding: 0.75rem 1.1rem;
+      color: #e2e8f0; font-size: 0.88rem; font-weight: 600;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .sysinfo-body {
+      padding: 0.6rem 1.1rem 1rem;
+    }
+    .sysinfo-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 0.5rem 1.2rem;
+    }
+    .sysinfo-row {
+      display: flex; flex-direction: column; gap: 0.1rem;
+      padding: 0.45rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .sysinfo-label {
+      font-size: 0.72rem; text-transform: uppercase;
+      letter-spacing: 0.04em; color: rgba(255,255,255,0.35);
+    }
+    .sysinfo-value {
+      font-size: 0.82rem; color: #e2e8f0;
+      word-break: break-all;
+    }
+    .sysinfo-value.loading { color: rgba(255,255,255,0.2); }
+    .sysinfo-note {
+      margin-top: 0.7rem; font-size: 0.7rem;
+      color: rgba(255,255,255,0.25); line-height: 1.4;
+    }
+    @media (max-width: 600px) {
+      .sysinfo-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── Toast notifications ─────────────────────────────────── */
+    .toast-container {
+      position: fixed; top: 1.2rem; right: 1.2rem; z-index: 100000;
+      display: flex; flex-direction: column; gap: 0.6rem;
+      pointer-events: none; max-width: min(420px, calc(100vw - 2.4rem));
+    }
+    .toast {
+      pointer-events: auto;
+      display: flex; align-items: flex-start; gap: 0.7rem;
+      padding: 0.85rem 1.1rem; border-radius: 10px;
+      background: #1a1d2e; border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+      color: #e2e8f0; font-size: 0.88rem; line-height: 1.45;
+      animation: toastSlideIn 0.32s cubic-bezier(0.21,1.02,0.73,1) forwards;
+      backdrop-filter: blur(12px);
+    }
+    .toast.toast-exit {
+      animation: toastSlideOut 0.28s ease-in forwards;
+    }
+    .toast-icon {
+      flex-shrink: 0; font-size: 1.15rem; margin-top: 0.08rem;
+    }
+    .toast-body { flex: 1; word-break: break-word; }
+    .toast-close {
+      flex-shrink: 0; background: none; border: none;
+      color: rgba(255,255,255,0.35); font-size: 1.1rem;
+      cursor: pointer; padding: 0; margin-left: 0.3rem; line-height: 1;
+    }
+    .toast-close:hover { color: rgba(255,255,255,0.7); }
+    .toast--error   { border-color: #ef4444; background: linear-gradient(135deg, #1a1d2e 60%, rgba(239,68,68,0.08)); }
+    .toast--warning { border-color: #f59e0b; background: linear-gradient(135deg, #1a1d2e 60%, rgba(245,158,11,0.08)); }
+    .toast--success { border-color: #22c55e; background: linear-gradient(135deg, #1a1d2e 60%, rgba(34,197,94,0.08)); }
+    .toast--info    { border-color: #3b82f6; background: linear-gradient(135deg, #1a1d2e 60%, rgba(59,130,246,0.08)); }
+    @keyframes toastSlideIn {
+      from { opacity: 0; transform: translateX(40px) scale(0.96); }
+      to   { opacity: 1; transform: translateX(0) scale(1); }
+    }
+    @keyframes toastSlideOut {
+      from { opacity: 1; transform: translateX(0) scale(1); }
+      to   { opacity: 0; transform: translateX(40px) scale(0.92); }
+    }
+    @media (max-width: 600px) {
+      .toast-container { top: 0.6rem; right: 0.6rem; left: 0.6rem; max-width: none; }
+    }
   </style>
 </head>
 <body>
+<div class="toast-container" id="toastContainer"></div>
 <div class="page-wrap">
 <div class="page-content">
 
@@ -1313,6 +1526,21 @@
   </div>
 </div>
 
+<!-- SYSTEM INFORMATION (always visible) -->
+<div class="sysinfo-card open" id="sysinfoCard">
+  <div class="sysinfo-header">
+    <span>&#x1f4bb;</span>
+    <span data-sr="Informacije o vasem sistemu" data-en="Your System Information">Informacije o vasem sistemu</span>
+  </div>
+  <div class="sysinfo-body" id="sysinfoBody" role="region" style="display:block;">
+    <div class="sysinfo-grid" id="sysinfoGrid"></div>
+    <div class="sysinfo-note">
+      <span class="sr">Ovi podaci se prikazuju lokalno u vasem pregledacu. Nista se ne salje niti cuva na nasem serveru.</span>
+      <span class="en">This data is displayed locally in your browser. Nothing is sent to or stored on our server.</span>
+    </div>
+  </div>
+</div>
+
 <!-- RESULT TABS (shown after scan starts) -->
 <div class="result-tabs" id="resultTabs" role="tablist" aria-label="Rezultati skeniranja">
   <button class="result-tab active" data-tab="security" onclick="switchTab('security')" data-sr="Bezbednost" data-en="Security" role="tab" aria-selected="true">Bezbednost</button>
@@ -1321,91 +1549,7 @@
   <button class="result-tab" data-tab="gdpr" onclick="switchTab('gdpr')" role="tab" aria-selected="false">GDPR</button>
 </div>
 
-<!-- FEATURES LIST -->
-<div class="features-section" id="featuresSection">
-  <div class="features-title">
-    <h2 data-sr="Sta proveravamo" data-en="What we check">Sta proveravamo</h2>
-    <p data-sr="110+ automatskih provera u 4 kategorije" data-en="110+ automated checks in 4 categories">110+ automatskih provera u 4 kategorije</p>
-  </div>
-  <div class="features-grid">
-    <div class="feature-card card-security">
-      <div class="feature-card-header">
-        <div class="feature-icon" style="color:#ef4444">&#128272;</div>
-        <div>
-          <h2 data-sr="Bezbednost" data-en="Security" style="font-size:0.92rem;">Bezbednost</h2>
-          <div class="feature-count" data-sr="60+ provera" data-en="60+ checks">60+ provera</div>
-        </div>
-      </div>
-      <ul>
-        <li data-sr="SSL/TLS sertifikati i enkripcija" data-en="SSL/TLS certificates & encryption">SSL/TLS sertifikati i enkripcija</li>
-        <li data-sr="HTTP sigurnosni headeri (7 provera)" data-en="HTTP security headers (7 checks)">HTTP sigurnosni headeri (7 provera)</li>
-        <li data-sr="DNS bezbednost (SPF/DMARC/DNSSEC)" data-en="DNS security (SPF/DMARC/DNSSEC)">DNS bezbednost (SPF/DMARC/DNSSEC)</li>
-        <li data-sr="Detekcija ranjivosti (SQL, XSS, CSRF)" data-en="Vulnerability detection (SQL, XSS, CSRF)">Detekcija ranjivosti (SQL, XSS, CSRF)</li>
-        <li data-sr="Osetljivi fajlovi, portovi, CORS" data-en="Sensitive files, ports, CORS">Osetljivi fajlovi, portovi, CORS</li>
-      </ul>
-      <div class="card-more" data-sr="+ WHOIS, email, Mozilla Observatory, tech stack i jos 10 provera" data-en="+ WHOIS, email, Mozilla Observatory, tech stack and 10 more checks">+ WHOIS, email, Mozilla Observatory, tech stack i jos 10 provera</div>
-      <a href="./blog-security.html" class="card-link" data-sr="Saznajte vise" data-en="Learn more">Saznajte vise</a>
-    </div>
-    <div class="feature-card card-seo">
-      <div class="feature-card-header">
-        <div class="feature-icon" style="color:#3b82f6">&#128270;</div>
-        <div>
-          <h2 data-sr="SEO Analiza" data-en="SEO Analysis" style="font-size:0.92rem;">SEO Analiza</h2>
-          <div class="feature-count" data-sr="12 provera" data-en="12 checks">12 provera</div>
-        </div>
-      </div>
-      <ul>
-        <li data-sr="Title, description, viewport" data-en="Title, description, viewport">Title, description, viewport</li>
-        <li data-sr="Open Graph i Twitter Cards" data-en="Open Graph & Twitter Cards">Open Graph i Twitter Cards</li>
-        <li data-sr="Heading struktura (H1-H6)" data-en="Heading structure (H1-H6)">Heading struktura (H1-H6)</li>
-        <li data-sr="Sitemap.xml i robots.txt" data-en="Sitemap.xml & robots.txt">Sitemap.xml i robots.txt</li>
-        <li data-sr="Strukturirani podaci (Schema.org)" data-en="Structured data (Schema.org)">Strukturirani podaci (Schema.org)</li>
-      </ul>
-      <div class="card-more" data-sr="+ canonical, lang, slike i jos 4 provere" data-en="+ canonical, lang, images and 4 more checks">+ canonical, lang, slike i jos 4 provere</div>
-      <a href="./blog-seo.html" class="card-link" data-sr="Saznajte vise" data-en="Learn more">Saznajte vise</a>
-    </div>
-    <div class="feature-card card-perf">
-      <div class="feature-card-header">
-        <div class="feature-icon" style="color:#eab308">&#9889;</div>
-        <div>
-          <h2 data-sr="Performanse" data-en="Performance" style="font-size:0.92rem;">Performanse</h2>
-          <div class="feature-count" data-sr="16 provera" data-en="16 checks">16 provera</div>
-        </div>
-      </div>
-      <ul>
-        <li data-sr="TTFB (vreme odgovora servera)" data-en="TTFB (server response time)">TTFB (vreme odgovora servera)</li>
-        <li data-sr="Kompresija (Gzip/Brotli)" data-en="Compression (Gzip/Brotli)">Kompresija (Gzip/Brotli)</li>
-        <li data-sr="Cache headeri i HTTP/2" data-en="Cache headers & HTTP/2">Cache headeri i HTTP/2</li>
-        <li data-sr="Lazy loading i optimizacija slika" data-en="Lazy loading & image optimization">Lazy loading i optimizacija slika</li>
-        <li data-sr="Pristupacnost (ARIA, forme, headings)" data-en="Accessibility (ARIA, forms, headings)">Pristupacnost (ARIA, forme, headings)</li>
-      </ul>
-      <div class="card-more" data-sr="+ velicina stranice, minifikacija, tabindex i jos 3 provere" data-en="+ page size, minification, tabindex and 3 more checks">+ velicina stranice, minifikacija, tabindex i jos 3 provere</div>
-      <a href="./blog-performance.html" class="card-link" data-sr="Saznajte vise" data-en="Learn more">Saznajte vise</a>
-    </div>
-    <div class="feature-card card-gdpr">
-      <div class="feature-card-header">
-        <div class="feature-icon" style="color:#22c55e">&#128274;</div>
-        <div>
-          <h2 data-sr="GDPR / Privatnost" data-en="GDPR / Privacy" style="font-size:0.92rem;">GDPR / Privatnost</h2>
-          <div class="feature-count" data-sr="7 provera" data-en="7 checks">7 provera</div>
-        </div>
-      </div>
-      <ul>
-        <li data-sr="Privacy Policy detekcija" data-en="Privacy Policy detection">Privacy Policy detekcija</li>
-        <li data-sr="Cookie consent mehanizam" data-en="Cookie consent mechanism">Cookie consent mehanizam</li>
-        <li data-sr="Third-party trackeri (GA, FB, Hotjar)" data-en="Third-party trackers (GA, FB, Hotjar)">Third-party trackeri (GA, FB, Hotjar)</li>
-        <li data-sr="HTTPS za podatke korisnika" data-en="HTTPS for user data">HTTPS za podatke korisnika</li>
-        <li data-sr="Forme i enkripcija podataka" data-en="Forms & data encryption">Forme i enkripcija podataka</li>
-      </ul>
-      <div class="card-more" data-sr="+ uslovi koriscenja, third-party cookies" data-en="+ terms of service, third-party cookies">+ uslovi koriscenja, third-party cookies</div>
-      <a href="./blog-gdpr.html" class="card-link" data-sr="Saznajte vise" data-en="Learn more">Saznajte vise</a>
-    </div>
-  </div>
-  <div style="text-align:center;margin-top:1.5rem;">
-    <p style="color:var(--text-dim);font-size:0.85rem;margin-bottom:0.6rem;" data-sr="+ Crawler (do 20 stranica) &bull; Risk Engine &bull; WHOIS &bull; Tech Stack &bull; Email &bull; Mozilla Observatory" data-en="+ Crawler (up to 20 pages) &bull; Risk Engine &bull; WHOIS &bull; Tech Stack &bull; Email &bull; Mozilla Observatory">+ Crawler (do 20 stranica) &bull; Risk Engine &bull; WHOIS &bull; Tech Stack &bull; Email &bull; Mozilla Observatory</p>
-    <a href="./blog-features.html" style="color:var(--accent2);font-weight:700;font-size:0.9rem;text-decoration:none;" data-sr="Pogledajte kompletnu listu svih 110+ provera &rarr;" data-en="See complete list of all 110+ checks &rarr;">Pogledajte kompletnu listu svih 110+ provera &rarr;</a>
-  </div>
-</div>
+<!-- FEATURES LIST (moved to sidebar) -->
 
 <!-- AD SLOT (during scan - large display/video).
      NO inline push() here — we trigger it from JS only when the slot
@@ -1785,6 +1929,199 @@ const API_BASE = (location.hostname === "localhost" || location.hostname === "12
 let currentLang = "sr";
 let currentResults = null;
 
+// ── Toast notification system ────────────────────────────────────────
+var _toastIcons = { error: "\u26d4", warning: "\u26a0\ufe0f", success: "\u2705", info: "\u2139\ufe0f" };
+function showToast(message, type) {
+  type = type || "error";
+  var container = document.getElementById("toastContainer");
+  var el = document.createElement("div");
+  el.className = "toast toast--" + type;
+  el.setAttribute("role", "alert");
+
+  var icon = document.createElement("span");
+  icon.className = "toast-icon";
+  icon.textContent = _toastIcons[type] || _toastIcons.info;
+
+  var body = document.createElement("span");
+  body.className = "toast-body";
+  body.textContent = message;
+
+  var closeBtn = document.createElement("button");
+  closeBtn.className = "toast-close";
+  closeBtn.setAttribute("aria-label", "Close");
+  closeBtn.innerHTML = "&times;";
+  closeBtn.onclick = function() { _dismissToast(el); };
+
+  el.appendChild(icon);
+  el.appendChild(body);
+  el.appendChild(closeBtn);
+  container.appendChild(el);
+
+  var autoTimer = setTimeout(function() { _dismissToast(el); }, type === "error" ? 6000 : 4000);
+  el._autoTimer = autoTimer;
+}
+function _dismissToast(el) {
+  if (el._dismissed) return;
+  el._dismissed = true;
+  clearTimeout(el._autoTimer);
+  el.classList.add("toast-exit");
+  el.addEventListener("animationend", function() { if (el.parentNode) el.parentNode.removeChild(el); });
+}
+
+// ── Checks sidebar ──────────────────────────────────────────────────
+function openChecksSidebar() {
+  document.getElementById("checksSidebarOverlay").classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+function closeChecksSidebar() {
+  document.getElementById("checksSidebarOverlay").classList.remove("open");
+  document.body.style.overflow = "";
+}
+function toggleSbCategory(id) {
+  document.getElementById(id).classList.toggle("open");
+}
+document.addEventListener("keydown", function(e) {
+  if (e.key === "Escape" && document.getElementById("checksSidebarOverlay").classList.contains("open")) {
+    closeChecksSidebar();
+  }
+});
+
+// ── System Information panel (auto-populates on load) ────────────────
+
+function _populateSysinfo() {
+  var grid = document.getElementById("sysinfoGrid");
+  var ua = navigator.userAgent || "";
+  var items = [
+    { sr: "Pregledac", en: "Browser", value: _parseBrowser(ua) },
+    { sr: "Operativni sistem", en: "Operating System", value: _parseOS(ua) },
+    { sr: "Rezolucija ekrana", en: "Screen Resolution", value: screen.width + " x " + screen.height },
+    { sr: "Kolacici", en: "Cookies", value: navigator.cookieEnabled
+        ? (currentLang === "en" ? "Enabled" : "Omoguceni")
+        : (currentLang === "en" ? "Disabled" : "Onemoguceni") },
+    { sr: "Javna IP adresa", en: "Public IP", value: null, id: "sysinfo-ip" },
+    { sr: "Lokalna IP (LAN)", en: "Local IP (LAN)", value: null, id: "sysinfo-lan" },
+    { sr: "Vremenska zona", en: "Timezone", value: Intl.DateTimeFormat().resolvedOptions().timeZone || "N/A" },
+    { sr: "Jezik", en: "Language", value: navigator.language || "N/A" },
+    { sr: "Platforma", en: "Platform", value: navigator.platform || "N/A" },
+    { sr: "User Agent", en: "User Agent", value: ua || "N/A" },
+  ];
+
+  items.forEach(function(item) {
+    var row = document.createElement("div");
+    row.className = "sysinfo-row";
+
+    var label = document.createElement("div");
+    label.className = "sysinfo-label";
+    var labelSr = document.createElement("span");
+    labelSr.className = "sr";
+    labelSr.textContent = item.sr;
+    var labelEn = document.createElement("span");
+    labelEn.className = "en";
+    labelEn.textContent = item.en;
+    label.appendChild(labelSr);
+    label.appendChild(labelEn);
+
+    var val = document.createElement("div");
+    val.className = "sysinfo-value";
+    if (item.id) val.id = item.id;
+    if (item.value !== null) {
+      val.textContent = item.value;
+    } else {
+      val.textContent = "...";
+      val.classList.add("loading");
+    }
+
+    row.appendChild(label);
+    row.appendChild(val);
+    grid.appendChild(row);
+  });
+
+  _fetchPublicIP();
+  _detectLanIP();
+}
+
+function _parseBrowser(ua) {
+  if (/Edg\//.test(ua)) return "Microsoft Edge " + (ua.match(/Edg\/([\d.]+)/) || [])[1];
+  if (/OPR\//.test(ua)) return "Opera " + (ua.match(/OPR\/([\d.]+)/) || [])[1];
+  if (/Chrome\//.test(ua) && !/Chromium/.test(ua)) return "Google Chrome " + (ua.match(/Chrome\/([\d.]+)/) || [])[1];
+  if (/Firefox\//.test(ua)) return "Mozilla Firefox " + (ua.match(/Firefox\/([\d.]+)/) || [])[1];
+  if (/Safari\//.test(ua) && !/Chrome/.test(ua)) return "Safari " + (ua.match(/Version\/([\d.]+)/) || [])[1];
+  return ua.split(" ").pop() || "N/A";
+}
+
+function _parseOS(ua) {
+  if (/Windows NT 10/.test(ua)) return "Windows 10/11";
+  if (/Windows NT 6\.3/.test(ua)) return "Windows 8.1";
+  if (/Windows NT 6\.1/.test(ua)) return "Windows 7";
+  if (/Mac OS X ([\d_]+)/.test(ua)) return "macOS " + (ua.match(/Mac OS X ([\d_]+)/) || ["",""])[1].replace(/_/g, ".");
+  if (/Android ([\d.]+)/.test(ua)) return "Android " + (ua.match(/Android ([\d.]+)/) || [])[1];
+  if (/iPhone|iPad/.test(ua)) return "iOS " + ((ua.match(/OS ([\d_]+)/) || ["",""])[1] || "").replace(/_/g, ".");
+  if (/Linux/.test(ua)) return "Linux";
+  return navigator.platform || "N/A";
+}
+
+function _fetchPublicIP() {
+  var el = document.getElementById("sysinfo-ip");
+  if (!el) return;
+  var apis = [
+    { url: "https://api.ipify.org?format=json", parse: function(r) { return r.json().then(function(d) { return d.ip; }); } },
+    { url: "https://api64.ipify.org?format=json", parse: function(r) { return r.json().then(function(d) { return d.ip; }); } },
+    { url: "https://icanhazip.com", parse: function(r) { return r.text().then(function(t) { return t.trim(); }); } },
+  ];
+  function tryNext(i) {
+    if (i >= apis.length) {
+      el.textContent = currentLang === "en" ? "Not available (blocked)" : "Nije dostupno (blokirano)";
+      el.classList.remove("loading");
+      return;
+    }
+    fetch(apis[i].url).then(apis[i].parse).then(function(ip) {
+      if (ip && /^[\d.:a-fA-F]+$/.test(ip)) {
+        el.textContent = ip;
+        el.classList.remove("loading");
+      } else { tryNext(i + 1); }
+    }).catch(function() { tryNext(i + 1); });
+  }
+  tryNext(0);
+}
+
+function _detectLanIP() {
+  var el = document.getElementById("sysinfo-lan");
+  if (!el) return;
+  try {
+    var pc = new RTCPeerConnection({ iceServers: [] });
+    pc.createDataChannel("");
+    pc.createOffer().then(function(offer) { return pc.setLocalDescription(offer); });
+    var found = false;
+    pc.onicecandidate = function(e) {
+      if (found) return;
+      if (!e || !e.candidate || !e.candidate.candidate) {
+        if (!found) {
+          el.textContent = currentLang === "en" ? "Not available" : "Nije dostupno";
+          el.classList.remove("loading");
+        }
+        return;
+      }
+      var match = e.candidate.candidate.match(/([0-9]{1,3}(\.[0-9]{1,3}){3})/);
+      if (match && match[1] && !match[1].startsWith("0.")) {
+        found = true;
+        el.textContent = match[1];
+        el.classList.remove("loading");
+        pc.close();
+      }
+    };
+    setTimeout(function() {
+      if (!found) {
+        el.textContent = currentLang === "en" ? "Not available" : "Nije dostupno";
+        el.classList.remove("loading");
+        try { pc.close(); } catch(x) {}
+      }
+    }, 3000);
+  } catch (e) {
+    el.textContent = currentLang === "en" ? "Not available" : "Nije dostupno";
+    el.classList.remove("loading");
+  }
+}
+
 const MODULES = ["SSL/TLS","Headers","DNS","Files","Cookies","Redirects","CMS","Vuln","JS","API","Deps","SEO","Perf","GDPR","A11y","WHOIS","Tech","Email","Mozilla","CT","Subs"];
 
 function switchTab(tab) {
@@ -1938,7 +2275,7 @@ function showDiscoveryModal(pages, homeUrl, maxSelect) {
           if (currentCount > maxSelect) {
             cb.checked = false;
             delete pickedSet[url];
-            alert("Max " + maxSelect + " pages.");
+            showToast("Max " + maxSelect + " pages.", "warning");
             currentCount = Object.keys(pickedSet).length;
           }
           selectedEl.textContent = String(currentCount);
@@ -1966,7 +2303,7 @@ function showDiscoveryModal(pages, homeUrl, maxSelect) {
     }
     startBtn.onclick = function() {
       var picked = Object.keys(pickedSet);
-      if (picked.length === 0) { alert("Select at least one page."); return; }
+      if (picked.length === 0) { showToast("Select at least one page.", "warning"); return; }
       cleanup();
       resolve(picked);
     };
@@ -1984,11 +2321,11 @@ async function startScan() {
     var msg = currentLang === "en"
       ? "Please disable your ad blocker to use the scanner. This free service is supported by ads."
       : "Molimo iskljucite blokator reklama da biste koristili skener. Ovaj besplatni servis je podrzan reklamama.";
-    alert(msg);
+    showToast(msg, "warning");
     return;
   }
   var url = document.getElementById("urlInput").value.trim();
-  if (!url) { alert("Unesite URL sajta."); return; }
+  if (!url) { showToast(currentLang === "en" ? "Enter a URL first." : "Unesite URL sajta.", "warning"); return; }
 
   // Require explicit consent before every scan (logged in audit_log + scans.consent_version)
   var consentCheckbox = document.getElementById("consentCheckbox");
@@ -1996,7 +2333,7 @@ async function startScan() {
     var consentMsg = currentLang === "en"
       ? "You must confirm you have permission to scan this site before starting."
       : "Morate potvrditi da imate dozvolu da skenirate sajt pre pokretanja.";
-    alert(consentMsg);
+    showToast(consentMsg, "warning");
     if (consentCheckbox) consentCheckbox.focus();
     return;
   }
@@ -2958,7 +3295,7 @@ function _shareFallbackCopy(text) {
 
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text)
-      .then(function() { alert(okMsg); })
+      .then(function() { showToast(okMsg, "success"); })
       .catch(function() { prompt(promptMsg, text); });
   } else {
     prompt(promptMsg, text);
@@ -3154,6 +3491,7 @@ document.addEventListener("DOMContentLoaded", function() {
   if (chk) {
     chk.addEventListener("change", _updateVerifyCheckButtonState);
   }
+  _populateSysinfo();
 });
 
 function _verifyAppendKV(parent, keyLabel, value) {
@@ -3383,7 +3721,7 @@ function _wizardBuildInstructions(method, domain) {
 async function startFullScanWizard() {
   var url = (document.getElementById("urlInput").value || "").trim();
   if (!url) {
-    alert(currentLang === "en" ? "Enter a URL first." : "Prvo unesite URL.");
+    showToast(currentLang === "en" ? "Enter a URL first." : "Prvo unesite URL.", "warning");
     return;
   }
 
@@ -3423,14 +3761,14 @@ async function startFullScanWizard() {
     var data = await resp.json();
     if (!resp.ok) {
       var msg = data && data.detail ? data.detail : _wizardL10n().startError;
-      alert(msg);
+      showToast(msg, "error");
       return;
     }
     wizardState.requestId = data.request_id;
     wizardState.domain = data.domain;
     document.getElementById("wizardDomainPill").textContent = data.domain;
   } catch (e) {
-    alert(_wizardL10n().startError + " " + e.message);
+    showToast(_wizardL10n().startError + " " + e.message, "error");
     return;
   }
 
@@ -3460,7 +3798,7 @@ async function wizardSetConsent(consentNum) {
     if (!resp.ok) {
       var data = await resp.json().catch(function(){ return {}; });
       checkbox.checked = false;
-      alert(data.detail || _wizardL10n().consentError);
+      showToast(data.detail || _wizardL10n().consentError, "error");
       return;
     }
     wizardState.consentsConfirmed += 1;
@@ -3469,7 +3807,7 @@ async function wizardSetConsent(consentNum) {
     }
   } catch (e) {
     checkbox.checked = false;
-    alert(_wizardL10n().consentError + " " + e.message);
+    showToast(_wizardL10n().consentError + " " + e.message, "error");
   } finally {
     checkbox.disabled = false;
   }
@@ -3487,13 +3825,13 @@ async function wizardFinalizeConsents() {
     });
     var data = await resp.json();
     if (!resp.ok) {
-      alert(data.detail || _wizardL10n().finalizeError);
+      showToast(data.detail || _wizardL10n().finalizeError, "error");
       btn.disabled = false;
       return;
     }
     _wizardShowStep(2);
   } catch (e) {
-    alert(_wizardL10n().finalizeError + " " + e.message);
+    showToast(_wizardL10n().finalizeError + " " + e.message, "error");
     btn.disabled = false;
   }
 }
@@ -3592,14 +3930,14 @@ async function wizardExecute() {
     });
     var data = await resp.json();
     if (!resp.ok) {
-      alert(_wizardL10n().executeError + (data.detail || ""));
+      showToast(_wizardL10n().executeError + (data.detail || ""), "error");
       btn.disabled = false;
       return;
     }
     _wizardClose();
     _handoffToPollLoop(data.scan_id);
   } catch (e) {
-    alert(_wizardL10n().executeError + e.message);
+    showToast(_wizardL10n().executeError + e.message, "error");
     btn.disabled = false;
   }
 }
@@ -3701,7 +4039,7 @@ async function _wizardInlinePoll(scanId) {
         return;
       }
       if (data.status === "error") {
-        alert((currentLang === "en" ? "Scan error: " : "Greska skena: ") + (data.error || ""));
+        showToast((currentLang === "en" ? "Scan error: " : "Greska skena: ") + (data.error || ""), "error");
         if (qBtn) qBtn.disabled = false;
         if (fBtn) fBtn.disabled = false;
         return;
@@ -3751,6 +4089,124 @@ async function _wizardInlinePoll(scanId) {
         <span class="sr">Skeniraj izabrano</span>
         <span class="en">Scan selected</span>
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CHECKS SIDEBAR ═══ -->
+<button class="checks-sidebar-btn" onclick="openChecksSidebar()" aria-label="Open checks list">
+  <span class="sidebar-badge">110+</span>
+  <span data-sr="Provere" data-en="Checks">Provere</span>
+</button>
+
+<div class="checks-sidebar-overlay" id="checksSidebarOverlay" onclick="closeChecksSidebar()">
+  <div class="checks-sidebar" id="checksSidebar" onclick="event.stopPropagation()">
+    <div class="checks-sidebar-header">
+      <h3 data-sr="Sta proveravamo" data-en="What we check">Sta proveravamo</h3>
+      <small data-sr="110+ provera u 4 kategorije" data-en="110+ checks in 4 categories">110+ provera u 4 kategorije</small>
+      <button class="checks-sidebar-close" onclick="closeChecksSidebar()" aria-label="Close">&times;</button>
+    </div>
+    <div class="checks-sidebar-scroll">
+
+      <!-- Security -->
+      <div class="sb-category open" id="sbSecurity">
+        <button class="sb-cat-toggle" onclick="toggleSbCategory('sbSecurity')">
+          <span class="sb-cat-icon">&#128272;</span>
+          <span class="sb-cat-name" data-sr="Bezbednost" data-en="Security">Bezbednost</span>
+          <span class="sb-cat-count" data-sr="60+ provera" data-en="60+ checks">60+ provera</span>
+          <span class="sb-cat-chevron">&#9654;</span>
+        </button>
+        <div class="sb-cat-body">
+          <div class="sb-check-item" data-sr="SSL/TLS sertifikati i enkripcija" data-en="SSL/TLS certificates &amp; encryption">SSL/TLS sertifikati i enkripcija</div>
+          <div class="sb-check-item" data-sr="HTTP sigurnosni headeri (7 provera)" data-en="HTTP security headers (7 checks)">HTTP sigurnosni headeri (7 provera)</div>
+          <div class="sb-check-item" data-sr="DNS bezbednost (SPF/DMARC/DNSSEC)" data-en="DNS security (SPF/DMARC/DNSSEC)">DNS bezbednost (SPF/DMARC/DNSSEC)</div>
+          <div class="sb-check-item" data-sr="Detekcija ranjivosti (SQL, XSS, CSRF)" data-en="Vulnerability detection (SQL, XSS, CSRF)">Detekcija ranjivosti (SQL, XSS, CSRF)</div>
+          <div class="sb-check-item" data-sr="Osetljivi fajlovi, portovi, CORS" data-en="Sensitive files, ports, CORS">Osetljivi fajlovi, portovi, CORS</div>
+          <div class="sb-check-item" data-sr="WHOIS informacije o domenu" data-en="WHOIS domain information">WHOIS informacije o domenu</div>
+          <div class="sb-check-item" data-sr="Email bezbednost (MTA-STS, DANE, TLS-RPT)" data-en="Email security (MTA-STS, DANE, TLS-RPT)">Email bezbednost (MTA-STS, DANE, TLS-RPT)</div>
+          <div class="sb-check-item" data-sr="Mozilla Observatory ocena" data-en="Mozilla Observatory score">Mozilla Observatory ocena</div>
+          <div class="sb-check-item" data-sr="Tech stack detekcija" data-en="Tech stack detection">Tech stack detekcija</div>
+          <div class="sb-check-item" data-sr="Certificate Transparency logovi" data-en="Certificate Transparency logs">Certificate Transparency logovi</div>
+          <div class="sb-check-item" data-sr="Cookie bezbednost (Secure, HttpOnly, SameSite)" data-en="Cookie security (Secure, HttpOnly, SameSite)">Cookie bezbednost (Secure, HttpOnly, SameSite)</div>
+          <div class="sb-check-item" data-sr="Redirect lanci i petlje" data-en="Redirect chains &amp; loops">Redirect lanci i petlje</div>
+          <div class="sb-check-item" data-sr="CMS detekcija (WordPress, Joomla, Drupal...)" data-en="CMS detection (WordPress, Joomla, Drupal...)">CMS detekcija (WordPress, Joomla, Drupal...)</div>
+          <div class="sb-check-item" data-sr="JWT analiza (alg:none, slabi kljucevi)" data-en="JWT analysis (alg:none, weak keys)">JWT analiza (alg:none, slabi kljucevi)</div>
+          <div class="sb-check-item" data-sr="Information disclosure (verzije, debug)" data-en="Information disclosure (versions, debug)">Information disclosure (verzije, debug)</div>
+          <div class="sb-check-item" data-sr=".well-known endpoint-ovi (8 IETF/W3C)" data-en=".well-known endpoints (8 IETF/W3C)">.well-known endpoint-ovi (8 IETF/W3C)</div>
+          <div class="sb-check-item" data-sr="JavaScript bezbednost (inline, SRI, source maps)" data-en="JavaScript security (inline, SRI, source maps)">JavaScript bezbednost (inline, SRI, source maps)</div>
+          <div class="sb-cat-more" data-sr="+ port scan, admin paneli, subdomain enum, takeover detekcija (puni sken)" data-en="+ port scan, admin panels, subdomain enum, takeover detection (full scan)">+ port scan, admin paneli, subdomain enum, takeover detekcija (puni sken)</div>
+          <a href="./blog-security.html" class="sb-cat-link" data-sr="Saznajte vise &rarr;" data-en="Learn more &rarr;">Saznajte vise &rarr;</a>
+        </div>
+      </div>
+
+      <!-- SEO -->
+      <div class="sb-category" id="sbSeo">
+        <button class="sb-cat-toggle" onclick="toggleSbCategory('sbSeo')">
+          <span class="sb-cat-icon">&#128270;</span>
+          <span class="sb-cat-name" data-sr="SEO Analiza" data-en="SEO Analysis">SEO Analiza</span>
+          <span class="sb-cat-count" data-sr="12 provera" data-en="12 checks">12 provera</span>
+          <span class="sb-cat-chevron">&#9654;</span>
+        </button>
+        <div class="sb-cat-body">
+          <div class="sb-check-item" data-sr="Title, description, viewport" data-en="Title, description, viewport">Title, description, viewport</div>
+          <div class="sb-check-item" data-sr="Open Graph i Twitter Cards" data-en="Open Graph &amp; Twitter Cards">Open Graph i Twitter Cards</div>
+          <div class="sb-check-item" data-sr="Heading struktura (H1-H6)" data-en="Heading structure (H1-H6)">Heading struktura (H1-H6)</div>
+          <div class="sb-check-item" data-sr="Sitemap.xml i robots.txt" data-en="Sitemap.xml &amp; robots.txt">Sitemap.xml i robots.txt</div>
+          <div class="sb-check-item" data-sr="Strukturirani podaci (Schema.org)" data-en="Structured data (Schema.org)">Strukturirani podaci (Schema.org)</div>
+          <div class="sb-check-item" data-sr="Canonical URL" data-en="Canonical URL">Canonical URL</div>
+          <div class="sb-check-item" data-sr="Hreflang / lang atribut" data-en="Hreflang / lang attribute">Hreflang / lang atribut</div>
+          <div class="sb-check-item" data-sr="Alt tekst za slike" data-en="Image alt text">Alt tekst za slike</div>
+          <div class="sb-check-item" data-sr="Robots meta direktive" data-en="Robots meta directives">Robots meta direktive</div>
+          <a href="./blog-seo.html" class="sb-cat-link" data-sr="Saznajte vise &rarr;" data-en="Learn more &rarr;">Saznajte vise &rarr;</a>
+        </div>
+      </div>
+
+      <!-- Performance -->
+      <div class="sb-category" id="sbPerf">
+        <button class="sb-cat-toggle" onclick="toggleSbCategory('sbPerf')">
+          <span class="sb-cat-icon">&#9889;</span>
+          <span class="sb-cat-name" data-sr="Performanse" data-en="Performance">Performanse</span>
+          <span class="sb-cat-count" data-sr="16 provera" data-en="16 checks">16 provera</span>
+          <span class="sb-cat-chevron">&#9654;</span>
+        </button>
+        <div class="sb-cat-body">
+          <div class="sb-check-item" data-sr="TTFB (vreme odgovora servera)" data-en="TTFB (server response time)">TTFB (vreme odgovora servera)</div>
+          <div class="sb-check-item" data-sr="Kompresija (Gzip/Brotli)" data-en="Compression (Gzip/Brotli)">Kompresija (Gzip/Brotli)</div>
+          <div class="sb-check-item" data-sr="Cache headeri i HTTP/2" data-en="Cache headers &amp; HTTP/2">Cache headeri i HTTP/2</div>
+          <div class="sb-check-item" data-sr="Lazy loading i optimizacija slika" data-en="Lazy loading &amp; image optimization">Lazy loading i optimizacija slika</div>
+          <div class="sb-check-item" data-sr="Velicina stranice i resursa" data-en="Page &amp; resource size">Velicina stranice i resursa</div>
+          <div class="sb-check-item" data-sr="Minifikacija CSS/JS" data-en="CSS/JS minification">Minifikacija CSS/JS</div>
+          <div class="sb-check-item" data-sr="HTTP/2 i HTTP/3 podrska" data-en="HTTP/2 &amp; HTTP/3 support">HTTP/2 i HTTP/3 podrska</div>
+          <div class="sb-check-item" data-sr="Pristupacnost (ARIA, forme, headings)" data-en="Accessibility (ARIA, forms, headings)">Pristupacnost (ARIA, forme, headings)</div>
+          <div class="sb-check-item" data-sr="Tabindex i fokus redosled" data-en="Tabindex &amp; focus order">Tabindex i fokus redosled</div>
+          <a href="./blog-performance.html" class="sb-cat-link" data-sr="Saznajte vise &rarr;" data-en="Learn more &rarr;">Saznajte vise &rarr;</a>
+        </div>
+      </div>
+
+      <!-- GDPR -->
+      <div class="sb-category" id="sbGdpr">
+        <button class="sb-cat-toggle" onclick="toggleSbCategory('sbGdpr')">
+          <span class="sb-cat-icon">&#128274;</span>
+          <span class="sb-cat-name" data-sr="GDPR / Privatnost" data-en="GDPR / Privacy">GDPR / Privatnost</span>
+          <span class="sb-cat-count" data-sr="7 provera" data-en="7 checks">7 provera</span>
+          <span class="sb-cat-chevron">&#9654;</span>
+        </button>
+        <div class="sb-cat-body">
+          <div class="sb-check-item" data-sr="Privacy Policy detekcija" data-en="Privacy Policy detection">Privacy Policy detekcija</div>
+          <div class="sb-check-item" data-sr="Cookie consent mehanizam" data-en="Cookie consent mechanism">Cookie consent mehanizam</div>
+          <div class="sb-check-item" data-sr="Third-party trackeri (GA, FB, Hotjar)" data-en="Third-party trackers (GA, FB, Hotjar)">Third-party trackeri (GA, FB, Hotjar)</div>
+          <div class="sb-check-item" data-sr="HTTPS za podatke korisnika" data-en="HTTPS for user data">HTTPS za podatke korisnika</div>
+          <div class="sb-check-item" data-sr="Forme i enkripcija podataka" data-en="Forms &amp; data encryption">Forme i enkripcija podataka</div>
+          <div class="sb-check-item" data-sr="Uslovi koriscenja" data-en="Terms of service">Uslovi koriscenja</div>
+          <div class="sb-check-item" data-sr="Third-party cookies analiza" data-en="Third-party cookies analysis">Third-party cookies analiza</div>
+          <a href="./blog-gdpr.html" class="sb-cat-link" data-sr="Saznajte vise &rarr;" data-en="Learn more &rarr;">Saznajte vise &rarr;</a>
+        </div>
+      </div>
+
+    </div>
+    <div class="sb-footer">
+      <div class="sb-footer-extra" data-sr="+ Crawler (do 20 stranica) &bull; Risk Engine &bull; WHOIS &bull; Tech Stack &bull; Email &bull; Mozilla Observatory" data-en="+ Crawler (up to 20 pages) &bull; Risk Engine &bull; WHOIS &bull; Tech Stack &bull; Email &bull; Mozilla Observatory">+ Crawler (do 20 stranica) &bull; Risk Engine &bull; WHOIS &bull; Tech Stack &bull; Email &bull; Mozilla Observatory</div>
+      <a href="./blog-features.html" class="sb-footer-link" data-sr="Kompletna lista 110+ provera &rarr;" data-en="Full list of 110+ checks &rarr;">Kompletna lista 110+ provera &rarr;</a>
     </div>
   </div>
 </div>
