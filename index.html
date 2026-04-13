@@ -2293,11 +2293,23 @@ function _fetchPublicIP() {
 }
 
 // Get or generate per-session ID (persists across page refreshes in same tab)
+// Must be a valid UUID — backend stores it in a Postgres UUID column and
+// rejects anything else (silently drops the scan from the DB).
 function _getSessionId() {
   try {
     var sid = sessionStorage.getItem("wss_session_id");
-    if (!sid) {
-      sid = "s" + Date.now().toString(36) + Math.random().toString(36).substring(2, 10);
+    var uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!sid || !uuidRe.test(sid)) {
+      if (window.crypto && typeof crypto.randomUUID === "function") {
+        sid = crypto.randomUUID();
+      } else {
+        // RFC 4122 v4 fallback for older browsers
+        sid = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c) {
+          var r = (crypto.getRandomValues(new Uint8Array(1))[0]) % 16;
+          var v = c === "x" ? r : (r & 0x3) | 0x8;
+          return v.toString(16);
+        });
+      }
       sessionStorage.setItem("wss_session_id", sid);
     }
     return sid;
