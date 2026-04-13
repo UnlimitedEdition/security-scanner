@@ -5140,6 +5140,7 @@ async function _wizardInlinePoll(scanId) {
         if (pctEl) pctEl.textContent = pct + "%";
         var stepEl = document.getElementById("progressStep");
         if (stepEl && data.step) stepEl.textContent = data.step;
+        if (typeof updateModules === "function") updateModules(data.step || "", pct);
       }
       if (data.status === "completed") {
         if (data.result) data.result.id = data.id || scanId;
