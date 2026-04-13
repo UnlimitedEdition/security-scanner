@@ -2684,6 +2684,12 @@ async function startScan() {
     // Non-fatal: fall back to single-page scan with a warning. This
     // protects the main scan flow from a discovery-only bug.
     console.warn("Pro discovery failed, falling back to single-page scan:", discoveryErr);
+    showToast(
+      currentLang === "en"
+        ? "Multi-page discovery failed (" + (discoveryErr.message || "error") + "). Scanning homepage only."
+        : "Pronalazak stranica nije uspeo (" + (discoveryErr.message || "greska") + "). Skeniram samo homepage.",
+      "warning"
+    );
     selectedPages = null;
   }
 
