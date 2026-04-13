@@ -60,15 +60,29 @@ USER_AGENT = (
     "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 )
 
+# Fallback UA used when the primary fetch looks like a bot/block page.
+# Some WAFs (Cloudflare in particular) treat datacenter IPs + desktop Chrome UA
+# more harshly than a plain mobile UA. We retry once to reduce false-positive
+# SEO/GDPR/perf failures when the real site is fine for human visitors.
+FALLBACK_UA = (
+    "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
+)
 
-def _detect_bot_protection(body: str, headers: dict) -> bool:
-    """Detect if response is a bot challenge page instead of real content."""
+
+def _detect_bot_protection(body: str, headers: dict, status_code: int = 200) -> bool:
+    """Detect if response is a bot challenge / WAF block page instead of real content."""
+    # HTTP-level block (Cloudflare, AWS WAF, Imperva often respond with 403/503
+    # to datacenter IPs). An empty body is only meaningful in context of status.
+    if status_code in (403, 429, 503):
+        return True
+
     if not body:
         return False
 
     body_lower = body.lower()
 
-    # Known challenge page signatures
+    # Known challenge / block page signatures
     challenge_signs = [
         "vercel security checkpoint",
         "checking your browser",
@@ -81,19 +95,34 @@ def _detect_bot_protection(body: str, headers: dict) -> bool:
         "attention required",
         "enable javascript and cookies to continue",
         "browser verification",
+        "sorry, you have been blocked",
+        "access denied",
+        "forbidden",
+        "you don't have permission",
     ]
     for sign in challenge_signs:
         if sign in body_lower:
             return True
 
-    # Very short body with no real HTML structure = likely challenge
-    # Real pages have at least some content
     has_title = "<title" in body_lower
     has_body_content = len(body) > 2000
     has_meta = '<meta name="description"' in body_lower or '<meta name="viewport"' in body_lower
 
-    # If page has < 1500 chars and no standard meta tags, likely a challenge
+    # Short body without standard meta tags = likely challenge / error page
     if len(body) < 1500 and not has_meta and not has_title:
+        return True
+
+    # HTML sanity: a real page of any size has at least one of <html>, <head>,
+    # <body>, or <title>. A response of a few KB without any of these is almost
+    # certainly a block page, error page, or non-HTML payload — treat as blocked
+    # so downstream SEO/GDPR/perf checks don't produce nonsense failures.
+    has_html_struct = (
+        "<html" in body_lower
+        or "<head" in body_lower
+        or "<body" in body_lower
+        or "<title" in body_lower
+    )
+    if len(body) > 200 and not has_html_struct:
         return True
 
     # Check for challenge-related headers
@@ -389,7 +418,41 @@ def scan(
             except Exception:
                 pass
 
-        bot_blocked = _detect_bot_protection(response_body, response_headers)
+        bot_blocked = _detect_bot_protection(
+            response_body, response_headers,
+            status_code=main_response.status_code if main_response else 200,
+        )
+
+        # Generic retry with a mobile UA — some WAFs (notably Cloudflare) give
+        # datacenter IPs + desktop Chrome UA a harder time than a mobile UA from
+        # the same IP. One retry avoids false-positive SEO/GDPR failures when
+        # the site actually renders fine for real users.
+        if bot_blocked:
+            try:
+                retry_session = requests.Session()
+                retry_session.verify = True
+                retry_session.headers.update({
+                    "User-Agent": FALLBACK_UA,
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                    "Accept-Language": "en-US,en;q=0.5",
+                })
+                retry_resp = safe_get(retry_session, base_url, timeout=15)
+                retry_body = retry_resp.text[:50000]
+                retry_blocked = _detect_bot_protection(
+                    retry_body, dict(retry_resp.headers),
+                    status_code=retry_resp.status_code,
+                )
+                if not retry_blocked and len(retry_body) > 500:
+                    main_response = retry_resp
+                    response_headers = dict(retry_resp.headers)
+                    response_body = retry_body
+                    response_time_ms = retry_resp.elapsed.total_seconds() * 1000
+                    page_size_bytes = len(retry_resp.content)
+                    session = retry_session
+                    bot_blocked = False
+            except Exception:
+                pass
+
         if bot_blocked:
             # If page has real content despite bot detection, keep it (false positive)
             has_real_content = (
