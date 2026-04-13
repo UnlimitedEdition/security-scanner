@@ -2149,29 +2149,37 @@ def api_discover(req: DiscoverRequest, request: Request):
         r = _safe_get(s, base_url, timeout=15)
         return s, r
 
+    # For discovery we do NOT gate on _detect_bot_protection — that heuristic
+    # gives false positives on large legitimate pages (e.g. sites that embed
+    # Cloudflare analytics JS but render real content). Accept any HTTP 2xx/3xx
+    # with a non-trivial HTML body and let the crawler decide. If the crawler
+    # finds no links we fall back to [homepage] below, which is still a valid
+    # Pro discovery result.
     temp_session = None
     resp = None
     body = ""
     _last_err = None
+    _attempts: list[str] = []
     for _ua in (_desktop_ua, _mobile_ua):
         try:
             _sess, _r = _try_fetch(_ua)
             _txt = _r.text[:50000] if _r.text else ""
-            _blocked = scanner._detect_bot_protection(_txt, dict(_r.headers), status_code=_r.status_code) if hasattr(scanner, "_detect_bot_protection") else False
-            if not _blocked and _r.status_code < 500 and len(_txt) > 200:
+            _attempts.append(f"ua={_ua.split('/')[0][:20]} status={_r.status_code} len={len(_txt)}")
+            if _r.status_code < 400 and len(_txt) > 200:
                 temp_session = _sess
                 resp = _r
                 body = _txt
                 break
-            _last_err = f"blocked or empty (status={_r.status_code}, len={len(_txt)})"
+            _last_err = f"HTTP {_r.status_code} / body {len(_txt)} bytes"
         except Exception as e:
+            _attempts.append(f"ua={_ua.split('/')[0][:20]} exc={type(e).__name__}")
             _last_err = str(e)[:200]
             continue
 
     if resp is None:
         raise HTTPException(
             status_code=502,
-            detail=f"Could not fetch target site: {_last_err or 'unknown error'}",
+            detail=f"Could not fetch target site: {_last_err or 'unknown error'}. Attempts: {'; '.join(_attempts)}",
         )
 
     # Run the crawler
