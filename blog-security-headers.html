@@ -3,20 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HTTP Security Headers — 7 obaveznih headera | Web Security Scanner</title>
-  <meta name="description" content="Detaljan vodic za 7 kljucnih HTTP security headera: CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy i COOP sa primerima konfiguracije.">
-  <meta name="keywords" content="security headers, CSP, HSTS, X-Frame-Options, Content-Security-Policy, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, COOP">
+  <title>HTTP Security Headers — 7 Must-Have Headers / HTTP Security Headers — 7 obaveznih headera · CSP · HSTS · COOP</title>
+  <meta name="description" content="Detailed guide to 7 essential HTTP security headers: CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, COOP with config examples. · Detaljan vodic za 7 kljucnih HTTP security headera sa primerima konfiguracije.">
+  <meta name="keywords" content="security headers, HTTP headeri, HTTP security, bezbednosni headeri, CSP, Content-Security-Policy, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, COOP, kako podesiti security headers, nginx headers, apache headers, HTTP security headers, web security headers, CSP policy, HSTS preload, clickjacking prevention, how to configure security headers, nginx security, apache security, Express.js security, secure headers">
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
   <link rel="canonical" href="https://security-skener.gradovi.rs/blog-security-headers.html">
   <link rel="alternate" hreflang="sr" href="https://security-skener.gradovi.rs/blog-security-headers.html">
-  <link rel="alternate" hreflang="en" href="https://security-skener.gradovi.rs/blog-security-headers.html">
+  <link rel="alternate" hreflang="x-default" href="https://security-skener.gradovi.rs/blog-security-headers.html">
   <meta property="og:type" content="article">
-  <meta property="og:title" content="HTTP Security Headers — 7 obaveznih headera za vas sajt">
-  <meta property="og:description" content="Naucite kako da pravilno konfiguresite CSP, HSTS, X-Frame-Options i ostale security headere za zastitu vaseg sajta.">
+  <meta property="og:title" content="HTTP Security Headers / 7 obaveznih headera">
+  <meta property="og:description" content="Learn how to configure CSP, HSTS, X-Frame-Options and other security headers. · Naucite kako da pravilno konfiguresete CSP, HSTS, X-Frame-Options i ostale security headere.">
   <meta property="og:url" content="https://security-skener.gradovi.rs/blog-security-headers.html">
+  <meta property="og:locale" content="sr_RS">
+  <meta property="og:locale:alternate" content="en_US">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="HTTP Security Headers — 7 obaveznih headera za vas sajt">
-  <meta name="twitter:description" content="Naucite kako da pravilno konfiguresite CSP, HSTS, X-Frame-Options i ostale security headere za zastitu vaseg sajta.">
+  <meta name="twitter:title" content="HTTP Security Headers / 7 obaveznih headera">
+  <meta name="twitter:description" content="CSP, HSTS, X-Frame-Options config guide. · Vodic za konfiguraciju security headera.">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -26,7 +28,9 @@
     "publisher": {"@type": "Organization", "name": "Web Security Scanner"},
     "datePublished": "2026-04-09",
     "dateModified": "2026-04-09",
-    "description": "Detaljan vodic za 7 kljucnih HTTP security headera sa primerima konfiguracije za Nginx, Apache i Express.js.",
+    "description": "Detailed guide to 7 essential HTTP security headers with config examples for Nginx, Apache and Express.js. · Detaljan vodic za 7 kljucnih HTTP security headera sa primerima konfiguracije za Nginx, Apache i Express.js.",
+    "inLanguage": ["sr-RS", "en-US"],
+    "keywords": "security headers, CSP, HSTS, X-Frame-Options, HTTP security, Content-Security-Policy, COOP, nginx, apache, Express.js",
     "mainEntityOfPage": {
       "@type": "WebPage",
       "@id": "https://security-skener.gradovi.rs/blog-security-headers.html"

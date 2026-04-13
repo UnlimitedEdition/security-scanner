@@ -3,21 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gzip i Brotli kompresija — Kako smanjiti velicinu sajta | Web Security Scanner</title>
-  <meta name="description" content="Kompletni vodic za HTTP kompresiju: Gzip vs Brotli benchmarks, konfiguracija za Nginx/Apache/Express/Vercel, pre-kompresija, koji fajlovi se kompresuju a koji ne.">
-  <meta name="keywords" content="Gzip, Brotli, kompresija, Content-Encoding, Accept-Encoding, transfer size, HTTP kompresija, Nginx, Apache">
+  <title>Gzip &amp; Brotli Compression — Shrink Site 70-90% / Gzip i Brotli kompresija — Smanjite sajt · Nginx · Apache</title>
+  <meta name="description" content="Complete HTTP compression guide: Gzip vs Brotli benchmarks, config for Nginx/Apache/Express/Vercel, pre-compression, which files to compress. · Kompletni vodic za HTTP kompresiju: Gzip vs Brotli benchmarks, konfiguracija za Nginx/Apache/Express/Vercel, pre-kompresija.">
+  <meta name="keywords" content="Gzip, Brotli, kompresija, HTTP kompresija, Content-Encoding, Accept-Encoding, smanjenje velicine, kako ukljuciti Gzip, kako ukljuciti Brotli, Nginx kompresija, Apache kompresija, HTTP compression, Brotli vs Gzip, enable Gzip, enable Brotli, how to enable compression, Nginx gzip, Apache mod_deflate, pre-compression, compression levels, transfer size reduction">
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
   <link rel="canonical" href="https://security-skener.gradovi.rs/blog-perf-compression.html">
   <link rel="alternate" hreflang="sr" href="https://security-skener.gradovi.rs/blog-perf-compression.html">
-  <link rel="alternate" hreflang="en" href="https://security-skener.gradovi.rs/blog-perf-compression.html">
+  <link rel="alternate" hreflang="x-default" href="https://security-skener.gradovi.rs/blog-perf-compression.html">
   <meta property="og:type" content="article">
-  <meta property="og:title" content="Gzip i Brotli kompresija — Smanjite sajt za 70-90%">
-  <meta property="og:description" content="Gzip vs Brotli benchmarks, konfiguracija za sve servere, pre-kompresija i testiranje.">
+  <meta property="og:title" content="Gzip &amp; Brotli Compression / Gzip i Brotli — Smanjite sajt 70-90%">
+  <meta property="og:description" content="Gzip vs Brotli benchmarks, config for all servers, pre-compression, testing. · Gzip vs Brotli benchmarks, konfiguracija za sve servere, pre-kompresija, testiranje.">
   <meta property="og:url" content="https://security-skener.gradovi.rs/blog-perf-compression.html">
   <meta property="og:site_name" content="Web Security Scanner">
+  <meta property="og:locale" content="sr_RS">
+  <meta property="og:locale:alternate" content="en_US">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Gzip i Brotli kompresija — Smanjite sajt za 70-90%">
-  <meta name="twitter:description" content="Gzip vs Brotli benchmarks, konfiguracija za sve servere, pre-kompresija i testiranje.">
+  <meta name="twitter:title" content="Gzip &amp; Brotli Compression / Gzip i Brotli kompresija">
+  <meta name="twitter:description" content="HTTP compression guide. · HTTP kompresija vodic.">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",

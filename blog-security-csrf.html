@@ -3,20 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CSRF Napadi — Cross-Site Request Forgery | Web Security Scanner</title>
-  <meta name="description" content="Detaljno objasnjenje CSRF napada: kako funkcionisu, realni primeri (Gmail, Netflix), i kako se zastititi pomocu tokena, SameSite kolacica i framework zastite.">
-  <meta name="keywords" content="CSRF, Cross-Site Request Forgery, CSRF token, SameSite cookie, web bezbednost, OWASP">
-  <meta property="og:title" content="CSRF Napadi — Cross-Site Request Forgery | Web Security Scanner">
-  <meta property="og:description" content="Kompletni vodic za CSRF napade: kako rade, realni primeri i metode zastite ukljucujuci tokene i SameSite kolacice.">
+  <title>CSRF Attacks — Cross-Site Request Forgery Prevention / CSRF Napadi — Zastita · CSRF Token · SameSite Cookie</title>
+  <meta name="description" content="Detailed CSRF attack explanation: how they work, real examples (Gmail, Netflix), protection via tokens, SameSite cookies and framework defenses. · Detaljno objasnjenje CSRF napada: kako funkcionisu, realni primeri, zastita pomocu tokena, SameSite kolacica i framework zastite.">
+  <meta name="keywords" content="CSRF, CSRF napad, CSRF napadi, Cross-Site Request Forgery, falsifikovanje zahteva, CSRF token, SameSite kolacic, zastita od CSRF, kako sprečiti CSRF, web bezbednost, CSRF attack, CSRF prevention, how to prevent CSRF, SameSite cookie, anti-CSRF token, CSRF vulnerability, CSRF protection, double submit cookie, OWASP CSRF, synchronizer token pattern">
+  <meta property="og:title" content="CSRF Attacks / CSRF Napadi — Zastita">
+  <meta property="og:description" content="How CSRF works, real examples, protection via tokens and SameSite cookies. · Kako CSRF radi, realni primeri, zastita pomocu tokena i SameSite kolacica.">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://web-security-scanner.vercel.app/blog-security-csrf.html">
   <meta property="og:site_name" content="Web Security Scanner">
+  <meta property="og:locale" content="sr_RS">
+  <meta property="og:locale:alternate" content="en_US">
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="CSRF Napadi — Cross-Site Request Forgery | Web Security Scanner">
-  <meta name="twitter:description" content="Kompletni vodic za CSRF napade: kako rade, realni primeri i metode zastite.">
+  <meta name="twitter:title" content="CSRF Attacks / CSRF Napadi — Zastita">
+  <meta name="twitter:description" content="CSRF attacks: how they work, examples, protection. · CSRF napadi: kako rade, primeri, zastita.">
   <link rel="canonical" href="https://web-security-scanner.vercel.app/blog-security-csrf.html">
   <link rel="alternate" hreflang="sr" href="https://web-security-scanner.vercel.app/blog-security-csrf.html">
-  <link rel="alternate" hreflang="en" href="https://web-security-scanner.vercel.app/blog-security-csrf.html">
+  <link rel="alternate" hreflang="x-default" href="https://web-security-scanner.vercel.app/blog-security-csrf.html">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./blog-common.css">
@@ -25,7 +27,8 @@
     "@context": "https://schema.org",
     "@type": "Article",
     "headline": "CSRF Napadi — Cross-Site Request Forgery",
-    "description": "Kompletni vodic za CSRF napade: kako rade, realni primeri i metode zastite ukljucujuci tokene i SameSite kolacice.",
+    "description": "Complete CSRF attack guide: how they work, real examples, protection methods including tokens and SameSite cookies. · Kompletni vodic za CSRF napade: kako rade, realni primeri i metode zastite ukljucujuci tokene i SameSite kolacice.",
+    "inLanguage": ["sr-RS", "en-US"],
     "author": { "@type": "Person", "name": "Toske" },
     "publisher": { "@type": "Organization", "name": "Web Security Scanner" },
     "datePublished": "2026-04-08",
