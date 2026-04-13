@@ -60,11 +60,42 @@ def run(base_url: str, session: requests.Session) -> List[Dict[str, Any]]:
         content = resp.text
         lines = content.split("\n")
 
-        # Check for "Disallow: /" — blocks all crawlers (bad for SEO but ok for private)
-        blocks_all = any(
-            re.match(r"^Disallow:\s*/\s*$", line.strip(), re.IGNORECASE)
-            for line in lines
-        )
+        # Parse User-agent groups — a directive only applies to its preceding User-agent.
+        # Only flag "blocks all" when the User-agent: * group contains an active Disallow: /
+        # (and no Allow: / override). Per-bot blocks (GPTBot, ClaudeBot, etc.) are intentional
+        # and must not trigger this flag.
+        star_disallow_root = False
+        star_allow_root = False
+        current_agents: List[str] = []
+        prev_was_directive = False
+
+        for raw in lines:
+            line = raw.split("#", 1)[0].strip()
+            if not line:
+                prev_was_directive = False
+                continue
+            m = re.match(r"^User-agent\s*:\s*(.+)$", line, re.IGNORECASE)
+            if m:
+                # New group starts after a directive/blank; consecutive UAs share the same group.
+                if prev_was_directive:
+                    current_agents = []
+                    prev_was_directive = False
+                current_agents.append(m.group(1).strip())
+                continue
+            if re.match(r"^Disallow\s*:", line, re.IGNORECASE):
+                prev_was_directive = True
+                if "*" in current_agents and re.match(r"^Disallow\s*:\s*/\s*$", line, re.IGNORECASE):
+                    star_disallow_root = True
+                continue
+            if re.match(r"^Allow\s*:", line, re.IGNORECASE):
+                prev_was_directive = True
+                if "*" in current_agents and re.match(r"^Allow\s*:\s*/\s*$", line, re.IGNORECASE):
+                    star_allow_root = True
+                continue
+            # Other directives (Sitemap, Crawl-delay, Host) don't belong to a UA group.
+            prev_was_directive = True
+
+        blocks_all = star_disallow_root and not star_allow_root
         if blocks_all:
             results.append({
                 "id": "robots_blocks_all",

@@ -6,10 +6,34 @@ Checks if database/service ports are accidentally exposed to the internet.
 Passive TCP connect check — no exploitation, no data sent.
 """
 import socket
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional, Tuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 TIMEOUT = 3
+
+# Headers / banners that mean "this port is owned by a CDN/edge proxy, not the
+# origin server". When 8080/8443 are answered by an edge, the finding is a
+# false positive — the customer doesn't own that port, the CDN does.
+CDN_HEADER_MARKERS = (
+    "cloudflare", "cf-ray", "vercel", "x-vercel-id",
+    "fastly", "x-served-by", "akamai", "x-amz-cf-id",
+    "x-cache: hit", "x-cache: miss", "envoy", "google frontend",
+)
+
+
+def _looks_like_cdn(host: str, port: int) -> bool:
+    """Best-effort HTTP probe: open the port, send a minimal HTTP request,
+    and look for CDN/edge fingerprints in the response. Failure-safe — any
+    exception means 'unknown', not 'cdn'."""
+    try:
+        with socket.create_connection((host, port), timeout=TIMEOUT) as sock:
+            sock.settimeout(TIMEOUT)
+            req = f"HEAD / HTTP/1.0\r\nHost: {host}\r\n\r\n".encode("ascii", errors="ignore")
+            sock.sendall(req)
+            data = sock.recv(2048).decode("utf-8", errors="ignore").lower()
+            return any(marker in data for marker in CDN_HEADER_MARKERS)
+    except Exception:
+        return False
 
 DANGEROUS_PORTS = [
     (3306, "MySQL baza podataka", "CRITICAL",
@@ -200,6 +224,23 @@ def run(domain: str) -> List[Dict[str, Any]]:
 
     if open_ports:
         for port, name, severity, desc_sr, desc_en, rec_sr, rec_en in open_ports:
+            # 8080/8443 false positive guard: if a CDN/edge answers, the port
+            # belongs to the edge, not to the customer. Demote to INFO+passed
+            # with a note instead of a MEDIUM/LOW finding.
+            if port in (8080, 8443) and _looks_like_cdn(domain, port):
+                results.append({
+                    "id": f"port_{port}_cdn",
+                    "category": "Open Ports",
+                    "severity": "INFO",
+                    "passed": True,
+                    "title": f"Port {port} odgovara CDN/edge proxy (ne origin server)",
+                    "title_en": f"Port {port} answered by a CDN/edge proxy (not the origin server)",
+                    "description": f"Port {port} je 'otvoren' samo zato što je domen iza CDN-a (Cloudflare/Vercel/Fastly/...). Edge sloj rutira saobraćaj — vi ne kontrolišete šta sluša na tom portu, niti je on direktno povezan sa vašim serverom.",
+                    "description_en": f"Port {port} is 'open' only because the domain sits behind a CDN (Cloudflare/Vercel/Fastly/...). The edge layer routes traffic — you don't control what listens on that port, and it isn't directly tied to your server.",
+                    "recommendation": "",
+                    "recommendation_en": "",
+                })
+                continue
             results.append({
                 "id": f"port_{port}_open",
                 "category": "Open Ports",

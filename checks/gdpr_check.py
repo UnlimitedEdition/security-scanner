@@ -38,7 +38,7 @@ def run(base_url: str, response_body: str, response_headers: dict,
 def _check_privacy_policy(base_url, body, session):
     results = []
     privacy_patterns = [
-        r'href=["\'][^"\']*(?:privacy|privacy-policy|politika-privatnosti)[^"\']*["\']'
+        r'href=["\'][^"\']*(?:privacy|privacy-policy|privacy_policy|privatnost|politika-privatnosti|politika_privatnosti|gdpr|data-protection|zastita-podataka)[^"\']*["\']'
     ]
     found = False
     for pattern in privacy_patterns:
@@ -47,13 +47,18 @@ def _check_privacy_policy(base_url, body, session):
             break
 
     if not found:
-        # Try fetching common privacy policy URLs
-        test_paths = ["/privacy-policy", "/privacy", "/politika-privatnosti"]
+        # Try fetching common privacy policy URLs (HTML and slug variants)
+        test_paths = [
+            "/privacy.html", "/privacy", "/privacy-policy", "/privacy-policy.html",
+            "/privatnost", "/privatnost.html",
+            "/politika-privatnosti", "/politika-privatnosti.html",
+            "/gdpr", "/gdpr.html",
+        ]
         for path in test_paths:
             try:
                 url = base_url.rstrip("/") + path
                 resp = safe_head(session, url, timeout=TIMEOUT)
-                if resp.status_code == 200:
+                if resp.status_code in (200, 301, 302, 303, 307, 308):
                     found = True
                     break
             except Exception:

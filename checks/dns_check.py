@@ -143,9 +143,25 @@ def _is_platform_domain(domain: str) -> bool:
     return False
 
 
+def _has_mx_records(domain: str) -> bool:
+    """True if the domain advertises MX records (i.e. receives email).
+    Failure-modes (NXDOMAIN, NoAnswer, timeout, etc.) all mean 'no MX'."""
+    try:
+        answers = dns.resolver.resolve(domain, "MX", lifetime=5)
+        return any(True for _ in answers)
+    except Exception:
+        return False
+
+
 def run(domain: str) -> List[Dict[str, Any]]:
     results = []
     is_platform = _is_platform_domain(domain)
+    has_mx = _has_mx_records(domain)
+    # When there is no MX, SPF/DMARC missing is a much weaker signal —
+    # spoofing protections matter only if the domain actually sends mail.
+    no_mail_severity = "LOW"
+    no_mail_note_sr = " (domen nema MX zapise pa email spoofing nije aktivan rizik — preporučeno je dodati ipak za zaštitu od podvaljivanja imena)."
+    no_mail_note_en = " (domain has no MX records so email spoofing isn't an active risk — still recommended to add as protection against name impersonation)."
 
     # --- SPF Check ---
     try:
@@ -243,12 +259,12 @@ def run(domain: str) -> List[Dict[str, Any]]:
                 results.append({
                     "id": "dns_spf_missing",
                     "category": "DNS Security",
-                    "severity": "HIGH",
+                    "severity": "HIGH" if has_mx else no_mail_severity,
                     "passed": False,
                     "title": "SPF record nedostaje \u2014 email spoofing mogu\u0107",
                     "title_en": "SPF Record Missing \u2014 Email Spoofing Possible",
-                    "description": "Bez SPF recorda, napada\u010d mo\u017ee poslati email koji izgleda kao da dolazi sa va\u0161eg domena. Klijenti mogu dobiti la\u017ene fakture ili phishing emailove.",
-                    "description_en": "Without an SPF record, anyone can send email that appears to come from your domain. Clients may receive fake invoices or phishing emails.",
+                    "description": "Bez SPF recorda, napada\u010d mo\u017ee poslati email koji izgleda kao da dolazi sa va\u0161eg domena. Klijenti mogu dobiti la\u017ene fakture ili phishing emailove." + ("" if has_mx else no_mail_note_sr),
+                    "description_en": "Without an SPF record, anyone can send email that appears to come from your domain. Clients may receive fake invoices or phishing emails." + ("" if has_mx else no_mail_note_en),
                     "recommendation": 'Dodajte TXT record: v=spf1 include:_spf.yourmailprovider.com ~all',
                     "recommendation_en": 'Add TXT record: v=spf1 include:_spf.yourmailprovider.com ~all',
                 })
@@ -270,12 +286,12 @@ def run(domain: str) -> List[Dict[str, Any]]:
             results.append({
                 "id": "dns_spf_missing",
                 "category": "DNS Security",
-                "severity": "HIGH",
+                "severity": "HIGH" if has_mx else no_mail_severity,
                 "passed": False,
                 "title": "SPF record nedostaje",
                 "title_en": "SPF Record Missing",
-                "description": "Nije prona\u0111en SPF TXT record za ovaj domen.",
-                "description_en": "No SPF TXT record found for this domain.",
+                "description": "Nije prona\u0111en SPF TXT record za ovaj domen." + ("" if has_mx else no_mail_note_sr),
+                "description_en": "No SPF TXT record found for this domain." + ("" if has_mx else no_mail_note_en),
                 "recommendation": "Dodajte SPF record da za\u0161titite domen od email spoofing-a.",
                 "recommendation_en": "Add an SPF record to protect your domain from email spoofing.",
             })
@@ -327,12 +343,12 @@ def run(domain: str) -> List[Dict[str, Any]]:
                 results.append({
                     "id": "dns_dmarc_missing",
                     "category": "DNS Security",
-                    "severity": "HIGH",
+                    "severity": "HIGH" if has_mx else no_mail_severity,
                     "passed": False,
                     "title": "DMARC record nedostaje",
                     "title_en": "DMARC Record Missing",
-                    "description": "Bez DMARC-a nema izve\u0161tavanja o poku\u0161ajima spoofing-a i emailovi sa va\u0161eg domena lak\u0161e prolaze spam filtere napada\u010da.",
-                    "description_en": "Without DMARC there is no reporting on spoofing attempts and spoofed emails from your domain more easily pass spam filters.",
+                    "description": "Bez DMARC-a nema izve\u0161tavanja o poku\u0161ajima spoofing-a i emailovi sa va\u0161eg domena lak\u0161e prolaze spam filtere napada\u010da." + ("" if has_mx else no_mail_note_sr),
+                    "description_en": "Without DMARC there is no reporting on spoofing attempts and spoofed emails from your domain more easily pass spam filters." + ("" if has_mx else no_mail_note_en),
                     "recommendation": 'Dodajte TXT record na _dmarc.yourdomain.com: v=DMARC1; p=quarantine; rua=mailto:dmarc@yourdomain.com',
                     "recommendation_en": 'Add TXT record at _dmarc.yourdomain.com: v=DMARC1; p=quarantine; rua=mailto:dmarc@yourdomain.com',
                 })
@@ -354,12 +370,12 @@ def run(domain: str) -> List[Dict[str, Any]]:
             results.append({
                 "id": "dns_dmarc_missing",
                 "category": "DNS Security",
-                "severity": "HIGH",
+                "severity": "HIGH" if has_mx else no_mail_severity,
                 "passed": False,
                 "title": "DMARC record nedostaje",
                 "title_en": "DMARC Record Missing",
-                "description": "Nije prona\u0111en DMARC record za ovaj domen.",
-                "description_en": "No DMARC record found for this domain.",
+                "description": "Nije prona\u0111en DMARC record za ovaj domen." + ("" if has_mx else no_mail_note_sr),
+                "description_en": "No DMARC record found for this domain." + ("" if has_mx else no_mail_note_en),
                 "recommendation": "Dodajte DMARC record na _dmarc.yourdomain.com.",
                 "recommendation_en": "Add a DMARC record at _dmarc.yourdomain.com.",
             })

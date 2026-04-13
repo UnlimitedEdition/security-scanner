@@ -377,19 +377,9 @@ def _check_robots_seo(base_url, session):
     try:
         resp = safe_get(session, base_url.rstrip("/") + "/robots.txt", timeout=TIMEOUT)
         if resp.status_code == 200 and len(resp.text) > 5:
-            if "disallow: /" in resp.text.lower() and "disallow: / " not in resp.text.lower():
-                lines = resp.text.lower().split("\n")
-                for line in lines:
-                    line = line.strip()
-                    if line == "disallow: /":
-                        results.append(_fail("seo_robots_block", "HIGH",
-                            "robots.txt blokira sve pretrazivace!",
-                            "robots.txt blocks all search engines!",
-                            "Disallow: / u robots.txt blokira indeksiranje celokupnog sajta. Nijedna stranica nece biti u Google rezultatima.",
-                            "Disallow: / in robots.txt blocks indexing of the entire site. No pages will appear in Google results.",
-                            "Promenite na: Disallow: (prazno) ili uklonite tu liniju.",
-                            "Change to: Disallow: (empty) or remove that line."))
-                        return results
+            # Note: duplicate "blocks all" detection is owned by checks/robots_check.py
+            # (robots_blocks_all). This check only reports OK / missing, to avoid two IDs
+            # flagging the same condition.
             results.append(_pass("seo_robots_ok",
                 "robots.txt prisutan i pravilno konfigurisan",
                 "robots.txt present and properly configured",

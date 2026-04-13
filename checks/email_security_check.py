@@ -40,13 +40,14 @@ def run(domain: str) -> List[Dict[str, Any]]:
             })
         mx_records.sort(key=lambda x: x["priority"])
     except (dns.resolver.NoAnswer, dns.resolver.NXDOMAIN):
-        results.append(_fail("email_no_mx", "MEDIUM",
-            "MX zapisi ne postoje — domen ne prima email",
-            "MX records not found — domain does not receive email",
-            "Domen nema MX zapise sto znaci da ne moze primati email. Ako koristite email na ovom domenu, ovo je problem.",
-            "Domain has no MX records which means it cannot receive email. If you use email on this domain, this is an issue.",
-            "Dodajte MX zapise kod vaseg DNS provajdera.",
-            "Add MX records at your DNS provider."))
+        # No MX is normal for many static / web-only domains. Report as INFO
+        # rather than a failure — SPF/DMARC checks downstream will treat this
+        # signal as "domain does not send mail" and skip their own findings.
+        results.append(_pass("email_no_mx",
+            "Domen nema MX zapise (ne prima email)",
+            "Domain has no MX records (does not receive email)",
+            "Ovo je normalno za sajtove koji ne koriste email na svom domenu (npr. statik sajtovi, landing strane). Ako planirate da primate email na ovom domenu, dodajte MX zapise.",
+            "This is normal for sites that don't use email on their domain (e.g. static sites, landing pages). If you plan to receive email on this domain, add MX records."))
         return results
     except dns.exception.Timeout:
         return results
