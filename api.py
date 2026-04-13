@@ -2129,21 +2129,48 @@ def api_discover(req: DiscoverRequest, request: Request):
         )
         raise HTTPException(status_code=403, detail="Domain blocked by abuse report.")
 
-    # Fetch homepage to extract initial links for the crawler
-    try:
-        temp_session = requests.Session()
-        temp_session.verify = True
-        temp_session.headers.update({
-            "User-Agent": scanner.USER_AGENT if hasattr(scanner, "USER_AGENT") else "Mozilla/5.0 (compatible; WebSecurityScanner/Pro)",
-            "Accept": "text/html,application/xhtml+xml",
+    # Fetch homepage to extract initial links for the crawler.
+    # WAFs (Cloudflare, Vercel, Firebase) often block datacenter IP + desktop
+    # Chrome UA — same pattern scanner.py uses: try desktop first, retry with
+    # mobile UA on block/failure before giving up.
+    from security_utils import safe_get as _safe_get
+    _desktop_ua = scanner.USER_AGENT if hasattr(scanner, "USER_AGENT") else "Mozilla/5.0 (compatible; WebSecurityScanner/Pro)"
+    _mobile_ua = getattr(scanner, "FALLBACK_UA", None) or "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+
+    def _try_fetch(ua: str):
+        s = requests.Session()
+        s.verify = True
+        s.headers.update({
+            "User-Agent": ua,
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.5",
         })
-        from security_utils import safe_get as _safe_get
-        resp = _safe_get(temp_session, base_url, timeout=15)
-        body = resp.text[:50000] if resp.text else ""
-    except Exception as e:
+        r = _safe_get(s, base_url, timeout=15)
+        return s, r
+
+    temp_session = None
+    resp = None
+    body = ""
+    _last_err = None
+    for _ua in (_desktop_ua, _mobile_ua):
+        try:
+            _sess, _r = _try_fetch(_ua)
+            _txt = _r.text[:50000] if _r.text else ""
+            _blocked = scanner._detect_bot_protection(_txt, dict(_r.headers), status_code=_r.status_code) if hasattr(scanner, "_detect_bot_protection") else False
+            if not _blocked and _r.status_code < 500 and len(_txt) > 200:
+                temp_session = _sess
+                resp = _r
+                body = _txt
+                break
+            _last_err = f"blocked or empty (status={_r.status_code}, len={len(_txt)})"
+        except Exception as e:
+            _last_err = str(e)[:200]
+            continue
+
+    if resp is None:
         raise HTTPException(
             status_code=502,
-            detail=f"Could not fetch target site: {str(e)[:200]}",
+            detail=f"Could not fetch target site: {_last_err or 'unknown error'}",
         )
 
     # Run the crawler

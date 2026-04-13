@@ -3904,6 +3904,32 @@ document.addEventListener("DOMContentLoaded", function() {
         .catch(function() { sessionStorage.removeItem("active_scan_id"); });
     }
   } catch(e) {}
+
+  // Load scan from ?scan=<id> URL param (account.html history links)
+  try {
+    var _params = new URLSearchParams(location.search);
+    var _scanParam = _params.get("scan");
+    if (_scanParam) {
+      var _headers = {};
+      if (window._browserFingerprint) _headers["X-Fingerprint-Hash"] = window._browserFingerprint;
+      fetch(API_BASE + "/scan/" + encodeURIComponent(_scanParam), { headers: _headers })
+        .then(function(r) { return r.ok ? r.json() : null; })
+        .then(function(d) {
+          if (!d) return;
+          if (d.status === "completed" && d.result) {
+            currentResults = d.result;
+            renderResults(d.result);
+            history.replaceState({}, "", "./index.html");
+          } else if (d.status === "running" || d.status === "queued") {
+            sessionStorage.setItem("active_scan_id", _scanParam);
+            document.getElementById("progressWrap").style.display = "block";
+            document.getElementById("scanBtn").disabled = true;
+            pollScan(_scanParam);
+          }
+        })
+        .catch(function() {});
+    }
+  } catch(e) {}
 });
 
 function _verifyAppendKV(parent, keyLabel, value) {
