@@ -1863,7 +1863,7 @@ def execute_scan_request_endpoint(
         ip=client_ip,
         user_agent=user_agent,
         consent_accepted=True,
-        consent_version="2026-04-12-v3",
+        consent_version="2026-04-13-v4",
         status="queued" if queue_position > 0 else "running",
         subscription_id=(pro_sub.get("id") if pro_sub else None),
     )

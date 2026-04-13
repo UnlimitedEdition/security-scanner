@@ -2,8 +2,8 @@
  * Copyright (c) 2026 Toske-Programer (Web Security Scanner contributors)
  * =============================================
    BLOG COMMON JS — Web Security Scanner
-   Version: 2026-04-12-v3 (cookie consent loader + user-rights link)
-   Last change: 2026-04-10 14:40 UTC
+   Version: 2026-04-13-v4 (public gallery opt-in — section 15 in privacy)
+   Last change: 2026-04-13 UTC
    Injects header, footer, timeline + lang toggle
    All content is static/trusted (no user input)
    ============================================= */
@@ -210,8 +210,8 @@
   brand.appendChild(svg);
   brand.appendChild(el('span', {}, ['Web Security Scanner']));
   var verBadge = el('span', { className: 'header-version' });
-  verBadge.textContent = 'v3';
-  verBadge.title = '2026-04-12-v3';
+  verBadge.textContent = 'v4';
+  verBadge.title = '2026-04-13-v4';
   brand.appendChild(verBadge);
   headerInner.appendChild(brand);
 
