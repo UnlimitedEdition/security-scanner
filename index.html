@@ -3918,6 +3918,7 @@ document.addEventListener("DOMContentLoaded", function() {
           if (!d) return;
           if (d.status === "completed" && d.result) {
             currentResults = d.result;
+            document.getElementById("resultTabs").classList.add("visible");
             renderResults(d.result);
             history.replaceState({}, "", "./index.html");
           } else if (d.status === "running" || d.status === "queued") {
