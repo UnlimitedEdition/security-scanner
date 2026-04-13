@@ -1231,3 +1231,254 @@ def get_active_scan_requests_for_ip(ip_hash: str) -> List[Dict[str, Any]]:
         return result.data or []
 
     return _safe_db_call("get_active_scan_requests_for_ip", _do) or []
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# Public gallery (V4 — opt-in publish of scan summary)
+# ─────────────────────────────────────────────────────────────────────────
+# Writes go through the service role; RLS on public_scans allows anon
+# SELECT only. The FastAPI layer owns authorization (same-IP for
+# withdraw, rate-limit for publish) — these helpers do the DB work only.
+
+def publish_scan(
+    scan_id: str,
+    url: str,
+    domain: str,
+    score: int,
+    grade: str,
+    strictness: str,
+    total_checks: int,
+    failed_checks: int,
+    counts: Dict[str, int],
+    categories: Dict[str, Dict[str, Any]],
+    publisher_ip: str,
+    publisher_fingerprint: Optional[str] = None,
+) -> bool:
+    """
+    Insert a public_scans row. Returns True on success, False otherwise
+    (DB not configured, duplicate scan_id, or transient error).
+
+    The publisher_ip is hashed before storage. `counts` and `categories`
+    are JSONB — see migration 018 for the expected shape.
+    """
+    if not is_configured():
+        return False
+
+    def _do() -> bool:
+        client = get_client()
+        row = {
+            "scan_id": scan_id,
+            "url": url,
+            "domain": domain,
+            "score": score,
+            "grade": grade,
+            "strictness": strictness,
+            "total_checks": total_checks,
+            "failed_checks": failed_checks,
+            "counts_json": counts,
+            "categories_json": categories,
+            "publisher_ip_hash": hash_ip(publisher_ip),
+            "publisher_fingerprint": publisher_fingerprint,
+            "published_at": now_utc().isoformat(),
+        }
+        client.table("public_scans").insert(row).execute()
+        return True
+
+    out = _safe_db_call("publish_scan", _do)
+    return bool(out)
+
+
+def withdraw_scan(
+    scan_id: str,
+    client_ip: str,
+    fingerprint_hash: Optional[str] = None,
+) -> bool:
+    """
+    Soft-delete a public_scans row by setting withdrawn_at = NOW().
+
+    Authorization: caller must match EITHER the original publisher_ip_hash
+    OR the original publisher_fingerprint. Mirrors is_domain_verified's
+    dual-check so users on dynamic IPs can still withdraw from the same
+    browser. Returns True if the row was updated, False otherwise.
+    """
+    if not is_configured():
+        return False
+
+    def _do() -> bool:
+        client = get_client()
+        existing = (
+            client.table("public_scans")
+            .select("publisher_ip_hash,publisher_fingerprint,withdrawn_at")
+            .eq("scan_id", scan_id)
+            .limit(1)
+            .execute()
+        )
+        if not existing.data:
+            return False
+        row = existing.data[0]
+        if row.get("withdrawn_at"):
+            return False
+
+        ip_match = row.get("publisher_ip_hash") == hash_ip(client_ip)
+        fp_match = (
+            fingerprint_hash is not None
+            and row.get("publisher_fingerprint") == fingerprint_hash
+        )
+        if not (ip_match or fp_match):
+            return False
+
+        (
+            client.table("public_scans")
+            .update({"withdrawn_at": now_utc().isoformat()})
+            .eq("scan_id", scan_id)
+            .execute()
+        )
+        return True
+
+    out = _safe_db_call("withdraw_scan", _do)
+    return bool(out)
+
+
+PUBLIC_SORT_MODES = ("newest", "top_score", "top_paranoid", "top_strict")
+
+
+def list_public_scans(
+    limit: int = 50,
+    offset: int = 0,
+    strictness_filter: Optional[str] = None,
+    grade_filter: Optional[str] = None,
+    sort_by: str = "newest",
+) -> List[Dict[str, Any]]:
+    """
+    Fetch gallery listing rows. Only non-withdrawn rows.
+
+    sort_by:
+      - "newest":       published_at DESC (default feed)
+      - "top_score":    score DESC, newest tie-break (global leaderboard)
+      - "top_paranoid": top_score restricted to paranoid profile
+      - "top_strict":   top_score restricted to strict profile
+
+    The TOP LISTA variants exist because a paranoid-profile A is worth
+    a lot more than a basic-profile A — mixing them in one leaderboard
+    would reward picking the easier profile.
+    """
+    if not is_configured():
+        return []
+
+    limit = max(1, min(int(limit or 50), 100))
+    offset = max(0, int(offset or 0))
+    if sort_by not in PUBLIC_SORT_MODES:
+        sort_by = "newest"
+
+    def _do() -> List[Dict[str, Any]]:
+        client = get_client()
+        q = (
+            client.table("public_scans")
+            .select(
+                "scan_id,url,domain,score,grade,strictness,"
+                "total_checks,failed_checks,counts_json,"
+                "categories_json,published_at"
+            )
+            .is_("withdrawn_at", "null")
+        )
+
+        if sort_by == "top_paranoid":
+            q = q.eq("strictness", "paranoid")
+        elif sort_by == "top_strict":
+            q = q.eq("strictness", "strict")
+        elif strictness_filter:
+            q = q.eq("strictness", strictness_filter)
+
+        if grade_filter:
+            q = q.eq("grade", grade_filter)
+
+        if sort_by in ("top_score", "top_paranoid", "top_strict"):
+            q = q.order("score", desc=True).order("published_at", desc=True)
+        else:
+            q = q.order("published_at", desc=True)
+
+        result = q.range(offset, offset + limit - 1).execute()
+        return result.data or []
+
+    return _safe_db_call("list_public_scans", _do) or []
+
+
+def get_public_scan(scan_id: str) -> Optional[Dict[str, Any]]:
+    """
+    Fetch a single public_scans row for the detail page. Returns the
+    full row (including categories_json) but only when the row exists
+    and has not been withdrawn. Used by GET /api/public/{scan_id}.
+    """
+    if not is_configured():
+        return None
+
+    def _do() -> Optional[Dict[str, Any]]:
+        client = get_client()
+        result = (
+            client.table("public_scans")
+            .select("*")
+            .eq("scan_id", scan_id)
+            .is_("withdrawn_at", "null")
+            .limit(1)
+            .execute()
+        )
+        if result.data:
+            return result.data[0]
+        return None
+
+    return _safe_db_call("get_public_scan", _do)
+
+
+def count_recent_publishes_by_ip(ip: str, hours: int = 24) -> int:
+    """
+    How many publishes did this IP make in the last N hours.
+
+    Counts withdrawn rows too — otherwise a user could
+    publish/withdraw/publish/withdraw to bypass the limit.
+    """
+    if not is_configured():
+        return 0
+
+    def _do() -> int:
+        client = get_client()
+        cutoff = (now_utc() - timedelta(hours=hours)).isoformat()
+        result = (
+            client.table("public_scans")
+            .select("scan_id", count="exact")
+            .eq("publisher_ip_hash", hash_ip(ip))
+            .gte("published_at", cutoff)
+            .execute()
+        )
+        return int(getattr(result, "count", 0) or 0)
+
+    out = _safe_db_call("count_recent_publishes_by_ip", _do)
+    return int(out) if out is not None else 0
+
+
+def get_public_scan_for_owner_check(scan_id: str) -> Optional[Dict[str, Any]]:
+    """
+    Like get_public_scan() but includes withdrawn rows and the authz
+    fields (publisher_ip_hash, publisher_fingerprint, withdrawn_at).
+    Used by endpoints that need to verify ownership before a state
+    change (e.g. "already published?" check before re-publishing).
+    """
+    if not is_configured():
+        return None
+
+    def _do() -> Optional[Dict[str, Any]]:
+        client = get_client()
+        result = (
+            client.table("public_scans")
+            .select(
+                "scan_id,publisher_ip_hash,publisher_fingerprint,"
+                "withdrawn_at,published_at"
+            )
+            .eq("scan_id", scan_id)
+            .limit(1)
+            .execute()
+        )
+        if result.data:
+            return result.data[0]
+        return None
+
+    return _safe_db_call("get_public_scan_for_owner_check", _do)

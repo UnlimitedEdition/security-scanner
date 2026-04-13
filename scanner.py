@@ -46,11 +46,75 @@ import risk_engine
 # skipped and a truncation notice is added to the errors list.
 SCAN_DEADLINE_SECONDS = 180
 
-# Severity weights for scoring
+# ============================================================================
+# V4 — Strictness Profiles
+# ============================================================================
+# Four scoring profiles let the user choose how strictly the scan is judged.
+# "standard" MUST replicate V3 behavior exactly (regression gate: same input
+# produces the same score). New profiles add tougher penalties and/or widen
+# the set of categories that count toward the security score.
+#
+# Profile fields:
+#   weights             -> per-severity penalty (points deducted)
+#   diminishing         -> cap counts per severity (V3-style; False means no cap)
+#   diminishing_caps    -> caps used when diminishing=True (CRITICAL, HIGH, MED, LOW)
+#   bonus_per_info      -> points granted per INFO-severity passed check
+#   bonus_cap           -> max total bonus
+#   excluded_categories -> categories NOT counted toward the score
+#   grade_thresholds    -> score >= X gets that grade; otherwise falls through to F
+# ----------------------------------------------------------------------------
+
+STRICTNESS_PROFILES: Dict[str, Dict[str, Any]] = {
+    "basic": {
+        "weights": {"CRITICAL": 15, "HIGH": 6, "MEDIUM": 2, "LOW": 0.5},
+        "diminishing": True,
+        "diminishing_caps": {"CRITICAL": 3, "HIGH": 4, "MEDIUM": 4, "LOW": 5},
+        "bonus_per_info": 3,
+        "bonus_cap": 25,
+        "excluded_categories": ["SEO", "GDPR", "Accessibility", "Performance"],
+        "grade_thresholds": {"A": 85, "B": 70, "C": 55, "D": 35},
+    },
+    # "standard" = exact V3 behavior. Do not change without a paired regression
+    # test update in tests/test_strictness.py, or downstream scorecards break.
+    "standard": {
+        "weights": {"CRITICAL": 20, "HIGH": 10, "MEDIUM": 5, "LOW": 2},
+        "diminishing": True,
+        "diminishing_caps": {"CRITICAL": 3, "HIGH": 4, "MEDIUM": 4, "LOW": 5},
+        "bonus_per_info": 2,
+        "bonus_cap": 20,
+        "excluded_categories": ["SEO", "GDPR", "Accessibility", "Performance"],
+        "grade_thresholds": {"A": 90, "B": 75, "C": 60, "D": 40},
+    },
+    "strict": {
+        "weights": {"CRITICAL": 25, "HIGH": 15, "MEDIUM": 8, "LOW": 4},
+        "diminishing": False,
+        "diminishing_caps": {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0},
+        "bonus_per_info": 1,
+        "bonus_cap": 10,
+        "excluded_categories": ["Accessibility", "Performance"],
+        "grade_thresholds": {"A": 95, "B": 85, "C": 70, "D": 50},
+    },
+    "paranoid": {
+        "weights": {"CRITICAL": 35, "HIGH": 20, "MEDIUM": 12, "LOW": 7},
+        "diminishing": False,
+        "diminishing_caps": {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0},
+        "bonus_per_info": 0,
+        "bonus_cap": 0,
+        "excluded_categories": [],
+        "grade_thresholds": {"A": 100, "B": 90, "C": 80, "D": 65},
+    },
+}
+
+# Default strictness when a caller omits the parameter. Keeps all existing
+# API callers on V3 behavior until they explicitly opt into a stricter mode.
+DEFAULT_STRICTNESS = "standard"
+
+# Legacy constant kept for callers that still import it. Values mirror the
+# "standard" profile so any external use continues to match V3 scoring.
 SEVERITY_WEIGHTS = {
-    "CRITICAL": 25,
-    "HIGH": 12,
-    "MEDIUM": 6,
+    "CRITICAL": 20,
+    "HIGH": 10,
+    "MEDIUM": 5,
     "LOW": 2,
     "INFO": 0,
 }
@@ -153,54 +217,64 @@ def _get_domain(url: str) -> str:
     return netloc.removeprefix("www.")
 
 
-def compute_score(results: List[Dict]) -> Dict[str, Any]:
+def compute_score(
+    results: List[Dict],
+    strictness: str = DEFAULT_STRICTNESS,
+) -> Dict[str, Any]:
     """
-    Compute score 0-100 using weighted penalty system.
+    Compute score 0-100 using profile-driven weighted penalty system (V4).
 
-    Formula:
-    - Penalties are proportional, not additive-cliff
-    - Each CRITICAL issue deducts up to 20 points (max 3 counted = -60)
-    - Each HIGH deducts up to 10 points (max 4 counted = -40)
-    - MEDIUM: -5 each (max 4 = -20), LOW: -2 each (max 5 = -10)
-    - Minimum floor is 5 (a reachable site is never 0 unless truly broken)
+    The `strictness` parameter picks one of STRICTNESS_PROFILES:
+      - "basic"    : lenient, site-owner perspective
+      - "standard" : V3-compatible default (regression-safe)
+      - "strict"   : no diminishing returns, fewer excluded categories
+      - "paranoid" : max penalties, every category counts, A = 100 only
+
+    Unknown values fall back to DEFAULT_STRICTNESS so a bad API input
+    cannot crash scoring.
     """
-    # Exclude SEO results from security score (SEO has its own score in frontend)
-    security_results = [r for r in results if r.get("category") not in ("SEO", "Performance", "GDPR", "Accessibility")]
+    profile = STRICTNESS_PROFILES.get(strictness) or STRICTNESS_PROFILES[DEFAULT_STRICTNESS]
+    weights = profile["weights"]
+    excluded = set(profile["excluded_categories"])
+
+    security_results = [r for r in results if r.get("category") not in excluded]
     failed = [r for r in security_results if not r.get("passed", True)]
 
-    # Group by severity, apply diminishing returns (cap per category)
-    by_sev = {"CRITICAL": [], "HIGH": [], "MEDIUM": [], "LOW": []}
+    by_sev: Dict[str, List[Dict]] = {"CRITICAL": [], "HIGH": [], "MEDIUM": [], "LOW": []}
     for item in failed:
         sev = item.get("severity", "LOW")
         if sev in by_sev:
             by_sev[sev].append(item)
 
-    deduction = 0
-    deduction += min(len(by_sev["CRITICAL"]), 3) * 20   # max -60
-    deduction += min(len(by_sev["HIGH"]), 4) * 10        # max -40
-    deduction += min(len(by_sev["MEDIUM"]), 4) * 5       # max -20
-    deduction += min(len(by_sev["LOW"]), 5) * 2          # max -10
+    deduction = 0.0
+    if profile["diminishing"]:
+        caps = profile["diminishing_caps"]
+        for sev in ("CRITICAL", "HIGH", "MEDIUM", "LOW"):
+            deduction += min(len(by_sev[sev]), caps[sev]) * weights[sev]
+    else:
+        for sev in ("CRITICAL", "HIGH", "MEDIUM", "LOW"):
+            deduction += len(by_sev[sev]) * weights[sev]
 
-    # Bonus points for positive checks
     passed = [r for r in results if r.get("passed", False) and r.get("severity") == "INFO"]
-    bonus = min(len(passed) * 2, 20)  # up to +20 bonus for good practices
+    bonus = min(len(passed) * profile["bonus_per_info"], profile["bonus_cap"])
 
     score = max(5, min(100, 100 - deduction + bonus))
     score = round(score)
 
-    if score >= 90:
+    thresholds = profile["grade_thresholds"]
+    if score >= thresholds["A"]:
         grade = "A"
         grade_color = "#22c55e"
         grade_label = "Odlično / Excellent"
-    elif score >= 75:
+    elif score >= thresholds["B"]:
         grade = "B"
         grade_color = "#84cc16"
         grade_label = "Dobro / Good"
-    elif score >= 60:
+    elif score >= thresholds["C"]:
         grade = "C"
         grade_color = "#eab308"
         grade_label = "Osrednje / Fair"
-    elif score >= 40:
+    elif score >= thresholds["D"]:
         grade = "D"
         grade_color = "#f97316"
         grade_label = "Loše / Poor"
@@ -222,6 +296,7 @@ def compute_score(results: List[Dict]) -> Dict[str, Any]:
         "grade_color": grade_color,
         "grade_label": grade_label,
         "counts": counts,
+        "strictness": strictness if strictness in STRICTNESS_PROFILES else DEFAULT_STRICTNESS,
     }
 
 
@@ -231,6 +306,7 @@ def scan(
     max_pages: int = 1,
     preselected_pages: Optional[List[str]] = None,
     mode: str = "full",
+    strictness: str = DEFAULT_STRICTNESS,
 ) -> Dict[str, Any]:
     """
     Run all security checks on the given URL.
@@ -740,7 +816,7 @@ def scan(
 
     update("Izračunavam ocenu...", 99)
 
-    score_data = compute_score(all_results)
+    score_data = compute_score(all_results, strictness=strictness)
 
     # Risk priorities
     top_priorities = risk_engine.get_top_priorities(all_results, count=5)

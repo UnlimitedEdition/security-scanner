@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rezultat skeniranja / Scan result — Web Security Scanner</title>
+  <meta name="description" content="Javni rezime objavljenog skeniranja: ocena, skor, broj provera po kategoriji. Bez specificnih ranjivosti. · Public summary of a published scan: grade, score, per-category checks. No vulnerability specifics.">
+  <meta name="robots" content="index, follow">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 0;
+      background: #0a0c15; color: #e8eaf6;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+    }
+    .detail-page {
+      max-width: 900px; margin: 0 auto;
+      padding: 2rem 1.2rem 3rem;
+    }
+    .back-link {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      color: #7b83a6; text-decoration: none; font-size: 0.82rem;
+      margin-bottom: 1rem;
+    }
+    .back-link:hover { color: #a78bfa; }
+
+    .scan-url-card {
+      background: #12142a;
+      border: 1px solid rgba(124,58,237,0.3);
+      border-radius: 12px; padding: 1.2rem 1.3rem;
+      margin-bottom: 1rem;
+    }
+    .scan-url-label {
+      font-size: 0.72rem; color: #7b83a6;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      margin-bottom: 0.3rem;
+    }
+    .scan-url-value {
+      font-size: 1.2rem; font-weight: 700; color: #e8eaf6;
+      word-break: break-all; line-height: 1.35;
+    }
+    .scan-url-value a { color: #a78bfa; text-decoration: none; }
+    .scan-url-value a:hover { text-decoration: underline; }
+    .scan-date {
+      font-size: 0.75rem; color: #555; margin-top: 0.4rem;
+    }
+
+    .hero-card {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 1.4rem; align-items: center;
+      background: #12142a;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px; padding: 1.4rem; margin-bottom: 1rem;
+    }
+    .ring-wrap { position: relative; width: 140px; height: 140px; }
+    .ring-text {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+    }
+    .ring-grade { font-size: 2.6rem; font-weight: 900; line-height: 1; }
+    .ring-num { font-size: 0.85rem; color: #7b83a6; margin-top: 0.25rem; font-weight: 600; }
+
+    .hero-info h2 {
+      margin: 0 0 0.4rem 0;
+      font-size: 1.2rem; color: #e8eaf6; font-weight: 700;
+    }
+    .hero-meta {
+      font-size: 0.85rem; color: #7b83a6; line-height: 1.55;
+      margin-bottom: 0.5rem;
+    }
+    .hero-strictness {
+      display: inline-block;
+      font-size: 0.72rem; padding: 0.25rem 0.6rem;
+      border-radius: 6px; font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+    .hero-strictness.basic    { background: rgba(34,197,94,0.12);  color: #22c55e; }
+    .hero-strictness.standard { background: rgba(124,58,237,0.15); color: #a78bfa; }
+    .hero-strictness.strict   { background: rgba(249,115,22,0.12); color: #f97316; }
+    .hero-strictness.paranoid { background: rgba(239,68,68,0.12);  color: #ef4444; }
+
+    .counts-row {
+      display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.7rem;
+    }
+    .count-chip {
+      font-size: 0.72rem; padding: 0.25rem 0.6rem;
+      border-radius: 6px; font-weight: 700;
+    }
+    .count-chip.critical { background: rgba(220,38,38,0.15); color: #f87171; border: 1px solid rgba(220,38,38,0.35); }
+    .count-chip.high     { background: rgba(239,68,68,0.12); color: #fb923c; border: 1px solid rgba(239,68,68,0.3); }
+    .count-chip.medium   { background: rgba(234,179,8,0.12); color: #fbbf24; border: 1px solid rgba(234,179,8,0.3); }
+    .count-chip.low      { background: rgba(100,116,139,0.12); color: #94a3b8; border: 1px solid rgba(100,116,139,0.3); }
+    .count-chip.ok       { background: rgba(34,197,94,0.12); color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
+
+    .section-title {
+      font-size: 0.78rem; text-transform: uppercase;
+      letter-spacing: 0.1em; color: #7b83a6;
+      margin: 1.5rem 0 0.7rem; font-weight: 700;
+    }
+
+    .cat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 0.7rem;
+    }
+    .cat-card {
+      background: #12142a;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 10px; padding: 0.9rem 1rem;
+    }
+    .cat-name {
+      font-weight: 700; font-size: 0.85rem; color: #e8eaf6;
+      margin-bottom: 0.3rem;
+    }
+    .cat-grade-row {
+      display: flex; align-items: baseline; gap: 0.5rem;
+      margin-bottom: 0.4rem;
+    }
+    .cat-grade {
+      font-size: 1.6rem; font-weight: 900; line-height: 1;
+    }
+    .cat-grade.A { color: #22c55e; }
+    .cat-grade.B { color: #84cc16; }
+    .cat-grade.C { color: #eab308; }
+    .cat-grade.D { color: #f97316; }
+    .cat-grade.F { color: #ef4444; }
+    .cat-score {
+      font-size: 0.85rem; font-weight: 700; color: #b4bbd6;
+    }
+    .cat-stats {
+      font-size: 0.76rem; color: #7b83a6; line-height: 1.5;
+    }
+    .cat-bar {
+      height: 4px; background: rgba(255,255,255,0.05);
+      border-radius: 2px; margin-top: 0.4rem; overflow: hidden;
+    }
+    .cat-bar-fill { height: 100%; border-radius: 2px; transition: width 0.4s; }
+
+    .actions-row {
+      display: flex; gap: 0.5rem; flex-wrap: wrap;
+      margin-top: 1.5rem; justify-content: center;
+    }
+    .act-btn {
+      background: #12142a; color: #b4bbd6;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px; padding: 0.55rem 1.1rem;
+      font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; font-family: inherit;
+      text-decoration: none;
+    }
+    .act-btn:hover { border-color: rgba(124,58,237,0.4); color: #e8eaf6; }
+    .act-btn.primary {
+      background: rgba(124,58,237,0.15);
+      border-color: rgba(124,58,237,0.45);
+      color: #a78bfa;
+    }
+    .act-btn.danger {
+      background: rgba(239,68,68,0.1);
+      border-color: rgba(239,68,68,0.35);
+      color: #fca5a5;
+    }
+
+    .loading, .error-state {
+      text-align: center; padding: 3rem 1rem;
+      color: #7b83a6; font-size: 0.9rem;
+    }
+    .error-state { color: #ef4444; }
+
+    .footer-note {
+      text-align: center; margin-top: 2rem; padding-top: 1.5rem;
+      border-top: 1px solid rgba(255,255,255,0.04);
+      font-size: 0.72rem; color: #555; line-height: 1.6;
+    }
+    .footer-note a { color: #a78bfa; text-decoration: none; }
+
+    @media (max-width: 600px) {
+      .detail-page { padding: 1.3rem 0.8rem 2rem; }
+      .hero-card { grid-template-columns: 1fr; text-align: center; }
+      .ring-wrap { margin: 0 auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="detail-page">
+    <a href="/gallery" class="back-link">
+      <span class="sr">&larr; Nazad u galeriju</span><span class="en">&larr; Back to gallery</span>
+    </a>
+
+    <div id="content">
+      <div class="loading" id="loadingState">
+        <span class="sr">Ucitavam rezultat...</span><span class="en">Loading result...</span>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      <span class="sr">
+        Prikaz je rezime &mdash; konkretne ranjivosti, imena provera i tehnoloski otisci nikada se ne objavljuju.
+        <a href="/privacy.html#pp15">Politika privatnosti &sect;15</a>.
+      </span>
+      <span class="en">
+        This page is a summary &mdash; specific vulnerabilities, check names and tech fingerprints are never published.
+        <a href="/privacy.html#pp15e">Privacy policy &sect;15</a>.
+      </span>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      'use strict';
+
+      var API_BASE = (location.hostname === "localhost" || location.hostname === "127.0.0.1")
+        ? ""
+        : "https://unlimitededition-web-security-scanner.hf.space";
+
+      // Extract scan_id from /public/{id} OR ?id={id} (Vercel rewrite strips
+      // the path and serves public-scan.html, so both forms must work).
+      function parseScanId() {
+        var m = location.pathname.match(/^\/public\/([^\/\?#]+)/);
+        if (m && m[1]) return decodeURIComponent(m[1]);
+        var qs = new URLSearchParams(location.search);
+        return qs.get("id") || "";
+      }
+
+      var scanId = parseScanId();
+      var isEn = function() { return document.body.classList.contains("lang-en"); };
+
+      var STRICTNESS_LABEL_SR = {
+        basic: "Osnovno", standard: "Standardno",
+        strict: "Strogo", paranoid: "Paranoidno"
+      };
+      var STRICTNESS_LABEL_EN = {
+        basic: "Basic", standard: "Standard",
+        strict: "Strict", paranoid: "Paranoid"
+      };
+
+      var CATEGORY_ORDER = ["Security", "SEO", "Performance", "GDPR", "Accessibility"];
+      var CATEGORY_LABEL_SR = {
+        Security: "Bezbednost",
+        SEO: "SEO",
+        Performance: "Performanse",
+        GDPR: "GDPR",
+        Accessibility: "Pristupacnost"
+      };
+
+      var GRADE_COLOR = {
+        A: "#22c55e", B: "#84cc16", C: "#eab308",
+        D: "#f97316", F: "#ef4444"
+      };
+
+      function formatDate(iso) {
+        if (!iso) return "";
+        try {
+          return new Date(iso).toLocaleDateString(
+            isEn() ? "en-US" : "sr-RS",
+            { year: "numeric", month: "long", day: "numeric" }
+          );
+        } catch (e) { return iso.slice(0, 10); }
+      }
+
+      function isMyPublication(id) {
+        try {
+          var mine = JSON.parse(localStorage.getItem("my_published_scans") || "[]");
+          return Array.isArray(mine) && mine.indexOf(id) !== -1;
+        } catch (e) { return false; }
+      }
+
+      function removeFromMyList(id) {
+        try {
+          var mine = JSON.parse(localStorage.getItem("my_published_scans") || "[]");
+          mine = mine.filter(function(x) { return x !== id; });
+          localStorage.setItem("my_published_scans", JSON.stringify(mine));
+        } catch (e) {}
+      }
+
+      function renderRing(score, grade) {
+        var size = 140, r = 56, cx = 70, cy = 70;
+        var circ = 2 * Math.PI * r;
+        var offset = circ - (Math.max(0, Math.min(100, score)) / 100) * circ;
+        var color = GRADE_COLOR[grade] || "#ef4444";
+
+        var wrap = document.createElement("div");
+        wrap.className = "ring-wrap";
+
+        var svgNS = "http://www.w3.org/2000/svg";
+        var svg = document.createElementNS(svgNS, "svg");
+        svg.setAttribute("width", String(size));
+        svg.setAttribute("height", String(size));
+        svg.setAttribute("viewBox", "0 0 " + size + " " + size);
+
+        var bg = document.createElementNS(svgNS, "circle");
+        bg.setAttribute("cx", String(cx));
+        bg.setAttribute("cy", String(cy));
+        bg.setAttribute("r", String(r));
+        bg.setAttribute("fill", "none");
+        bg.setAttribute("stroke", "rgba(255,255,255,0.05)");
+        bg.setAttribute("stroke-width", "10");
+        svg.appendChild(bg);
+
+        var fg = document.createElementNS(svgNS, "circle");
+        fg.setAttribute("cx", String(cx));
+        fg.setAttribute("cy", String(cy));
+        fg.setAttribute("r", String(r));
+        fg.setAttribute("fill", "none");
+        fg.setAttribute("stroke", color);
+        fg.setAttribute("stroke-width", "10");
+        fg.setAttribute("stroke-linecap", "round");
+        fg.setAttribute("stroke-dasharray", String(circ));
+        fg.setAttribute("stroke-dashoffset", String(circ));
+        fg.setAttribute("transform", "rotate(-90 " + cx + " " + cy + ")");
+        svg.appendChild(fg);
+
+        wrap.appendChild(svg);
+
+        var txt = document.createElement("div");
+        txt.className = "ring-text";
+        var g = document.createElement("div");
+        g.className = "ring-grade";
+        g.style.color = color;
+        g.textContent = grade || "?";
+        var n = document.createElement("div");
+        n.className = "ring-num";
+        n.textContent = (score != null ? score : "?") + "/100";
+        txt.appendChild(g);
+        txt.appendChild(n);
+        wrap.appendChild(txt);
+
+        // Animate after insertion
+        requestAnimationFrame(function() {
+          setTimeout(function() { fg.setAttribute("stroke-dashoffset", String(offset)); }, 50);
+        });
+        return wrap;
+      }
+
+      function renderCategory(name, data) {
+        var card = document.createElement("div");
+        card.className = "cat-card";
+
+        var title = document.createElement("div");
+        title.className = "cat-name";
+        title.textContent = isEn() ? name : (CATEGORY_LABEL_SR[name] || name);
+        card.appendChild(title);
+
+        var gradeRow = document.createElement("div");
+        gradeRow.className = "cat-grade-row";
+        var g = document.createElement("span");
+        g.className = "cat-grade " + (data.grade || "F");
+        g.textContent = data.grade || "?";
+        gradeRow.appendChild(g);
+        var sc = document.createElement("span");
+        sc.className = "cat-score";
+        sc.textContent = (data.score != null ? data.score : "?") + "/100";
+        gradeRow.appendChild(sc);
+        card.appendChild(gradeRow);
+
+        var stats = document.createElement("div");
+        stats.className = "cat-stats";
+        var passedWord = isEn() ? "passed" : "prosli";
+        var ofWord = isEn() ? "of" : "od";
+        var testsWord = isEn() ? "tests" : "testova";
+        stats.textContent = data.passed + " " + ofWord + " " + data.total + " " + testsWord + " " + passedWord;
+        card.appendChild(stats);
+
+        var bar = document.createElement("div");
+        bar.className = "cat-bar";
+        var fill = document.createElement("div");
+        fill.className = "cat-bar-fill";
+        fill.style.width = "0%";
+        fill.style.background = GRADE_COLOR[data.grade] || "#6c63ff";
+        bar.appendChild(fill);
+        card.appendChild(bar);
+
+        var pct = data.total > 0 ? (100 * data.passed / data.total) : 0;
+        requestAnimationFrame(function() {
+          setTimeout(function() { fill.style.width = pct + "%"; }, 50);
+        });
+
+        return card;
+      }
+
+      function renderDetail(row) {
+        var container = document.getElementById("content");
+        container.textContent = "";
+
+        // URL card — first thing on the page, as user requested.
+        var urlCard = document.createElement("div");
+        urlCard.className = "scan-url-card";
+        var urlLabel = document.createElement("div");
+        urlLabel.className = "scan-url-label";
+        urlLabel.textContent = isEn() ? "Scanned site" : "Skenirani sajt";
+        urlCard.appendChild(urlLabel);
+
+        var urlVal = document.createElement("div");
+        urlVal.className = "scan-url-value";
+        var urlLink = document.createElement("a");
+        urlLink.href = row.url || "#";
+        urlLink.target = "_blank";
+        urlLink.rel = "noopener noreferrer";
+        urlLink.textContent = row.url || "";
+        urlVal.appendChild(urlLink);
+        urlCard.appendChild(urlVal);
+
+        var d = document.createElement("div");
+        d.className = "scan-date";
+        d.textContent = (isEn() ? "Published: " : "Objavljeno: ") + formatDate(row.published_at);
+        urlCard.appendChild(d);
+        container.appendChild(urlCard);
+
+        // Hero card — ring + overall meta.
+        var hero = document.createElement("div");
+        hero.className = "hero-card";
+        hero.appendChild(renderRing(row.score, row.grade));
+
+        var info = document.createElement("div");
+        info.className = "hero-info";
+
+        var heading = document.createElement("h2");
+        heading.textContent = isEn()
+          ? "Overall: " + (row.grade || "?") + " (" + (row.score != null ? row.score : "?") + "/100)"
+          : "Ukupno: " + (row.grade || "?") + " (" + (row.score != null ? row.score : "?") + "/100)";
+        info.appendChild(heading);
+
+        var meta = document.createElement("div");
+        meta.className = "hero-meta";
+        var checksWord = isEn() ? "checks" : "provera";
+        var issuesWord = isEn() ? "issues" : "problema";
+        meta.textContent = (row.total_checks || 0) + " " + checksWord +
+          " \u00B7 " + (row.failed_checks || 0) + " " + issuesWord;
+        info.appendChild(meta);
+
+        var st = row.strictness || "standard";
+        var stBadge = document.createElement("span");
+        stBadge.className = "hero-strictness " + st;
+        var stWord = isEn() ? "Strictness: " : "Strogost: ";
+        stBadge.textContent = stWord +
+          ((isEn() ? STRICTNESS_LABEL_EN : STRICTNESS_LABEL_SR)[st] || st);
+        info.appendChild(stBadge);
+
+        // Severity counts
+        var counts = row.counts_json || {};
+        var countsRow = document.createElement("div");
+        countsRow.className = "counts-row";
+        var sevList = [
+          { key: "critical", cls: "critical", sr: "Kriticno", en: "Critical" },
+          { key: "high",     cls: "high",     sr: "Visoko",   en: "High" },
+          { key: "medium",   cls: "medium",   sr: "Srednje",  en: "Medium" },
+          { key: "low",      cls: "low",      sr: "Nisko",    en: "Low" }
+        ];
+        var hasAnyIssue = false;
+        sevList.forEach(function(s) {
+          var v = counts[s.key] || 0;
+          if (v > 0) {
+            hasAnyIssue = true;
+            var chip = document.createElement("span");
+            chip.className = "count-chip " + s.cls;
+            chip.textContent = v + " " + (isEn() ? s.en : s.sr);
+            countsRow.appendChild(chip);
+          }
+        });
+        if (!hasAnyIssue) {
+          var ok = document.createElement("span");
+          ok.className = "count-chip ok";
+          ok.textContent = isEn() ? "No issues found" : "Nema problema";
+          countsRow.appendChild(ok);
+        }
+        info.appendChild(countsRow);
+        hero.appendChild(info);
+        container.appendChild(hero);
+
+        // Per-category cards
+        var cats = row.categories_json || {};
+        var catKeys = CATEGORY_ORDER.filter(function(k) { return cats[k]; });
+        if (catKeys.length > 0) {
+          var title = document.createElement("div");
+          title.className = "section-title";
+          title.textContent = isEn() ? "Category breakdown" : "Po kategorijama";
+          container.appendChild(title);
+
+          var catGrid = document.createElement("div");
+          catGrid.className = "cat-grid";
+          catKeys.forEach(function(k) {
+            catGrid.appendChild(renderCategory(k, cats[k]));
+          });
+          container.appendChild(catGrid);
+        }
+
+        // Actions: share + withdraw (if publisher)
+        var actions = document.createElement("div");
+        actions.className = "actions-row";
+
+        var newScanBtn = document.createElement("a");
+        newScanBtn.className = "act-btn primary";
+        newScanBtn.href = "/?url=" + encodeURIComponent(row.url || "");
+        newScanBtn.textContent = isEn() ? "Scan my site" : "Skeniraj moj sajt";
+        actions.appendChild(newScanBtn);
+
+        var shareBtn = document.createElement("button");
+        shareBtn.className = "act-btn";
+        shareBtn.textContent = isEn() ? "Copy link" : "Kopiraj link";
+        shareBtn.onclick = function() {
+          var link = location.origin + "/public/" + encodeURIComponent(scanId);
+          try {
+            navigator.clipboard.writeText(link).then(function() {
+              shareBtn.textContent = isEn() ? "Copied!" : "Kopirano!";
+              setTimeout(function() {
+                shareBtn.textContent = isEn() ? "Copy link" : "Kopiraj link";
+              }, 1500);
+            });
+          } catch (e) {}
+        };
+        actions.appendChild(shareBtn);
+
+        if (isMyPublication(scanId)) {
+          var withdrawBtn = document.createElement("button");
+          withdrawBtn.className = "act-btn danger";
+          withdrawBtn.textContent = isEn() ? "Withdraw publication" : "Povuci objavu";
+          withdrawBtn.onclick = async function() {
+            var confirmMsg = isEn()
+              ? "Withdraw this publication? It will no longer appear in the gallery."
+              : "Povuci ovu objavu? Nece se vise prikazivati u galeriji.";
+            if (!confirm(confirmMsg)) return;
+            withdrawBtn.disabled = true;
+            try {
+              var headers = {};
+              if (window._browserFingerprint) headers["X-Fingerprint-Hash"] = window._browserFingerprint;
+              var resp = await fetch(API_BASE + "/api/public/" + encodeURIComponent(scanId), {
+                method: "DELETE",
+                headers: headers,
+              });
+              if (!resp.ok) throw new Error("HTTP " + resp.status);
+              removeFromMyList(scanId);
+              renderWithdrawn();
+            } catch (e) {
+              withdrawBtn.disabled = false;
+              alert(isEn() ? "Withdraw failed. Try again." : "Povlacenje nije uspelo. Pokusajte ponovo.");
+            }
+          };
+          actions.appendChild(withdrawBtn);
+        }
+
+        container.appendChild(actions);
+      }
+
+      function renderWithdrawn() {
+        var container = document.getElementById("content");
+        container.textContent = "";
+        var msg = document.createElement("div");
+        msg.className = "loading";
+        msg.textContent = isEn()
+          ? "Publication withdrawn. Redirecting to gallery..."
+          : "Objava povucena. Vracam na galeriju...";
+        container.appendChild(msg);
+        setTimeout(function() { location.href = "/gallery"; }, 1500);
+      }
+
+      function renderError(status) {
+        var container = document.getElementById("content");
+        container.textContent = "";
+        var msg = document.createElement("div");
+        msg.className = "error-state";
+        if (status === 404) {
+          msg.textContent = isEn()
+            ? "This result does not exist or has been withdrawn."
+            : "Ovaj rezultat ne postoji ili je povucen.";
+        } else {
+          msg.textContent = isEn()
+            ? "Could not load result. Please try again."
+            : "Rezultat trenutno nije dostupan. Pokusajte ponovo.";
+        }
+        container.appendChild(msg);
+      }
+
+      async function load() {
+        if (!scanId) { renderError(404); return; }
+        try {
+          var resp = await fetch(API_BASE + "/api/public/" + encodeURIComponent(scanId));
+          if (resp.status === 404) { renderError(404); return; }
+          if (!resp.ok) { renderError(resp.status); return; }
+          var row = await resp.json();
+          renderDetail(row);
+        } catch (e) {
+          renderError(0);
+        }
+      }
+
+      load();
+    })();
+  </script>
+  <script src="./cookie-consent.js" defer></script>
+  <script src="./blog-common.js" defer></script>
+</body>
+</html>

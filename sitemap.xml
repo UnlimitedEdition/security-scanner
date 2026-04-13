@@ -198,6 +198,22 @@
     <priority>0.7</priority>
   </url>
 
+  <!-- V4 Strictness Modes (release blog post) -->
+  <url>
+    <loc>https://security-skener.gradovi.rs/blog-strictness-modes</loc>
+    <lastmod>2026-04-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- V4 Public gallery (opt-in published results) -->
+  <url>
+    <loc>https://security-skener.gradovi.rs/gallery</loc>
+    <lastmod>2026-04-13</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+
   <!-- Pro plan landing -->
   <url>
     <loc>https://security-skener.gradovi.rs/pricing</loc>

@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Javna galerija rezultata / Public scan gallery — Web Security Scanner</title>
+  <meta name="description" content="Javna galerija objavljenih rezultata skeniranja. Opt-in rezime po sajtu: URL, ocena, skor, profil strogosti. Bez ranjivosti. · Public gallery of opt-in scan results: URL, grade, score, strictness profile. No vulnerabilities shown.">
+  <meta name="keywords" content="javna galerija, public gallery, security leaderboard, top security scores, objavljeni rezultati, rezultati skeniranja, TOP lista sajtova">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://security-skener.gradovi.rs/gallery.html">
+  <link rel="alternate" hreflang="sr" href="https://security-skener.gradovi.rs/gallery.html">
+  <link rel="alternate" hreflang="x-default" href="https://security-skener.gradovi.rs/gallery.html">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Javna galerija rezultata / Public scan gallery">
+  <meta property="og:description" content="TOP lista: najbolji rezultati po strogosti. · TOP list: best-scoring scans by strictness.">
+  <meta property="og:url" content="https://security-skener.gradovi.rs/gallery.html">
+  <meta property="og:site_name" content="Web Security Scanner">
+  <meta property="og:locale" content="sr_RS">
+  <meta property="og:locale:alternate" content="en_US">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Javna galerija rezultata / Public scan gallery">
+  <meta name="twitter:description" content="TOP lista sajtova po bezbednosnoj oceni. · TOP list of sites by security grade.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 0;
+      background: #0a0c15; color: #e8eaf6;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+    }
+    .gallery-page {
+      max-width: 1080px; margin: 0 auto;
+      padding: 2rem 1.2rem 3rem;
+    }
+    .gallery-header { text-align: center; margin-bottom: 1.8rem; }
+    .gallery-header h1 {
+      font-size: 1.6rem; margin: 0 0 0.4rem;
+      color: #e8eaf6; font-weight: 800;
+    }
+    .gallery-header p {
+      font-size: 0.85rem; color: #7b83a6; margin: 0 auto; max-width: 640px; line-height: 1.55;
+    }
+
+    .gallery-controls {
+      display: flex; flex-wrap: wrap; gap: 0.5rem;
+      justify-content: center; margin-bottom: 1.5rem;
+    }
+    .sort-tab {
+      background: #12142a; color: #b4bbd6;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px; padding: 0.5rem 1rem;
+      font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; font-family: inherit;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .sort-tab:hover { background: #181a33; border-color: rgba(124,58,237,0.3); }
+    .sort-tab.active {
+      background: rgba(124,58,237,0.18);
+      color: #a78bfa;
+      border-color: rgba(124,58,237,0.5);
+    }
+
+    .gallery-filters {
+      display: flex; justify-content: center; gap: 0.5rem;
+      margin-bottom: 1.5rem; flex-wrap: wrap;
+    }
+    .grade-pill {
+      background: #12142a; color: #b4bbd6;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px; padding: 0.35rem 0.7rem;
+      font-size: 0.75rem; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+    }
+    .grade-pill.active { border-color: #6c63ff; color: #e8eaf6; }
+    .grade-pill[data-grade="A"].active { background: rgba(34,197,94,0.15); border-color: #22c55e; color: #22c55e; }
+    .grade-pill[data-grade="B"].active { background: rgba(132,204,22,0.15); border-color: #84cc16; color: #84cc16; }
+    .grade-pill[data-grade="C"].active { background: rgba(234,179,8,0.15); border-color: #eab308; color: #eab308; }
+    .grade-pill[data-grade="D"].active { background: rgba(249,115,22,0.15); border-color: #f97316; color: #f97316; }
+    .grade-pill[data-grade="F"].active { background: rgba(239,68,68,0.15); border-color: #ef4444; color: #ef4444; }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 0.9rem;
+    }
+
+    .gallery-card {
+      display: block; text-decoration: none; color: inherit;
+      background: #12142a;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px; padding: 1rem 1.1rem;
+      transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+      position: relative;
+    }
+    .gallery-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(124,58,237,0.35);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    }
+    .gallery-rank {
+      position: absolute; top: 0.6rem; right: 0.7rem;
+      font-size: 0.72rem; font-weight: 800; color: #444;
+      letter-spacing: 0.02em;
+    }
+    .gallery-url {
+      font-weight: 700; font-size: 0.95rem; color: #e8eaf6;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      margin-bottom: 0.1rem; padding-right: 2.2rem;
+    }
+    .gallery-domain {
+      font-size: 0.72rem; color: #7b83a6; margin-bottom: 0.8rem;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .gallery-score-row {
+      display: flex; align-items: center; gap: 0.7rem;
+      margin-bottom: 0.6rem;
+    }
+    .gallery-grade {
+      font-size: 1.7rem; font-weight: 900; line-height: 1;
+      padding: 0.1rem 0.5rem; border-radius: 8px;
+      background: rgba(255,255,255,0.03);
+      min-width: 2.2rem; text-align: center;
+    }
+    .gallery-grade.A { color: #22c55e; }
+    .gallery-grade.B { color: #84cc16; }
+    .gallery-grade.C { color: #eab308; }
+    .gallery-grade.D { color: #f97316; }
+    .gallery-grade.F { color: #ef4444; }
+    .gallery-score {
+      font-size: 1.1rem; font-weight: 700; color: #e8eaf6;
+    }
+    .gallery-score-max {
+      font-size: 0.75rem; color: #7b83a6; font-weight: 500;
+    }
+    .gallery-meta-row {
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 0.4rem; flex-wrap: wrap;
+    }
+    .gallery-strictness {
+      font-size: 0.7rem; padding: 0.22rem 0.55rem;
+      border-radius: 6px; font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+    .gallery-strictness.basic    { background: rgba(34,197,94,0.12);  color: #22c55e; }
+    .gallery-strictness.standard { background: rgba(124,58,237,0.15); color: #a78bfa; }
+    .gallery-strictness.strict   { background: rgba(249,115,22,0.12); color: #f97316; }
+    .gallery-strictness.paranoid { background: rgba(239,68,68,0.12);  color: #ef4444; }
+    .gallery-date {
+      font-size: 0.7rem; color: #555;
+    }
+
+    .gallery-empty {
+      text-align: center; padding: 3rem 1rem;
+      color: #7b83a6; font-size: 0.9rem;
+    }
+    .gallery-empty a { color: #a78bfa; text-decoration: none; }
+    .gallery-empty a:hover { text-decoration: underline; }
+    .gallery-loading { text-align: center; padding: 2rem; color: #7b83a6; font-size: 0.85rem; }
+
+    .gallery-footer {
+      text-align: center; margin-top: 2rem; padding-top: 1.5rem;
+      border-top: 1px solid rgba(255,255,255,0.04);
+      font-size: 0.75rem; color: #555; line-height: 1.6;
+    }
+    .gallery-footer a { color: #a78bfa; text-decoration: none; }
+    .gallery-footer a:hover { text-decoration: underline; }
+
+    .gallery-more {
+      text-align: center; margin-top: 1.5rem;
+    }
+    .gallery-more button {
+      background: #12142a; color: #b4bbd6;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px; padding: 0.6rem 1.4rem;
+      font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; font-family: inherit;
+    }
+    .gallery-more button:hover { border-color: rgba(124,58,237,0.4); color: #e8eaf6; }
+    .gallery-more button[disabled] { opacity: 0.4; cursor: not-allowed; }
+
+    @media (max-width: 500px) {
+      .gallery-page { padding: 1.3rem 0.8rem 2rem; }
+      .gallery-header h1 { font-size: 1.3rem; }
+      .gallery-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="gallery-page">
+    <div class="gallery-header">
+      <h1>
+        <span class="sr">Javna galerija rezultata</span>
+        <span class="en">Public scan gallery</span>
+      </h1>
+      <p>
+        <span class="sr">
+          Opt-in rezime objavljenih skenova. Prikazuje se samo URL, ocena, skor, profil strogosti i datum. Bez ranjivosti, bez tehnoloskih otisaka.
+        </span>
+        <span class="en">
+          Opt-in summary of published scans. Shows only URL, grade, score, strictness profile and date. No vulnerabilities, no tech fingerprints.
+        </span>
+      </p>
+    </div>
+
+    <div class="gallery-controls" id="sortTabs">
+      <button class="sort-tab active" data-sort="newest">
+        <span class="sr">Najnovije</span><span class="en">Newest</span>
+      </button>
+      <button class="sort-tab" data-sort="top_score">
+        <span class="sr">TOP skor</span><span class="en">TOP score</span>
+      </button>
+      <button class="sort-tab" data-sort="top_paranoid">
+        <span class="sr">TOP Paranoid</span><span class="en">TOP Paranoid</span>
+      </button>
+      <button class="sort-tab" data-sort="top_strict">
+        <span class="sr">TOP Strict</span><span class="en">TOP Strict</span>
+      </button>
+    </div>
+
+    <div class="gallery-filters" id="gradeFilters">
+      <button class="grade-pill active" data-grade="">
+        <span class="sr">Sve</span><span class="en">All</span>
+      </button>
+      <button class="grade-pill" data-grade="A">A</button>
+      <button class="grade-pill" data-grade="B">B</button>
+      <button class="grade-pill" data-grade="C">C</button>
+      <button class="grade-pill" data-grade="D">D</button>
+      <button class="grade-pill" data-grade="F">F</button>
+    </div>
+
+    <div class="gallery-grid" id="galleryGrid"></div>
+    <div class="gallery-loading" id="galleryLoading">
+      <span class="sr">Ucitavam...</span><span class="en">Loading...</span>
+    </div>
+    <div class="gallery-empty" id="galleryEmpty" style="display:none;">
+      <span class="sr">Jos nema objavljenih rezultata. Budi prvi &mdash; <a href="/">pokreni sken</a> i objavi.</span>
+      <span class="en">No published results yet. Be the first &mdash; <a href="/">run a scan</a> and publish.</span>
+    </div>
+
+    <div class="gallery-more" id="galleryMore" style="display:none;">
+      <button id="loadMoreBtn">
+        <span class="sr">Ucitaj jos</span><span class="en">Load more</span>
+      </button>
+    </div>
+
+    <div class="gallery-footer">
+      <span class="sr">
+        Objavljivanje je iskljucivo opciono. Vlasnik moze povuci objavu u bilo kom trenutku sa istog uredjaja.
+        Detalji: <a href="/privacy.html#pp15">Politika privatnosti &sect;15</a>.
+      </span>
+      <span class="en">
+        Publishing is strictly opt-in. Owners can withdraw any time from the same device.
+        Details: <a href="/privacy.html#pp15e">Privacy policy &sect;15</a>.
+      </span>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      'use strict';
+
+      // API base — same pattern as index.html (local dev = same origin,
+      // production = HF Space backend).
+      var API_BASE = (location.hostname === "localhost" || location.hostname === "127.0.0.1")
+        ? ""
+        : "https://unlimitededition-web-security-scanner.hf.space";
+
+      var STRICTNESS_LABEL_SR = {
+        basic: "Osnovno", standard: "Standardno",
+        strict: "Strogo", paranoid: "Paranoidno"
+      };
+      var STRICTNESS_LABEL_EN = {
+        basic: "Basic", standard: "Standard",
+        strict: "Strict", paranoid: "Paranoid"
+      };
+
+      var state = {
+        sort: "newest",
+        grade: "",
+        offset: 0,
+        pageSize: 30,
+        items: [],
+      };
+
+      var grid = document.getElementById("galleryGrid");
+      var loading = document.getElementById("galleryLoading");
+      var empty = document.getElementById("galleryEmpty");
+      var moreWrap = document.getElementById("galleryMore");
+      var loadMoreBtn = document.getElementById("loadMoreBtn");
+
+      function isEn() {
+        return document.body.classList.contains("lang-en");
+      }
+
+      function formatDate(iso) {
+        if (!iso) return "";
+        try {
+          var d = new Date(iso);
+          var locale = isEn() ? "en-US" : "sr-RS";
+          return d.toLocaleDateString(locale, {
+            year: "numeric", month: "short", day: "numeric"
+          });
+        } catch (e) { return iso.slice(0, 10); }
+      }
+
+      function hostFromUrl(u) {
+        try { return new URL(u).hostname.replace(/^www\./, ""); }
+        catch (e) { return u; }
+      }
+
+      function renderCard(row, rank) {
+        var card = document.createElement("a");
+        card.className = "gallery-card";
+        card.href = "/public/" + encodeURIComponent(row.scan_id);
+
+        // Rank badge only visible on top_* sorts (leaderboard mode)
+        if (state.sort !== "newest" && rank > 0) {
+          var rankEl = document.createElement("div");
+          rankEl.className = "gallery-rank";
+          rankEl.textContent = "#" + rank;
+          card.appendChild(rankEl);
+        }
+
+        var urlEl = document.createElement("div");
+        urlEl.className = "gallery-url";
+        urlEl.textContent = hostFromUrl(row.url || "");
+        urlEl.title = row.url || "";
+        card.appendChild(urlEl);
+
+        var domainEl = document.createElement("div");
+        domainEl.className = "gallery-domain";
+        domainEl.textContent = row.url || "";
+        card.appendChild(domainEl);
+
+        var scoreRow = document.createElement("div");
+        scoreRow.className = "gallery-score-row";
+
+        var gradeEl = document.createElement("div");
+        gradeEl.className = "gallery-grade " + (row.grade || "F");
+        gradeEl.textContent = row.grade || "?";
+        scoreRow.appendChild(gradeEl);
+
+        var scoreWrap = document.createElement("div");
+        var scoreEl = document.createElement("span");
+        scoreEl.className = "gallery-score";
+        scoreEl.textContent = (row.score != null ? row.score : "?");
+        scoreWrap.appendChild(scoreEl);
+        var scoreMax = document.createElement("span");
+        scoreMax.className = "gallery-score-max";
+        scoreMax.textContent = "/100";
+        scoreWrap.appendChild(scoreMax);
+        scoreRow.appendChild(scoreWrap);
+
+        card.appendChild(scoreRow);
+
+        var metaRow = document.createElement("div");
+        metaRow.className = "gallery-meta-row";
+
+        var st = row.strictness || "standard";
+        var stBadge = document.createElement("span");
+        stBadge.className = "gallery-strictness " + st;
+        stBadge.textContent = (isEn() ? STRICTNESS_LABEL_EN : STRICTNESS_LABEL_SR)[st] || st;
+        metaRow.appendChild(stBadge);
+
+        var dateEl = document.createElement("span");
+        dateEl.className = "gallery-date";
+        dateEl.textContent = formatDate(row.published_at);
+        metaRow.appendChild(dateEl);
+
+        card.appendChild(metaRow);
+        return card;
+      }
+
+      function renderAll() {
+        grid.textContent = "";
+        state.items.forEach(function(row, idx) {
+          grid.appendChild(renderCard(row, idx + 1));
+        });
+        empty.style.display = state.items.length === 0 ? "block" : "none";
+      }
+
+      function setEmptyError() {
+        empty.textContent = isEn()
+          ? "Could not load gallery. Please try again."
+          : "Galerija trenutno nije dostupna. Pokusajte ponovo.";
+        empty.style.display = "block";
+      }
+
+      async function loadPage(reset) {
+        if (reset) {
+          state.offset = 0;
+          state.items = [];
+          grid.textContent = "";
+        }
+        loading.style.display = "block";
+        moreWrap.style.display = "none";
+
+        var params = new URLSearchParams();
+        params.set("sort", state.sort);
+        params.set("limit", String(state.pageSize));
+        params.set("offset", String(state.offset));
+        if (state.grade) params.set("grade", state.grade);
+
+        try {
+          var resp = await fetch(API_BASE + "/api/public?" + params.toString());
+          if (!resp.ok) throw new Error("HTTP " + resp.status);
+          var body = await resp.json();
+          var items = body.items || [];
+          state.items = state.items.concat(items);
+          state.offset += items.length;
+          renderAll();
+          if (items.length >= state.pageSize) moreWrap.style.display = "block";
+        } catch (e) {
+          setEmptyError();
+        } finally {
+          loading.style.display = "none";
+        }
+      }
+
+      // Sort tab wiring
+      document.querySelectorAll(".sort-tab").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+          document.querySelectorAll(".sort-tab").forEach(function(b) { b.classList.remove("active"); });
+          btn.classList.add("active");
+          state.sort = btn.dataset.sort || "newest";
+          loadPage(true);
+        });
+      });
+
+      // Grade filter wiring
+      document.querySelectorAll(".grade-pill").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+          document.querySelectorAll(".grade-pill").forEach(function(b) { b.classList.remove("active"); });
+          btn.classList.add("active");
+          state.grade = btn.dataset.grade || "";
+          loadPage(true);
+        });
+      });
+
+      loadMoreBtn.addEventListener("click", function() {
+        loadMoreBtn.disabled = true;
+        loadPage(false).then(function() { loadMoreBtn.disabled = false; });
+      });
+
+      loadPage(true);
+    })();
+  </script>
+  <script src="./cookie-consent.js" defer></script>
+  <script src="./blog-common.js" defer></script>
+</body>
+</html>

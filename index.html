@@ -421,6 +421,61 @@
       font-size: 0.8rem; color: var(--text-dim);
       text-align: center;
     }
+    /* V4 Strictness segmented control.
+       Four-way pick (Basic/Standard/Strict/Paranoid) that the user
+       chooses BEFORE scanning. Preference is persisted in localStorage
+       under "ss_strictness" and sent as `strictness` in POST /scan. */
+    .strictness-wrap {
+      margin: 0 0 0.9rem; text-align: center;
+    }
+    .strictness-label {
+      font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--text-dim);
+      margin-bottom: 0.45rem;
+    }
+    .strictness-group {
+      display: inline-flex; flex-wrap: wrap; justify-content: center;
+      gap: 0.3rem; padding: 0.25rem;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+    }
+    .strictness-btn {
+      background: transparent; border: 1px solid transparent;
+      color: var(--text-dim);
+      font-family: inherit; font-size: 0.78rem; font-weight: 700;
+      padding: 0.45rem 0.9rem; border-radius: 8px;
+      cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .strictness-btn:hover:not(.active) {
+      background: rgba(255,255,255,0.05);
+      color: var(--text);
+    }
+    .strictness-btn.active {
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+      color: #fff; border-color: transparent;
+      box-shadow: 0 2px 10px rgba(108,99,255,0.25);
+    }
+    .strictness-btn[data-level="paranoid"].active {
+      background: linear-gradient(135deg, #ef4444, #b91c1c);
+      box-shadow: 0 2px 10px rgba(239,68,68,0.3);
+    }
+    .strictness-btn[data-level="strict"].active {
+      background: linear-gradient(135deg, #f97316, #c2410c);
+      box-shadow: 0 2px 10px rgba(249,115,22,0.3);
+    }
+    .strictness-btn[data-level="basic"].active {
+      background: linear-gradient(135deg, #22c55e, #15803d);
+      box-shadow: 0 2px 10px rgba(34,197,94,0.3);
+    }
+    .strictness-hint {
+      margin-top: 0.4rem;
+      font-size: 0.72rem; color: var(--text-dim);
+      min-height: 1em;
+    }
+    @media (max-width: 520px) {
+      .strictness-btn { padding: 0.45rem 0.7rem; font-size: 0.72rem; }
+    }
     /* Mobile: stack input + button vertically, full-width, so the
        scan button stays visually centered instead of snapping to
        the left edge when flex-wrap kicks in. */
@@ -1632,6 +1687,36 @@
 <!-- SCAN BOX -->
 <div class="scan-wrap">
   <div class="scan-box">
+    <!-- V4 Strictness picker — 4 segmented buttons. Default: Standard (V3 parity). -->
+    <div class="strictness-wrap" role="group" aria-labelledby="strictnessLabel">
+      <div class="strictness-label" id="strictnessLabel">
+        <span class="sr">Strogost skeniranja</span>
+        <span class="en">Scan strictness</span>
+      </div>
+      <div class="strictness-group" id="strictnessGroup">
+        <button type="button" class="strictness-btn" data-level="basic"
+                data-sr="Osnovno" data-en="Basic"
+                data-hint-sr="Popustljivo — iz ugla vlasnika sajta. A na 85+."
+                data-hint-en="Lenient — site-owner view. A at 85+."
+                aria-pressed="false">Osnovno</button>
+        <button type="button" class="strictness-btn active" data-level="standard"
+                data-sr="Standardno" data-en="Standard"
+                data-hint-sr="Podrazumevano — kompatibilno sa V3. A na 90+."
+                data-hint-en="Default — V3-compatible. A at 90+."
+                aria-pressed="true">Standardno</button>
+        <button type="button" class="strictness-btn" data-level="strict"
+                data-sr="Strogo" data-en="Strict"
+                data-hint-sr="Bez popusta — svaki propust se računa. A na 95+."
+                data-hint-en="No diminishing — every issue counts. A at 95+."
+                aria-pressed="false">Strogo</button>
+        <button type="button" class="strictness-btn" data-level="paranoid"
+                data-sr="Paranoidno" data-en="Paranoid"
+                data-hint-sr="Maksimum — sve kategorije se računaju. A samo na 100."
+                data-hint-en="Maximum — every category counts. A only at 100."
+                aria-pressed="false">Paranoidno</button>
+      </div>
+      <div class="strictness-hint" id="strictnessHint"></div>
+    </div>
     <div class="scan-row">
       <label for="urlInput" class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">URL sajta za skeniranje</label>
       <input class="scan-input" type="text" id="urlInput"
@@ -2511,6 +2596,12 @@ function setLang(lang) {
     if (tabNames[tab]) b.textContent = tabNames[tab][lang];
   });
   if (currentResults) renderResults(currentResults);
+  // Refresh strictness hint — its text is not driven by data-sr/data-en
+  // textContent swap (that would clobber the aria-pressed state) but
+  // pulled from data-hint-{sr,en} on the active button by setStrictness.
+  if (typeof setStrictness === "function" && typeof getStrictness === "function") {
+    setStrictness(getStrictness());
+  }
 }
 
 // Dual detection: (1) bait div ad blockers hide, (2) fetch test to googlesyndication
@@ -2554,9 +2645,52 @@ function isAdBlocked() {
 }
 
 // Init on DOM ready
+// ────────────────────────────────────────────────────────────────
+// V4 Strictness picker
+// ────────────────────────────────────────────────────────────────
+var STRICTNESS_LEVELS = ["basic", "standard", "strict", "paranoid"];
+var STRICTNESS_DEFAULT = "standard";
+
+function getStrictness() {
+  try {
+    var v = localStorage.getItem("ss_strictness");
+    return STRICTNESS_LEVELS.indexOf(v) >= 0 ? v : STRICTNESS_DEFAULT;
+  } catch (e) { return STRICTNESS_DEFAULT; }
+}
+
+function setStrictness(level) {
+  if (STRICTNESS_LEVELS.indexOf(level) < 0) level = STRICTNESS_DEFAULT;
+  try { localStorage.setItem("ss_strictness", level); } catch (e) {}
+  var btns = document.querySelectorAll(".strictness-btn");
+  for (var i = 0; i < btns.length; i++) {
+    var active = btns[i].dataset.level === level;
+    btns[i].classList.toggle("active", active);
+    btns[i].setAttribute("aria-pressed", active ? "true" : "false");
+    if (active) {
+      var hint = document.getElementById("strictnessHint");
+      if (hint) {
+        var key = currentLang === "en" ? "hintEn" : "hintSr";
+        hint.textContent = btns[i].dataset[key] || "";
+      }
+    }
+  }
+}
+
+function _initStrictnessPicker() {
+  var group = document.getElementById("strictnessGroup");
+  if (!group) return;
+  group.addEventListener("click", function(e) {
+    var btn = e.target.closest(".strictness-btn");
+    if (!btn) return;
+    setStrictness(btn.dataset.level);
+  });
+  setStrictness(getStrictness());
+}
+
 document.addEventListener("DOMContentLoaded", function() {
   _initAdBlockBait();
   _runAdBlockFetchTest();
+  _initStrictnessPicker();
 });
 
 // Lazy ad loader — calls adsbygoogle.push({}) only when the slot is
@@ -2808,7 +2942,8 @@ async function startScan() {
       consent_version: "2026-04-12-v3",
       ad_blocked: isAdBlocked(),
       session_id: _getSessionId(),
-      fingerprint_hash: window._browserFingerprint || null
+      fingerprint_hash: window._browserFingerprint || null,
+      strictness: getStrictness()
     };
     if (selectedPages && selectedPages.length > 0) {
       scanBody.selected_pages = selectedPages;
@@ -3028,6 +3163,24 @@ function renderResults(data) {
   label.textContent = s.grade_label;
   details.appendChild(label);
 
+  // V4 strictness badge — shows which scoring profile produced this score.
+  // Null/missing on pre-V4 results; gracefully skipped.
+  if (s.strictness) {
+    var stBadge = document.createElement("div");
+    stBadge.className = "score-strictness";
+    stBadge.style.cssText = "margin-top:0.35rem;font-size:0.72rem;color:var(--text-dim);letter-spacing:0.04em;";
+    var stLabels = {
+      basic: { sr: "Osnovno", en: "Basic" },
+      standard: { sr: "Standardno", en: "Standard" },
+      strict: { sr: "Strogo", en: "Strict" },
+      paranoid: { sr: "Paranoidno", en: "Paranoid" }
+    };
+    var stName = (stLabels[s.strictness] || stLabels.standard)[currentLang];
+    var stWord = currentLang === "en" ? "Strictness" : "Strogost";
+    stBadge.textContent = stWord + ": " + stName;
+    details.appendChild(stBadge);
+  }
+
   var counts = document.createElement("div");
   counts.className = "score-counts";
   var levels = [
@@ -3123,6 +3276,19 @@ function renderResults(data) {
   jsonBtn.textContent = currentLang === "en" ? "Export JSON" : "Izvezi JSON";
   jsonBtn.onclick = function() { _exportJSON(data); };
   actions.appendChild(jsonBtn);
+
+  // V4: publish to public gallery. Opens a consent modal that spells out
+  // exactly what gets published (summary only, no vulnerabilities).
+  if (data.id) {
+    var pubBtn = document.createElement("button");
+    pubBtn.className = "action-btn";
+    pubBtn.style.cssText = "background:var(--accent);color:#0a0c15;border-color:var(--accent);";
+    pubBtn.textContent = currentLang === "en"
+      ? "Publish to gallery"
+      : "Objavi u galeriji";
+    pubBtn.onclick = function() { openPublishModal(data.id, pubBtn); };
+    actions.appendChild(pubBtn);
+  }
 
   scoreCard.appendChild(actions);
   wrap.appendChild(scoreCard);
@@ -3751,6 +3917,139 @@ function _exportCSV(data) {
   a.click();
   URL.revokeObjectURL(url);
   showToast(currentLang === "en" ? "CSV downloaded" : "CSV preuzet", "success");
+}
+
+// V4 public gallery — opt-in publish consent modal. Builds DOM inline
+// so we don't need extra HTML markup; reuses the dark theme vars so it
+// looks native. The modal makes it crystal clear WHAT gets published
+// (summary only) and what does NOT (no vulnerability specifics, no
+// tech fingerprints). User's rule: "show quality, never dismiss".
+function openPublishModal(scanId, triggerBtn) {
+  if (!scanId) return;
+  var isEn = (currentLang === "en");
+
+  var backdrop = document.createElement("div");
+  backdrop.style.cssText =
+    "position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;" +
+    "display:flex;align-items:center;justify-content:center;padding:1rem;";
+
+  var dialog = document.createElement("div");
+  dialog.style.cssText =
+    "background:var(--surface);border:1px solid var(--border);border-radius:12px;" +
+    "max-width:520px;width:100%;padding:1.5rem;box-shadow:0 20px 60px rgba(0,0,0,0.5);";
+
+  var h = document.createElement("h3");
+  h.style.cssText = "margin:0 0 0.5rem 0;color:var(--accent);font-size:1.2rem;";
+  h.textContent = isEn ? "Publish to public gallery?" : "Objavi u javnoj galeriji?";
+  dialog.appendChild(h);
+
+  var intro = document.createElement("p");
+  intro.style.cssText = "margin:0 0 1rem 0;color:var(--text);font-size:0.9rem;line-height:1.5;";
+  intro.textContent = isEn
+    ? "Your scan summary will appear on /gallery.html. This is opt-in and can be withdrawn any time from the same device."
+    : "Rezime tvog skeniranja ce se prikazati na /gallery.html. Ovo je opciono i moze se povuci u bilo kom trenutku sa istog uredjaja.";
+  dialog.appendChild(intro);
+
+  var okWrap = document.createElement("div");
+  okWrap.style.cssText = "background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);border-radius:8px;padding:0.75rem 1rem;margin-bottom:0.75rem;";
+  var okTitle = document.createElement("div");
+  okTitle.style.cssText = "font-weight:600;color:#22c55e;margin-bottom:0.3rem;font-size:0.85rem;";
+  okTitle.textContent = isEn ? "What is published:" : "Sta se objavljuje:";
+  okWrap.appendChild(okTitle);
+  var okList = document.createElement("ul");
+  okList.style.cssText = "margin:0;padding-left:1.2rem;font-size:0.82rem;color:var(--text-dim);line-height:1.6;";
+  var okItems = isEn
+    ? ["URL of scanned site", "Grade (A-F) and score (0-100)", "Strictness profile", "Counts per severity", "Per-category grades (Security / SEO / Performance / GDPR / Accessibility)", "Publish date"]
+    : ["URL skeniranog sajta", "Ocena (A-F) i skor (0-100)", "Profil strogosti", "Broj nalaza po ozbiljnosti", "Ocene po kategorijama (Bezbednost / SEO / Performanse / GDPR / Pristupacnost)", "Datum objave"];
+  okItems.forEach(function(t) {
+    var li = document.createElement("li"); li.textContent = t; okList.appendChild(li);
+  });
+  okWrap.appendChild(okList);
+  dialog.appendChild(okWrap);
+
+  var badWrap = document.createElement("div");
+  badWrap.style.cssText = "background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:0.75rem 1rem;margin-bottom:1rem;";
+  var badTitle = document.createElement("div");
+  badTitle.style.cssText = "font-weight:600;color:#ef4444;margin-bottom:0.3rem;font-size:0.85rem;";
+  badTitle.textContent = isEn ? "What is NEVER published:" : "Sta se NIKADA ne objavljuje:";
+  badWrap.appendChild(badTitle);
+  var badList = document.createElement("ul");
+  badList.style.cssText = "margin:0;padding-left:1.2rem;font-size:0.82rem;color:var(--text-dim);line-height:1.6;";
+  var badItems = isEn
+    ? ["Specific vulnerabilities or check IDs", "Exposed files or credentials", "Technology fingerprints (CMS, versions)", "Your IP address or browser data"]
+    : ["Konkretne ranjivosti ili ID-evi provera", "Izlozeni fajlovi ili kredencijali", "Tehnoloski otisci (CMS, verzije)", "Vasa IP adresa ili podaci browsera"];
+  badItems.forEach(function(t) {
+    var li = document.createElement("li"); li.textContent = t; badList.appendChild(li);
+  });
+  badWrap.appendChild(badList);
+  dialog.appendChild(badWrap);
+
+  var btnRow = document.createElement("div");
+  btnRow.style.cssText = "display:flex;gap:0.5rem;justify-content:flex-end;";
+
+  var cancelBtn = document.createElement("button");
+  cancelBtn.className = "action-btn";
+  cancelBtn.textContent = isEn ? "Cancel" : "Odustani";
+  cancelBtn.onclick = function() { document.body.removeChild(backdrop); };
+  btnRow.appendChild(cancelBtn);
+
+  var confirmBtn = document.createElement("button");
+  confirmBtn.className = "action-btn";
+  confirmBtn.style.cssText = "background:var(--accent);color:#0a0c15;border-color:var(--accent);";
+  confirmBtn.textContent = isEn ? "Yes, publish" : "Da, objavi";
+  confirmBtn.onclick = async function() {
+    confirmBtn.disabled = true;
+    cancelBtn.disabled = true;
+    confirmBtn.textContent = isEn ? "Publishing..." : "Objavljujem...";
+    try {
+      var headers = {};
+      if (window._browserFingerprint) headers["X-Fingerprint-Hash"] = window._browserFingerprint;
+      var resp = await fetch(API_BASE + "/api/public/" + encodeURIComponent(scanId) + "/publish", {
+        method: "POST",
+        headers: headers,
+      });
+      var body = null;
+      try { body = await resp.json(); } catch (e) {}
+      if (!resp.ok) {
+        var msg = (body && body.detail) || (isEn ? "Publish failed." : "Objava nije uspela.");
+        showToast(msg, "warning");
+        confirmBtn.disabled = false;
+        cancelBtn.disabled = false;
+        confirmBtn.textContent = isEn ? "Yes, publish" : "Da, objavi";
+        return;
+      }
+      // Remember this publication locally so the detail page can show
+      // the "Withdraw publication" button to the original publisher.
+      try {
+        var mine = JSON.parse(localStorage.getItem("my_published_scans") || "[]");
+        if (!Array.isArray(mine)) mine = [];
+        if (mine.indexOf(scanId) === -1) mine.push(scanId);
+        localStorage.setItem("my_published_scans", JSON.stringify(mine));
+      } catch (e) {}
+
+      document.body.removeChild(backdrop);
+      showToast(isEn ? "Published to gallery." : "Objavljeno u galeriji.", "success");
+      if (triggerBtn) {
+        triggerBtn.textContent = isEn ? "View in gallery" : "Vidi u galeriji";
+        triggerBtn.onclick = function() {
+          window.open("/public/" + encodeURIComponent(scanId), "_blank");
+        };
+      }
+    } catch (e) {
+      showToast(isEn ? "Network error." : "Greska u mrezi.", "warning");
+      confirmBtn.disabled = false;
+      cancelBtn.disabled = false;
+      confirmBtn.textContent = isEn ? "Yes, publish" : "Da, objavi";
+    }
+  };
+  btnRow.appendChild(confirmBtn);
+
+  dialog.appendChild(btnRow);
+  backdrop.appendChild(dialog);
+  backdrop.addEventListener("click", function(e) {
+    if (e.target === backdrop) document.body.removeChild(backdrop);
+  });
+  document.body.appendChild(backdrop);
 }
 
 function _exportJSON(data) {

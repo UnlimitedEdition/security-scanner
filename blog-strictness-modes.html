@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>4 Strictness Modes / 4 Nivoa Strogosti — Basic, Standard, Strict, Paranoid · Web Security Scanner</title>
+  <meta name="description" content="Why we built four scoring profiles: Basic, Standard, Strict, Paranoid. How severity weights differ, which categories count, and what score popular sites get in each mode. · Zasto imamo cetiri nivoa ocenjivanja: Basic, Standard, Strict, Paranoid. Kako se menjaju tezine po severity-u, koje kategorije se broje i koji score popularni sajtovi dobijaju.">
+  <meta name="keywords" content="strictness modes, strictness profiles, security scoring, security grade, A+ security score, paranoid mode, strict mode, strogost skeniranja, nivo strogosti, security scorecard, weighted scoring, website grade, hardenize alternative, securityheaders alternative, custom security scoring, compliance scoring, GDPR scoring, SEO scoring, scoring profile">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <link rel="canonical" href="https://security-skener.gradovi.rs/blog-strictness-modes.html">
+  <link rel="alternate" hreflang="sr" href="https://security-skener.gradovi.rs/blog-strictness-modes.html">
+  <link rel="alternate" hreflang="x-default" href="https://security-skener.gradovi.rs/blog-strictness-modes.html">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="4 Strictness Modes / 4 Nivoa Strogosti">
+  <meta property="og:description" content="Basic, Standard, Strict, Paranoid — four ways to score the same scan. Pick the one that matches your goal. · Basic, Standard, Strict, Paranoid — cetiri nacina da ocenite isti sken. Izaberite onaj koji odgovara vasem cilju.">
+  <meta property="og:url" content="https://security-skener.gradovi.rs/blog-strictness-modes.html">
+  <meta property="og:site_name" content="Web Security Scanner">
+  <meta property="og:locale" content="sr_RS">
+  <meta property="og:locale:alternate" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="4 Strictness Modes / 4 Nivoa Strogosti">
+  <meta name="twitter:description" content="Basic → Paranoid. Four scoring profiles on one scan. · Basic → Paranoid. Cetiri profila na jednom skenu.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2.5' stroke-linecap='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "4 Strictness Modes for Website Security Scoring",
+    "description": "Basic, Standard, Strict, Paranoid — a four-profile scoring system for a single scan result. Explains weight matrices, category exclusions, and benchmark data.",
+    "author": { "@type": "Organization", "name": "Web Security Scanner", "url": "https://security-skener.gradovi.rs/" },
+    "publisher": { "@type": "Organization", "name": "Web Security Scanner" },
+    "datePublished": "2026-04-13",
+    "inLanguage": ["sr-RS", "en"],
+    "url": "https://security-skener.gradovi.rs/blog-strictness-modes.html"
+  }
+  </script>
+  <style>
+    .sm-page { max-width: 980px; }
+    .sm-hero { text-align: center; padding: 2rem 0 1.5rem; border-bottom: 1px solid #252a4a; margin-bottom: 2rem; }
+    .sm-hero h1 { font-size: 2rem; margin-bottom: 0.6rem; line-height: 1.2; }
+    .sm-hero .subtitle { color: #9ca3af; font-size: 1rem; margin-bottom: 1.25rem; max-width: 720px; margin-left: auto; margin-right: auto; }
+    .sm-hero .pubdate { color: #7b83a6; font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; }
+
+    .sm-mode-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin: 1.5rem 0 2.5rem; }
+    .sm-mode-card { background: #11142a; border: 1px solid #252a4a; border-radius: 12px; padding: 1.2rem 1.3rem; transition: border-color .15s; }
+    .sm-mode-card:hover { border-color: #a78bfa; }
+    .sm-mode-card.basic { border-left: 4px solid #22c55e; }
+    .sm-mode-card.standard { border-left: 4px solid #a78bfa; }
+    .sm-mode-card.strict { border-left: 4px solid #f97316; }
+    .sm-mode-card.paranoid { border-left: 4px solid #ef4444; }
+    .sm-mode-card h3 { font-size: 1.05rem; margin-bottom: 0.35rem; color: #e8eaf6; }
+    .sm-mode-card .tagline { color: #a78bfa; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.04em; margin-bottom: 0.65rem; text-transform: uppercase; }
+    .sm-mode-card p { color: #cbd5e1; font-size: 0.82rem; line-height: 1.65; margin-bottom: 0.6rem; }
+    .sm-mode-card .thresh { display: inline-block; padding: 0.2rem 0.55rem; background: rgba(167,139,250,0.1); color: #a78bfa; border-radius: 999px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; }
+
+    .sm-section { margin: 2.5rem 0; }
+    .sm-section h2 { font-size: 1.45rem; margin-bottom: 0.5rem; }
+    .sm-section > p { color: #cbd5e1; font-size: 0.95rem; line-height: 1.75; margin-bottom: 1rem; }
+
+    .sm-table-wrap { overflow-x: auto; margin: 1rem 0 1.5rem; }
+    .sm-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 520px; }
+    .sm-table th, .sm-table td { padding: 0.65rem 0.75rem; text-align: left; border-bottom: 1px solid #252a4a; }
+    .sm-table th { background: #11142a; color: #a78bfa; font-weight: 700; letter-spacing: 0.03em; font-size: 0.78rem; text-transform: uppercase; }
+    .sm-table td.num { text-align: center; font-variant-numeric: tabular-nums; }
+    .sm-table tbody tr:hover { background: rgba(167,139,250,0.03); }
+    .sm-table .grade-A { color: #22c55e; font-weight: 700; }
+    .sm-table .grade-B { color: #84cc16; font-weight: 700; }
+    .sm-table .grade-F { color: #ef4444; font-weight: 700; }
+
+    .sm-usecase { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0.9rem; margin: 1.5rem 0; }
+    .sm-usecase-card { background: #11142a; border: 1px solid #252a4a; border-radius: 10px; padding: 1rem 1.15rem; }
+    .sm-usecase-card h4 { font-size: 0.95rem; color: #e8eaf6; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.4rem; }
+    .sm-usecase-card .pill { font-size: 0.68rem; padding: 0.12rem 0.45rem; border-radius: 999px; font-weight: 700; letter-spacing: 0.03em; }
+    .sm-usecase-card .pill.basic { background: rgba(34,197,94,0.14); color: #22c55e; }
+    .sm-usecase-card .pill.standard { background: rgba(167,139,250,0.14); color: #a78bfa; }
+    .sm-usecase-card .pill.strict { background: rgba(249,115,22,0.14); color: #f97316; }
+    .sm-usecase-card .pill.paranoid { background: rgba(239,68,68,0.14); color: #ef4444; }
+    .sm-usecase-card p { color: #cbd5e1; font-size: 0.82rem; line-height: 1.6; }
+
+    .sm-faq { margin: 2rem 0; }
+    .sm-faq details { background: #11142a; border: 1px solid #252a4a; border-radius: 10px; padding: 0.85rem 1.15rem; margin-bottom: 0.7rem; cursor: pointer; }
+    .sm-faq details summary { font-weight: 700; color: #e8eaf6; font-size: 0.92rem; list-style: none; }
+    .sm-faq details summary::before { content: "+"; color: #a78bfa; font-weight: 800; margin-right: 0.6rem; display: inline-block; transition: transform .15s; }
+    .sm-faq details[open] summary::before { content: "\2212"; }
+    .sm-faq details p { margin-top: 0.55rem; color: #cbd5e1; font-size: 0.85rem; line-height: 1.7; }
+
+    .sm-cta { margin: 3rem 0 1rem; padding: 2rem 1.5rem; background: linear-gradient(135deg, #1a1e38, #2a1f4d); border: 1px solid #a78bfa; border-radius: 14px; text-align: center; }
+    .sm-cta h3 { font-size: 1.35rem; color: #e8eaf6; margin-bottom: 0.5rem; }
+    .sm-cta p { color: #cbd5e1; font-size: 0.92rem; margin-bottom: 1.25rem; }
+    .sm-cta a { display: inline-block; padding: 0.9rem 2rem; background: linear-gradient(135deg, #a78bfa, #c4b5fd); color: #0a0c15; font-weight: 800; border-radius: 10px; text-decoration: none; font-size: 0.95rem; transition: transform .15s, box-shadow .2s; }
+    .sm-cta a:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(167,139,250,0.35); }
+
+    @media (max-width: 600px) {
+      .sm-hero h1 { font-size: 1.5rem; }
+      .sm-mode-grid { grid-template-columns: 1fr; }
+      .sm-section h2 { font-size: 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr"><div class="timeline-title">Sadrzaj</div><ol id="timeline-sr"></ol></div>
+    <div class="en"><div class="timeline-title">Contents</div><ol id="timeline-en"></ol></div>
+  </aside>
+  <main class="blog-content sm-page">
+
+    <header class="sm-hero">
+      <div class="pubdate">2026-04-13 &middot; V4 release</div>
+      <h1>
+        <span class="sr">4 Nivoa Strogosti &mdash; Basic, Standard, Strict, Paranoid</span>
+        <span class="en">4 Strictness Modes &mdash; Basic, Standard, Strict, Paranoid</span>
+      </h1>
+      <p class="subtitle">
+        <span class="sr">Jedan sken &mdash; cetiri nacina da se izracuna ocena. Izaberite profil koji odgovara vasem cilju: od marketing prezentacije do compliance audita.</span>
+        <span class="en">One scan &mdash; four ways to compute the grade. Pick the profile that matches your goal: from marketing presentation to compliance audit.</span>
+      </p>
+    </header>
+
+    <section class="sm-section" id="why">
+      <h2>
+        <span class="sr">Zasto 4 nivoa?</span>
+        <span class="en">Why 4 levels?</span>
+      </h2>
+      <p>
+        <span class="sr">Kada smo testirali skener na <a href="https://hardenize.com">hardenize.com</a>, dobio je <strong>100/A</strong> u podrazumevanom modu &mdash; iako je prosao 43 od 66 provera i pao 23. To je bilo previse popustljivo. Sa druge strane, sajt vlasnika koji trazi "100/A za email klijentu" ne zeli isti strog rezim kao kompanija koja priprema ISO27001 audit.</span>
+        <span class="en">When we tested the scanner on <a href="https://hardenize.com">hardenize.com</a>, it got <strong>100/A</strong> in default mode &mdash; even though it passed 43 of 66 checks and failed 23. That was too lenient. On the other hand, a site owner who wants "100/A for the client email" doesn't need the same strict regime as a company preparing an ISO27001 audit.</span>
+      </p>
+      <p>
+        <span class="sr">Resenje: jedan sken, cetiri profila ocenjivanja. <code>Basic</code> za marketing i brzu prezentaciju, <code>Standard</code> kao V3 default (kompatibilan sa prethodnim izvestajima), <code>Strict</code> kao ozbiljna compliance provera, <code>Paranoid</code> kao maksimum &mdash; A samo na 100.</span>
+        <span class="en">Solution: one scan, four scoring profiles. <code>Basic</code> for marketing and quick presentations, <code>Standard</code> as the V3 default (backward-compatible with old reports), <code>Strict</code> as a serious compliance check, <code>Paranoid</code> as the maximum &mdash; A only at 100.</span>
+      </p>
+    </section>
+
+    <section class="sm-section" id="modes">
+      <h2>
+        <span class="sr">4 profila ocenjivanja</span>
+        <span class="en">4 scoring profiles</span>
+      </h2>
+      <div class="sm-mode-grid">
+        <article class="sm-mode-card basic">
+          <div class="tagline"><span class="sr">Popustljivo</span><span class="en">Lenient</span></div>
+          <h3>Basic</h3>
+          <p>
+            <span class="sr">Iz ugla vlasnika sajta. Gleda samo ozbiljne bezbednosne probleme, bonus poeni za INFO provere. A na 85+.</span>
+            <span class="en">Site-owner perspective. Only serious security issues count, generous bonus for passed INFO checks. A at 85+.</span>
+          </p>
+          <span class="thresh">A = 85+</span>
+        </article>
+        <article class="sm-mode-card standard">
+          <div class="tagline"><span class="sr">Podrazumevano</span><span class="en">Default</span></div>
+          <h3>Standard</h3>
+          <p>
+            <span class="sr">V3 kompatibilno &mdash; identicno ponasanje kao u ranijim verzijama skenera. Safe izbor za poredjenje sa starim izvestajima.</span>
+            <span class="en">V3-compatible &mdash; identical behavior to earlier scanner versions. Safe choice for comparing against old reports.</span>
+          </p>
+          <span class="thresh">A = 90+</span>
+        </article>
+        <article class="sm-mode-card strict">
+          <div class="tagline"><span class="sr">Bez popusta</span><span class="en">No diminishing</span></div>
+          <h3>Strict</h3>
+          <p>
+            <span class="sr">Svaki propust se broji &mdash; nema "cap" na broj penalty-a. Racuna i SEO + GDPR kategorije. A na 95+.</span>
+            <span class="en">Every issue counts &mdash; no cap on penalties. SEO and GDPR categories also count. A at 95+.</span>
+          </p>
+          <span class="thresh">A = 95+</span>
+        </article>
+        <article class="sm-mode-card paranoid">
+          <div class="tagline"><span class="sr">Maksimum</span><span class="en">Maximum</span></div>
+          <h3>Paranoid</h3>
+          <p>
+            <span class="sr">Sve kategorije se broje (Accessibility + Performance takodje). Najvise tezine po severity-u. A samo ako je <em>tacno</em> 100.</span>
+            <span class="en">Every category counts (Accessibility + Performance included). Highest weight per severity. A only at <em>exactly</em> 100.</span>
+          </p>
+          <span class="thresh">A = 100</span>
+        </article>
+      </div>
+    </section>
+
+    <section class="sm-section" id="weights">
+      <h2>
+        <span class="sr">Matrica tezina po severity-u</span>
+        <span class="en">Severity weight matrix</span>
+      </h2>
+      <p>
+        <span class="sr">Formula ocene je: <code>score = max(5, min(100, 100 &minus; suma_penalty + bonus))</code>. Tezine po severity-u odredjuju koliko jedan propust "kosta". Basic i Standard imaju <em>diminishing returns</em> (cap na broj propusta iste ozbiljnosti koji se broje); Strict i Paranoid broje sve.</span>
+        <span class="en">Score formula: <code>score = max(5, min(100, 100 &minus; sum_penalty + bonus))</code>. Severity weights determine how much one issue "costs". Basic and Standard have <em>diminishing returns</em> (cap on the number of same-severity issues counted); Strict and Paranoid count all.</span>
+      </p>
+      <div class="sm-table-wrap">
+        <table class="sm-table">
+          <thead>
+            <tr>
+              <th>Profile</th>
+              <th class="num">CRITICAL</th>
+              <th class="num">HIGH</th>
+              <th class="num">MEDIUM</th>
+              <th class="num">LOW</th>
+              <th class="num"><span class="sr">Cap</span><span class="en">Cap</span></th>
+              <th class="num"><span class="sr">Bonus</span><span class="en">Bonus</span></th>
+              <th><span class="sr">Izuzete kategorije</span><span class="en">Excluded categories</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Basic</td>    <td class="num">&minus;15</td><td class="num">&minus;6</td> <td class="num">&minus;2</td> <td class="num">&minus;0.5</td><td class="num">3/4/4/5</td><td class="num">+3/INFO (max +25)</td><td>SEO, GDPR, A11y, Perf</td></tr>
+            <tr><td>Standard</td> <td class="num">&minus;20</td><td class="num">&minus;10</td><td class="num">&minus;5</td> <td class="num">&minus;2</td>  <td class="num">3/4/4/5</td><td class="num">+2/INFO (max +20)</td><td>SEO, GDPR, A11y, Perf</td></tr>
+            <tr><td>Strict</td>   <td class="num">&minus;25</td><td class="num">&minus;15</td><td class="num">&minus;8</td> <td class="num">&minus;4</td>  <td class="num"><span class="sr">bez</span><span class="en">none</span></td><td class="num">+1/INFO (max +10)</td><td>A11y, Perf</td></tr>
+            <tr><td>Paranoid</td> <td class="num">&minus;35</td><td class="num">&minus;20</td><td class="num">&minus;12</td><td class="num">&minus;7</td>  <td class="num"><span class="sr">bez</span><span class="en">none</span></td><td class="num">0</td><td><span class="sr">nijedna</span><span class="en">none</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="sm-section" id="benchmark">
+      <h2>
+        <span class="sr">Real-world benchmark &mdash; 4 sajta &times; 4 profila</span>
+        <span class="en">Real-world benchmark &mdash; 4 sites &times; 4 profiles</span>
+      </h2>
+      <p>
+        <span class="sr">Sledeca tabela pokazuje kako se ista skeniranja ocenjuju kroz svaki profil. Svi brojevi su iz stvarnih skenova od <strong>2026-04-13</strong> (raw JSON: <code>tests/benchmark_results.json</code>).</span>
+        <span class="en">The table below shows how the same scan is rated under each profile. All numbers come from real scans on <strong>2026-04-13</strong> (raw JSON: <code>tests/benchmark_results.json</code>).</span>
+      </p>
+      <div class="sm-table-wrap">
+        <table class="sm-table">
+          <thead>
+            <tr>
+              <th><span class="sr">Sajt</span><span class="en">Site</span></th>
+              <th class="num">Basic</th>
+              <th class="num">Standard</th>
+              <th class="num">Strict</th>
+              <th class="num">Paranoid</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>gradovi.rs</code></td>          <td class="num"><span class="grade-A">100 A</span></td><td class="num"><span class="grade-A">95 A</span></td> <td class="num"><span class="grade-F">5 F</span></td><td class="num"><span class="grade-F">5 F</span></td></tr>
+            <tr><td><code>hardenize.com</code></td>        <td class="num"><span class="grade-A">100 A</span></td><td class="num"><span class="grade-A">100 A</span></td><td class="num"><span class="grade-F">5 F</span></td><td class="num"><span class="grade-F">5 F</span></td></tr>
+            <tr><td><code>securityheaders.com</code></td>  <td class="num"><span class="grade-A">100 A</span></td><td class="num"><span class="grade-A">93 A</span></td> <td class="num"><span class="grade-F">5 F</span></td><td class="num"><span class="grade-F">5 F</span></td></tr>
+            <tr><td><code>google.com</code></td>           <td class="num"><span class="grade-A">100 A</span></td><td class="num"><span class="grade-A">90 A</span></td> <td class="num"><span class="grade-F">5 F</span></td><td class="num"><span class="grade-F">5 F</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        <span class="sr">Opservacija: cak i popularni security alati <em>hardenize.com</em> i <em>securityheaders.com</em> padaju na F u Paranoid modu. Ne zato sto su losi &mdash; nego zato sto Paranoid broji apsolutno sve kategorije (SEO, GDPR, Accessibility, Performance), a svaki javni sajt ima bar nekoliko takvih propusta.</span>
+        <span class="en">Observation: even popular security tools <em>hardenize.com</em> and <em>securityheaders.com</em> get F in Paranoid mode. Not because they're bad &mdash; because Paranoid counts absolutely every category (SEO, GDPR, Accessibility, Performance), and any public site has at least a few such issues.</span>
+      </p>
+    </section>
+
+    <section class="sm-section" id="usecase">
+      <h2>
+        <span class="sr">Kada koristiti koji mod</span>
+        <span class="en">When to use which mode</span>
+      </h2>
+      <div class="sm-usecase">
+        <article class="sm-usecase-card">
+          <h4><span class="pill basic">Basic</span></h4>
+          <p>
+            <span class="sr">Prezentacija klijentu. Marketing screenshot. Prva demonstracija skenera. Skola/fakultet. Kada je poruka "pogledaj, sve je u redu" vaznija od detalja.</span>
+            <span class="en">Client presentation. Marketing screenshot. First demo of the scanner. School/university assignment. When "look, it's fine" is the message.</span>
+          </p>
+        </article>
+        <article class="sm-usecase-card">
+          <h4><span class="pill standard">Standard</span></h4>
+          <p>
+            <span class="sr">Rutinska mesecna provera. Poredjenje sa prethodnim izvestajem (V3 kompatibilnost). Default izbor ako niste sigurni sta vam treba.</span>
+            <span class="en">Routine monthly check. Comparison with previous report (V3 backward-compatible). Default choice if you're unsure what you need.</span>
+          </p>
+        </article>
+        <article class="sm-usecase-card">
+          <h4><span class="pill strict">Strict</span></h4>
+          <p>
+            <span class="sr">Interni security audit. Pre-deploy gate za staging. Compliance priprema (ZZPL, GDPR osnove). Izvestaj za management koji trazi ozbiljnost.</span>
+            <span class="en">Internal security audit. Pre-deploy gate for staging. Compliance prep (Serbian ZZPL, GDPR basics). Management report that needs to look serious.</span>
+          </p>
+        </article>
+        <article class="sm-usecase-card">
+          <h4><span class="pill paranoid">Paranoid</span></h4>
+          <p>
+            <span class="sr">ISO27001 / PCI-DSS / SOC2 priprema. Bank/fintech release candidate. Javni vladini sajtovi. Kada <em>svaki</em> propust mora da se dokumentuje i ispravi.</span>
+            <span class="en">ISO27001 / PCI-DSS / SOC2 preparation. Bank/fintech release candidate. Government public-facing sites. When <em>every</em> issue has to be documented and fixed.</span>
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="sm-section sm-faq" id="faq">
+      <h2>
+        <span class="sr">Cesto postavljena pitanja</span>
+        <span class="en">Frequently asked questions</span>
+      </h2>
+      <details>
+        <summary><span class="sr">Zasto moj sajt dobija F u Paranoid modu?</span><span class="en">Why does my site get F in Paranoid mode?</span></summary>
+        <p>
+          <span class="sr">Paranoid broji SVE kategorije &mdash; ukljucujuci SEO, GDPR, Accessibility i Performance. Ako imate bar 3 MEDIUM propusta (&minus;12 svaki) i 3 HIGH (&minus;20 svaki), vec ste na 100 &minus; 96 = 4 &rarr; floor=5 &rarr; F. Nije bug, to je svrha profila: Paranoid daje A samo savrsenim sajtovima.</span>
+          <span class="en">Paranoid counts EVERY category &mdash; SEO, GDPR, Accessibility, Performance included. With just 3 MEDIUM issues (&minus;12 each) and 3 HIGH (&minus;20 each) you're already at 100 &minus; 96 = 4 &rarr; floor=5 &rarr; F. It's not a bug, that's the point: Paranoid gives A only to perfect sites.</span>
+        </p>
+      </details>
+      <details>
+        <summary><span class="sr">Da li Standard i dalje odgovara V3 rezultatima?</span><span class="en">Does Standard still match V3 results?</span></summary>
+        <p>
+          <span class="sr">Da &mdash; to je regresivni uslov. Svaki sken koji je V3 ocenio sa X, V4 Standard mora da oceni sa X. Imamo 23 unit testa (<code>tests/test_strictness.py</code>) koji to potvrdjuju na svakom buildu. Ako se neki V3 izvestaj razlikuje, to je bug i blokira merge.</span>
+          <span class="en">Yes &mdash; it's a regression gate. Every scan that V3 rated X, V4 Standard must rate X. We have 23 unit tests (<code>tests/test_strictness.py</code>) enforcing this on every build. Any V3 report that differs is a bug and blocks merge.</span>
+        </p>
+      </details>
+      <details>
+        <summary><span class="sr">Da li mogu da menjam profil posle skena?</span><span class="en">Can I change profile after the scan?</span></summary>
+        <p>
+          <span class="sr">Za sada ne kroz UI &mdash; profil se bira pre skena. Ali buduca verzija ce imati re-score dugme u rezultatima (ista lista problema, novi brojevi) jer <code>compute_score()</code> je cista funkcija rezultata i moze da se pokrene ponovo bez novog mreznog skena.</span>
+          <span class="en">Not yet through the UI &mdash; profile is picked before scan. A future version will have a re-score button in results (same issue list, new numbers) since <code>compute_score()</code> is a pure function of the result list and can be replayed without a new network scan.</span>
+        </p>
+      </details>
+      <details>
+        <summary><span class="sr">Da li je Strict mod strogi od Paranoid? Slicne brojke...</span><span class="en">Is Strict actually easier than Paranoid? The numbers look similar...</span></summary>
+        <p>
+          <span class="sr">U benchmark tabeli oba mode-a pokazuju 5/F jer vecina javnih sajtova ima dovoljno propusta da pregaze floor. Razlika je u <em>broju detektovanih propusta</em> (Paranoid dodaje Accessibility + Performance kategorije) i u praksi &mdash; ako sajt ima jedan CRITICAL, u Strict modu je to &minus;25, u Paranoid modu &minus;35. Na skoro savrsenom sajtu razlika se itekako vidi.</span>
+          <span class="en">In our benchmark both modes show 5/F because most public sites have enough issues to drive the score past the floor. The difference shows in <em>count of detected issues</em> (Paranoid adds Accessibility + Performance) and in practice &mdash; one CRITICAL is &minus;25 in Strict vs &minus;35 in Paranoid. On near-perfect sites the gap is clearly visible.</span>
+        </p>
+      </details>
+      <details>
+        <summary><span class="sr">Gde je zapisano moje podrazumevano podesavanje?</span><span class="en">Where is my default setting stored?</span></summary>
+        <p>
+          <span class="sr">Lokalno u browseru (<code>localStorage</code>, kljuc <code>ss_strictness</code>). Ne salje se na server niti na treca lica, ne deli se izmedju uredjaja. Ako obrisete cache, vraca se na Standard.</span>
+          <span class="en">Locally in your browser (<code>localStorage</code>, key <code>ss_strictness</code>). Not sent to the server or third parties, not synced across devices. Clearing cache resets to Standard.</span>
+        </p>
+      </details>
+    </section>
+
+    <div class="sm-cta">
+      <h3><span class="sr">Probaj sva 4 moda</span><span class="en">Try all 4 modes</span></h3>
+      <p>
+        <span class="sr">Jedan URL, cetiri ocene. Vidi koliko je tvoj sajt &quot;u redu&quot; po razlicitim kriterijumima &mdash; besplatno, bez registracije.</span>
+        <span class="en">One URL, four grades. See how &quot;fine&quot; your site really is by different criteria &mdash; free, no registration.</span>
+      </p>
+      <a href="./index.html"><span class="sr">Skeniraj sajt &rarr;</span><span class="en">Scan your site &rarr;</span></a>
+    </div>
+
+  </main>
+</div>
+<script src="./blog-common.js" defer></script>
+</body>
+</html>

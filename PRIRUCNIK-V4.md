@@ -244,6 +244,47 @@ Pre merge-a — skenirati ova 4 sajta na sva 4 nivoa i zabeleziti score:
 
 Rezultati ulaze u §2.4 kao real-world benchmark.
 
+#### Rezultati (2026-04-13, `tests/bench_strictness.py`)
+
+Metoda: jedan pravi sken po sajtu + `compute_score()` replayed kroz sva
+4 profila na istom `all_results` skupu. Matematicki identicno sa 4
+zasebna skena, bez 4× mrezne varijanse i bez CDN cache jitter-a.
+
+| Sajt | Basic | Standard | Strict | Paranoid |
+|------|:-----:|:--------:|:------:|:--------:|
+| `gradovi.rs`          | 100 A | **95 A** | 5 F | 5 F |
+| `hardenize.com`       | 100 A | 100 A    | 5 F | 5 F |
+| `securityheaders.com` | 100 A | **93 A** | 5 F | 5 F |
+| `google.com`          | 100 A | **90 A** | 5 F | 5 F |
+
+Counts CRIT/HIGH/MED/LOW po profilu (failures):
+
+| Sajt | Basic | Standard | Strict | Paranoid |
+|------|:-----:|:--------:|:------:|:--------:|
+| `gradovi.rs`          | 0/1/1/5 | 0/1/1/5 | 0/4/7/8  | 0/4/7/8  |
+| `hardenize.com`       | 0/0/2/8 | 0/0/2/8 | 0/0/9/10 | 0/0/11/12 |
+| `securityheaders.com` | 0/2/1/1 | 0/2/1/1 | 0/3/7/5  | 0/3/7/7  |
+| `google.com`          | 0/1/2/7 | 0/1/2/7 | 0/3/7/11 | 0/3/7/13 |
+
+Kljucne opservacije (dobar sadrzaj za blog post):
+
+1. **Standard = V3 parity OK** — sva 4 sajta dobijaju iste vrednosti kao
+   pre V4. Regression gate cist.
+2. **Basic = marketing-friendly** — 100/A za svakoga na benchmark setu.
+   Korisno za prezentaciju klijentu ali nije dovoljno strogo za
+   kompliance proveru.
+3. **Strict vs Paranoid razlika se krije** — svi benchmark sajtovi
+   padaju na floor=5 jer HIGH×15 + MEDIUM×8 + LOW×4 vrlo brzo premasi
+   100 penalty. Razlika se vidi tek u **counts** (paranoid dodaje
+   Accessibility + Performance failure-e: hardenize +2 MED +2 LOW,
+   google +2 LOW).
+4. **Cak i hardenize.com / securityheaders.com dobijaju F u Paranoid
+   modu** — jak marketing ugao: *"Nijedan sajt nije savrsen. Mozete
+   li da prodjete Paranoid?"*
+
+Benchmark raw JSON: `tests/benchmark_results.json` (zadnji sken tj.
+`google.com` iz ove runde — skripta overwrites svaki put).
+
 ### §5.3 Regression test
 
 - **Kritican uslov:** Standard mode mora dati **identican** score kao V3.

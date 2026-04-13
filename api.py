@@ -256,6 +256,7 @@ def _run_scan_inline(
     mode: str = "safe",
     scan_request_id: Optional[str] = None,
     ad_blocked: bool = False,
+    strictness: str = scanner.DEFAULT_STRICTNESS,
 ):
     """
     Executes a single scan. Shared between the "start immediately" path
@@ -308,7 +309,7 @@ def _run_scan_inline(
         domain=scans[scan_id].get("domain"),
         session_id=scans[scan_id].get("session_id"),
         fingerprint_hash=scans[scan_id].get("fingerprint_hash"),
-        details={"mode": mode, "scan_request_id": scan_request_id},
+        details={"mode": mode, "scan_request_id": scan_request_id, "strictness": strictness},
     )
 
     progress_cb = _make_progress_cb(scan_id)
@@ -319,6 +320,7 @@ def _run_scan_inline(
             max_pages=max_pages,
             preselected_pages=preselected_pages,
             mode=mode,
+            strictness=strictness,
         )
         scans[scan_id]["status"] = "completed"
         scans[scan_id]["progress"] = 100
@@ -399,6 +401,7 @@ def _process_queue():
                 scan.get("mode", "safe"),
                 scan.get("scan_request_id"),
                 bool(scan.get("ad_blocked")),
+                scan.get("strictness") or scanner.DEFAULT_STRICTNESS,
             ),
             daemon=True,
         )
@@ -429,6 +432,23 @@ class ScanRequest(BaseModel):
     # Including the field in this model allows the legacy endpoint to
     # accept and ignore it without raising a validation error.
     mode: Optional[str] = None
+    # V4 strictness profile. Whitelisted against STRICTNESS_PROFILES in
+    # scanner.py. Unknown or missing values fall back to scanner's
+    # DEFAULT_STRICTNESS ("standard"), which replicates V3 scoring exactly.
+    strictness: Optional[str] = None
+
+    @field_validator("strictness")
+    @classmethod
+    def validate_strictness(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        v = v.strip().lower()
+        if v not in scanner.STRICTNESS_PROFILES:
+            raise ValueError(
+                "Neispravna strogost. Dozvoljeno: "
+                + ", ".join(scanner.STRICTNESS_PROFILES.keys())
+            )
+        return v
 
     @field_validator("url")
     @classmethod
@@ -1743,7 +1763,11 @@ def scan_request_verify_endpoint(
 
 
 @app.post("/scan/request/{request_id}/execute")
-def execute_scan_request_endpoint(request_id: str, request: Request):
+def execute_scan_request_endpoint(
+    request_id: str,
+    request: Request,
+    strictness: Optional[str] = None,
+):
     """
     Step 5 of the Full Scan wizard: kick off the actual full-mode scan.
 
@@ -1883,6 +1907,11 @@ def execute_scan_request_endpoint(request_id: str, request: Request):
         # precondition above has been re-validated server-side.
         "mode": "full",
         "scan_request_id": request_id,
+        "strictness": (
+            strictness.strip().lower()
+            if strictness and strictness.strip().lower() in scanner.STRICTNESS_PROFILES
+            else scanner.DEFAULT_STRICTNESS
+        ),
     }
 
     db.log_audit_event(
@@ -1906,7 +1935,11 @@ def execute_scan_request_endpoint(request_id: str, request: Request):
         scans[scan_id]["step"] = "Pokretanje punog skena..."
         thread = threading.Thread(
             target=_run_scan_inline,
-            args=(scan_id, url, client_ip, user_agent, max_pages, None, "full", request_id, False),
+            args=(
+                scan_id, url, client_ip, user_agent, max_pages,
+                None, "full", request_id, False,
+                scans[scan_id]["strictness"],
+            ),
             daemon=True,
         )
         thread.start()
@@ -2395,6 +2428,8 @@ def start_scan(req: ScanRequest, request: Request):
         "mode": "safe",
         "scan_request_id": None,
         "ad_blocked": bool(req.ad_blocked),
+        # V4: strictness picked in UI. None means scanner uses DEFAULT_STRICTNESS.
+        "strictness": req.strictness or scanner.DEFAULT_STRICTNESS,
     }
 
     # Persist the scan + log the request. Both are best-effort — DB
@@ -2437,7 +2472,11 @@ def start_scan(req: ScanRequest, request: Request):
         scans[scan_id]["step"] = "Pokretanje skeniranja..."
         thread = threading.Thread(
             target=_run_scan_inline,
-            args=(scan_id, req.url, client_ip, user_agent, max_pages, validated_selected, "safe", None, bool(req.ad_blocked)),
+            args=(
+                scan_id, req.url, client_ip, user_agent, max_pages,
+                validated_selected, "safe", None, bool(req.ad_blocked),
+                req.strictness or scanner.DEFAULT_STRICTNESS,
+            ),
             daemon=True,
         )
         thread.start()
@@ -2870,6 +2909,255 @@ def api_checkout_create(req: CheckoutCreateRequest, request: Request):
 
     checkout_url = urlunparse(parsed._replace(query=urlencode(existing_params)))
     return {"checkout_url": checkout_url, "plan": req.plan}
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# Public gallery (V4 — opt-in publish of scan summary)
+# ─────────────────────────────────────────────────────────────────────────
+# Users can opt-in to publish a completed scan's SUMMARY on /gallery.html.
+# Principle: show quality (score, grade, category breakdown), never
+# dismiss (no specific vulnerabilities, no tech fingerprints). The public
+# row contains only: url, grade, score, strictness, per-severity counts,
+# per-category grades. Everything else stays private.
+
+# Maps fine-grained check categories (as written by checks/*.py) to the
+# five top-level buckets shown on the gallery detail page. Anything not
+# in this map falls into "Security" (safe default for new check modules).
+_GALLERY_CATEGORY_MAP: Dict[str, str] = {
+    "SEO": "SEO",
+    "Performance": "Performance",
+    "GDPR": "GDPR",
+    "Accessibility": "Accessibility",
+}
+
+
+def _gallery_group(category: str) -> str:
+    """Project fine-grained check category into one of the 5 gallery groups."""
+    return _GALLERY_CATEGORY_MAP.get(category or "", "Security")
+
+
+def _grade_from_score(score: int) -> str:
+    """Simple pass-ratio grade used for per-category badges on the gallery.
+
+    Intentionally independent of strictness profile thresholds — this is
+    a pure "how many tests passed in this category" badge, not a
+    severity-weighted score. Users asked for KOLIKO TESTOVA KOJA
+    PROLAZNOST, which is exactly this.
+    """
+    if score >= 90:
+        return "A"
+    if score >= 80:
+        return "B"
+    if score >= 70:
+        return "C"
+    if score >= 60:
+        return "D"
+    return "F"
+
+
+def _compute_category_summary(results: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+    """Group scan results into 5 top-level buckets with total/passed/grade/score.
+
+    Returns a dict ready to store as categories_json. Categories with
+    zero tests are omitted so the UI doesn't render empty cards.
+    """
+    buckets: Dict[str, Dict[str, int]] = {
+        "Security": {"total": 0, "passed": 0},
+        "SEO": {"total": 0, "passed": 0},
+        "Performance": {"total": 0, "passed": 0},
+        "GDPR": {"total": 0, "passed": 0},
+        "Accessibility": {"total": 0, "passed": 0},
+    }
+    for r in results or []:
+        group = _gallery_group(r.get("category") or "")
+        buckets[group]["total"] += 1
+        if r.get("passed", False):
+            buckets[group]["passed"] += 1
+
+    out: Dict[str, Dict[str, Any]] = {}
+    for name, b in buckets.items():
+        if b["total"] == 0:
+            continue
+        score = round(100 * b["passed"] / b["total"])
+        out[name] = {
+            "total": b["total"],
+            "passed": b["passed"],
+            "score": score,
+            "grade": _grade_from_score(score),
+        }
+    return out
+
+
+# Max publishes allowed per publisher IP in a rolling 24h window.
+# Tuned so an honest user can publish a few scans across their sites
+# but a single IP can't spam the gallery.
+_GALLERY_PUBLISH_LIMIT_24H = 10
+
+
+@app.post("/api/public/{scan_id}/publish")
+def publish_scan_endpoint(scan_id: str, request: Request):
+    """Opt-in publish a completed scan's summary to the public gallery.
+
+    Authorization: caller must be the same IP that ran the scan (or
+    match its fingerprint). We also require the scan to be `completed`
+    and have a usable result. Rate-limited by publisher IP.
+    """
+    client_ip = _client_ip(request)
+    fingerprint = _client_fingerprint(request)
+
+    scan = scans.get(scan_id)
+    db_row = None
+    if not scan:
+        db_row = db.get_scan_from_db(scan_id)
+        if not db_row:
+            raise HTTPException(status_code=404, detail="Skeniranje nije pronadjeno.")
+
+    source = scan or db_row
+    status_val = source.get("status")
+    if status_val != "completed":
+        raise HTTPException(
+            status_code=409,
+            detail="Skeniranje nije zavrseno — ne moze se objaviti jos.",
+        )
+
+    result = source.get("result") or {}
+    score_data = result.get("score") or {}
+    results_list = result.get("results") or []
+    if not score_data or not results_list:
+        raise HTTPException(status_code=409, detail="Rezultat skeniranja je nepotpun.")
+
+    # Ownership: this scan ran from this IP (or fingerprint) — same rule
+    # as /scan/{id} result visibility. Without this anyone could publish
+    # anyone else's scan_id.
+    scan_domain = source.get("domain") or ""
+    if scan_domain and not db.is_domain_verified(scan_domain, client_ip, fingerprint_hash=fingerprint):
+        # Fall back to matching the scan's original requester IP.
+        original_ip = source.get("client_ip") or ""
+        if not original_ip or db.hash_ip(client_ip) != db.hash_ip(original_ip):
+            raise HTTPException(
+                status_code=403,
+                detail="Samo onaj ko je pokrenuo skeniranje moze ga objaviti.",
+            )
+
+    # Already published?
+    existing = db.get_public_scan_for_owner_check(scan_id)
+    if existing and not existing.get("withdrawn_at"):
+        raise HTTPException(status_code=409, detail="Ovo skeniranje je vec objavljeno.")
+
+    # Rate-limit — count all publishes from this IP in last 24h,
+    # withdrawn rows included (see db.count_recent_publishes_by_ip).
+    recent = db.count_recent_publishes_by_ip(client_ip, hours=24)
+    if recent >= _GALLERY_PUBLISH_LIMIT_24H:
+        raise HTTPException(
+            status_code=429,
+            detail=(
+                f"Dostignut limit objava u javnoj galeriji "
+                f"({_GALLERY_PUBLISH_LIMIT_24H} / 24h). Pokusajte kasnije."
+            ),
+        )
+
+    categories = _compute_category_summary(results_list)
+    counts = score_data.get("counts") or {"critical": 0, "high": 0, "medium": 0, "low": 0}
+    strictness = source.get("strictness") or score_data.get("strictness") or scanner.DEFAULT_STRICTNESS
+    total_checks = result.get("total_checks") or len(results_list)
+    failed_checks = result.get("failed_checks") or sum(
+        1 for r in results_list if not r.get("passed", True)
+    )
+
+    ok = db.publish_scan(
+        scan_id=scan_id,
+        url=source.get("url") or "",
+        domain=scan_domain,
+        score=int(score_data.get("score", 0)),
+        grade=str(score_data.get("grade", "F")),
+        strictness=str(strictness),
+        total_checks=int(total_checks),
+        failed_checks=int(failed_checks),
+        counts=counts,
+        categories=categories,
+        publisher_ip=client_ip,
+        publisher_fingerprint=fingerprint,
+    )
+    if not ok:
+        raise HTTPException(status_code=500, detail="Objava nije uspela. Pokusajte kasnije.")
+
+    db.log_audit_event(
+        event="gallery_publish",
+        ip=client_ip, ua=request.headers.get("user-agent", "")[:500] or None,
+        scan_id=scan_id, domain=scan_domain,
+        fingerprint_hash=fingerprint,
+        details={"strictness": strictness, "score": score_data.get("score"),
+                 "grade": score_data.get("grade")},
+    )
+
+    return {"ok": True, "scan_id": scan_id, "public_url": f"/public/{scan_id}"}
+
+
+@app.delete("/api/public/{scan_id}")
+def withdraw_scan_endpoint(scan_id: str, request: Request):
+    """Soft-withdraw a previously published scan. Same-IP (or fingerprint) only."""
+    client_ip = _client_ip(request)
+    fingerprint = _client_fingerprint(request)
+
+    ok = db.withdraw_scan(scan_id, client_ip=client_ip, fingerprint_hash=fingerprint)
+    if not ok:
+        raise HTTPException(
+            status_code=404,
+            detail="Nema objave za povlacenje, ili niste vlasnik.",
+        )
+
+    db.log_audit_event(
+        event="gallery_withdraw",
+        ip=client_ip, ua=request.headers.get("user-agent", "")[:500] or None,
+        scan_id=scan_id,
+        fingerprint_hash=fingerprint,
+        details={},
+    )
+    return {"ok": True, "scan_id": scan_id}
+
+
+@app.get("/api/public")
+def list_public_scans_endpoint(
+    limit: int = 50,
+    offset: int = 0,
+    strictness: Optional[str] = None,
+    grade: Optional[str] = None,
+    sort: str = "newest",
+):
+    """Public gallery listing. Supports top-list leaderboard sort modes.
+
+    Query params:
+      sort: newest | top_score | top_paranoid | top_strict
+      strictness: basic | standard | strict | paranoid (filter; ignored for top_*)
+      grade: A | B | C | D | F (filter)
+      limit/offset: pagination (limit capped at 100 server-side)
+    """
+    if sort not in db.PUBLIC_SORT_MODES:
+        sort = "newest"
+    if strictness and strictness not in scanner.STRICTNESS_PROFILES:
+        strictness = None
+    if grade and grade not in ("A", "B", "C", "D", "F"):
+        grade = None
+
+    rows = db.list_public_scans(
+        limit=limit, offset=offset,
+        strictness_filter=strictness,
+        grade_filter=grade,
+        sort_by=sort,
+    )
+    return {"items": rows, "sort": sort, "count": len(rows)}
+
+
+@app.get("/api/public/{scan_id}")
+def get_public_scan_endpoint(scan_id: str):
+    """Detail view for a single published scan."""
+    row = db.get_public_scan(scan_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Javni prikaz nije pronadjen.")
+    # Never expose PII-adjacent fields publicly.
+    row.pop("publisher_ip_hash", None)
+    row.pop("publisher_fingerprint", None)
+    return row
 
 
 # ─────────────────────────────────────────────────────────────────────────

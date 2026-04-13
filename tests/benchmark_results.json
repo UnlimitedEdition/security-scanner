@@ -1,0 +1,48 @@
+{
+  "url": "https://google.com",
+  "scan_duration_s": 20.1,
+  "total_checks": 70,
+  "failed_checks": 23,
+  "matrix": {
+    "basic": {
+      "score": 100,
+      "grade": "A",
+      "counts": {
+        "critical": 0,
+        "high": 1,
+        "medium": 2,
+        "low": 7
+      }
+    },
+    "standard": {
+      "score": 90,
+      "grade": "A",
+      "counts": {
+        "critical": 0,
+        "high": 1,
+        "medium": 2,
+        "low": 7
+      }
+    },
+    "strict": {
+      "score": 5,
+      "grade": "F",
+      "counts": {
+        "critical": 0,
+        "high": 3,
+        "medium": 7,
+        "low": 11
+      }
+    },
+    "paranoid": {
+      "score": 5,
+      "grade": "F",
+      "counts": {
+        "critical": 0,
+        "high": 3,
+        "medium": 7,
+        "low": 13
+      }
+    }
+  }
+}

@@ -219,6 +219,28 @@
       </div>
     </div>
     <p style="font-size:0.75rem;color:#7b83a6;margin-top:0.7rem;">Svaka verzija je trajno sacuvana u <code>audit_log</code> tabeli — consent koji ste dali vazi za verziju koja je bila aktivna u tom trenutku.</p>
+
+    <h2 id="pp15">15. Javna galerija rezultata (opt-in objava)</h2>
+    <p>Od aprila 2026. korisnik koji je pokrenuo skeniranje moze, <strong>iskljucivo svojim izborom</strong>, objaviti rezime rezultata u javnoj galeriji na <a href="/gallery">/gallery</a>. Objava je podrazumevano iskljucena — dok ne kliknete "Objavi u galeriji" i ne potvrdite consent modal, nijedan rezultat nije javan.</p>
+    <p><strong>Sta se objavljuje u galeriji:</strong></p>
+    <ul>
+      <li>URL skeniranog sajta</li>
+      <li>Ukupna ocena (A-F) i skor (0-100)</li>
+      <li>Profil strogosti (Basic / Standard / Strict / Paranoid)</li>
+      <li>Broj nalaza po ozbiljnosti (Critical / High / Medium / Low)</li>
+      <li>Ocena i procenat prolaznosti po kategoriji (Bezbednost / SEO / Performanse / GDPR / Pristupacnost)</li>
+      <li>Datum objave</li>
+    </ul>
+    <p><strong>Sta se NIKADA ne objavljuje:</strong></p>
+    <ul>
+      <li>Konkretne ranjivosti ili ID-evi provera</li>
+      <li>Izlozeni fajlovi, putanje ili kredencijali</li>
+      <li>Tehnoloski otisci (CMS, verzije, serverske zaglavlja)</li>
+      <li>Vasa IP adresa, User-Agent, ili browser podaci</li>
+    </ul>
+    <p><strong>Pravo na povlacenje:</strong> objava se moze povuci u bilo kom trenutku sa istog uredjaja sa kojeg je i objavljena. Povlacenje je soft-delete — red u bazi ostaje zbog audit tragova, ali se vise ne prikazuje javno. Za povlacenje sa drugog uredjaja (npr. izgubljen pristup) kontaktirajte <a href="mailto:kontakt@gradovi.rs">kontakt@gradovi.rs</a>.</p>
+    <p><strong>Retention:</strong> javne objave nemaju automatski rok isteka — ostaju dok ih vlasnik ne povuce. Povucene objave (<code>withdrawn_at IS NOT NULL</code>) se posle 90 dana trajno brisu iz baze.</p>
+    <p><strong>Pravni osnov:</strong> eksplicitan consent (cl. 12 st. 1 tac. 1 ZZPL) — modal sa jasnom listom "sta se objavljuje / sta NE" pre svake objave. Consent se loguje u <code>audit_log</code> kao <code>gallery_publish</code> event.</p>
   </div>
 
   <!-- ENGLISH -->
@@ -408,6 +430,28 @@
       </div>
     </div>
     <p style="font-size:0.75rem;color:#7b83a6;margin-top:0.7rem;">Each version is permanently recorded in the <code>audit_log</code> table — the consent you gave applies to the version that was active at that moment.</p>
+
+    <h2 id="pp15e">15. Public scan gallery (opt-in publishing)</h2>
+    <p>Starting April 2026, the person who ran a scan can <strong>opt in</strong> to publish the result summary on the public gallery at <a href="/gallery">/gallery</a>. Publication is off by default — unless you click "Publish to gallery" and confirm the consent modal, no result is public.</p>
+    <p><strong>What appears in the gallery:</strong></p>
+    <ul>
+      <li>URL of the scanned site</li>
+      <li>Overall grade (A-F) and score (0-100)</li>
+      <li>Strictness profile (Basic / Standard / Strict / Paranoid)</li>
+      <li>Counts per severity (Critical / High / Medium / Low)</li>
+      <li>Per-category grade and pass rate (Security / SEO / Performance / GDPR / Accessibility)</li>
+      <li>Publish date</li>
+    </ul>
+    <p><strong>What is NEVER published:</strong></p>
+    <ul>
+      <li>Specific vulnerabilities or check IDs</li>
+      <li>Exposed files, paths, or credentials</li>
+      <li>Technology fingerprints (CMS, versions, server headers)</li>
+      <li>Your IP, User-Agent, or browser data</li>
+    </ul>
+    <p><strong>Right to withdraw:</strong> a publication can be withdrawn any time from the same device it was published from. Withdrawal is a soft-delete — the row stays for audit purposes but is no longer shown publicly. To withdraw from a different device (e.g. lost access) contact <a href="mailto:kontakt@gradovi.rs">kontakt@gradovi.rs</a>.</p>
+    <p><strong>Retention:</strong> public publications have no automatic expiry — they stay until the owner withdraws them. Withdrawn rows (<code>withdrawn_at IS NOT NULL</code>) are permanently deleted from the database after 90 days.</p>
+    <p><strong>Legal basis:</strong> explicit consent (Art. 12(1)(1) ZZPL) — a modal with a clear "what IS / what is NEVER" published list appears before every publication. The consent action is logged in <code>audit_log</code> as a <code>gallery_publish</code> event.</p>
   </div>
 
   </main>

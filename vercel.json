@@ -4,6 +4,9 @@
   "outputDirectory": ".",
   "framework": null,
   "cleanUrls": true,
+  "rewrites": [
+    { "source": "/public/:id", "destination": "/public-scan.html" }
+  ],
   "headers": [
     {
       "source": "/(.*)",
