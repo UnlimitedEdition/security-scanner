@@ -1766,7 +1766,7 @@
     <div class="progress-wrap" id="progressWrap" role="status" aria-live="polite">
       <div class="progress-modules" id="progressModules"></div>
       <div class="progress-label">
-        <span id="progressStep">Inicijalizacija...</span>
+        <span id="progressStep" data-sr="Inicijalizacija..." data-en="Initializing...">Inicijalizacija...</span>
         <span id="progressPct">0%</span>
       </div>
       <div class="progress-track">
@@ -3052,8 +3052,26 @@ function updateModules(step, pct) {
   });
 }
 
+// Backend always emits Serbian step strings (scanner.py update("…")). When the
+// UI is on EN we map known phrases to their English equivalents; unknown
+// strings (rare module-specific labels) fall through unchanged.
+var STEP_SR_TO_EN = {
+  "Inicijalizacija...": "Initializing...",
+  "Inicijalizacija konekcije...": "Initializing connection...",
+  "Učitavanje sajta...": "Loading site...",
+  "Otkrivam stranice sajta...": "Discovering site pages...",
+  "Izračunavam ocenu...": "Calculating score...",
+  "Završeno!": "Done!",
+  "Pokretanje skeniranja...": "Starting scan...",
+  "...": "..."
+};
+
 function setProgress(step, pct) {
-  document.getElementById("progressStep").textContent = step;
+  var label = step;
+  if (typeof currentLang !== "undefined" && currentLang === "en" && STEP_SR_TO_EN[step]) {
+    label = STEP_SR_TO_EN[step];
+  }
+  document.getElementById("progressStep").textContent = label;
   document.getElementById("progressPct").textContent = pct + "%";
   document.getElementById("progressBar").style.width = pct + "%";
 }
@@ -5139,7 +5157,14 @@ async function _wizardInlinePoll(scanId) {
         var pctEl = document.getElementById("progressPct");
         if (pctEl) pctEl.textContent = pct + "%";
         var stepEl = document.getElementById("progressStep");
-        if (stepEl && data.step) stepEl.textContent = data.step;
+        if (stepEl && data.step) {
+          var _label = data.step;
+          if (typeof currentLang !== "undefined" && currentLang === "en"
+              && typeof STEP_SR_TO_EN !== "undefined" && STEP_SR_TO_EN[data.step]) {
+            _label = STEP_SR_TO_EN[data.step];
+          }
+          stepEl.textContent = _label;
+        }
         if (typeof updateModules === "function") updateModules(data.step || "", pct);
       }
       if (data.status === "completed") {
