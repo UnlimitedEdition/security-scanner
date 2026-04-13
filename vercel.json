@@ -5,7 +5,7 @@
   "framework": null,
   "cleanUrls": true,
   "rewrites": [
-    { "source": "/public/:id", "destination": "/public-scan.html" }
+    { "source": "/public/:id", "destination": "/public-scan" }
   ],
   "headers": [
     {

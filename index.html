@@ -5050,7 +5050,13 @@ async function wizardExecute() {
   btn.disabled = true;
   try {
     var execHeaders = _wizardHeaders();
-    var resp = await fetch(API_BASE + "/scan/request/" + wizardState.requestId + "/execute", {
+    // Pass the picked strictness as a query param. Without this, /execute
+    // falls back to DEFAULT_STRICTNESS ('standard') and the user's pick
+    // (Basic/Strict/Paranoid) silently loses to standard in the DB.
+    var strictness = (typeof getStrictness === "function") ? getStrictness() : "standard";
+    var execUrl = API_BASE + "/scan/request/" + wizardState.requestId
+                  + "/execute?strictness=" + encodeURIComponent(strictness);
+    var resp = await fetch(execUrl, {
       method: "POST",
       headers: execHeaders,
     });
