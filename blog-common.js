@@ -152,6 +152,7 @@
     if (cat === 'performance') return fname.includes('perf');
     if (cat === 'gdpr') return fname.includes('gdpr');
     if (cat === 'pricing') return fname.includes('pricing');
+    if (cat === 'gallery') return fname === 'gallery.html' || fname === 'public-scan.html' || path.indexOf('/public/') === 0;
     return false;
   }
 
@@ -226,6 +227,7 @@
   nav.appendChild(navLink('./blog-seo.html', 'SEO', 'SEO', isActive('seo')));
   nav.appendChild(navLink('./blog-performance.html', 'Performanse', 'Performance', isActive('performance')));
   nav.appendChild(navLink('./blog-gdpr.html', 'GDPR', 'GDPR', isActive('gdpr')));
+  nav.appendChild(navLink('./gallery.html', 'Galerija', 'Gallery', isActive('gallery')));
 
   // Pro pricing CTA — for free visitors. For subscribed users this
   // button swaps to an 'Account' link (see logic below after the header
@@ -275,6 +277,7 @@
   colSec.appendChild(footerLink('./blog-security-dns.html', 'DNS'));
   colSec.appendChild(footerLink('./blog-security-ports.html', 'Port Scanning'));
   colSec.appendChild(footerLink('./blog-security-api.html', 'API Security'));
+  colSec.appendChild(footerLinkBi('./blog-strictness-modes.html', 'Rezimi strogosti', 'Strictness Modes'));
   footerGrid.appendChild(colSec);
 
   // SEO column
@@ -364,6 +367,11 @@
   var statusLink = el('a', { href: './status.html' });
   statusLink.appendChild(srSpan('Stanje sistema', 'System Status'));
   legalRow.appendChild(statusLink);
+
+  // Javna galerija — opt-in TOP LISTA rezultata
+  var galleryLink = el('a', { href: './gallery.html' });
+  galleryLink.appendChild(srSpan('Javna galerija', 'Public Gallery'));
+  legalRow.appendChild(galleryLink);
 
   // Data protection badge in footer
   var badgeRow = el('div');
