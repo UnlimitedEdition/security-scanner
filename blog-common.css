@@ -304,7 +304,7 @@ th { color: #a78bfa; font-weight: 600; }
   margin-bottom: 2rem;
   min-width: 0;
 }
-.footer-col { min-width: 0; }
+.footer-col { min-width: 0; text-align: center; }
 .footer-col h4 {
   color: #a78bfa; font-size: 0.82rem; font-weight: 700;
   margin-bottom: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;
