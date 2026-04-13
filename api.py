@@ -2185,7 +2185,7 @@ def api_discover(req: DiscoverRequest, request: Request):
     # Run the crawler
     from checks.crawler import crawl as _crawl
     try:
-        pages = _crawl(base_url, temp_session, body, limit=20)
+        pages = _crawl(base_url, temp_session, body, limit=50)
     except Exception as e:
         raise HTTPException(
             status_code=500,

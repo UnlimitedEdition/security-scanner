@@ -589,6 +589,39 @@
     .category-body { display: none; }
     .category-body.open { display: block; }
 
+    /* Per-page subgroup inside a category (Pro multi-page scans) */
+    .page-subgroup { border-top: 1px dashed rgba(108,99,255,0.25); }
+    .page-subgroup:first-child { border-top: none; }
+    .page-subgroup-header {
+      padding: 0.55rem 1.25rem;
+      background: rgba(108,99,255,0.06);
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      display: flex; align-items: center; gap: 0.5rem;
+      border-bottom: 1px solid rgba(108,99,255,0.15);
+    }
+    .page-subgroup-label {
+      font-weight: 700; color: var(--accent);
+      font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;
+      flex-shrink: 0;
+    }
+    .page-subgroup-url {
+      font-family: ui-monospace, monospace;
+      color: var(--text); font-weight: 500;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      min-width: 0; flex: 1;
+    }
+    .page-subgroup-badge {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: var(--surface2);
+      color: var(--text-dim);
+      flex-shrink: 0;
+    }
+    .page-subgroup-badge.has-issues { background: rgba(239,68,68,0.15); color: #f87171; }
+    .page-subgroup-badge.all-ok { background: rgba(34,197,94,0.15); color: #4ade80; }
+
     /* CHECK ITEMS */
     .check-item {
       padding: 0.9rem 1.25rem;
@@ -3187,9 +3220,7 @@ function renderResults(data) {
     // Body
     var body = document.createElement("div");
     body.className = "category-body" + (failed.length > 0 ? " open" : "");
-    items.forEach(function(item) {
-      body.appendChild(renderItem(item));
-    });
+    renderCategoryItemsByPage(body, items);
     section.appendChild(body);
     wrap.appendChild(section);
   });
@@ -3419,7 +3450,7 @@ function renderTabResults(wrapId, data, categories, titleSr, titleEn) {
     failSection.appendChild(failHeader);
     var failBody = document.createElement("div");
     failBody.className = "category-body open";
-    failedItems.forEach(function(item) { failBody.appendChild(renderItem(item)); });
+    renderCategoryItemsByPage(failBody, failedItems);
     failSection.appendChild(failBody);
     wrap.appendChild(failSection);
   }
@@ -3441,7 +3472,7 @@ function renderTabResults(wrapId, data, categories, titleSr, titleEn) {
     passSection.appendChild(passHeader);
     var passBody = document.createElement("div");
     passBody.className = "category-body";
-    passedItems.forEach(function(item) { passBody.appendChild(renderItem(item)); });
+    renderCategoryItemsByPage(passBody, passedItems);
     passSection.appendChild(passBody);
     wrap.appendChild(passSection);
   }
@@ -3453,6 +3484,67 @@ function renderPerformanceTab(data) {
 
 function renderGdprTab(data) {
   renderTabResults("gdprResultsWrap", data, ["GDPR"], "GDPR / Privatnost", "GDPR / Privacy");
+}
+
+// Groups category items by page_url (Pro multi-page scans tag every
+// finding via scanner.py). On single-page scans every item lacks the
+// tag, so we render them flat in one group — same look as before.
+function renderCategoryItemsByPage(bodyEl, items) {
+  var homepageItems = [];
+  var byPage = {};          // page_url -> items[]
+  var pageOrder = [];       // preserves first-seen order
+  items.forEach(function(it) {
+    var p = it && it.page_url;
+    if (!p) { homepageItems.push(it); return; }
+    if (!byPage[p]) { byPage[p] = []; pageOrder.push(p); }
+    byPage[p].push(it);
+  });
+
+  // Single-page scan: no per-page tags at all — flat render, original look
+  if (pageOrder.length === 0) {
+    items.forEach(function(it) { bodyEl.appendChild(renderItem(it)); });
+    return;
+  }
+
+  function makeGroup(labelText, url, groupItems) {
+    var wrap = document.createElement("div");
+    wrap.className = "page-subgroup";
+
+    var failed = groupItems.filter(function(i) { return !i.passed; }).length;
+
+    var header = document.createElement("div");
+    header.className = "page-subgroup-header";
+    var label = document.createElement("span");
+    label.className = "page-subgroup-label";
+    label.textContent = labelText;
+    header.appendChild(label);
+    if (url) {
+      var urlEl = document.createElement("span");
+      urlEl.className = "page-subgroup-url";
+      urlEl.textContent = url;
+      urlEl.title = url;
+      header.appendChild(urlEl);
+    }
+    var badge = document.createElement("span");
+    badge.className = "page-subgroup-badge " + (failed > 0 ? "has-issues" : "all-ok");
+    badge.textContent = failed > 0
+      ? (currentLang === "en" ? failed + " issue" + (failed > 1 ? "s" : "") : failed + " problem" + (failed > 1 ? "a" : ""))
+      : (currentLang === "en" ? "all OK" : "sve OK");
+    header.appendChild(badge);
+
+    wrap.appendChild(header);
+    groupItems.forEach(function(it) { wrap.appendChild(renderItem(it)); });
+    return wrap;
+  }
+
+  if (homepageItems.length > 0) {
+    var homeLabel = currentLang === "en" ? "Homepage" : "Početna";
+    bodyEl.appendChild(makeGroup(homeLabel, "", homepageItems));
+  }
+  pageOrder.forEach(function(p, idx) {
+    var label = (currentLang === "en" ? "Page " : "Stranica ") + (idx + 1);
+    bodyEl.appendChild(makeGroup(label, p, byPage[p]));
+  });
 }
 
 function renderItem(item) {
