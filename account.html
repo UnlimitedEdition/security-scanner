@@ -154,6 +154,76 @@
       background: #2a1010; border: 1px solid #3f1a1a;
       border-radius: 10px; color: #f87171;
     }
+
+    /* Confirmation modal (used for logout and similar flows) */
+    .acc-modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(5, 7, 15, 0.72);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      display: none;
+      align-items: center; justify-content: center;
+      z-index: 1000;
+      padding: 1rem;
+      opacity: 0;
+      transition: opacity 0.18s ease;
+    }
+    .acc-modal-backdrop.visible { display: flex; opacity: 1; }
+    .acc-modal {
+      background: linear-gradient(180deg, #11142a 0%, #0d1024 100%);
+      border: 1px solid #2a2f55;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.55), 0 0 40px rgba(167,139,250,0.08);
+      max-width: 460px; width: 100%;
+      padding: 1.75rem 1.75rem 1.5rem;
+      transform: translateY(8px) scale(0.98);
+      transition: transform 0.22s ease;
+    }
+    .acc-modal-backdrop.visible .acc-modal { transform: translateY(0) scale(1); }
+    .acc-modal-icon {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; margin-bottom: 1rem;
+    }
+    .acc-modal-title {
+      font-size: 1.15rem; font-weight: 800; color: #e8eaf6;
+      margin: 0 0 0.5rem;
+    }
+    .acc-modal-body {
+      color: #9ca3af; font-size: 0.88rem; line-height: 1.55;
+      margin: 0 0 1.5rem;
+    }
+    .acc-modal-actions {
+      display: flex; gap: 0.6rem; justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+    .acc-modal-btn {
+      padding: 0.6rem 1.1rem;
+      border-radius: 8px;
+      border: 1px solid #2a2f55;
+      background: #161a33;
+      color: #e8eaf6;
+      font-weight: 600; font-size: 0.85rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    }
+    .acc-modal-btn:hover { background: #1c2142; border-color: #3a4272; }
+    .acc-modal-btn:active { transform: translateY(1px); }
+    .acc-modal-btn.danger {
+      background: #dc2626; border-color: #dc2626; color: #fff;
+    }
+    .acc-modal-btn.danger:hover { background: #b91c1c; border-color: #b91c1c; }
+    .acc-modal-btn:focus-visible {
+      outline: 2px solid #a78bfa; outline-offset: 2px;
+    }
+    @media (max-width: 480px) {
+      .acc-modal { padding: 1.4rem 1.2rem 1.2rem; }
+      .acc-modal-actions { flex-direction: column-reverse; }
+      .acc-modal-btn { width: 100%; }
+    }
   </style>
 </head>
 <body>
@@ -505,21 +575,85 @@
         showError(isEn() ? 'Could not load account: ' + err.message : 'Ne mogu da ucitam nalog: ' + err.message);
       });
 
-    // Logout button
+    // Logout button — styled modal instead of native confirm()
     var logout = document.getElementById('btnLogout');
     if (logout) {
       logout.addEventListener('click', function() {
-        var ok = confirm(isEn()
-          ? 'Log out? Your license key will be removed from this device. You can re-activate it anytime.'
-          : 'Odjavi se? License key ce biti uklonjen sa ovog uredjaja. Mozete ponovo da aktivirate bilo kada.');
-        if (!ok) return;
-        try { localStorage.removeItem('wss-license-key'); } catch (e) {}
-        location.href = './index.html';
+        showConfirmModal({
+          icon: '\uD83D\uDEAA',
+          titleSr: 'Odjavi se?',
+          titleEn: 'Log out?',
+          bodySr: 'License key ce biti uklonjen sa ovog uredjaja. Mozete ponovo da se aktivirate bilo kada — kljuc ostaje vezan za vas nalog.',
+          bodyEn: 'Your license key will be removed from this device. You can re-activate anytime — the key stays linked to your account.',
+          confirmSr: 'Odjavi me',
+          confirmEn: 'Log out',
+          cancelSr: 'Otkazi',
+          cancelEn: 'Cancel',
+          danger: true
+        }).then(function(ok) {
+          if (!ok) return;
+          try { localStorage.removeItem('wss-license-key'); } catch (e) {}
+          location.href = './index.html';
+        });
       });
     }
   });
+
+  // Promise-based confirm dialog — styled to match the rest of account.html
+  // instead of using the jarring native confirm() popup.
+  window.showConfirmModal = function(opts) {
+    return new Promise(function(resolve) {
+      var en = isEn();
+      var backdrop = document.getElementById('accModalBackdrop');
+      var iconEl = document.getElementById('accModalIcon');
+      var titleEl = document.getElementById('accModalTitle');
+      var bodyEl = document.getElementById('accModalBody');
+      var confirmBtn = document.getElementById('accModalConfirm');
+      var cancelBtn = document.getElementById('accModalCancel');
+
+      iconEl.textContent = opts.icon || '';
+      iconEl.style.display = opts.icon ? 'flex' : 'none';
+      titleEl.textContent = en ? opts.titleEn : opts.titleSr;
+      bodyEl.textContent = en ? opts.bodyEn : opts.bodySr;
+      confirmBtn.textContent = en ? (opts.confirmEn || 'Confirm') : (opts.confirmSr || 'Potvrdi');
+      cancelBtn.textContent = en ? (opts.cancelEn || 'Cancel') : (opts.cancelSr || 'Otkazi');
+      confirmBtn.classList.toggle('danger', !!opts.danger);
+
+      function close(result) {
+        backdrop.classList.remove('visible');
+        confirmBtn.onclick = null;
+        cancelBtn.onclick = null;
+        backdrop.onclick = null;
+        document.removeEventListener('keydown', onKey);
+        resolve(result);
+      }
+      function onKey(e) {
+        if (e.key === 'Escape') close(false);
+        else if (e.key === 'Enter') close(true);
+      }
+      confirmBtn.onclick = function() { close(true); };
+      cancelBtn.onclick = function() { close(false); };
+      backdrop.onclick = function(e) { if (e.target === backdrop) close(false); };
+      document.addEventListener('keydown', onKey);
+
+      backdrop.classList.add('visible');
+      setTimeout(function() { cancelBtn.focus(); }, 50);
+    });
+  };
 })();
 </script>
+
+<div class="acc-modal-backdrop" id="accModalBackdrop" role="dialog" aria-modal="true" aria-labelledby="accModalTitle">
+  <div class="acc-modal">
+    <div class="acc-modal-icon" id="accModalIcon"></div>
+    <h3 class="acc-modal-title" id="accModalTitle"></h3>
+    <p class="acc-modal-body" id="accModalBody"></p>
+    <div class="acc-modal-actions">
+      <button type="button" class="acc-modal-btn" id="accModalCancel"></button>
+      <button type="button" class="acc-modal-btn" id="accModalConfirm"></button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
