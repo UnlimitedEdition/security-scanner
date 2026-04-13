@@ -2995,6 +2995,7 @@ async function pollScan(scanId) {
 
     if (data.status === "completed") {
       try { sessionStorage.removeItem("active_scan_id"); } catch(e) {}
+      if (data.result) data.result.id = data.id || scanId;
       currentResults = data.result;
       renderResults(data.result);
       btn.disabled = false;
@@ -4361,6 +4362,7 @@ document.addEventListener("DOMContentLoaded", function() {
             // Scan is done/error/not found — clean up
             sessionStorage.removeItem("active_scan_id");
             if (d.status === "completed" && d.result) {
+              d.result.id = d.id || activeScanId;
               currentResults = d.result;
               renderResults(d.result);
             }
@@ -4382,6 +4384,7 @@ document.addEventListener("DOMContentLoaded", function() {
         .then(function(d) {
           if (!d) return;
           if (d.status === "completed" && d.result) {
+            d.result.id = d.id || _scanParam;
             currentResults = d.result;
             document.getElementById("resultTabs").classList.add("visible");
             renderResults(d.result);
@@ -5139,6 +5142,7 @@ async function _wizardInlinePoll(scanId) {
         if (stepEl && data.step) stepEl.textContent = data.step;
       }
       if (data.status === "completed") {
+        if (data.result) data.result.id = data.id || scanId;
         currentResults = data.result;
         if (typeof renderResults === "function") renderResults(currentResults);
         document.getElementById("progressWrap").style.display = "none";
