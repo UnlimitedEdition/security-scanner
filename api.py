@@ -1517,8 +1517,17 @@ def scan_request_get_token_endpoint(
     if not domain:
         raise HTTPException(status_code=500, detail="Wizard row nema domain.")
 
-    # Cached verification — no token needed
+    # Cached verification — no token needed. Flip the wizard row to
+    # 'verified' here so /execute doesn't 409 on "status != verified"
+    # when the frontend uses the cached shortcut and skips /verify.
     if db.is_domain_verified(domain, client_ip, fingerprint_hash=req.fingerprint_hash):
+        if status != "verified":
+            db.attach_verify_to_scan_request(
+                request_id=request_id,
+                method=req.method,
+                token="CACHED",
+                passed=True,
+            )
         return {
             "token": "CACHED",
             "domain": domain,
