@@ -1,0 +1,50 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Toske-Programer (Web Security Scanner contributors)
+#
+# Scanner Configuration: Strict
+#
+# For production environments that demand hardened security posture.
+# No diminishing returns — every finding counts fully. SEO and GDPR
+# are included in scoring. Only Accessibility and Performance are excluded.
+#
+# Best for: production sites handling sensitive data, financial services,
+# healthcare, government.
+#
+# Apply with: --strictness strict
+# Or via API: {"strictness": "strict"}
+
+profile: strict
+
+# Scoring weights — heavier penalties across the board
+weights:
+  CRITICAL: 25
+  HIGH: 15
+  MEDIUM: 8
+  LOW: 4
+
+# No diminishing returns — every finding counts at full weight.
+# A site with 10 MEDIUM findings loses 80 points, not just 20.
+diminishing: false
+diminishing_caps:
+  CRITICAL: 0  # Unused (diminishing=false)
+  HIGH: 0
+  MEDIUM: 0
+  LOW: 0
+
+# Reduced bonus — passing checks barely help the score
+bonus_per_info: 1
+bonus_cap: 10
+
+# Only Accessibility and Performance excluded
+# SEO and GDPR failures now affect the grade
+excluded_categories:
+  - Accessibility
+  - Performance
+
+# Grade thresholds — harder to achieve
+grade_thresholds:
+  A: 95   # Near-perfect security posture
+  B: 85   # Strong posture with minor gaps
+  C: 70   # Acceptable but needs improvement
+  D: 50   # Concerning — multiple issues
+  # Below 50 = Grade F

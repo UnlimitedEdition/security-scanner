@@ -1,0 +1,51 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Toske-Programer (Web Security Scanner contributors)
+#
+# Scanner Configuration: Minimal
+#
+# Use this profile for fast scans that focus only on critical security issues.
+# Skips compliance (GDPR, SEO, Accessibility, Performance) entirely.
+# Best for: CI/CD pipelines where speed matters more than thoroughness.
+#
+# Apply with: --strictness basic
+# Or via API: {"strictness": "basic"}
+
+profile: basic
+
+# Scoring weights (points deducted per failed check)
+weights:
+  CRITICAL: 15
+  HIGH: 6
+  MEDIUM: 2
+  LOW: 0.5
+
+# Diminishing returns — cap the number of findings per severity
+# that count toward the score. Prevents a single category from
+# dominating the grade.
+diminishing: true
+diminishing_caps:
+  CRITICAL: 3
+  HIGH: 4
+  MEDIUM: 4
+  LOW: 5
+
+# Bonus points for passing INFO-level checks
+bonus_per_info: 3
+bonus_cap: 25
+
+# Categories excluded from scoring
+# These checks still RUN (data is collected), but failures don't
+# affect the security grade.
+excluded_categories:
+  - SEO
+  - GDPR
+  - Accessibility
+  - Performance
+
+# Grade thresholds
+grade_thresholds:
+  A: 85
+  B: 70
+  C: 55
+  D: 35
+  # Below D threshold = Grade F

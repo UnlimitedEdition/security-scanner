@@ -1,0 +1,65 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Toske-Programer (Web Security Scanner contributors)
+#
+# Example: Docker Compose deployment with PostgreSQL
+#
+# This is a self-contained deployment that does NOT require Supabase.
+# It uses a local PostgreSQL instance for persistence.
+#
+# Usage:
+#   docker compose up -d
+#   # Open http://localhost:7860
+#
+# NOTE: For production use, add TLS termination (nginx/Caddy/Traefik)
+# in front of the scanner.
+
+version: "3.8"
+
+services:
+  scanner:
+    build: ../../
+    ports:
+      - "7860:7860"
+    environment:
+      - PII_HASH_SALT=${PII_HASH_SALT:-change-me-to-a-random-64-char-string}
+      # Uncomment and configure for database persistence:
+      # - SUPABASE_URL=http://db:5432
+      # - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7860/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: security_scanner
+      POSTGRES_USER: scanner
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-change-me}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scanner -d security_scanner"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+volumes:
+  pgdata:
+    driver: local

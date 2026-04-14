@@ -1,0 +1,53 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Toske-Programer (Web Security Scanner contributors)
+#
+# Security scan on dependency changes — runs pip-audit when
+# requirements.txt is modified and on a weekly schedule.
+
+name: Security Audit
+
+on:
+  push:
+    paths:
+      - "requirements.txt"
+      - "Dockerfile"
+  schedule:
+    # Weekly Monday 06:00 UTC (same cadence as Dependabot)
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  audit:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pip-audit
+
+      - name: Run pip-audit
+        run: |
+          pip-audit --strict --desc on --format json --output audit-results.json || true
+          pip-audit --strict --desc on
+
+      - name: Upload audit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pip-audit-results
+          path: audit-results.json
+          retention-days: 90

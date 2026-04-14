@@ -1,0 +1,48 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Toske-Programer (Web Security Scanner contributors)
+#
+# Scanner Configuration: Paranoid
+#
+# Maximum strictness. Zero tolerance. Every category counts. Every finding
+# counts at maximum weight. Grade A requires a perfect 100. Any LOW-severity
+# finding drops you from A.
+#
+# This profile is intentionally punitive — it exists for environments where
+# ANY security gap is unacceptable: banking, defense, critical infrastructure.
+#
+# Most sites will score D or F under this profile. That is by design.
+#
+# Apply with: --strictness paranoid
+# Or via API: {"strictness": "paranoid"}
+
+profile: paranoid
+
+# Maximum penalty weights
+weights:
+  CRITICAL: 35
+  HIGH: 20
+  MEDIUM: 12
+  LOW: 7
+
+# No diminishing returns — every single finding counts
+diminishing: false
+diminishing_caps:
+  CRITICAL: 0
+  HIGH: 0
+  MEDIUM: 0
+  LOW: 0
+
+# No bonus points — passing checks don't offset failures
+bonus_per_info: 0
+bonus_cap: 0
+
+# ALL categories count — nothing is excluded
+excluded_categories: []
+
+# Grade A requires perfection
+grade_thresholds:
+  A: 100  # Only achievable with zero findings
+  B: 90   # Exceptional — 1-2 LOW findings at most
+  C: 80   # Very good — a few minor issues
+  D: 65   # Acceptable for non-critical systems
+  # Below 65 = Grade F

@@ -1,0 +1,106 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Toske-Programer (Web Security Scanner contributors)
+#
+# Example: GitHub Actions CI/CD security gate
+#
+# This workflow runs a security scan against your staging/production
+# site and blocks the deploy if the security grade drops below a threshold.
+#
+# Usage:
+#   1. Copy this file to your project's .github/workflows/
+#   2. Set the SCAN_TARGET_URL secret in your repo settings
+#   3. Adjust GRADE_THRESHOLD to your team's risk tolerance
+
+name: Security Gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Weekly Monday 6 AM UTC — catch regressions from dependency updates
+    - cron: "0 6 * * 1"
+
+env:
+  # Change this to your scanner instance URL (self-hosted or SaaS)
+  SCANNER_URL: "https://security-skener.gradovi.rs"
+  # Minimum acceptable grade: A, B, C, D, F
+  GRADE_THRESHOLD: "C"
+
+jobs:
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run security scan
+        id: scan
+        run: |
+          echo "🛡️ Starting security scan..."
+          
+          RESULT=$(curl -s -X POST "${{ env.SCANNER_URL }}/scan" \
+            -H "Content-Type: application/json" \
+            -d "{\"url\":\"${{ secrets.SCAN_TARGET_URL }}\",\"consent_accepted\":true,\"strictness\":\"standard\"}")
+          
+          # Extract scan ID and poll for completion
+          SCAN_ID=$(echo "$RESULT" | jq -r '.scan_id // empty')
+          
+          if [ -z "$SCAN_ID" ]; then
+            # Synchronous result (older API version or quick scan)
+            GRADE=$(echo "$RESULT" | jq -r '.result.score.grade')
+            SCORE=$(echo "$RESULT" | jq -r '.result.score.score')
+          else
+            # Poll for completion
+            for i in $(seq 1 60); do
+              sleep 5
+              STATUS=$(curl -s "${{ env.SCANNER_URL }}/scan/$SCAN_ID")
+              STATE=$(echo "$STATUS" | jq -r '.status')
+              
+              if [ "$STATE" = "completed" ]; then
+                GRADE=$(echo "$STATUS" | jq -r '.result.score.grade')
+                SCORE=$(echo "$STATUS" | jq -r '.result.score.score')
+                break
+              elif [ "$STATE" = "error" ]; then
+                echo "::error::Scan failed with error"
+                exit 1
+              fi
+              
+              PROGRESS=$(echo "$STATUS" | jq -r '.progress // 0')
+              echo "⏳ Scan in progress: ${PROGRESS}%"
+            done
+          fi
+          
+          echo "grade=$GRADE" >> $GITHUB_OUTPUT
+          echo "score=$SCORE" >> $GITHUB_OUTPUT
+
+      - name: Report results
+        run: |
+          GRADE="${{ steps.scan.outputs.grade }}"
+          SCORE="${{ steps.scan.outputs.score }}"
+          
+          echo "## 🛡️ Security Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Grade** | $GRADE |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Score** | $SCORE/100 |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Threshold** | ${{ env.GRADE_THRESHOLD }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Grade comparison (A=5, B=4, C=3, D=2, F=1)
+          grade_to_num() {
+            case "$1" in
+              A) echo 5 ;; B) echo 4 ;; C) echo 3 ;; D) echo 2 ;; *) echo 1 ;;
+            esac
+          }
+          
+          ACTUAL=$(grade_to_num "$GRADE")
+          REQUIRED=$(grade_to_num "${{ env.GRADE_THRESHOLD }}")
+          
+          if [ "$ACTUAL" -lt "$REQUIRED" ]; then
+            echo "::error::Security grade $GRADE is below threshold ${{ env.GRADE_THRESHOLD }}"
+            echo "❌ **FAILED** — grade $GRADE is below minimum ${{ env.GRADE_THRESHOLD }}" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "✅ **PASSED** — grade $GRADE meets minimum ${{ env.GRADE_THRESHOLD }}" >> $GITHUB_STEP_SUMMARY
+          fi

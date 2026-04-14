@@ -1,0 +1,133 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Toske-Programer (Web Security Scanner contributors)
+#
+# CI Pipeline — runs on every push and PR to master.
+# Lints, tests, and audits dependencies for known vulnerabilities.
+
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint & Style
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install flake8 mypy
+
+      - name: Flake8 lint
+        run: |
+          flake8 scanner.py api.py risk_engine.py security_utils.py \
+            --max-line-length=120 \
+            --ignore=E501,W503,E402 \
+            --count --show-source --statistics
+
+      - name: Flake8 check modules
+        run: |
+          flake8 checks/ \
+            --max-line-length=120 \
+            --ignore=E501,W503,E402 \
+            --count --show-source --statistics
+
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+
+      - name: Run tests
+        run: |
+          python -m pytest tests/ -v \
+            --tb=short \
+            --cov=checks \
+            --cov=scanner \
+            --cov=risk_engine \
+            --cov=security_utils \
+            --cov-report=term-missing \
+            --cov-report=xml:coverage.xml
+        env:
+          # Tests run without database — stateless mode
+          PYTHONDONTWRITEBYTECODE: "1"
+
+      - name: Upload coverage
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+          retention-days: 30
+
+  security-audit:
+    name: Dependency Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pip-audit safety
+
+      - name: pip-audit (OSV database)
+        run: pip-audit --strict --desc on
+
+      - name: safety check (Safety DB)
+        run: safety check --full-report || true
+        # safety check returns non-zero on findings; we log but don't
+        # fail CI on safety alone (pip-audit is the primary gate)
+
+  docker-build:
+    name: Docker Build Test
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t security-scanner:ci-test .
+
+      - name: Verify health endpoint
+        run: |
+          docker run -d --name scanner-test -p 7860:7860 security-scanner:ci-test
+          sleep 10
+          curl -f http://localhost:7860/health || exit 1
+          docker stop scanner-test
