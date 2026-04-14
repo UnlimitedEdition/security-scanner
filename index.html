@@ -1447,14 +1447,23 @@
       padding: 1.2rem 0.7rem; font-size: 0.9rem; font-weight: 700;
       cursor: pointer; z-index: 9998; letter-spacing: 0.04em;
       box-shadow: 2px 0 16px rgba(0,0,0,0.4);
-      transition: background 0.2s;
+      transition: background 0.2s, top 0.2s, transform 0.3s ease;
     }
     .checks-sidebar-btn:hover { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
     .checks-sidebar-btn .sidebar-badge {
-      display: block; writing-mode: horizontal-tb;
+      display: block;
       background: #facc15; color: #0a0c15; border-radius: 10px;
-      font-size: 0.72rem; font-weight: 800; padding: 0.2rem 0.5rem;
-      margin-bottom: 0.5rem; text-align: center;
+      font-size: 0.78rem; font-weight: 800;
+      padding: 0.35rem 0.4rem;
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.04em;
+      text-align: center;
+    }
+    .checks-sidebar-btn.scroll-hidden {
+      transform: translateY(-50%) translateX(-110%);
+    }
+    @media (max-width: 768px) {
+      .checks-sidebar-btn { top: 20%; }
     }
 
     .checks-sidebar-overlay {
@@ -2249,6 +2258,28 @@ function openChecksSidebar() {
   document.body.style.width = "100%";
   document.body.style.top = "-" + window.scrollY + "px";
 }
+(function sidebarBtnHideOnScroll() {
+  var lastY = window.scrollY;
+  var ticking = false;
+  function onScroll() {
+    if (window.innerWidth > 768) return;
+    if (ticking) return;
+    ticking = true;
+    window.requestAnimationFrame(function() {
+      var btn = document.querySelector(".checks-sidebar-btn");
+      if (!btn) { ticking = false; return; }
+      var y = window.scrollY;
+      if (y > lastY && y > 150) {
+        btn.classList.add("scroll-hidden");
+      } else if (y < lastY - 5 || y < 150) {
+        btn.classList.remove("scroll-hidden");
+      }
+      lastY = y;
+      ticking = false;
+    });
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+})();
 function closeChecksSidebar() {
   document.getElementById("checksSidebarOverlay").classList.remove("open");
   var scrollY = document.body.style.top;
