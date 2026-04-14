@@ -91,6 +91,8 @@ dev.db
 .claude/
 memory/
 CLAUDE.local.md
+CLAUDE.md
+BLOG-TODO.md
 
 # ==========================================================================
 # code-review-graph — lokalni graph DB + wiki artefakti

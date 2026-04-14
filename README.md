@@ -46,8 +46,30 @@ The wizard uses `created_date DATE` (no timestamp) for the consent state — eve
 - **GDPR signals** — privacy policy presence, cookie consent, tracker census
 - **SEO/performance** — meta tags, heading structure, page weight
 
-See `PRIRUCNIK.md` (Serbian) for the full operator handbook and
-`checks/` directory for the individual check implementations.
+See `PRIRUCNIK.md` (Serbian) for the full operator handbook,
+`ARCHITECTURE.md` for the system diagram, and `checks/` directory
+for the individual check implementations.
+
+## Strictness profiles
+
+The scanner exposes four strictness tiers, selectable on the wizard:
+
+- **Basic** — only critical-severity issues fail
+- **Standard** (default) — typical web-app posture
+- **Strict** — raises MEDIUM to fail, expects modern defaults
+- **Paranoid** — demands every hardening toggle; any LOW fails
+
+The choice is persisted on the `scans` row and surfaced on the
+public gallery summary.
+
+## Public gallery (opt-in)
+
+After a scan, owners can publish a **sanitized summary** (grade,
+score, severity counts, per-category breakdown) to `/gallery`.
+The gallery **never** discloses specific vulnerabilities, check
+names, or technology fingerprints — see `public-scan.html` and
+`privacy.html §15`. Publications can be withdrawn at any time from
+the scan's detail page.
 
 ## Free vs Pro
 

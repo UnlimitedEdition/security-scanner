@@ -150,7 +150,7 @@
     <p>Uz te informacije mozemo da izracunamo vas hash i pronadjemo podudarajuce redove u <code>scans</code> i <code>audit_log</code> tabelama. Brisanje se vrsi u roku od 30 dana od prijema zahteva (GDPR Art. 12). <strong>Napomena o audit_log-u:</strong> audit log je namerno append-only i cuva se 90 dana kao forenzicki trag pod pravnom osnovom legitimnog interesa (GDPR Art. 6(1)(f) — dokumentovanje potencijalnih sigurnosnih incidenata). Vasi zapisi se nece fizicki obrisati iz audit_log-a, ali ce se markirati kao &quot;izuzeti od operativne statistike&quot; i ionako ce biti automatski obrisani nakon 90 dana ako nisu flagovani.</p>
 
     <h2 id="pp9">9. Prava vlasnika skeniranog sajta (abuse report)</h2>
-    <p>Ako ste vlasnik domena koji je neko skenirao preko naseg servisa bez vase dozvole, mozete podneti prijavu preko link-a &quot;Prijavi zloupotrebu&quot; u footer-u ili direktno na <a href="./index.html#abuse">./index.html#abuse</a>. Pregledamo svaku prijavu u roku od 72 sata. Ako potvrdimo zloupotrebu:</p>
+    <p>Ako ste vlasnik domena koji je neko skenirao preko naseg servisa bez vase dozvole, mozete podneti prijavu preko link-a &quot;Prijavi zloupotrebu&quot; u footer-u ili direktno na <a href="/abuse-report#form">stranici za prijavu zloupotrebe</a>. Pregledamo svaku prijavu u roku od 72 sata. Ako potvrdimo zloupotrebu:</p>
     <ul>
       <li>Dodajemo vas domen na listu blokade — svi buduci scan-ovi tog domena vracaju HTTP 403</li>
       <li>Povezani <code>audit_log</code> redovi se flaguju kao pravni dokaz i cuvaju zauvek (umesto 90 dana)</li>
@@ -369,7 +369,7 @@
     <p>With that information we can compute your hash and find matching rows in the <code>scans</code> and <code>audit_log</code> tables. Deletion is performed within 30 days of receiving the request (GDPR Art. 12). <strong>Note about audit_log:</strong> the audit log is intentionally append-only and retained for 90 days as a forensic trail under the legal basis of legitimate interest (GDPR Art. 6(1)(f) — documenting potential security incidents). Your entries will not be physically deleted from audit_log but will be marked as &quot;excluded from operational statistics&quot; and will in any case be automatically pruned after 90 days unless flagged.</p>
 
     <h2 id="pp9e">9. Rights of scanned site owners (abuse report)</h2>
-    <p>If you are the owner of a domain that someone has scanned through our service without your permission, you can file a report via the &quot;Report abuse&quot; link in the footer or directly at <a href="./index.html#abuse">./index.html#abuse</a>. We review every report within 72 hours. If we confirm abuse:</p>
+    <p>If you are the owner of a domain that someone has scanned through our service without your permission, you can file a report via the &quot;Report abuse&quot; link in the footer or directly at the <a href="/abuse-report#form-en">abuse report page</a>. We review every report within 72 hours. If we confirm abuse:</p>
     <ul>
       <li>We add your domain to the block list — all future scans of that domain will be refused with HTTP 403</li>
       <li>Related <code>audit_log</code> entries are flagged as legal evidence and retained indefinitely (instead of 90 days)</li>
