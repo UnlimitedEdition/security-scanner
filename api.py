@@ -52,8 +52,8 @@ from security_utils import is_safe_target
 
 # Public defaults — can be overridden via env vars if we ever need to tune
 # rate limits per environment without code changes.
-_RATE_LIMIT = int(os.environ.get("RATE_LIMIT_MAX", "5"))
-_RATE_WINDOW = int(os.environ.get("RATE_LIMIT_WINDOW_SECONDS", "1800"))
+_RATE_LIMIT = int(os.environ.get("RATE_LIMIT_MAX", "2"))
+_RATE_WINDOW = int(os.environ.get("RATE_LIMIT_WINDOW_SECONDS", "7200"))
 
 app = FastAPI(
     title="Web Security Scanner API",
@@ -2294,12 +2294,13 @@ def start_scan(req: ScanRequest, request: Request):
             ip=client_ip, ua=user_agent,
             details={"url": req.url, "limit": _RATE_LIMIT, "window_s": _RATE_WINDOW},
         )
+        _window_min = _RATE_WINDOW // 60
         raise HTTPException(
             status_code=429,
             detail=(
-                "Previše zahteva. Maksimalno 5 skeniranja po 30 minuta. "
+                f"Previše zahteva. Maksimalno {_RATE_LIMIT} skeniranja po {_window_min} minuta. "
                 "Pretplatite se na Pro za neograničene skenove. / "
-                "Too many requests. Max 5 scans per 30 minutes. "
+                f"Too many requests. Max {_RATE_LIMIT} scans per {_window_min} minutes. "
                 "Upgrade to Pro for unlimited scans."
             ),
         )
