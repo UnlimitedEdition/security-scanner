@@ -59,6 +59,7 @@ body.lang-en span.sr { display: none; } body.lang-en span.en { display: inline; 
   font-weight: 700; font-size: 0.95rem;
 }
 .header-brand svg { width: 22px; height: 22px; flex-shrink: 0; }
+.header-brand .header-logo { width: 28px; height: 28px; flex-shrink: 0; display: block; }
 .header-version {
   font-size: 0.58rem; color: #7c3aed; background: rgba(124,58,237,0.12);
   padding: 0.1rem 0.35rem; border-radius: 4px; font-weight: 600;
@@ -350,8 +351,15 @@ th { color: #a78bfa; font-weight: 600; }
   display: flex; justify-content: space-between; align-items: center;
   flex-wrap: wrap; gap: 1rem;
 }
-.footer-bottom p { color: #7b83a6; font-size: 0.78rem; }
+.footer-bottom p { color: #7b83a6; font-size: 0.78rem; margin: 0; }
 .footer-bottom a { color: #a78bfa; }
+.footer-bottom .footer-brand {
+  display: flex; align-items: center; gap: 0.6rem;
+}
+.footer-bottom .footer-logo {
+  width: 32px; height: 32px;
+  opacity: 0.85; flex-shrink: 0;
+}
 .footer-cta {
   display: inline-block;
   background: linear-gradient(135deg, #6c63ff, #8b5cf6);

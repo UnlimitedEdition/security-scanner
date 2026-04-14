@@ -199,16 +199,14 @@
 
   // Brand
   var brand = el('a', { href: './index.html', className: 'header-brand' });
-  var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('viewBox', '0 0 24 24');
-  svg.setAttribute('fill', 'none');
-  svg.setAttribute('stroke', '#6c63ff');
-  svg.setAttribute('stroke-width', '2.5');
-  svg.setAttribute('stroke-linecap', 'round');
-  var svgPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  svgPath.setAttribute('d', 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z');
-  svg.appendChild(svgPath);
-  brand.appendChild(svg);
+  var logoImg = el('img', {
+    src: '/favicon.svg',
+    alt: 'Web Security Scanner',
+    width: '28',
+    height: '28',
+    className: 'header-logo'
+  });
+  brand.appendChild(logoImg);
   brand.appendChild(el('span', {}, ['Web Security Scanner']));
   var verBadge = el('span', { className: 'header-version' });
   verBadge.textContent = 'v4';
@@ -391,12 +389,22 @@
   badgeLink.appendChild(badgeText);
   badgeRow.appendChild(badgeLink);
 
-  // Footer bottom — just copyright + CTA
+  // Footer bottom — brand logo + copyright + CTA
   var footerBottom = el('div', { className: 'footer-bottom' });
+  var fbBrand = el('div', { className: 'footer-brand' });
+  var fbLogo = el('img', {
+    src: '/favicon.svg',
+    alt: 'Web Security Scanner',
+    width: '32',
+    height: '32',
+    className: 'footer-logo'
+  });
+  fbBrand.appendChild(fbLogo);
   var fbP = el('p');
   fbP.appendChild(document.createTextNode('Web Security Scanner \u00A9 2026 \u2014 '));
   fbP.appendChild(el('a', { href: 'https://toske-programer.web.app' }, ['<Toske/>']));
-  footerBottom.appendChild(fbP);
+  fbBrand.appendChild(fbP);
+  footerBottom.appendChild(fbBrand);
   var fbCta = el('a', { href: './index.html', className: 'footer-cta' });
   fbCta.appendChild(srSpan('Skeniraj svoj sajt \u2192', 'Scan your site \u2192'));
   footerBottom.appendChild(fbCta);

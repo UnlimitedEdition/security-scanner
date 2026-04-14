@@ -1,3 +1,13 @@
+---
+title: Web Security Scanner
+emoji: 🛡️
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 7860
+short_description: Passive website security analysis - 240+ checks
+---
+
 <p align="center">
   <img src="logo.svg" alt="Web Security Scanner" width="80" />
 </p>
