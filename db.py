@@ -873,6 +873,7 @@ def create_scan_request(
     url: str,
     ip: str,
     user_agent: Optional[str] = None,
+    scan_kind: str = "main",
 ) -> Optional[Dict[str, Any]]:
     """
     INSERT a new scan_requests row in 'pending_consent' status.
@@ -881,9 +882,16 @@ def create_scan_request(
     api.py is the only caller. It generates request_id (uuid4[:8], same
     shape as scans.id) and the normalized domain. We hash IP and UA here
     so callers don't need to know about PII handling.
+
+    scan_kind (migration 021):
+      * 'main'    — /execute dispatches to the 240+ check async scanner.
+      * 'malware' — /execute dispatches to malware_scanner.scan_malware
+                    (sync, 18 checks). Set at creation, never mutated.
     """
     if not is_configured():
         return None
+    if scan_kind not in ("main", "malware"):
+        scan_kind = "main"
 
     def _do():
         client = get_client()
@@ -894,6 +902,7 @@ def create_scan_request(
             "status": "pending_consent",
             "client_ip_hash": hash_ip(ip),
             "user_agent_hash": hash_ua(user_agent) if user_agent else None,
+            "scan_kind": scan_kind,
         }
         result = client.table("scan_requests").insert(row).execute()
         return (result.data or [None])[0]
@@ -1085,6 +1094,46 @@ def mark_scan_request_executed(
     return bool(out)
 
 
+def mark_malware_scan_request_executed(request_id: str) -> bool:
+    """
+    Transition 'verified' → 'executing' for scan_kind='malware' wizards.
+
+    Mirrors mark_scan_request_executed's CAS gating (all 3 consents TRUE,
+    verify_passed TRUE, status='verified') but does NOT set scan_id —
+    malware scans land in malware_scans, which has no FK back to
+    scan_requests. final_confirmed=TRUE closes the gate, so a malicious
+    client cannot replay /execute on the same row.
+
+    Race safety: the WHERE clause atomically rejects any row that has
+    already transitioned out of 'verified' (e.g. another /execute call
+    won the race, or /abandon flipped it to 'abandoned').
+    """
+    if not is_configured():
+        return False
+
+    def _do() -> bool:
+        client = get_client()
+        result = (
+            client.table("scan_requests")
+            .update({
+                "status": "executing",
+                "final_confirmed": True,
+            })
+            .eq("id", request_id)
+            .eq("status", "verified")
+            .eq("scan_kind", "malware")
+            .eq("verify_passed", True)
+            .eq("consent_1_given", True)
+            .eq("consent_2_given", True)
+            .eq("consent_3_given", True)
+            .execute()
+        )
+        return bool(result.data)
+
+    out = _safe_db_call("mark_malware_scan_request_executed", _do)
+    return bool(out)
+
+
 def mark_scan_request_completed(request_id: str) -> bool:
     """
     Transition 'executing' → 'completed' once the scanner.scan() call
@@ -1170,7 +1219,7 @@ def count_active_scan_requests_for_ip(ip: str) -> int:
 
 
 def get_active_scan_request_for_domain_ip(
-    domain: str, ip_hash: str
+    domain: str, ip_hash: str, scan_kind: str = "main",
 ) -> Optional[Dict[str, Any]]:
     """
     Return the active wizard for this specific (domain, ip_hash) pair.
@@ -1190,6 +1239,7 @@ def get_active_scan_request_for_domain_ip(
             .select("*")
             .eq("domain", domain)
             .eq("client_ip_hash", ip_hash)
+            .eq("scan_kind", scan_kind)
             .in_("status", ["pending_consent", "consent_recorded", "verified"])
             .order("created_date", desc=True)
             .limit(1)

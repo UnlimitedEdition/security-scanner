@@ -1208,6 +1208,7 @@ _MAX_ACTIVE_SCAN_REQUESTS_PER_IP = 5
 
 class ScanRequestCreate(BaseModel):
     url: str
+    scan_kind: str = "main"  # 'main' or 'malware' — see migration 021
 
     @field_validator("url")
     @classmethod
@@ -1224,6 +1225,14 @@ class ScanRequestCreate(BaseModel):
             raise ValueError(
                 f"Ciljna adresa nije dozvoljena. / Target not allowed: {reason}"
             )
+        return v
+
+    @field_validator("scan_kind")
+    @classmethod
+    def validate_scan_kind(cls, v: str) -> str:
+        v = (v or "main").strip().lower()
+        if v not in ("main", "malware"):
+            raise ValueError("scan_kind mora biti 'main' ili 'malware'.")
         return v
 
 
@@ -1314,7 +1323,7 @@ def create_scan_request_endpoint(req: ScanRequestCreate, request: Request):
     # row. This is what makes the "leave to add meta tag, come back,
     # enter same domain, click Full Scan" flow work seamlessly.
     ip_hash = db.hash_ip(client_ip)
-    existing = db.get_active_scan_request_for_domain_ip(domain, ip_hash)
+    existing = db.get_active_scan_request_for_domain_ip(domain, ip_hash, scan_kind=req.scan_kind)
     if existing:
         status = existing.get("status", "")
         if status == "pending_consent":
@@ -1332,6 +1341,7 @@ def create_scan_request_endpoint(req: ScanRequestCreate, request: Request):
             "status": status,
             "resumed": True,
             "step": step,
+            "scan_kind": existing.get("scan_kind") or "main",
             "consent_1_given": bool(existing.get("consent_1_given")),
             "consent_2_given": bool(existing.get("consent_2_given")),
             "consent_3_given": bool(existing.get("consent_3_given")),
@@ -1358,6 +1368,7 @@ def create_scan_request_endpoint(req: ScanRequestCreate, request: Request):
         url=req.url,
         ip=client_ip,
         user_agent=user_agent,
+        scan_kind=req.scan_kind,
     )
     if not row:
         raise HTTPException(
@@ -1370,7 +1381,7 @@ def create_scan_request_endpoint(req: ScanRequestCreate, request: Request):
         ip=client_ip, ua=user_agent, domain=domain,
         session_id=_client_session(request),
         fingerprint_hash=_client_fingerprint(request),
-        details={"request_id": request_id, "url": req.url},
+        details={"request_id": request_id, "url": req.url, "scan_kind": req.scan_kind},
     )
 
     return {
@@ -1378,6 +1389,7 @@ def create_scan_request_endpoint(req: ScanRequestCreate, request: Request):
         "domain": domain,
         "url": req.url,
         "status": "pending_consent",
+        "scan_kind": req.scan_kind,
         "next_step": "consent",
     }
 
@@ -1851,6 +1863,44 @@ def execute_scan_request_endpoint(
                 "Verification must come from the same device."
             ),
         )
+
+    # ── Dispatch on scan_kind (migration 021) ─────────────────────────
+    # The malware scanner is synchronous (~15-30s budget) and produces
+    # a self-contained result blob, so it doesn't need the scans table
+    # queue. Flip the wizard atomically, run scan_malware in-process,
+    # return the result directly.
+    scan_kind = (row.get("scan_kind") or "main").lower()
+    if scan_kind == "malware":
+        if not db.mark_malware_scan_request_executed(request_id):
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    "Wizard ne moze da se pokrene — moguce je da je vec "
+                    "izvrsen ili ponisten."
+                ),
+            )
+        db.log_audit_event(
+            event="scan_request_executed",
+            ip=client_ip, ua=user_agent, domain=domain,
+            session_id=_client_session(request),
+            fingerprint_hash=_client_fingerprint(request),
+            details={"request_id": request_id, "url": url, "scan_kind": "malware"},
+        )
+        try:
+            result = malware_scanner.scan_malware(url, mode="full")
+        except Exception as e:
+            db.abandon_scan_request(request_id)
+            raise HTTPException(
+                status_code=500,
+                detail=f"Malware sken nije uspeo: {str(e)[:180]}",
+            )
+        db.mark_scan_request_completed(request_id)
+        return {
+            "request_id": request_id,
+            "scan_kind": "malware",
+            "status": "completed",
+            "result": result,
+        }
 
     # Create a normal scan row + queue, but tagged with mode='full' and
     # scan_request_id. From this point on, the wizard cannot reach
