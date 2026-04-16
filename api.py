@@ -44,6 +44,8 @@ import re
 
 import requests
 import scanner
+import malware_scanner
+from malware_scanner import config as malware_config
 import db
 import verification
 import subscription
@@ -2494,6 +2496,277 @@ def start_scan(req: ScanRequest, request: Request):
     return {"scan_id": scan_id, "status": scans[scan_id]["status"], "queue_position": queue_position}
 
 
+# ============================================================================
+# Malware Scanner — separate product (distinct from the 240+ check scanner).
+# ============================================================================
+# Runs synchronously because the malware scan has a tight budget (~15-30s)
+# and fits inside an HTTP request. Unlike /scan, there is no queue, no
+# in-memory `scans` cache, no polling — the client gets the full result in
+# one round-trip. Persistence is best-effort to `malware_scans`.
+# ============================================================================
+class MalwareScanRequest(BaseModel):
+    """Payload for POST /malware-scan.
+
+    `mode` is the caller's REQUESTED mode. The server may downgrade
+    'full' → 'safe' if the domain is not verified for this caller or
+    they have no paid credit remaining. The response always returns
+    the EFFECTIVE mode alongside the caller's requested mode so the
+    frontend can surface a "Verify to unlock 18 checks" prompt.
+    """
+    url: str
+    consent_accepted: bool = False
+    consent_version: Optional[str] = None
+    session_id: Optional[str] = None
+    fingerprint_hash: Optional[str] = None
+    mode: Optional[str] = "safe"
+
+    @field_validator("url")
+    @classmethod
+    def _validate_url(cls, v: str) -> str:
+        v = (v or "").strip()
+        if not v:
+            raise ValueError("URL je obavezan / URL is required")
+        if not v.startswith(("http://", "https://")):
+            v = "https://" + v
+        if len(v) > 2000:
+            raise ValueError("URL predugačak / URL too long")
+        return v
+
+    @field_validator("mode")
+    @classmethod
+    def _validate_mode(cls, v: Optional[str]) -> str:
+        v = (v or "safe").lower()
+        return v if v in ("safe", "full") else "safe"
+
+
+@app.post("/malware-scan")
+def start_malware_scan(req: MalwareScanRequest, request: Request):
+    """
+    Run a malware scan and return results synchronously.
+
+    Access tiers:
+      * Free      — 1 scan / 24h / IP, mode='safe' only.
+      * Verified  — unlimited 'full' scans for the verified domain.
+      * Paid pack — $3 / 5 scans, 30-day validity (Phase 7).
+    """
+    from urllib.parse import urlparse
+
+    client_ip = _client_ip(request)
+    user_agent = request.headers.get("user-agent", "")[:500] or None
+
+    # Consent — spec requires explicit acceptance BEFORE every scan.
+    # A missing consent flag is a 400, not a 403, because the client
+    # can fix it trivially by re-posting with the box ticked.
+    if not req.consent_accepted:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Morate prihvatiti uslove pre skeniranja malvera. / "
+                "You must accept the terms before scanning for malware."
+            ),
+        )
+
+    # SSRF guard. Do this BEFORE burning rate-limit quota so a probe at
+    # 127.0.0.1 can't be used as a free oracle to enumerate private IPs.
+    safe, reason = is_safe_target(req.url)
+    if not safe:
+        db.log_audit_event(
+            event="scan_blocked_ssrf",
+            ip=client_ip, ua=user_agent,
+            details={"url": req.url, "reason": reason, "kind": "malware"},
+        )
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Adresa nije dozvoljena: {reason} / "
+                f"Address not allowed: {reason}"
+            ),
+        )
+
+    # Extract domain for verification / block / audit context.
+    try:
+        parsed = urlparse(req.url)
+        domain = (parsed.netloc or "").lower().removeprefix("www.").split(":")[0]
+    except Exception:
+        domain = ""
+
+    # Confirmed-abuse block list. Same behavior as /scan.
+    if domain and db.is_domain_blocked(domain):
+        db.log_audit_event(
+            event="abuse_block_applied",
+            ip=client_ip, ua=user_agent, domain=domain,
+            details={"url": req.url, "reason": "confirmed_abuse_report",
+                     "kind": "malware"},
+        )
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "Ovaj domen je blokiran zbog prijave zloupotrebe. / "
+                "This domain is blocked due to an abuse report."
+            ),
+        )
+
+    # Effective-mode resolution:
+    #   requested='full' + verified       → 'full'
+    #   requested='full' + NOT verified   → downgrade to 'safe' (Phase 7
+    #       will also check malware_credits here and allow 'full' if a
+    #       paid pack has credits_remaining > 0)
+    #   requested='safe'                  → 'safe'
+    requested_mode = (req.mode or "safe").lower()
+    effective_mode = "safe"
+    if requested_mode == "full" and domain and db.is_domain_verified(
+        domain, client_ip, req.fingerprint_hash
+    ):
+        effective_mode = "full"
+
+    # Rate limit ONLY the free path. Verified + paid flows bypass it.
+    # key_prefix='malware_free' keeps this counter isolated from the
+    # main /scan 2-per-window counter so the two products cannot
+    # interfere with each other's limits.
+    if effective_mode == "safe":
+        allowed, _count = db.check_rate_limit(
+            ip=client_ip,
+            max_count=malware_config.FREE_MALWARE_LIMIT,
+            window_seconds=malware_config.FREE_MALWARE_WINDOW_SECONDS,
+            key_prefix="malware_free",
+        )
+        if not allowed:
+            db.log_audit_event(
+                event="scan_blocked_rate_limit",
+                ip=client_ip, ua=user_agent, domain=domain,
+                details={
+                    "url": req.url,
+                    "limit": malware_config.FREE_MALWARE_LIMIT,
+                    "window_s": malware_config.FREE_MALWARE_WINDOW_SECONDS,
+                    "kind": "malware",
+                },
+            )
+            raise HTTPException(
+                status_code=429,
+                detail=(
+                    "Dostigli ste dnevni limit besplatnih provera malvera. "
+                    "Plaćeni paket: 5 skeniranja za $3, važi 30 dana. / "
+                    "Daily free malware-scan limit reached. "
+                    "Paid pack: 5 scans for $3, valid 30 days."
+                ),
+            )
+
+    scan_id = str(uuid.uuid4())[:8]
+
+    db.log_audit_event(
+        event="scan_request",
+        ip=client_ip, ua=user_agent,
+        scan_id=scan_id, domain=domain,
+        session_id=req.session_id,
+        fingerprint_hash=req.fingerprint_hash,
+        details={
+            "url": req.url,
+            "mode_requested": requested_mode,
+            "mode_effective": effective_mode,
+            "kind": "malware",
+        },
+    )
+
+    # Persist the scan as 'running' before we start. Best-effort: a DB
+    # outage degrades persistence but does NOT block the scan. Callers
+    # still get their result; forensics just loses a row.
+    def _persist_start() -> None:
+        if not db.is_configured():
+            return
+        client = db.get_client()
+        client.table("malware_scans").insert({
+            "id": scan_id,
+            "url": req.url,
+            "domain": domain or "",
+            "status": "running",
+            "progress": 0,
+            "scan_mode": effective_mode,
+            "ip_hash": db.hash_ip(client_ip),
+            "ua_hash": db.hash_ua(user_agent) if user_agent else None,
+            "fingerprint_hash": req.fingerprint_hash,
+            "consent_accepted": True,
+            "consent_version": req.consent_version,
+        }).execute()
+    db._safe_db_call("malware_scans.insert", _persist_start)
+
+    db.log_audit_event(
+        event="scan_start",
+        ip=client_ip, ua=user_agent,
+        scan_id=scan_id, domain=domain,
+        details={"url": req.url, "mode": effective_mode, "kind": "malware"},
+    )
+
+    # Run the scan. Phase 1 stub returns almost instantly because the
+    # _SAFE_CHECKS / _FULL_CHECKS tuples are empty — only the target
+    # homepage fetch happens. Phases 2-5 will grow this to the full
+    # 10-check SAFE / 18-check FULL pipeline.
+    try:
+        result: Dict[str, Any] = malware_scanner.scan_malware(
+            req.url, mode=effective_mode
+        )
+    except Exception as e:
+        err = str(e)[:200]
+        db.log_audit_event(
+            event="scan_error",
+            ip=client_ip, ua=user_agent,
+            scan_id=scan_id, domain=domain,
+            details={"url": req.url, "error": err, "kind": "malware"},
+        )
+
+        def _persist_err() -> None:
+            if not db.is_configured():
+                return
+            client = db.get_client()
+            client.table("malware_scans").update({
+                "status": "error",
+                "error": err,
+                "completed_at": db.now_utc().isoformat(),
+            }).eq("id", scan_id).execute()
+        db._safe_db_call("malware_scans.mark_error", _persist_err)
+
+        raise HTTPException(
+            status_code=500,
+            detail=f"Skeniranje nije uspelo / Scan failed: {err}",
+        )
+
+    # Persist the finished result. Same best-effort contract.
+    def _persist_done() -> None:
+        if not db.is_configured():
+            return
+        client = db.get_client()
+        client.table("malware_scans").update({
+            "status": "completed",
+            "progress": 100,
+            "result": result,
+            "completed_at": db.now_utc().isoformat(),
+        }).eq("id", scan_id).execute()
+    db._safe_db_call("malware_scans.mark_done", _persist_done)
+
+    db.log_audit_event(
+        event="scan_complete",
+        ip=client_ip, ua=user_agent,
+        scan_id=scan_id, domain=domain,
+        details={
+            "url": req.url,
+            "mode": effective_mode,
+            "score": (result.get("score") or {}).get("score"),
+            "grade": (result.get("score") or {}).get("grade"),
+            "failed_checks": result.get("failed_checks"),
+            "total_checks": result.get("total_checks"),
+            "kind": "malware",
+        },
+    )
+
+    return {
+        "scan_id": scan_id,
+        "status": "completed",
+        "mode_requested": requested_mode,
+        "mode_effective": effective_mode,
+        "downgraded": requested_mode == "full" and effective_mode != "full",
+        "result": result,
+    }
+
+
 @app.get("/scan/{scan_id}")
 def get_scan(scan_id: str, request: Request):
     """
@@ -2790,9 +3063,13 @@ def api_status():
     """
     buy_monthly = os.environ.get("LEMON_BUY_URL_MONTHLY", "").strip()
     buy_yearly = os.environ.get("LEMON_BUY_URL_YEARLY", "").strip()
+    buy_malware_5 = os.environ.get("LEMON_BUY_URL_MALWARE_5_PACK", "").strip()
     pro_available = bool(buy_monthly and buy_yearly)
+    malware_pack_available = bool(buy_malware_5)
     return {
         "pro_available": pro_available,
+        "malware_pack_available": malware_pack_available,
+        "malware_pack_buy_url": buy_malware_5 or None,
         "reason": None if pro_available else "pro_launch_pending",
         "scanner": "operational",
     }
