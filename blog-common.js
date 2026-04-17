@@ -521,17 +521,37 @@
     var items = [];
 
     h2s.forEach(function(h2) {
-      var li = el('li');
-      var a = el('a', { href: '#' + h2.id, textContent: h2.textContent.replace(/^\d+\.\s*/, '') });
-      li.appendChild(a);
-
       var parent = h2.closest('.sr') || h2.closest('.en');
-      if (parent && parent.classList.contains('sr') && srList) {
-        srList.appendChild(li);
-      } else if (parent && parent.classList.contains('en') && enList) {
-        enList.appendChild(li);
+      if (parent) {
+        var li = el('li');
+        var a = el('a', { href: '#' + h2.id, textContent: h2.textContent.replace(/^\d+\.\s*/, '') });
+        li.appendChild(a);
+        if (parent.classList.contains('sr') && srList) srList.appendChild(li);
+        else if (parent.classList.contains('en') && enList) enList.appendChild(li);
+        items.push({ el: h2, li: li });
+      } else {
+        var srSpanEl = h2.querySelector('span.sr');
+        var enSpanEl = h2.querySelector('span.en');
+        if (srSpanEl && enSpanEl) {
+          var liSr = el('li');
+          var aSr = el('a', { href: '#' + h2.id, textContent: srSpanEl.textContent });
+          liSr.appendChild(aSr);
+          if (srList) srList.appendChild(liSr);
+
+          var liEn = el('li');
+          var aEn = el('a', { href: '#' + h2.id, textContent: enSpanEl.textContent });
+          liEn.appendChild(aEn);
+          if (enList) enList.appendChild(liEn);
+
+          items.push({ el: h2, li: liSr, li2: liEn });
+        } else {
+          var li = el('li');
+          var a = el('a', { href: '#' + h2.id, textContent: h2.textContent.replace(/^\d+\.\s*/, '') });
+          li.appendChild(a);
+          if (srList) srList.appendChild(li);
+          items.push({ el: h2, li: li });
+        }
       }
-      items.push({ el: h2, li: li });
     });
 
     if (items.length === 0) return;
@@ -541,7 +561,9 @@
       entries.forEach(function(entry) {
         if (entry.isIntersecting) {
           items.forEach(function(item) {
-            item.li.classList.toggle('active', item.el === entry.target);
+            var isActive = item.el === entry.target;
+            item.li.classList.toggle('active', isActive);
+            if (item.li2) item.li2.classList.toggle('active', isActive);
           });
         }
       });
