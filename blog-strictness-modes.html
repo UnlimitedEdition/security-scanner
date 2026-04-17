@@ -36,6 +36,46 @@
     "url": "https://security-skener.gradovi.rs/blog-strictness-modes.html"
   }
   </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Why does my site get F in Paranoid mode?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Paranoid counts every category including SEO, GDPR, Accessibility and Performance. With just 3 MEDIUM and 3 HIGH issues you already hit the score floor. Paranoid gives A only to perfect sites."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does Standard mode still match V3 results?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Standard is a regression gate — every scan that V3 rated X, V4 Standard must rate X. 23 unit tests enforce this on every build."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I change the scoring profile after a scan?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Not yet through the UI — profile is selected before the scan. A future version will have a re-score button since compute_score() is a pure function and can be replayed without a new network scan."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Which strictness mode should I choose?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Basic for marketing presentations and demos. Standard for routine monthly checks. Strict for internal audits and compliance prep. Paranoid for ISO27001, PCI-DSS, SOC2 or government sites where every issue must be documented."
+        }
+      }
+    ]
+  }
+  </script>
   <style>
     .sm-page { max-width: 980px; }
     .sm-hero { text-align: center; padding: 2rem 0 1.5rem; border-bottom: 1px solid #252a4a; margin-bottom: 2rem; }
@@ -325,6 +365,54 @@
       </details>
     </section>
 
+    <section class="sm-section" id="improve">
+      <h2>
+        <span class="sr">Kako poboljsati ocenu u svakom modu</span>
+        <span class="en">How to improve your score in each mode</span>
+      </h2>
+      <p>
+        <span class="sr">Bez obzira na izabrani profil, poboljsanje ocene svodi se na iste korake &mdash; razlika je samo u prioritetu. U nastavku je vodic po profilima:</span>
+        <span class="en">Regardless of the profile you choose, improving your score comes down to the same steps &mdash; only the priority differs. Here is a per-profile guide:</span>
+      </p>
+      <div class="sm-table-wrap">
+        <table class="sm-table">
+          <thead>
+            <tr>
+              <th>Profile</th>
+              <th><span class="sr">Prioritet popravki</span><span class="en">Fix priority</span></th>
+              <th><span class="sr">Tipicni koraci</span><span class="en">Typical steps</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Basic</td>
+              <td><span class="sr">CRITICAL i HIGH</span><span class="en">CRITICAL and HIGH</span></td>
+              <td><span class="sr">Dodajte HTTPS, popravite HSTS, uklonite mixed content</span><span class="en">Add HTTPS, fix HSTS, remove mixed content</span></td>
+            </tr>
+            <tr>
+              <td>Standard</td>
+              <td><span class="sr">CRITICAL, HIGH, MEDIUM</span><span class="en">CRITICAL, HIGH, MEDIUM</span></td>
+              <td><span class="sr">Sve od Basic + security headeri (CSP, X-Frame-Options, Referrer-Policy)</span><span class="en">Everything from Basic + security headers (CSP, X-Frame-Options, Referrer-Policy)</span></td>
+            </tr>
+            <tr>
+              <td>Strict</td>
+              <td><span class="sr">Sve ozbiljnosti + SEO/GDPR</span><span class="en">All severities + SEO/GDPR</span></td>
+              <td><span class="sr">Sve od Standard + GDPR privacy policy, cookie consent, meta tagovi</span><span class="en">Everything from Standard + GDPR privacy policy, cookie consent, meta tags</span></td>
+            </tr>
+            <tr>
+              <td>Paranoid</td>
+              <td><span class="sr">Apsolutno sve</span><span class="en">Absolutely everything</span></td>
+              <td><span class="sr">Sve od Strict + Accessibility (alt tagovi, ARIA), Performance (kompresija, cache)</span><span class="en">Everything from Strict + Accessibility (alt tags, ARIA), Performance (compression, cache)</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <span class="sr"><strong>Savet:</strong> Zapocnite sa Standard modom i popravite sve CRITICAL/HIGH probleme. Zatim predjite na Strict da vidite sta jos mozete unaprediti. Paranoid koristite kao krajnji cilj, ne kao svakodnevni alat.</span>
+        <span class="en"><strong>Tip:</strong> Start with Standard mode and fix all CRITICAL/HIGH issues. Then switch to Strict to see what else you can improve. Use Paranoid as an end goal, not an everyday tool.</span>
+      </div>
+    </section>
+
     <div class="sm-cta">
       <h3><span class="sr">Probaj sva 4 moda</span><span class="en">Try all 4 modes</span></h3>
       <p>
@@ -332,6 +420,25 @@
         <span class="en">One URL, four grades. See how &quot;fine&quot; your site really is by different criteria &mdash; free, no registration.</span>
       </p>
       <a href="./index.html"><span class="sr">Skeniraj sajt &rarr;</span><span class="en">Scan your site &rarr;</span></a>
+    </div>
+
+    <div class="nav-links">
+      <div class="sr">
+        <h3>Povezani clanci</h3>
+        <ul>
+          <li><a href="./blog-security-ssl.html">SSL/TLS bezbednost &mdash; kompletni vodic</a></li>
+          <li><a href="./blog-security-malware.html">Malver zastita za web sajtove</a></li>
+          <li><a href="./blog-security-malware-recovery.html">Oporavak sajta od malvera &mdash; 8 koraka</a></li>
+        </ul>
+      </div>
+      <div class="en">
+        <h3>Related articles</h3>
+        <ul>
+          <li><a href="./blog-security-ssl.html">SSL/TLS security &mdash; complete guide</a></li>
+          <li><a href="./blog-security-malware.html">Malware protection for websites</a></li>
+          <li><a href="./blog-security-malware-recovery.html">Website malware recovery &mdash; 8 steps</a></li>
+        </ul>
+      </div>
     </div>
 
   </main>
