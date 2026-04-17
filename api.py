@@ -2589,6 +2589,23 @@ class MalwareScanRequest(BaseModel):
         return v if v in ("safe", "full") else "safe"
 
 
+@app.get("/malware-scan/status")
+def malware_scan_rate_status(request: Request):
+    """
+    Returns the caller's malware free-tier rate-limit status without
+    incrementing the counter. The frontend uses this to show a countdown
+    timer when the user has exhausted their 1/24h free scan.
+    """
+    client_ip = _client_ip(request)
+    status = db.get_rate_limit_status(
+        ip=client_ip,
+        max_count=malware_config.FREE_MALWARE_LIMIT,
+        window_seconds=malware_config.FREE_MALWARE_WINDOW_SECONDS,
+        key_prefix="malware_free",
+    )
+    return status
+
+
 @app.post("/malware-scan")
 def start_malware_scan(req: MalwareScanRequest, request: Request):
     """
@@ -2681,6 +2698,13 @@ def start_malware_scan(req: MalwareScanRequest, request: Request):
             key_prefix="malware_free",
         )
         if not allowed:
+            status = db.get_rate_limit_status(
+                ip=client_ip,
+                max_count=malware_config.FREE_MALWARE_LIMIT,
+                window_seconds=malware_config.FREE_MALWARE_WINDOW_SECONDS,
+                key_prefix="malware_free",
+            )
+            retry_after = status.get("retry_after", 0)
             db.log_audit_event(
                 event="scan_blocked_rate_limit",
                 ip=client_ip, ua=user_agent, domain=domain,
@@ -2688,17 +2712,24 @@ def start_malware_scan(req: MalwareScanRequest, request: Request):
                     "url": req.url,
                     "limit": malware_config.FREE_MALWARE_LIMIT,
                     "window_s": malware_config.FREE_MALWARE_WINDOW_SECONDS,
+                    "retry_after": retry_after,
                     "kind": "malware",
                 },
             )
-            raise HTTPException(
+            return JSONResponse(
                 status_code=429,
-                detail=(
-                    "Dostigli ste dnevni limit besplatnih provera malvera. "
-                    "Plaćeni paket: 5 skeniranja za $3, važi 30 dana. / "
-                    "Daily free malware-scan limit reached. "
-                    "Paid pack: 5 scans for $3, valid 30 days."
-                ),
+                content={
+                    "detail": (
+                        "Dostigli ste dnevni limit besplatnih provera malvera. "
+                        "Plaćeni paket: 5 skeniranja za $3, važi 30 dana. / "
+                        "Daily free malware-scan limit reached. "
+                        "Paid pack: 5 scans for $3, valid 30 days."
+                    ),
+                    "retry_after": retry_after,
+                    "limit": malware_config.FREE_MALWARE_LIMIT,
+                    "window_seconds": malware_config.FREE_MALWARE_WINDOW_SECONDS,
+                },
+                headers={"Retry-After": str(retry_after)},
             )
 
     scan_id = str(uuid.uuid4())[:8]

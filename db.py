@@ -499,6 +499,62 @@ def check_rate_limit(
     return result
 
 
+def get_rate_limit_status(
+    ip: str,
+    max_count: int = 5,
+    window_seconds: int = 1800,
+    key_prefix: str = "ip",
+) -> Dict[str, Any]:
+    """
+    Read-only check: how many scans remain and when the window resets.
+    Does NOT increment the counter.
+    """
+    default = {
+        "used": 0, "limit": max_count, "remaining": max_count,
+        "window_seconds": window_seconds, "retry_after": 0,
+    }
+    if not is_configured():
+        return default
+
+    def _do() -> Dict[str, Any]:
+        client = get_client()
+        key = f"{key_prefix}:{hash_ip(ip)}"
+        now = now_utc()
+        existing = (
+            client.table("rate_limits")
+            .select("key, count, window_start, window_seconds")
+            .eq("key", key)
+            .limit(1)
+            .execute()
+        )
+        rows = existing.data or []
+        if not rows:
+            return default
+
+        row = rows[0]
+        window_start = datetime.fromisoformat(
+            row["window_start"].replace("Z", "+00:00")
+        )
+        elapsed = (now - window_start).total_seconds()
+
+        if elapsed >= row["window_seconds"]:
+            return default
+
+        current = int(row["count"])
+        remaining = max(0, max_count - current)
+        retry_after = max(0, int(row["window_seconds"] - elapsed))
+        return {
+            "used": current,
+            "limit": max_count,
+            "remaining": remaining,
+            "window_seconds": window_seconds,
+            "retry_after": retry_after,
+        }
+
+    result = _safe_db_call("get_rate_limit_status", _do)
+    return result if result is not None else default
+
+
 # ─────────────────────────────────────────────────────────────────────────
 # Audit log
 # ─────────────────────────────────────────────────────────────────────────
