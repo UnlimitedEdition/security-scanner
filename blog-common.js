@@ -275,6 +275,10 @@
   colSec.appendChild(footerLink('./blog-security-dns.html', 'DNS'));
   colSec.appendChild(footerLink('./blog-security-ports.html', 'Port Scanning'));
   colSec.appendChild(footerLink('./blog-security-api.html', 'API Security'));
+  colSec.appendChild(footerLinkBi('./blog-security-malware.html', 'Malware detekcija', 'Malware Detection'));
+  colSec.appendChild(footerLinkBi('./blog-security-malware-recovery.html', 'Oporavak sajta', 'Post-Hack Recovery'));
+  colSec.appendChild(footerLinkBi('./faq-malware.html', 'Malware FAQ', 'Malware FAQ'));
+  colSec.appendChild(footerLinkBi('./faq-malware-recovery.html', 'Recovery FAQ', 'Recovery FAQ'));
   colSec.appendChild(footerLinkBi('./blog-strictness-modes.html', 'Rezimi strogosti', 'Strictness Modes'));
   footerGrid.appendChild(colSec);
 
