@@ -2593,17 +2593,43 @@ class MalwareScanRequest(BaseModel):
 def malware_scan_rate_status(request: Request):
     """
     Returns the caller's malware free-tier rate-limit status without
-    incrementing the counter. The frontend uses this to show a countdown
-    timer when the user has exhausted their 1/24h free scan.
+    incrementing the counter. Checks both IP and fingerprint limits;
+    returns the stricter of the two.
     """
     client_ip = _client_ip(request)
-    status = db.get_rate_limit_status(
+    caller_fp = request.headers.get("x-fingerprint-hash", "")[:128] or None
+
+    ip_status = db.get_rate_limit_status(
         ip=client_ip,
         max_count=malware_config.FREE_MALWARE_LIMIT,
         window_seconds=malware_config.FREE_MALWARE_WINDOW_SECONDS,
         key_prefix="malware_free",
     )
-    return status
+
+    if caller_fp:
+        fp_status = db.get_rate_limit_status(
+            ip=caller_fp,
+            max_count=malware_config.FREE_MALWARE_LIMIT,
+            window_seconds=malware_config.FREE_MALWARE_WINDOW_SECONDS,
+            key_prefix="malware_fp",
+        )
+        retry_after = max(
+            ip_status.get("retry_after", 0),
+            fp_status.get("retry_after", 0),
+        )
+        remaining = min(
+            ip_status.get("remaining", 1),
+            fp_status.get("remaining", 1),
+        )
+        return {
+            "used": max(ip_status["used"], fp_status["used"]),
+            "limit": malware_config.FREE_MALWARE_LIMIT,
+            "remaining": remaining,
+            "window_seconds": malware_config.FREE_MALWARE_WINDOW_SECONDS,
+            "retry_after": retry_after,
+        }
+
+    return ip_status
 
 
 @app.post("/malware-scan")
@@ -2673,38 +2699,76 @@ def start_malware_scan(req: MalwareScanRequest, request: Request):
             ),
         )
 
+    # Fingerprint required — blocks curl/scripts that can't generate
+    # a real browser fingerprint. Header is set by malware.js from
+    # the same fingerprinting logic used in index.html.
+    caller_fingerprint = (
+        req.fingerprint_hash
+        or request.headers.get("x-fingerprint-hash", "")[:128]
+        or None
+    )
+    if not caller_fingerprint:
+        db.log_audit_event(
+            event="scan_blocked_no_fingerprint",
+            ip=client_ip, ua=user_agent, domain=domain,
+            details={"url": req.url, "kind": "malware"},
+        )
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "Browser fingerprint je obavezan. Koristite web pregledač. / "
+                "Browser fingerprint is required. Use a web browser."
+            ),
+        )
+
     # Effective-mode resolution:
     #   requested='full' + verified       → 'full'
-    #   requested='full' + NOT verified   → downgrade to 'safe' (Phase 7
-    #       will also check malware_credits here and allow 'full' if a
-    #       paid pack has credits_remaining > 0)
+    #   requested='full' + NOT verified   → downgrade to 'safe'
     #   requested='safe'                  → 'safe'
     requested_mode = (req.mode or "safe").lower()
     effective_mode = "safe"
     if requested_mode == "full" and domain and db.is_domain_verified(
-        domain, client_ip, req.fingerprint_hash
+        domain, client_ip, caller_fingerprint
     ):
         effective_mode = "full"
 
-    # Rate limit ONLY the free path. Verified + paid flows bypass it.
-    # key_prefix='malware_free' keeps this counter isolated from the
-    # main /scan 2-per-window counter so the two products cannot
-    # interfere with each other's limits.
+    # Rate limit the free path by BOTH IP and fingerprint.
+    # IP limit:          1 scan / 24h per IP (catches same network)
+    # Fingerprint limit: 1 scan / 24h per fingerprint (catches VPN rotators)
+    # Verified + paid flows bypass both.
     if effective_mode == "safe":
-        allowed, _count = db.check_rate_limit(
+        ip_allowed, _ip_count = db.check_rate_limit(
             ip=client_ip,
             max_count=malware_config.FREE_MALWARE_LIMIT,
             window_seconds=malware_config.FREE_MALWARE_WINDOW_SECONDS,
             key_prefix="malware_free",
         )
-        if not allowed:
-            status = db.get_rate_limit_status(
+        fp_allowed, _fp_count = db.check_rate_limit(
+            ip=caller_fingerprint,
+            max_count=malware_config.FREE_MALWARE_LIMIT,
+            window_seconds=malware_config.FREE_MALWARE_WINDOW_SECONDS,
+            key_prefix="malware_fp",
+        )
+        if not ip_allowed or not fp_allowed:
+            ip_status = db.get_rate_limit_status(
                 ip=client_ip,
                 max_count=malware_config.FREE_MALWARE_LIMIT,
                 window_seconds=malware_config.FREE_MALWARE_WINDOW_SECONDS,
                 key_prefix="malware_free",
             )
-            retry_after = status.get("retry_after", 0)
+            fp_status = db.get_rate_limit_status(
+                ip=caller_fingerprint,
+                max_count=malware_config.FREE_MALWARE_LIMIT,
+                window_seconds=malware_config.FREE_MALWARE_WINDOW_SECONDS,
+                key_prefix="malware_fp",
+            )
+            retry_after = max(
+                ip_status.get("retry_after", 0),
+                fp_status.get("retry_after", 0),
+            )
+            blocked_by = "fingerprint" if ip_allowed else "ip"
+            if not ip_allowed and not fp_allowed:
+                blocked_by = "both"
             db.log_audit_event(
                 event="scan_blocked_rate_limit",
                 ip=client_ip, ua=user_agent, domain=domain,
@@ -2713,6 +2777,7 @@ def start_malware_scan(req: MalwareScanRequest, request: Request):
                     "limit": malware_config.FREE_MALWARE_LIMIT,
                     "window_s": malware_config.FREE_MALWARE_WINDOW_SECONDS,
                     "retry_after": retry_after,
+                    "blocked_by": blocked_by,
                     "kind": "malware",
                 },
             )
