@@ -2633,9 +2633,7 @@ function _computeFingerprint() {
       }).then(function(r) {
         if (r.status === 403) return r.json().then(function(err) {
           if (err.error === "device_limit") {
-            alert(isEn()
-              ? "This license key is active on " + err.device_count + " devices (max " + err.max + "). Remove a device from your account page."
-              : "Ovaj kljuc je aktivan na " + err.device_count + " uredjaja (max " + err.max + "). Uklonite uredjaj sa account stranice.");
+            _showDeviceLimitModal(err.device_count, err.max);
           }
         });
       }).catch(function() {});
@@ -2831,9 +2829,7 @@ async function isProUser() {
     if (resp.status === 403) {
       var err = await resp.json();
       if (err.error === "device_limit") {
-        alert(isEn()
-          ? "This license key is active on " + err.device_count + " devices (max " + err.max + "). Remove a device from your account page to use it here."
-          : "Ovaj kljuc je aktivan na " + err.device_count + " uredjaja (max " + err.max + "). Uklonite uredjaj sa account stranice da biste ga koristili ovde.");
+        _showDeviceLimitModal(err.device_count, err.max);
         _proStatusCache = { active: false };
         return false;
       }
@@ -5571,6 +5567,40 @@ async function _wizardInlinePoll(scanId) {
     </a>
   </span>
 </div>
+
+<div id="deviceLimitOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:99999;align-items:center;justify-content:center;">
+  <div style="background:#1e1b2e;border:1px solid rgba(239,68,68,0.4);border-radius:16px;padding:2rem;max-width:460px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+    <div style="font-size:2.5rem;margin-bottom:0.8rem;">&#128274;</div>
+    <h3 id="deviceLimitTitle" style="color:#ef4444;margin:0 0 0.8rem;font-size:1.3rem;"></h3>
+    <p id="deviceLimitMsg" style="color:#cbd5e1;line-height:1.6;margin:0 0 1.2rem;font-size:0.95rem;"></p>
+    <div style="display:flex;gap:0.8rem;justify-content:center;flex-wrap:wrap;">
+      <a href="./account.html" style="display:inline-block;padding:0.7rem 1.5rem;background:#7c3aed;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;">
+        <span class="sr">Upravljaj uredjajima</span>
+        <span class="en">Manage devices</span>
+      </a>
+      <button onclick="document.getElementById('deviceLimitOverlay').style.display='none'" style="padding:0.7rem 1.5rem;background:rgba(255,255,255,0.1);color:#9ca3af;border:1px solid rgba(255,255,255,0.15);border-radius:8px;cursor:pointer;font-size:0.95rem;">
+        <span class="sr">Zatvori</span>
+        <span class="en">Close</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+function _showDeviceLimitModal(count, max) {
+  var overlay = document.getElementById("deviceLimitOverlay");
+  var title = document.getElementById("deviceLimitTitle");
+  var msg = document.getElementById("deviceLimitMsg");
+  var en = isEn();
+  title.textContent = en
+    ? "Device limit reached"
+    : "Dostignut limit uredjaja";
+  msg.textContent = en
+    ? "This license key is active on " + count + " devices (max " + max + "). Remove a device from your account page to use it on this device."
+    : "Ovaj kljuc je aktivan na " + count + " uredjaja (max " + max + "). Uklonite uredjaj sa account stranice da biste ga koristili ovde.";
+  overlay.style.display = "flex";
+}
+</script>
 
 <script>window.lemonSqueezyAffiliateConfig = { store: "toske-programer" };</script>
 <script src="https://lmsqueezy.com/affiliate.js" defer></script>
