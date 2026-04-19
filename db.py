@@ -1597,7 +1597,7 @@ def get_public_scan_for_owner_check(scan_id: str) -> Optional[Dict[str, Any]]:
 def find_active_malware_credits(subscription_id: int) -> Optional[Dict[str, Any]]:
     """
     Find the newest active credit row for a subscription.
-    Active = credits_remaining > 0 AND expires_at > NOW().
+    Active = credits_remaining > 0 (credits never expire).
     """
     if not is_configured():
         return None
@@ -1609,8 +1609,7 @@ def find_active_malware_credits(subscription_id: int) -> Optional[Dict[str, Any]
             .select("*")
             .eq("subscription_id", subscription_id)
             .gt("credits_remaining", 0)
-            .gt("expires_at", now_utc().isoformat())
-            .order("expires_at", desc=True)
+            .order("created_at", desc=True)
             .limit(1)
             .execute()
         )
@@ -1642,7 +1641,6 @@ def consume_malware_credit(credit_id: int) -> bool:
                            updated_at = NOW()
                      WHERE id = %s
                        AND credits_remaining > 0
-                       AND expires_at > NOW()
                     """,
                     (credit_id,),
                 )

@@ -465,8 +465,7 @@
       var isEmpty = c.credits_remaining <= 0;
 
       var statusText, statusClass;
-      if (isExpired) { statusText = isEn() ? 'Expired' : 'Istekao'; statusClass = 'pill-err'; }
-      else if (isEmpty) { statusText = isEn() ? 'Used up' : 'Potrosen'; statusClass = 'pill-warn'; }
+      if (isEmpty) { statusText = isEn() ? 'Used up' : 'Potrosen'; statusClass = 'pill-warn'; }
       else { statusText = isEn() ? 'Active' : 'Aktivan'; statusClass = 'pill-ok'; }
 
       var f1 = el('div', 'plan-field');
@@ -492,10 +491,10 @@
 
       var f4 = el('div', 'plan-field');
       var l4 = el('div', 'label');
-      l4.appendChild(el('span', 'sr', 'Istice'));
-      l4.appendChild(el('span', 'en', 'Expires'));
+      l4.appendChild(el('span', 'sr', 'Rok trajanja'));
+      l4.appendChild(el('span', 'en', 'Validity'));
       f4.appendChild(l4);
-      f4.appendChild(el('div', 'value', formatDate(c.expires_at)));
+      f4.appendChild(el('div', 'value', isEn() ? 'Never expires' : 'Ne istice'));
       row.appendChild(f4);
 
       container.appendChild(row);

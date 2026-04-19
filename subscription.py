@@ -439,7 +439,7 @@ def _extract_subscription_attrs(payload: Dict[str, Any]) -> Optional[Dict[str, A
 # ─────────────────────────────────────────────────────────────────────────
 
 _MALWARE_PACK_CONFIG = {
-    "5_pack": {"credits": 5, "days": 30},
+    "5_pack": {"credits": 5, "days": 36500},
 }
 
 _on_license_key_ready = None
@@ -456,7 +456,7 @@ def _handle_order_created(payload: Dict[str, Any]) -> None:
 
     Creates TWO rows:
       1. subscriptions — plan_name='malware_pack', license_key from Lemon
-      2. malware_credits — credits_total=5, expires in 30 days, FK to subscription
+      2. malware_credits — credits_total=5, never expires, FK to subscription
 
     If the user buys again with the same email, we reuse the existing
     subscription row (same license_key) and just add a new malware_credits row.
