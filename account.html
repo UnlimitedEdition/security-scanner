@@ -258,13 +258,13 @@
       <span class="en">Pro access required</span>
     </h2>
     <p style="color:#cbd5e1;line-height:1.7;">
-      <span class="sr">Ova stranica je dostupna samo korisnicima sa aktivnom Pro pretplatom. Preusmeravanje na cenovnik za 3 sekunde...</span>
-      <span class="en">This page is only available to users with an active Pro subscription. Redirecting to pricing in 3 seconds...</span>
+      <span class="sr">Ova stranica je dostupna samo korisnicima sa aktivnom Pro pretplatom. Unesite svoj license key da se ulogujete. Preusmeravanje za 3 sekunde...</span>
+      <span class="en">This page is only available to users with an active Pro subscription. Enter your license key to log in. Redirecting in 3 seconds...</span>
     </p>
     <div class="plan-actions">
-      <a href="./pricing.html" class="plan-btn primary">
-        <span class="sr">Pretplati se na Pro</span>
-        <span class="en">Subscribe to Pro</span>
+      <a href="./pricing.html#activate" class="plan-btn primary">
+        <span class="sr">Uloguj se / Aktiviraj Pro</span>
+        <span class="en">Log in / Activate Pro</span>
       </a>
       <a href="./index.html" class="plan-btn">
         <span class="sr">Skener</span>
@@ -661,7 +661,7 @@
     if (!key) {
       document.getElementById('accLoading').style.display = 'none';
       document.getElementById('accNotPro').style.display = 'block';
-      setTimeout(function() { location.href = './pricing.html'; }, 3000);
+      setTimeout(function() { location.href = './pricing.html#activate'; }, 3000);
       return;
     }
 
@@ -672,7 +672,7 @@
         if (r.status === 402) {
           document.getElementById('accLoading').style.display = 'none';
           document.getElementById('accNotPro').style.display = 'block';
-          setTimeout(function() { location.href = './pricing.html'; }, 3000);
+          setTimeout(function() { location.href = './pricing.html#activate'; }, 3000);
           throw new Error('not_pro');
         }
         if (!r.ok) throw new Error('HTTP ' + r.status);
