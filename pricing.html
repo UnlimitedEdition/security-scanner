@@ -840,7 +840,7 @@
       }
 
       var attempts = 0;
-      var maxAttempts = 30;
+      var maxAttempts = 60;
       var pollInterval = 3000;
       var result = document.getElementById('activateResult');
       result.className = 'activate-result';
@@ -848,10 +848,24 @@
         ? 'Waiting for license key from Lemon Squeezy...'
         : 'Cekam license key od Lemon Squeezy-ja...';
 
+      var activateBtn = document.getElementById('activateBtn');
+      var keyInput = document.getElementById('licenseKeyInput');
+      if (activateBtn) activateBtn.disabled = true;
+      if (keyInput) keyInput.disabled = true;
+
+      window.onbeforeunload = function() {
+        return isEn()
+          ? 'Activation in progress — please wait.'
+          : 'Aktivacija u toku — sacekajte.';
+      };
+
       var poll = setInterval(function() {
         attempts++;
         if (attempts > maxAttempts) {
           clearInterval(poll);
+          window.onbeforeunload = null;
+          if (activateBtn) activateBtn.disabled = false;
+          if (keyInput) keyInput.disabled = false;
           result.textContent = isEn()
             ? 'Auto-activation timed out. Check your email for the license key and paste it below.'
             : 'Automatska aktivacija istekla. Proverite email za license key i nalepite ga ispod.';
@@ -872,6 +886,7 @@
               result.textContent = isEn()
                 ? 'Activated automatically! Redirecting...'
                 : 'Automatski aktivirano! Preusmeravam...';
+              window.onbeforeunload = null;
               setTimeout(function() { window.location.href = './account'; }, 1200);
             }
           })
