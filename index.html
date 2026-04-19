@@ -2626,6 +2626,20 @@ function _computeFingerprint() {
       el.title = hash;
       el.classList.remove("loading");
     }
+    var lk = getLicenseKey();
+    if (lk) {
+      fetch(API_BASE + "/api/subscription/me", {
+        headers: { "X-License-Key": lk, "X-Fingerprint-Hash": hash }
+      }).then(function(r) {
+        if (r.status === 403) return r.json().then(function(err) {
+          if (err.error === "device_limit") {
+            alert(isEn()
+              ? "This license key is active on " + err.device_count + " devices (max " + err.max + "). Remove a device from your account page."
+              : "Ovaj kljuc je aktivan na " + err.device_count + " uredjaja (max " + err.max + "). Uklonite uredjaj sa account stranice.");
+          }
+        });
+      }).catch(function() {});
+    }
   }).catch(function() {
     if (el) { el.textContent = "N/A"; el.classList.remove("loading"); }
   });
