@@ -1,0 +1,291 @@
+[
+  {
+    "url": "https://security-skener.gradovi.rs/",
+    "status": 200,
+    "title": "Web Security Scanner — Free Website Security Check / Besplatna provera bezbednosti sajta · SSL · SEO · GDPR · 240+ checks",
+    "title_length": 121,
+    "meta_description": "Free online website security scanner — SSL/TLS, HTTP headers, DNS, SEO audit, GDPR compliance, performance, vulnerability, API, CORS, dependencies. 240+ automated checks. · Besplatan online skener bezbednosti sajta — SSL, HTTP headeri, DNS, SEO analiza, GDPR provera, performanse, ranjivosti, skeniranje sajta, bezbednosni audit, test SSL-a, provera sigurnosti.",
+    "meta_description_length": 361,
+    "h1_count": 1,
+    "h1_text": [
+      "WebSecurityScanner"
+    ],
+    "h2_count": 5,
+    "canonical": "https://security-skener.gradovi.rs/",
+    "hreflang_tags": [
+      {
+        "lang": "sr",
+        "href": "https://security-skener.gradovi.rs/"
+      },
+      {
+        "lang": "x-default",
+        "href": "https://security-skener.gradovi.rs/"
+      }
+    ],
+    "og_title": "Web Security Scanner — Free Website Security Check · Besplatna provera bezbednosti sajta · 240+ checks",
+    "og_description": "Free online tool — SSL, HTTP headers, DNS, SEO, GDPR, performance, vulnerability. 240+ automated checks. · Besplatan alat za proveru bezbednosti sajta — SSL, HTTP headeri, DNS, SEO, GDPR, performanse, ranjivosti. 240+ automatskih provera.",
+    "og_image": "https://security-skener.gradovi.rs/og-image.png",
+    "internal_links": 14,
+    "external_links": 0,
+    "images_without_alt": 0,
+    "total_images": 3,
+    "schema_types": [
+      "WebApplication",
+      "FAQPage"
+    ],
+    "word_count": 1780
+  },
+  {
+    "url": "https://security-skener.gradovi.rs/blog-security",
+    "status": 200,
+    "title": "Website Security Guide — Complete Web Security Tutorial / Bezbednost sajta — Kompletni vodic · XSS · SQL · CSRF · SSL",
+    "title_length": 117,
+    "meta_description": "Complete web security guide: most common attacks (XSS, SQL Injection, CSRF), hack consequences, protection tactics, 8 detailed tutorials. Free website scan. · Kompletni vodic za web bezbednost: najcesci napadi, posledice hakovanja, zastita i 8 detaljnih vodica. Besplatno skeniranje sajta.",
+    "meta_description_length": 289,
+    "h1_count": 2,
+    "h1_text": [
+      "Bezbednost sajta — Kompletni vodic",
+      "Website Security — Complete Guide"
+    ],
+    "h2_count": 12,
+    "canonical": "https://security-skener.gradovi.rs/blog-security.html",
+    "hreflang_tags": [
+      {
+        "lang": "sr",
+        "href": "https://security-skener.gradovi.rs/blog-security.html"
+      },
+      {
+        "lang": "x-default",
+        "href": "https://security-skener.gradovi.rs/blog-security.html"
+      }
+    ],
+    "og_title": "Website Security Guide / Bezbednost sajta — Kompletni vodic",
+    "og_description": "8 detailed web security tutorials: SSL, Headers, XSS, SQL Injection, CSRF, DNS, Port Scanning, API Security. · 8 detaljnih vodica za web bezbednost: SSL, Headers, XSS, SQL Injection, CSRF, DNS, Portovi, API Security.",
+    "og_image": null,
+    "internal_links": 42,
+    "external_links": 0,
+    "images_without_alt": 0,
+    "total_images": 0,
+    "schema_types": [
+      "Article",
+      "FAQPage"
+    ],
+    "word_count": 1489
+  },
+  {
+    "url": "https://security-skener.gradovi.rs/blog-seo",
+    "status": 200,
+    "title": "SEO Guide — Complete On-Page & Technical SEO Tutorial / SEO Optimizacija — Kompletni vodic · Meta · Schema · Sitemap",
+    "title_length": 116,
+    "meta_description": "Complete SEO guide: on-page, technical and off-page SEO. Meta tags, Schema.org, sitemap, local SEO, Open Graph, heading structure, mobile-first. 7 detailed tutorials. · Kompletni SEO vodic: on-page, tehnicki i off-page SEO. Meta tagovi, Schema.org, sitemap, lokalni SEO, Open Graph, heading struktura, mobile-first. 7 detaljnih vodica.",
+    "meta_description_length": 335,
+    "h1_count": 2,
+    "h1_text": [
+      "SEO Optimizacija — Kompletni vodic",
+      "SEO Optimization — Complete Guide"
+    ],
+    "h2_count": 14,
+    "canonical": "https://security-skener.gradovi.rs/blog-seo.html",
+    "hreflang_tags": [
+      {
+        "lang": "sr",
+        "href": "https://security-skener.gradovi.rs/blog-seo.html"
+      },
+      {
+        "lang": "x-default",
+        "href": "https://security-skener.gradovi.rs/blog-seo.html"
+      }
+    ],
+    "og_title": "SEO Guide / SEO Optimizacija — Kompletni vodic",
+    "og_description": "On-page, technical and off-page SEO: meta tags, Schema.org, sitemap, local SEO, Open Graph, headings, mobile-first. · On-page, tehnicki i off-page SEO: meta tagovi, Schema.org, sitemap, lokalni SEO, Open Graph, headings, mobile-first.",
+    "og_image": null,
+    "internal_links": 18,
+    "external_links": 0,
+    "images_without_alt": 0,
+    "total_images": 0,
+    "schema_types": [
+      "Article",
+      "FAQPage"
+    ],
+    "word_count": 1273
+  },
+  {
+    "url": "https://security-skener.gradovi.rs/blog-security-ssl",
+    "status": 200,
+    "title": "SSL/TLS Certificates — Complete HTTPS Encryption Guide / SSL/TLS Sertifikati — Kompletni vodic · Let's Encrypt · HSTS",
+    "title_length": 117,
+    "meta_description": "Complete SSL/TLS certificate guide: how HTTPS encryption works, certificate types (DV, OV, EV), Let's Encrypt free certs, configuration and common errors. · Kompletni vodic za SSL/TLS sertifikate: kako funkcionise HTTPS enkripcija, tipovi sertifikata, Let's Encrypt besplatni sertifikati, konfiguracija i ceste greske.",
+    "meta_description_length": 318,
+    "h1_count": 2,
+    "h1_text": [
+      "SSL/TLS Sertifikati — Kompletni vodic",
+      "SSL/TLS Certificates — Complete Guide"
+    ],
+    "h2_count": 20,
+    "canonical": "https://security-skener.gradovi.rs/blog-security-ssl.html",
+    "hreflang_tags": [
+      {
+        "lang": "sr",
+        "href": "https://security-skener.gradovi.rs/blog-security-ssl.html"
+      },
+      {
+        "lang": "x-default",
+        "href": "https://security-skener.gradovi.rs/blog-security-ssl.html"
+      }
+    ],
+    "og_title": "SSL/TLS Certificates / SSL/TLS Sertifikati — Kompletni vodic",
+    "og_description": "Everything about SSL/TLS certificates: types, configuration, Let's Encrypt, HSTS, common errors. · Sve o SSL/TLS sertifikatima: tipovi, konfiguracija, Let's Encrypt, HSTS, ceste greske.",
+    "og_image": null,
+    "internal_links": 10,
+    "external_links": 28,
+    "images_without_alt": 0,
+    "total_images": 0,
+    "schema_types": [
+      "Article",
+      "FAQPage",
+      "HowTo"
+    ],
+    "word_count": 3306
+  },
+  {
+    "url": "https://security-skener.gradovi.rs/blog-security-headers",
+    "status": 200,
+    "title": "HTTP Security Headers — 7 Must-Have Headers / HTTP Security Headers — 7 obaveznih headera · CSP · HSTS · COOP",
+    "title_length": 109,
+    "meta_description": "Detailed guide to 7 essential HTTP security headers: CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, COOP with config examples. · Detaljan vodic za 7 kljucnih HTTP security headera sa primerima konfiguracije.",
+    "meta_description_length": 249,
+    "h1_count": 2,
+    "h1_text": [
+      "HTTP Security Headers — 7 obaveznih headera",
+      "HTTP Security Headers — 7 essential headers"
+    ],
+    "h2_count": 20,
+    "canonical": "https://security-skener.gradovi.rs/blog-security-headers.html",
+    "hreflang_tags": [
+      {
+        "lang": "sr",
+        "href": "https://security-skener.gradovi.rs/blog-security-headers.html"
+      },
+      {
+        "lang": "x-default",
+        "href": "https://security-skener.gradovi.rs/blog-security-headers.html"
+      }
+    ],
+    "og_title": "HTTP Security Headers / 7 obaveznih headera",
+    "og_description": "Learn how to configure CSP, HSTS, X-Frame-Options and other security headers. · Naucite kako da pravilno konfiguresete CSP, HSTS, X-Frame-Options i ostale security headere.",
+    "og_image": null,
+    "internal_links": 9,
+    "external_links": 36,
+    "images_without_alt": 0,
+    "total_images": 0,
+    "schema_types": [
+      "Article",
+      "FAQPage",
+      "HowTo"
+    ],
+    "word_count": 2672
+  },
+  {
+    "url": "https://security-skener.gradovi.rs/blog-seo-meta",
+    "status": 200,
+    "title": "Meta Tags — Title & Description Optimization for SEO / Meta Tagovi — Optimizacija Title i Description · CTR · SERP",
+    "title_length": 114,
+    "meta_description": "Complete HTML meta tags guide: title tag formula, meta description for CTR, robots, viewport, canonical, Open Graph. Examples, mistakes, tools. · Kompletni vodic za HTML meta tagove: title formula, meta description, robots, viewport, Open Graph. Primeri, greske, alati.",
+    "meta_description_length": 269,
+    "h1_count": 2,
+    "h1_text": [
+      "Meta Tagovi — Title i Description optimizacija",
+      "Meta Tags — Title and Description Optimization"
+    ],
+    "h2_count": 22,
+    "canonical": "https://security-skener.gradovi.rs/blog-seo-meta.html",
+    "hreflang_tags": [
+      {
+        "lang": "sr",
+        "href": "https://security-skener.gradovi.rs/blog-seo-meta.html"
+      },
+      {
+        "lang": "x-default",
+        "href": "https://security-skener.gradovi.rs/blog-seo-meta.html"
+      }
+    ],
+    "og_title": "Meta Tags / Meta Tagovi — Title i Description optimizacija",
+    "og_description": "How to write perfect title tag and meta description that drive clicks. Formula, examples, tools. · Kako napisati savrsen title i meta description koji donose klikove.",
+    "og_image": null,
+    "internal_links": 13,
+    "external_links": 16,
+    "images_without_alt": 0,
+    "total_images": 0,
+    "schema_types": [
+      "Article",
+      "FAQPage"
+    ],
+    "word_count": 3067
+  },
+  {
+    "url": "https://security-skener.gradovi.rs/pricing",
+    "status": 200,
+    "title": "Pricing / Cenovnik — Web Security Scanner Pro · Unlimited Scans · Multi-page · PDF",
+    "title_length": 82,
+    "meta_description": "Web Security Scanner Pro — unlimited scans, multi-page crawl, PDF reports. $9/mo or $79/yr. 7-day free trial. · Neograniceni skenovi, multi-page crawl, PDF izvestaji. $9/mes ili $79/god. 7 dana besplatan trial.",
+    "meta_description_length": 210,
+    "h1_count": 1,
+    "h1_text": [
+      "Cenovnik - jednostavan, fer, bez skrivenih troskovaPricing - simple, fair, no hidden costs"
+    ],
+    "h2_count": 1,
+    "canonical": "https://security-skener.gradovi.rs/pricing.html",
+    "hreflang_tags": [
+      {
+        "lang": "sr",
+        "href": "https://security-skener.gradovi.rs/pricing.html"
+      },
+      {
+        "lang": "x-default",
+        "href": "https://security-skener.gradovi.rs/pricing.html"
+      }
+    ],
+    "og_title": "Web Security Scanner Pro — Pricing / Cenovnik",
+    "og_description": "Unlimited scans, multi-page crawl, PDF reports. $9/mo or $79/yr. 7-day free trial. · Neograniceni skenovi, multi-page, PDF. $9/mes ili $79/god. Trial 7 dana.",
+    "og_image": null,
+    "internal_links": 14,
+    "external_links": 7,
+    "images_without_alt": 0,
+    "total_images": 0,
+    "schema_types": [],
+    "word_count": 1687
+  },
+  {
+    "url": "https://security-skener.gradovi.rs/gallery",
+    "status": 200,
+    "title": "Javna galerija rezultata / Public scan gallery — Web Security Scanner",
+    "title_length": 69,
+    "meta_description": "Javna galerija objavljenih rezultata skeniranja. Opt-in rezime po sajtu: URL, ocena, skor, profil strogosti. Bez ranjivosti. · Public gallery of opt-in scan results: URL, grade, score, strictness profile. No vulnerabilities shown.",
+    "meta_description_length": 230,
+    "h1_count": 1,
+    "h1_text": [
+      "Javna galerija rezultataPublic scan gallery"
+    ],
+    "h2_count": 0,
+    "canonical": "https://security-skener.gradovi.rs/gallery.html",
+    "hreflang_tags": [
+      {
+        "lang": "sr",
+        "href": "https://security-skener.gradovi.rs/gallery.html"
+      },
+      {
+        "lang": "x-default",
+        "href": "https://security-skener.gradovi.rs/gallery.html"
+      }
+    ],
+    "og_title": "Javna galerija rezultata / Public scan gallery",
+    "og_description": "TOP lista: najbolji rezultati po strogosti. · TOP list: best-scoring scans by strictness.",
+    "og_image": null,
+    "internal_links": 4,
+    "external_links": 0,
+    "images_without_alt": 0,
+    "total_images": 0,
+    "schema_types": [],
+    "word_count": 144
+  }
+]

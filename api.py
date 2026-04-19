@@ -189,6 +189,22 @@ _scan_queue: list = []
 _active_scans: set = set()  # Track multiple concurrent scans
 _MAX_CONCURRENT = 3
 
+# Pending activations — maps activation_token → license_key.
+# Populated by webhook handler, consumed by frontend polling.
+# TTL: entries older than 30 min are evicted on read.
+_pending_activations: Dict[str, Dict[str, Any]] = {}
+_ACTIVATION_TTL_S = 1800
+
+
+def _on_license_key_ready(activation_token: str, license_key: str) -> None:
+    _pending_activations[activation_token] = {
+        "license_key": license_key,
+        "ts": time.time(),
+    }
+
+
+subscription.set_activation_callback(_on_license_key_ready)
+
 
 def _check_rate_limit_in_memory(ip: str) -> bool:
     """
@@ -2324,6 +2340,40 @@ def api_discover(req: DiscoverRequest, request: Request):
     }
 
 
+@app.get("/scan/rate-status")
+def scan_rate_status(request: Request):
+    """Check remaining free scans and retry_after for countdown timer."""
+    pro_sub = _get_pro_subscription(request)
+    if pro_sub:
+        return {
+            "remaining": -1,
+            "limit": _RATE_LIMIT,
+            "retry_after": 0,
+            "window_seconds": _RATE_WINDOW,
+            "pro": True,
+        }
+    client_ip = _client_ip(request)
+    if db.is_configured():
+        status = db.get_rate_limit_status(
+            ip=client_ip, max_count=_RATE_LIMIT,
+            window_seconds=_RATE_WINDOW,
+        )
+        return {
+            "remaining": max(0, _RATE_LIMIT - status.get("count", 0)),
+            "limit": _RATE_LIMIT,
+            "retry_after": status.get("retry_after", 0),
+            "window_seconds": _RATE_WINDOW,
+            "pro": False,
+        }
+    return {
+        "remaining": _RATE_LIMIT,
+        "limit": _RATE_LIMIT,
+        "retry_after": 0,
+        "window_seconds": _RATE_WINDOW,
+        "pro": False,
+    }
+
+
 @app.post("/scan")
 def start_scan(req: ScanRequest, request: Request):
     """Start a new scan. Returns scan_id immediately."""
@@ -2341,20 +2391,29 @@ def start_scan(req: ScanRequest, request: Request):
     # are visible in forensics. Rate-limited/SSRF-blocked scans get their
     # own event types below.
     if not pro_sub and not _check_rate_limit(client_ip):
+        rate_status = db.get_rate_limit_status(
+            ip=client_ip, max_count=_RATE_LIMIT,
+            window_seconds=_RATE_WINDOW,
+        )
+        retry_after = rate_status.get("retry_after", _RATE_WINDOW)
         db.log_audit_event(
             event="scan_blocked_rate_limit",
             ip=client_ip, ua=user_agent,
             details={"url": req.url, "limit": _RATE_LIMIT, "window_s": _RATE_WINDOW},
         )
         _window_min = _RATE_WINDOW // 60
-        raise HTTPException(
+        return JSONResponse(
             status_code=429,
-            detail=(
-                f"Previše zahteva. Maksimalno {_RATE_LIMIT} skeniranja po {_window_min} minuta. "
-                "Pretplatite se na Pro za neograničene skenove. / "
-                f"Too many requests. Max {_RATE_LIMIT} scans per {_window_min} minutes. "
-                "Upgrade to Pro for unlimited scans."
-            ),
+            content={
+                "detail": (
+                    f"Previše zahteva. Maksimalno {_RATE_LIMIT} skeniranja po {_window_min} minuta. "
+                    "Pretplatite se na Pro za neograničene skenove. / "
+                    f"Too many requests. Max {_RATE_LIMIT} scans per {_window_min} minutes. "
+                    "Upgrade to Pro for unlimited scans."
+                ),
+                "retry_after": retry_after,
+            },
+            headers={"Retry-After": str(retry_after)},
         )
 
     # Server-side consent check — reject scans without explicit consent.
@@ -2593,9 +2652,25 @@ class MalwareScanRequest(BaseModel):
 def malware_scan_rate_status(request: Request):
     """
     Returns the caller's malware free-tier rate-limit status without
-    incrementing the counter. Checks both IP and fingerprint limits;
-    returns the stricter of the two.
+    incrementing the counter. If X-License-Key is present with active
+    malware credits, returns credit info instead of rate limit status.
     """
+    license_key = (request.headers.get("x-license-key") or "").strip()
+    if license_key:
+        sub_row = subscription.get_by_license_key(license_key)
+        if sub_row and sub_row.get("plan_name") == "malware_pack":
+            credits = db.find_active_malware_credits(sub_row["id"])
+            if credits:
+                return {
+                    "has_credits": True,
+                    "credits_remaining": credits.get("credits_remaining", 0),
+                    "credits_total": credits.get("credits_total", 0),
+                    "expires_at": credits.get("expires_at"),
+                    "remaining": credits.get("credits_remaining", 0),
+                    "limit": credits.get("credits_total", 0),
+                    "retry_after": 0,
+                }
+
     client_ip = _client_ip(request)
     caller_fp = request.headers.get("x-fingerprint-hash", "")[:128] or None
 
@@ -2732,11 +2807,27 @@ def start_malware_scan(req: MalwareScanRequest, request: Request):
     ):
         effective_mode = "full"
 
+    # ── Paid credit check ──────────────────────────────────────────────
+    # If the caller sends X-License-Key and has an active malware_pack
+    # subscription with remaining credits, consume one credit and skip
+    # the free-tier rate limit entirely.
+    used_credit = False
+    credit_id_used = None
+    license_key = (request.headers.get("x-license-key") or "").strip()
+    if license_key:
+        sub_row = subscription.get_by_license_key(license_key)
+        if sub_row and sub_row.get("plan_name") == "malware_pack":
+            credits = db.find_active_malware_credits(sub_row["id"])
+            if credits:
+                if db.consume_malware_credit(credits["id"]):
+                    used_credit = True
+                    credit_id_used = credits["id"]
+
     # Rate limit the free path by BOTH IP and fingerprint.
     # IP limit:          1 scan / 24h per IP (catches same network)
     # Fingerprint limit: 1 scan / 24h per fingerprint (catches VPN rotators)
     # Verified + paid flows bypass both.
-    if effective_mode == "safe":
+    if not used_credit and effective_mode == "safe":
         ip_allowed, _ip_count = db.check_rate_limit(
             ip=client_ip,
             max_count=malware_config.FREE_MALWARE_LIMIT,
@@ -2810,6 +2901,8 @@ def start_malware_scan(req: MalwareScanRequest, request: Request):
             "mode_requested": requested_mode,
             "mode_effective": effective_mode,
             "kind": "malware",
+            "used_credit": used_credit,
+            "credit_id": credit_id_used,
         },
     )
 
@@ -2820,7 +2913,7 @@ def start_malware_scan(req: MalwareScanRequest, request: Request):
         if not db.is_configured():
             return
         client = db.get_client()
-        client.table("malware_scans").insert({
+        row_data = {
             "id": scan_id,
             "url": req.url,
             "domain": domain or "",
@@ -2832,7 +2925,10 @@ def start_malware_scan(req: MalwareScanRequest, request: Request):
             "fingerprint_hash": req.fingerprint_hash,
             "consent_accepted": True,
             "consent_version": req.consent_version,
-        }).execute()
+        }
+        if credit_id_used:
+            row_data["credit_id"] = credit_id_used
+        client.table("malware_scans").insert(row_data).execute()
     db._safe_db_call("malware_scans.insert", _persist_start)
 
     db.log_audit_event(
@@ -3122,7 +3218,15 @@ def _subscription_public(row: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     frontend already has the key (it just sent it), no reason to echo
     back anything that isn't operationally useful.
     """
-    if not row or not subscription.is_active(row):
+    is_pro = row and subscription.is_active(row)
+    is_malware = row and row.get("plan_name") == "malware_pack" and row.get("status") == "active"
+
+    def _mask_key(key):
+        if not key or len(key) < 8:
+            return key or ""
+        return key[:4] + "-****-****-" + key[-4:]
+
+    if not is_pro and not is_malware:
         return {
             "active": False,
             "plan": "free",
@@ -3135,11 +3239,30 @@ def _subscription_public(row: Optional[Dict[str, Any]]) -> Dict[str, Any]:
             },
         }
     plan = row.get("plan_name") or "pro_monthly"
+    masked = _mask_key(row.get("license_key"))
+    if plan == "malware_pack":
+        return {
+            "active": True,
+            "plan": plan,
+            "status": row.get("status"),
+            "email": row.get("email"),
+            "license_key_masked": masked,
+            "current_period_end": row.get("current_period_end"),
+            "features": {
+                "unlimited_scans": False,
+                "multi_page_scan": False,
+                "max_pages": 1,
+                "pdf_export": False,
+                "scan_history_days": 0,
+                "malware_credits": True,
+            },
+        }
     return {
         "active": True,
-        "plan": plan,                              # 'pro_monthly' | 'pro_yearly'
-        "status": row.get("status"),               # 'active' | 'on_trial' | 'cancelled'
+        "plan": plan,
+        "status": row.get("status"),
         "email": row.get("email"),
+        "license_key_masked": masked,
         "current_period_end": row.get("current_period_end"),
         "trial_ends_at": row.get("trial_ends_at"),
         "features": {
@@ -3169,20 +3292,47 @@ def api_auth_license(req: LicenseActivateRequest, request: Request):
     """
     Validate a license key and return the Pro subscription status.
 
-    The frontend calls this once when the user pastes a key into the
-    "Activate Pro" modal. On success, the frontend stores the key in
-    localStorage and sends it as X-License-Key on subsequent calls.
-
-    We do not set a cookie — license key is the bearer token and lives
-    in localStorage. That keeps the auth model stateless and avoids
-    CSRF considerations.
+    Rate limited to 5 attempts / 15 min per IP to prevent brute-force.
     """
-    row = subscription.get_active_by_license_key(req.license_key)
+    client_ip = _client_ip(request)
+
+    allowed, count = db.check_rate_limit(
+        ip=client_ip,
+        max_count=5,
+        window_seconds=900,
+        key_prefix="license_auth",
+    )
+    if not allowed:
+        status = db.get_rate_limit_status(
+            ip=client_ip, max_count=5,
+            window_seconds=900, key_prefix="license_auth",
+        )
+        db.log_audit_event(
+            event="license_auth_rate_limited",
+            ip=client_ip,
+            details={"attempts": count},
+        )
+        return JSONResponse(
+            status_code=429,
+            content={
+                "detail": (
+                    "Previse pokusaja aktivacije. Pokusajte ponovo za 15 minuta. / "
+                    "Too many activation attempts. Try again in 15 minutes."
+                ),
+                "retry_after": status.get("retry_after", 900),
+            },
+            headers={"Retry-After": str(status.get("retry_after", 900))},
+        )
+
+    row = subscription.get_by_license_key(req.license_key)
     if not row:
-        # Fail in 200 with active=false rather than 401, so the frontend
-        # can show a friendly "key not recognized" message without a
-        # generic HTTP error being swallowed by the browser.
+        db.log_audit_event(
+            event="license_auth_failed",
+            ip=client_ip,
+            details={"key_prefix": req.license_key[:4] + "..."},
+        )
         return _subscription_public(None)
+
     return _subscription_public(row)
 
 
@@ -3233,7 +3383,7 @@ def api_subscription_me(request: Request):
     license_key = (request.headers.get("x-license-key") or "").strip()
     if not license_key:
         return _subscription_public(None)
-    row = subscription.get_active_by_license_key(license_key)
+    row = subscription.get_by_license_key(license_key)
     return _subscription_public(row)
 
 
@@ -3256,22 +3406,40 @@ def api_subscription_scans(request: Request):
             status_code=402,
             detail="Scan history requires an active Pro subscription.",
         )
-    row = subscription.get_active_by_license_key(license_key)
+
+    row = subscription.get_by_license_key(license_key)
     if not row:
         raise HTTPException(
             status_code=402,
             detail="Scan history requires an active Pro subscription.",
         )
 
-    scans_list = db.get_scans_by_subscription(
-        subscription_id=row.get("id"),
-        limit=30,
-        since_days=30,
-    )
+    is_pro = subscription.is_active(row)
+    is_malware_pack = row.get("plan_name") == "malware_pack"
+
+    if not is_pro and not is_malware_pack:
+        raise HTTPException(
+            status_code=402,
+            detail="Scan history requires an active Pro subscription.",
+        )
+
+    scans_list = []
+    if is_pro:
+        scans_list = db.get_scans_by_subscription(
+            subscription_id=row.get("id"),
+            limit=30,
+            since_days=30,
+        )
+
+    malware_credits = []
+    if is_malware_pack:
+        malware_credits = db.get_credits_for_subscription(row["id"])
+
     return {
         "subscription": _subscription_public(row),
         "scans": scans_list,
         "count": len(scans_list),
+        "malware_credits": malware_credits,
     }
 
 
@@ -3283,8 +3451,8 @@ class CheckoutCreateRequest(BaseModel):
     @classmethod
     def _validate_plan(cls, v: str) -> str:
         v = (v or "").strip().lower()
-        if v not in ("pro_monthly", "pro_yearly"):
-            raise ValueError("plan must be pro_monthly or pro_yearly")
+        if v not in ("pro_monthly", "pro_yearly", "malware_5_pack"):
+            raise ValueError("plan must be pro_monthly, pro_yearly, or malware_5_pack")
         return v
 
     @field_validator("email")
@@ -3303,6 +3471,7 @@ class CheckoutCreateRequest(BaseModel):
 # them. Set as env vars after creating the variants.
 _LEMON_BUY_URL_MONTHLY = os.environ.get("LEMON_BUY_URL_MONTHLY", "").strip()
 _LEMON_BUY_URL_YEARLY = os.environ.get("LEMON_BUY_URL_YEARLY", "").strip()
+_LEMON_BUY_URL_MALWARE_5_PACK = os.environ.get("LEMON_BUY_URL_MALWARE_5_PACK", "").strip()
 
 
 @app.post("/api/checkout/create")
@@ -3316,13 +3485,18 @@ def api_checkout_create(req: CheckoutCreateRequest, request: Request):
 
     The frontend redirects window.location.href to this URL.
     """
-    base = _LEMON_BUY_URL_MONTHLY if req.plan == "pro_monthly" else _LEMON_BUY_URL_YEARLY
+    _BUY_URLS = {
+        "pro_monthly": _LEMON_BUY_URL_MONTHLY,
+        "pro_yearly": _LEMON_BUY_URL_YEARLY,
+        "malware_5_pack": _LEMON_BUY_URL_MALWARE_5_PACK,
+    }
+    base = _BUY_URLS.get(req.plan, "")
     if not base:
         raise HTTPException(
             status_code=503,
             detail=(
                 f"Checkout not configured for plan={req.plan}. "
-                f"Set LEMON_BUY_URL_MONTHLY / LEMON_BUY_URL_YEARLY env vars."
+                f"Set the corresponding LEMON_BUY_URL_* env var."
             ),
         )
 
@@ -3340,8 +3514,38 @@ def api_checkout_create(req: CheckoutCreateRequest, request: Request):
     if session_id:
         existing_params["checkout[custom][session_id]"] = session_id[:64]
 
+    activation_token = request.headers.get("x-activation-token", "")[:64]
+    if activation_token:
+        existing_params["checkout[custom][activation_token]"] = activation_token
+
+    existing_params["checkout[success_url]"] = (
+        "https://security-skener.gradovi.rs/pricing?success=true&plan=" + req.plan
+    )
+
     checkout_url = urlunparse(parsed._replace(query=urlencode(existing_params)))
     return {"checkout_url": checkout_url, "plan": req.plan}
+
+
+@app.get("/api/activation/check")
+def api_activation_check(token: str = ""):
+    """
+    Poll endpoint for auto-activation after purchase.
+    Frontend sends the activation_token it stored in localStorage before
+    checkout. If the webhook has arrived and populated _pending_activations,
+    return the license_key so the frontend can auto-activate.
+    """
+    token = (token or "").strip()[:64]
+    if not token:
+        return {"found": False}
+
+    now = time.time()
+    entry = _pending_activations.get(token)
+    if entry and (now - entry.get("ts", 0)) < _ACTIVATION_TTL_S:
+        license_key = entry.get("license_key", "")
+        _pending_activations.pop(token, None)
+        return {"found": True, "license_key": license_key}
+
+    return {"found": False}
 
 
 # ─────────────────────────────────────────────────────────────────────────

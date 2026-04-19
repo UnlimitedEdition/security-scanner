@@ -1773,6 +1773,17 @@
     <div class="scan-note" id="scanNote" data-sr="Brzi sken: 21 modul (167+ provera) bez verifikacije. Puni sken: dodatnih 10 modula (74+ provera — osetljivi fajlovi, admin panel, portovi, ranjivosti, API, CORS, zavisnosti) — zahteva dokaz vlasnistva." data-en="Quick scan: 21 modules (167+ checks) without verification. Full scan: 10 additional modules (74+ checks — sensitive files, admin panel, ports, vulnerabilities, API, CORS, dependencies) — requires ownership proof.">
       Brzi sken: 21 modul (167+ provera) bez verifikacije. Puni sken: dodatnih 10 modula (74+ provera) — zahteva dokaz vlasnistva.
     </div>
+    <div id="scanRateLimit" style="display:none;max-width:960px;margin:0.8rem auto 0;padding:1rem 1.2rem;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.35);border-radius:12px;text-align:center;">
+      <span style="font-size:1.05rem;">
+        <span class="sr">Iskoristili ste besplatne skenove. Sledeci dostupan za:</span>
+        <span class="en">Free scans used. Next available in:</span>
+      </span>
+      <div id="scanRateCountdown" style="font-size:1.8rem;font-weight:700;color:#ef4444;letter-spacing:2px;margin:0.5rem 0;font-variant-numeric:tabular-nums;">00:00:00</div>
+      <span style="font-size:0.85rem;opacity:0.7;">
+        <span class="sr">Ili pretplatite se na <a href="./pricing.html" style="color:#6ee7b7;">Pro</a> za neogranicene skenove.</span>
+        <span class="en">Or subscribe to <a href="./pricing.html" style="color:#6ee7b7;">Pro</a> for unlimited scans.</span>
+      </span>
+    </div>
     <div class="consent-row">
       <input type="checkbox" id="consentCheckbox" />
       <!--
@@ -3011,7 +3022,18 @@ async function startScan() {
       ),
       body: JSON.stringify(scanBody)
     });
-    if (!resp.ok) { var e = await resp.json(); throw new Error(e.detail || "API greska"); }
+    if (!resp.ok) {
+      var e = await resp.json().catch(function(){ return {}; });
+      if (resp.status === 429 && e.retry_after) {
+        _showScanRateLimit(e.retry_after);
+        btn.disabled = true;
+        btn.textContent = currentLang === "en" ? "Quick public scan" : "Brzi javni sken";
+        document.getElementById("progressWrap").style.display = "none";
+        document.getElementById("adSlotTop").classList.remove("visible");
+        return;
+      }
+      throw new Error(e.detail || "API greska");
+    }
     var data = await resp.json();
     await pollScan(data.scan_id);
   } catch (err) {
@@ -4229,6 +4251,68 @@ function _shareFallbackCopy(text) {
     prompt(promptMsg, text);
   }
 }
+
+// ── Scan rate-limit countdown timer ──────────────────────────────────
+var _scanRateInterval = null;
+
+function _scanFmtHMS(sec) {
+  var h = Math.floor(sec / 3600);
+  var m = Math.floor((sec % 3600) / 60);
+  var s = sec % 60;
+  return (h < 10 ? "0" : "") + h + ":" +
+         (m < 10 ? "0" : "") + m + ":" +
+         (s < 10 ? "0" : "") + s;
+}
+
+function _showScanRateLimit(retryAfter) {
+  var box = document.getElementById("scanRateLimit");
+  var cd  = document.getElementById("scanRateCountdown");
+  var btn = document.getElementById("scanBtn");
+  var btn2 = document.getElementById("fullScanBtn");
+  if (!box || !cd) return;
+
+  var remaining = Math.max(0, Math.floor(retryAfter));
+  if (remaining <= 0) { _hideScanRateLimit(); return; }
+
+  box.style.display = "block";
+  if (btn) btn.disabled = true;
+  if (btn2) btn2.disabled = true;
+  cd.textContent = _scanFmtHMS(remaining);
+
+  if (_scanRateInterval) clearInterval(_scanRateInterval);
+  _scanRateInterval = setInterval(function() {
+    remaining -= 1;
+    if (remaining <= 0) {
+      _hideScanRateLimit();
+    } else {
+      cd.textContent = _scanFmtHMS(remaining);
+    }
+  }, 1000);
+}
+
+function _hideScanRateLimit() {
+  if (_scanRateInterval) { clearInterval(_scanRateInterval); _scanRateInterval = null; }
+  var box = document.getElementById("scanRateLimit");
+  var btn = document.getElementById("scanBtn");
+  var btn2 = document.getElementById("fullScanBtn");
+  if (box) box.style.display = "none";
+  if (btn) btn.disabled = false;
+  if (btn2) btn2.disabled = false;
+}
+
+function _checkScanRateStatus() {
+  fetch(API_BASE + "/scan/rate-status", { headers: proAuthHeaders() })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.pro) return;
+      if (data.remaining <= 0 && data.retry_after > 0) {
+        _showScanRateLimit(data.retry_after);
+      }
+    })
+    .catch(function() {});
+}
+
+_checkScanRateStatus();
 
 function showError(msg) {
   var wrap = document.getElementById("resultsWrap");

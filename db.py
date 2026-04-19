@@ -1588,3 +1588,95 @@ def get_public_scan_for_owner_check(scan_id: str) -> Optional[Dict[str, Any]]:
         return None
 
     return _safe_db_call("get_public_scan_for_owner_check", _do)
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# Malware credits — linked to subscriptions via subscription_id (Faza 7)
+# ─────────────────────────────────────────────────────────────────────────
+
+def find_active_malware_credits(subscription_id: int) -> Optional[Dict[str, Any]]:
+    """
+    Find the newest active credit row for a subscription.
+    Active = credits_remaining > 0 AND expires_at > NOW().
+    """
+    if not is_configured():
+        return None
+
+    def _do() -> Optional[Dict[str, Any]]:
+        client = get_client()
+        result = (
+            client.table("malware_credits")
+            .select("*")
+            .eq("subscription_id", subscription_id)
+            .gt("credits_remaining", 0)
+            .gt("expires_at", now_utc().isoformat())
+            .order("expires_at", desc=True)
+            .limit(1)
+            .execute()
+        )
+        rows = result.data or []
+        return rows[0] if rows else None
+
+    return _safe_db_call("find_active_malware_credits", _do)
+
+
+def consume_malware_credit(credit_id: int) -> bool:
+    """
+    Atomic decrement of credits_remaining by 1.
+    Returns True if a row was actually updated (credit was available).
+    Uses gt("credits_remaining", 0) as a CAS guard against double-spend.
+    """
+    if not is_configured():
+        return False
+
+    def _do() -> bool:
+        conn = get_pg_connection()
+        if not conn:
+            return False
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE malware_credits
+                       SET credits_remaining = credits_remaining - 1,
+                           updated_at = NOW()
+                     WHERE id = %s
+                       AND credits_remaining > 0
+                       AND expires_at > NOW()
+                    """,
+                    (credit_id,),
+                )
+                conn.commit()
+                return cur.rowcount == 1
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
+
+    return bool(_safe_db_call("consume_malware_credit", _do))
+
+
+def get_credits_for_subscription(subscription_id: int) -> List[Dict[str, Any]]:
+    """
+    Return all credit rows for a subscription (active + expired),
+    ordered newest first. Used by account.html to show history.
+    """
+    if not is_configured():
+        return []
+
+    def _do() -> List[Dict[str, Any]]:
+        client = get_client()
+        result = (
+            client.table("malware_credits")
+            .select(
+                "id,credits_total,credits_remaining,expires_at,"
+                "pack_kind,created_at,lemon_order_id"
+            )
+            .eq("subscription_id", subscription_id)
+            .order("created_at", desc=True)
+            .execute()
+        )
+        return result.data or []
+
+    return _safe_db_call("get_credits_for_subscription", _do) or []

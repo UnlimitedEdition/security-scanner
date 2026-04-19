@@ -303,6 +303,20 @@
           <div class="label">Email</div>
           <div class="value" id="fEmail">—</div>
         </div>
+        <div class="plan-field">
+          <div class="label">License Key</div>
+          <div class="value" style="display:flex;align-items:center;gap:0.5rem;">
+            <span id="fLicenseKey" style="font-family:monospace;font-size:0.85rem;letter-spacing:0.5px;">—</span>
+            <button type="button" id="btnToggleKey" style="background:none;border:1px solid #374151;border-radius:6px;color:#a78bfa;cursor:pointer;padding:2px 8px;font-size:0.75rem;" title="Show/Hide">
+              <span class="sr">Prikaži</span>
+              <span class="en">Show</span>
+            </button>
+            <button type="button" id="btnCopyKey" style="background:none;border:1px solid #374151;border-radius:6px;color:#9ca3af;cursor:pointer;padding:2px 8px;font-size:0.75rem;" title="Copy">
+              <span class="sr">Kopiraj</span>
+              <span class="en">Copy</span>
+            </button>
+          </div>
+        </div>
       </div>
       <div class="plan-actions">
         <a href="#" id="btnManage" class="plan-btn primary" target="_blank" rel="noopener">
@@ -314,6 +328,14 @@
           <span class="en">Log out</span>
         </button>
       </div>
+    </div>
+
+    <div class="acc-card" id="malwareCreditsCard" style="display:none;">
+      <h2>
+        <span class="sr">Malware skenovi</span>
+        <span class="en">Malware scans</span>
+      </h2>
+      <div id="malwareCreditsContainer"></div>
     </div>
 
     <div class="acc-card">
@@ -425,10 +447,66 @@
     } catch (e) { return iso; }
   }
 
+  function renderMalwareCredits(credits) {
+    var card = document.getElementById('malwareCreditsCard');
+    if (!credits || credits.length === 0) return;
+    card.style.display = 'block';
+
+    var container = document.getElementById('malwareCreditsContainer');
+    container.textContent = '';
+
+    credits.forEach(function(c) {
+      var row = el('div', 'plan-grid');
+      row.style.marginBottom = '1rem';
+
+      var now = new Date();
+      var exp = new Date(c.expires_at);
+      var isExpired = exp < now;
+      var isEmpty = c.credits_remaining <= 0;
+
+      var statusText, statusClass;
+      if (isExpired) { statusText = isEn() ? 'Expired' : 'Istekao'; statusClass = 'pill-err'; }
+      else if (isEmpty) { statusText = isEn() ? 'Used up' : 'Potrosen'; statusClass = 'pill-warn'; }
+      else { statusText = isEn() ? 'Active' : 'Aktivan'; statusClass = 'pill-ok'; }
+
+      var f1 = el('div', 'plan-field');
+      var l1 = el('div', 'label');
+      l1.appendChild(el('span', 'sr', 'Paket'));
+      l1.appendChild(el('span', 'en', 'Pack'));
+      f1.appendChild(l1);
+      f1.appendChild(el('div', 'value', c.pack_kind === '5_pack' ? '5-Pack ($3)' : c.pack_kind));
+      row.appendChild(f1);
+
+      var f2 = el('div', 'plan-field ' + statusClass);
+      f2.appendChild(el('div', 'label', 'Status'));
+      f2.appendChild(el('div', 'value', statusText));
+      row.appendChild(f2);
+
+      var f3 = el('div', 'plan-field');
+      var l3 = el('div', 'label');
+      l3.appendChild(el('span', 'sr', 'Preostalo'));
+      l3.appendChild(el('span', 'en', 'Remaining'));
+      f3.appendChild(l3);
+      f3.appendChild(el('div', 'value', c.credits_remaining + ' / ' + c.credits_total));
+      row.appendChild(f3);
+
+      var f4 = el('div', 'plan-field');
+      var l4 = el('div', 'label');
+      l4.appendChild(el('span', 'sr', 'Istice'));
+      l4.appendChild(el('span', 'en', 'Expires'));
+      f4.appendChild(l4);
+      f4.appendChild(el('div', 'value', formatDate(c.expires_at)));
+      row.appendChild(f4);
+
+      container.appendChild(row);
+    });
+  }
+
   function renderSubscription(sub) {
     document.getElementById('fPlan').textContent =
       sub.plan === 'pro_yearly' ? 'Pro Yearly' :
-      sub.plan === 'pro_monthly' ? 'Pro Monthly' : sub.plan;
+      sub.plan === 'pro_monthly' ? 'Pro Monthly' :
+      sub.plan === 'malware_pack' ? 'Malware Pack' : sub.plan;
 
     var statusField = document.getElementById('fStatusField');
     var statusCell = document.getElementById('fStatus');
@@ -444,6 +522,44 @@
 
     document.getElementById('fRenews').textContent = formatDate(sub.current_period_end);
     document.getElementById('fEmail').textContent = sub.email || '—';
+    var keyEl = document.getElementById('fLicenseKey');
+    var fullKey = getLicenseKey();
+    var maskedKey = sub.license_key_masked || '—';
+    keyEl.textContent = maskedKey;
+    keyEl.dataset.masked = maskedKey;
+    keyEl.dataset.full = fullKey;
+    keyEl.dataset.visible = 'false';
+
+    var toggleBtn = document.getElementById('btnToggleKey');
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', function() {
+        var visible = keyEl.dataset.visible === 'true';
+        if (visible) {
+          keyEl.textContent = keyEl.dataset.masked;
+          keyEl.dataset.visible = 'false';
+          toggleBtn.querySelector('.sr').textContent = 'Prikaži';
+          toggleBtn.querySelector('.en').textContent = 'Show';
+        } else {
+          keyEl.textContent = keyEl.dataset.full;
+          keyEl.dataset.visible = 'true';
+          toggleBtn.querySelector('.sr').textContent = 'Sakrij';
+          toggleBtn.querySelector('.en').textContent = 'Hide';
+        }
+      });
+    }
+
+    var copyBtn = document.getElementById('btnCopyKey');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function() {
+        navigator.clipboard.writeText(fullKey).then(function() {
+          var sr = copyBtn.querySelector('.sr');
+          var en = copyBtn.querySelector('.en');
+          sr.textContent = 'Kopirano!';
+          en.textContent = 'Copied!';
+          setTimeout(function() { sr.textContent = 'Kopiraj'; en.textContent = 'Copy'; }, 1500);
+        });
+      });
+    }
 
     // Manage subscription link — Lemon Squeezy customer portal.
     // The customer portal URL is the store's .lemonsqueezy.com/billing
@@ -566,6 +682,7 @@
         document.getElementById('accLoading').style.display = 'none';
         document.getElementById('accContent').style.display = 'block';
         if (data.subscription) renderSubscription(data.subscription);
+        if (data.malware_credits) renderMalwareCredits(data.malware_credits);
         renderHistoryList(data.scans || []);
       })
       .catch(function(err) {

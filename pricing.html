@@ -311,7 +311,93 @@
     </span>
   </div>
 
-  <section class="activate-section">
+  <section class="plans-grid" id="malwarePacksGrid" style="margin-top:2.5rem;">
+    <div class="plan-card">
+      <h3>Malware 5-Pack</h3>
+      <p class="plan-subtitle">
+        <span class="sr">Jednokratna kupovina — bez pretplate</span>
+        <span class="en">One-time purchase — no subscription</span>
+      </p>
+      <div class="price">$3 <small>USD</small></div>
+      <div class="savings">
+        <span class="sr">5 skenova · vazi 30 dana</span>
+        <span class="en">5 scans · valid 30 days</span>
+      </div>
+      <ul>
+        <li><span class="sr">5 kompletnih malware skenova</span><span class="en">5 full malware scans</span></li>
+        <li><span class="sr">Damage Report ukljucen</span><span class="en">Damage Report included</span></li>
+        <li><span class="sr">Vazi 30 dana od kupovine</span><span class="en">Valid 30 days from purchase</span></li>
+        <li><span class="sr">Isti license key za sve uredjaje</span><span class="en">Same license key for all devices</span></li>
+        <li><span class="sr">Bez automatskog obnavljanja</span><span class="en">No auto-renewal</span></li>
+      </ul>
+      <button class="plan-cta primary" data-plan="malware_5_pack">
+        <span class="sr">Kupi paket</span>
+        <span class="en">Buy pack</span>
+      </button>
+    </div>
+
+    <!-- INACTIVE — buduce ponude, aktivirati kad bude spremno
+    <div class="plan-card">
+      <h3>Malware 60-Pack</h3>
+      <p class="plan-subtitle">
+        <span class="sr">Najpopularniji paket</span>
+        <span class="en">Most popular pack</span>
+      </p>
+      <div class="price">$30 <small>USD</small></div>
+      <div class="savings">
+        <span class="sr">60 skenova · vazi 90 dana · ustedi 17%</span>
+        <span class="en">60 scans · valid 90 days · save 17%</span>
+      </div>
+      <ul>
+        <li><span class="sr">60 kompletnih malware skenova</span><span class="en">60 full malware scans</span></li>
+        <li><span class="sr">Damage Report ukljucen</span><span class="en">Damage Report included</span></li>
+        <li><span class="sr">Vazi 90 dana od kupovine</span><span class="en">Valid 90 days from purchase</span></li>
+        <li><span class="sr">$0.50 po skenu (usteda 17%)</span><span class="en">$0.50 per scan (save 17%)</span></li>
+      </ul>
+      <button class="plan-cta primary" data-plan="malware_60_pack" disabled>
+        <span class="sr">Uskoro</span>
+        <span class="en">Coming soon</span>
+      </button>
+    </div>
+
+    <div class="plan-card">
+      <h3>Malware 700-Pack</h3>
+      <p class="plan-subtitle">
+        <span class="sr">Za agencije i hosting provajdere</span>
+        <span class="en">For agencies and hosting providers</span>
+      </p>
+      <div class="price">$300 <small>USD</small></div>
+      <div class="savings">
+        <span class="sr">700 skenova · vazi 365 dana · ustedi 29%</span>
+        <span class="en">700 scans · valid 365 days · save 29%</span>
+      </div>
+      <ul>
+        <li><span class="sr">700 kompletnih malware skenova</span><span class="en">700 full malware scans</span></li>
+        <li><span class="sr">Damage Report ukljucen</span><span class="en">Damage Report included</span></li>
+        <li><span class="sr">Vazi 365 dana od kupovine</span><span class="en">Valid 365 days from purchase</span></li>
+        <li><span class="sr">$0.43 po skenu (usteda 29%)</span><span class="en">$0.43 per scan (save 29%)</span></li>
+      </ul>
+      <button class="plan-cta primary" data-plan="malware_700_pack" disabled>
+        <span class="sr">Uskoro</span>
+        <span class="en">Coming soon</span>
+      </button>
+    </div>
+    -->
+  </section>
+
+  <div id="purchaseSuccess" class="purchase-success" style="display:none;background:#0d2818;border:1px solid #22c55e;border-radius:12px;padding:1.5rem;margin:0 auto 2rem;max-width:640px;text-align:center;">
+    <div style="font-size:2rem;margin-bottom:0.5rem;">&#10003;</div>
+    <h3 style="color:#22c55e;margin:0 0 0.5rem;">
+      <span class="sr">Kupovina uspesna!</span>
+      <span class="en">Purchase successful!</span>
+    </h3>
+    <p style="color:#d1d5db;margin:0;font-size:0.9rem;line-height:1.6;">
+      <span class="sr">Lemon Squeezy vam salje email sa vasim license key-em. Proverite inbox (i spam folder). Zatim nalepite key ispod da aktivirate.</span>
+      <span class="en">Lemon Squeezy is sending you an email with your license key. Check your inbox (and spam folder). Then paste the key below to activate.</span>
+    </p>
+  </div>
+
+  <section class="activate-section" id="activateSection">
     <h3>
       <span class="sr">Vec imate license key?</span>
       <span class="en">Already have a license key?</span>
@@ -328,6 +414,13 @@
       </button>
     </div>
     <div id="activateResult" class="activate-result"></div>
+    <div id="authRateLimit" style="display:none;margin-top:1rem;padding:0.8rem 1rem;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.35);border-radius:10px;text-align:center;">
+      <span style="font-size:0.9rem;">
+        <span class="sr">Previse pokusaja. Pokusajte ponovo za:</span>
+        <span class="en">Too many attempts. Try again in:</span>
+      </span>
+      <div id="authRateCountdown" style="font-size:1.4rem;font-weight:700;color:#ef4444;letter-spacing:2px;margin:0.3rem 0;font-variant-numeric:tabular-nums;">00:00</div>
+    </div>
     <p style="margin-top:1rem;font-size:0.82rem;color:#7b83a6;">
       <span class="sr">Ne mozete da nadjete kljuc? </span>
       <span class="en">Can't find your key? </span>
@@ -513,6 +606,8 @@
         .then(function(data) {
           if (data && data.pro_available === false) {
             applyComingSoonState();
+          } else if (data && data.malware_pack_available === false) {
+            applyComingSoonBtn('malware_5_pack');
           }
         })
         .catch(function() {
@@ -520,6 +615,22 @@
           // soon so we never show a broken Buy button by accident.
           applyComingSoonState();
         });
+    }
+
+    function applyComingSoonBtn(planName) {
+      var btn = document.querySelector('button[data-plan="' + planName + '"]');
+      if (!btn) return;
+      btn.setAttribute('disabled', 'disabled');
+      btn.classList.add('coming-soon');
+      while (btn.firstChild) btn.removeChild(btn.firstChild);
+      var srLabel = document.createElement('span');
+      srLabel.className = 'sr';
+      srLabel.textContent = 'Uskoro';
+      var enLabel = document.createElement('span');
+      enLabel.className = 'en';
+      enLabel.textContent = 'Coming Soon';
+      btn.appendChild(srLabel);
+      btn.appendChild(enLabel);
     }
 
     function applyComingSoonState() {
@@ -574,11 +685,22 @@
         .catch(function() {});
     }
 
+    function generateToken() {
+      var arr = new Uint8Array(16);
+      crypto.getRandomValues(arr);
+      return Array.from(arr, function(b) { return b.toString(16).padStart(2, '0'); }).join('');
+    }
+
     function buyPlan(plan, btn) {
       setBtnLoading(btn, true);
+      var token = generateToken();
+      try { localStorage.setItem('wss-activation-token', token); } catch(e) {}
       fetch(API_BASE + '/api/checkout/create', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Activation-Token': token
+        },
         body: JSON.stringify({ plan: plan })
       })
         .then(function(r) {
@@ -599,6 +721,50 @@
             : 'Greska pri checkout-u: ' + err.message + '\n\nPro plan mozda jos nije potpuno konfigurisan. Pokusajte kasnije.';
           alert(msg);
         });
+    }
+
+    var _authRateInterval = null;
+
+    function _authFmtMS(sec) {
+      var m = Math.floor(sec / 60);
+      var s = sec % 60;
+      return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+    }
+
+    function _showAuthRateLimit(retryAfter) {
+      var box = document.getElementById('authRateLimit');
+      var cd  = document.getElementById('authRateCountdown');
+      var btn = document.getElementById('activateBtn');
+      var input = document.getElementById('licenseKeyInput');
+      if (!box || !cd) return;
+
+      var remaining = Math.max(0, Math.floor(retryAfter));
+      if (remaining <= 0) { _hideAuthRateLimit(); return; }
+
+      box.style.display = 'block';
+      if (btn) btn.disabled = true;
+      if (input) input.disabled = true;
+      cd.textContent = _authFmtMS(remaining);
+
+      if (_authRateInterval) clearInterval(_authRateInterval);
+      _authRateInterval = setInterval(function() {
+        remaining -= 1;
+        if (remaining <= 0) {
+          _hideAuthRateLimit();
+        } else {
+          cd.textContent = _authFmtMS(remaining);
+        }
+      }, 1000);
+    }
+
+    function _hideAuthRateLimit() {
+      if (_authRateInterval) { clearInterval(_authRateInterval); _authRateInterval = null; }
+      var box = document.getElementById('authRateLimit');
+      var btn = document.getElementById('activateBtn');
+      var input = document.getElementById('licenseKeyInput');
+      if (box) box.style.display = 'none';
+      if (btn) btn.disabled = false;
+      if (input) input.disabled = false;
     }
 
     function activatePro() {
@@ -622,7 +788,18 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ license_key: key })
       })
-        .then(function(r) { return r.json(); })
+        .then(function(r) {
+          if (r.status === 429) {
+            return r.json().then(function(d) {
+              setBtnLoading(btn, false);
+              result.className = 'activate-result';
+              result.textContent = '';
+              _showAuthRateLimit(d.retry_after || 900);
+              throw new Error('rate_limited');
+            });
+          }
+          return r.json();
+        })
         .then(function(data) {
           setBtnLoading(btn, false);
           if (data && data.active) {
@@ -638,16 +815,75 @@
           }
         })
         .catch(function(err) {
+          if (err.message === 'rate_limited') return;
           setBtnLoading(btn, false);
           result.className = 'activate-result err';
           result.textContent = 'Network error: ' + err.message;
         });
     }
 
+    function checkPurchaseSuccess() {
+      var params = new URLSearchParams(window.location.search);
+      if (params.get('success') !== 'true') return;
+
+      var banner = document.getElementById('purchaseSuccess');
+      if (banner) banner.style.display = 'block';
+      var section = document.getElementById('activateSection');
+      if (section) section.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      var token = '';
+      try { token = localStorage.getItem('wss-activation-token') || ''; } catch(e) {}
+      if (!token) {
+        var input = document.getElementById('licenseKeyInput');
+        if (input) setTimeout(function() { input.focus(); }, 600);
+        return;
+      }
+
+      var attempts = 0;
+      var maxAttempts = 30;
+      var pollInterval = 3000;
+      var result = document.getElementById('activateResult');
+      result.className = 'activate-result';
+      result.textContent = isEn()
+        ? 'Waiting for license key from Lemon Squeezy...'
+        : 'Cekam license key od Lemon Squeezy-ja...';
+
+      var poll = setInterval(function() {
+        attempts++;
+        if (attempts > maxAttempts) {
+          clearInterval(poll);
+          result.textContent = isEn()
+            ? 'Auto-activation timed out. Check your email for the license key and paste it below.'
+            : 'Automatska aktivacija istekla. Proverite email za license key i nalepite ga ispod.';
+          var input = document.getElementById('licenseKeyInput');
+          if (input) input.focus();
+          return;
+        }
+        fetch(API_BASE + '/api/activation/check?token=' + encodeURIComponent(token))
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            if (data && data.found && data.license_key) {
+              clearInterval(poll);
+              try {
+                localStorage.setItem('wss-license-key', data.license_key);
+                localStorage.removeItem('wss-activation-token');
+              } catch(e) {}
+              result.className = 'activate-result ok';
+              result.textContent = isEn()
+                ? 'Activated automatically! Redirecting...'
+                : 'Automatski aktivirano! Preusmeravam...';
+              setTimeout(function() { window.location.href = './account'; }, 1200);
+            }
+          })
+          .catch(function() {});
+      }, pollInterval);
+    }
+
     // Wire up event listeners when DOM is ready
     document.addEventListener('DOMContentLoaded', function() {
       checkLaunchStatus();
       checkExistingSubscription();
+      checkPurchaseSuccess();
 
       // Plan buy buttons
       var planButtons = document.querySelectorAll('button[data-plan]');

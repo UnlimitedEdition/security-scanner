@@ -3,7 +3,7 @@
   <!-- Glavna -->
   <url>
     <loc>https://security-skener.gradovi.rs/</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
@@ -11,25 +11,25 @@
   <!-- Hub stranice -->
   <url>
     <loc>https://security-skener.gradovi.rs/blog-security</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://security-skener.gradovi.rs/blog-seo</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://security-skener.gradovi.rs/blog-performance</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://security-skener.gradovi.rs/blog-gdpr</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -37,49 +37,49 @@
   <!-- Security clanci (8) -->
   <url>
     <loc>https://security-skener.gradovi.rs/blog-security-ssl</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://security-skener.gradovi.rs/blog-security-headers</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://security-skener.gradovi.rs/blog-security-xss</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://security-skener.gradovi.rs/blog-security-sql</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://security-skener.gradovi.rs/blog-security-csrf</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://security-skener.gradovi.rs/blog-security-dns</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://security-skener.gradovi.rs/blog-security-ports</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://security-skener.gradovi.rs/blog-security-api</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -87,43 +87,43 @@
   <!-- SEO clanci (7) -->
   <url>
     <loc>https://security-skener.gradovi.rs/blog-seo-meta</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://security-skener.gradovi.rs/blog-seo-schema</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://security-skener.gradovi.rs/blog-seo-sitemap</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://security-skener.gradovi.rs/blog-seo-local</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://security-skener.gradovi.rs/blog-seo-opengraph</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://security-skener.gradovi.rs/blog-seo-headings</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://security-skener.gradovi.rs/blog-seo-mobile</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -131,37 +131,37 @@
   <!-- Performance clanci (6) -->
   <url>
     <loc>https://security-skener.gradovi.rs/blog-perf-cwv</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://security-skener.gradovi.rs/blog-perf-images</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://security-skener.gradovi.rs/blog-perf-cache</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://security-skener.gradovi.rs/blog-perf-compression</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://security-skener.gradovi.rs/blog-perf-cdn</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://security-skener.gradovi.rs/blog-perf-lazy</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -169,31 +169,31 @@
   <!-- GDPR clanci (5) -->
   <url>
     <loc>https://security-skener.gradovi.rs/blog-gdpr-cookies</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://security-skener.gradovi.rs/blog-gdpr-policy</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://security-skener.gradovi.rs/blog-gdpr-trackers</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://security-skener.gradovi.rs/blog-gdpr-rights</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://security-skener.gradovi.rs/blog-gdpr-fines</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -201,7 +201,7 @@
   <!-- V4 Strictness Modes (release blog post) -->
   <url>
     <loc>https://security-skener.gradovi.rs/blog-strictness-modes</loc>
-    <lastmod>2026-04-13</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -209,7 +209,7 @@
   <!-- V4 Public gallery (opt-in published results) -->
   <url>
     <loc>https://security-skener.gradovi.rs/gallery</loc>
-    <lastmod>2026-04-13</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -217,53 +217,47 @@
   <!-- Pro plan landing -->
   <url>
     <loc>https://security-skener.gradovi.rs/pricing</loc>
-    <lastmod>2026-04-11</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
 
-  <!-- Pro account (noindex; listed for completeness) -->
-  <url>
-    <loc>https://security-skener.gradovi.rs/account</loc>
-    <lastmod>2026-04-11</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
+  <!-- /account is noindex — intentionally excluded from sitemap -->
 
   <!-- Legal / policy -->
   <url>
     <loc>https://security-skener.gradovi.rs/privacy</loc>
-    <lastmod>2026-04-10</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://security-skener.gradovi.rs/terms</loc>
-    <lastmod>2026-04-10</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://security-skener.gradovi.rs/refund-policy</loc>
-    <lastmod>2026-04-10</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://security-skener.gradovi.rs/abuse-report</loc>
-    <lastmod>2026-04-14</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://security-skener.gradovi.rs/status</loc>
-    <lastmod>2026-04-12</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://security-skener.gradovi.rs/user-rights</loc>
-    <lastmod>2026-04-12</lastmod>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
   </url>

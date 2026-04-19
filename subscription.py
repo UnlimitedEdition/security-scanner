@@ -37,7 +37,7 @@ import hashlib
 import hmac
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional, Tuple
 
 import db
@@ -54,6 +54,7 @@ LEMON_STORE_ID = os.environ.get("LEMON_STORE_ID", "").strip()
 LEMON_PRODUCT_ID = os.environ.get("LEMON_PRODUCT_ID", "").strip()
 LEMON_VARIANT_MONTHLY = os.environ.get("LEMON_VARIANT_MONTHLY", "").strip()
 LEMON_VARIANT_YEARLY = os.environ.get("LEMON_VARIANT_YEARLY", "").strip()
+LEMON_VARIANT_MALWARE_5_PACK = os.environ.get("LEMON_VARIANT_MALWARE_5_PACK", "").strip()
 
 LEMON_API_BASE = "https://api.lemonsqueezy.com/v1"
 
@@ -74,6 +75,7 @@ _HANDLED_EVENTS = frozenset({
     "subscription_payment_refunded",
     "license_key_created",
     "license_key_updated",
+    "order_created",
 })
 
 
@@ -189,7 +191,9 @@ def process_webhook_event(
         return "skipped", None
 
     try:
-        if event_name.startswith("subscription_"):
+        if event_name == "order_created":
+            _handle_order_created(payload)
+        elif event_name.startswith("subscription_"):
             _handle_subscription_event(event_name, payload)
         elif event_name.startswith("license_key_"):
             _handle_license_key_event(event_name, payload)
@@ -356,6 +360,122 @@ def _extract_subscription_attrs(payload: Dict[str, Any]) -> Optional[Dict[str, A
 
 
 # ─────────────────────────────────────────────────────────────────────────
+# One-time order handler (Malware 5-Pack)
+# ─────────────────────────────────────────────────────────────────────────
+
+_MALWARE_PACK_CONFIG = {
+    "5_pack": {"credits": 5, "days": 30},
+}
+
+_on_license_key_ready = None
+
+
+def set_activation_callback(fn):
+    global _on_license_key_ready
+    _on_license_key_ready = fn
+
+
+def _handle_order_created(payload: Dict[str, Any]) -> None:
+    """
+    Handle order_created webhook for one-time purchases (Malware 5-Pack).
+
+    Creates TWO rows:
+      1. subscriptions — plan_name='malware_pack', license_key from Lemon
+      2. malware_credits — credits_total=5, expires in 30 days, FK to subscription
+
+    If the user buys again with the same email, we reuse the existing
+    subscription row (same license_key) and just add a new malware_credits row.
+    """
+    data = payload.get("data") or {}
+    attrs = data.get("attributes") or {}
+    if not attrs:
+        raise ValueError("order_created: empty attributes")
+
+    first_item = (attrs.get("first_order_item") or {})
+    variant_id = first_item.get("variant_id")
+
+    if not LEMON_VARIANT_MALWARE_5_PACK or str(variant_id) != LEMON_VARIANT_MALWARE_5_PACK:
+        log.info("order_created: variant_id=%s is not malware_5_pack, ignoring", variant_id)
+        return
+
+    order_id = int(data.get("id")) if data.get("id") is not None else None
+    customer_id = attrs.get("customer_id")
+    user_email = (attrs.get("user_email") or "").strip().lower()
+
+    if not order_id or not customer_id or not user_email:
+        raise ValueError(
+            f"order_created: missing required fields "
+            f"(order_id={order_id}, customer_id={customer_id}, email={'set' if user_email else 'empty'})"
+        )
+
+    pack_cfg = _MALWARE_PACK_CONFIG["5_pack"]
+    client = db.get_client()
+
+    existing = (
+        client.table("subscriptions")
+        .select("id,license_key")
+        .eq("email", user_email)
+        .eq("plan_name", "malware_pack")
+        .limit(1)
+        .execute()
+    )
+    existing_rows = existing.data or []
+
+    if existing_rows:
+        sub_row = existing_rows[0]
+        sub_id = sub_row["id"]
+        client.table("subscriptions").update({
+            "status": "active",
+            "lemon_order_id": order_id,
+            "lemon_customer_id": customer_id,
+        }).eq("id", sub_id).execute()
+        log.info(
+            "order_created: reactivated existing subscription id=%s for email=%s",
+            sub_id, user_email,
+        )
+    else:
+        new_sub = {
+            "email": user_email,
+            "lemon_customer_id": customer_id,
+            "lemon_order_id": order_id,
+            "plan_name": "malware_pack",
+            "status": "active",
+            "current_period_start": datetime.now(timezone.utc).isoformat(),
+            "current_period_end": (
+                datetime.now(timezone.utc)
+                + timedelta(days=pack_cfg["days"])
+            ).isoformat(),
+        }
+        result = client.table("subscriptions").insert(new_sub).execute()
+        sub_row = (result.data or [{}])[0]
+        sub_id = sub_row.get("id")
+        if not sub_id:
+            raise ValueError("order_created: failed to INSERT subscription row")
+        log.info(
+            "order_created: created subscription id=%s for email=%s",
+            sub_id, user_email,
+        )
+
+    credit_row = {
+        "lemon_order_id": str(order_id),
+        "pack_kind": "5_pack",
+        "credits_total": pack_cfg["credits"],
+        "credits_remaining": pack_cfg["credits"],
+        "expires_at": (
+            datetime.now(timezone.utc)
+            + timedelta(days=pack_cfg["days"])
+        ).isoformat(),
+        "buyer_email": user_email,
+        "subscription_id": sub_id,
+    }
+    client.table("malware_credits").insert(credit_row).execute()
+    log.info(
+        "order_created: created malware_credits for sub_id=%s, %d credits, %d days",
+        sub_id, pack_cfg["credits"], pack_cfg["days"],
+    )
+
+
+# ─────────────────────────────────────────────────────────────────────────
 # License key event handlers
 # ─────────────────────────────────────────────────────────────────────────
 def _handle_license_key_event(event_name: str, payload: Dict[str, Any]) -> None:
@@ -404,6 +524,13 @@ def _handle_license_key_event(event_name: str, payload: Dict[str, Any]) -> None:
         _redact_key(license_key_value),
         rows[0].get("lemon_subscription_id"),
     )
+
+    if _on_license_key_ready:
+        meta = payload.get("meta") or {}
+        custom = meta.get("custom_data") or {}
+        activation_token = custom.get("activation_token")
+        if activation_token:
+            _on_license_key_ready(activation_token, license_key_value)
 
 
 # ─────────────────────────────────────────────────────────────────────────
@@ -510,5 +637,6 @@ def health_check() -> Dict[str, Any]:
         "lemon_product_id": LEMON_PRODUCT_ID or "<unset>",
         "lemon_variant_monthly": LEMON_VARIANT_MONTHLY or "<unset>",
         "lemon_variant_yearly": LEMON_VARIANT_YEARLY or "<unset>",
+        "lemon_variant_malware_5_pack": LEMON_VARIANT_MALWARE_5_PACK or "<unset>",
         "db_configured": db.is_configured(),
     }

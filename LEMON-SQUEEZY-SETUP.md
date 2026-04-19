@@ -272,8 +272,14 @@ pojavljuje se nov red. Posle testa → **Test mode: OFF** pre produkcije.
 
 - **Subscription kupovina** → `subscription_created` webhook → `subscription.py._handle_subscription_event` → INSERT u `subscriptions` tabelu → user od sada ima Pro.
 - **Subscription otkazana** → `subscription_cancelled` webhook → flip `status='cancelled'`, user gubi Pro na kraju plaćenog perioda.
-- **Malware 5-Pack kupovina** *(Faza 7 u izradi)* → `order_created` webhook → `subscription.py._handle_order_created` → INSERT u `malware_credits` tabelu sa `credits_remaining=5`, `expires_at=NOW()+30 dana`.
-- **FULL malware scan** → api.py → `db.consume_malware_credit(ip_hash)` → atomic decrement → ako ima kredit, dozvoli `mode='full'` bez verifikacije domena.
+- **Malware 5-Pack kupovina** *(Faza 7)* → `order_created` webhook → DVA reda:
+  1. `subscriptions` tabela: `plan_name='malware_pack'`, `status='active'`, `license_key` (od Lemon-a) — korisnik se loguje istim sistemom kao Pro
+  2. `malware_credits` tabela: `credits_total=5`, `credits_remaining=5`, `expires_at=NOW()+30 dana`, `subscription_id` → FK na subscriptions red
+  → Korisnik dobija license_key, loguje se na account.html, vidi koliko mu je skenova ostalo
+  → Kad istekne/potroši sve: `subscriptions.status='expired'`, red ostaje u bazi (NIKAD se ne briše)
+  → Ako kupi ponovo: isti license_key, novi red u `malware_credits`, status opet `active`
+- **Malware scan sa kreditom** → api.py → proveri license_key → nađi `malware_credits` gde `subscription_id` match, `credits_remaining > 0`, `expires_at > NOW()` → atomic decrement → dozvoli scan
+- **Malware scan bez kredita** → standardni free limit (1/24h po IP + fingerprint)
 
 ---
 
@@ -300,5 +306,11 @@ pojavljuje se nov red. Posle testa → **Test mode: OFF** pre produkcije.
 
 **Šalješ mi / unosiš u HF Space:** 11 vrednosti iz tabele u sekciji 5.
 
-Kada to imaš, reci mi i nastavljam Fazu 7 (kôd za webhook handler +
-credit consumption).
+Kada to imaš, reci mi i nastavljam Fazu 7. Redosled implementacije:
+
+1. Migracija 022 — proširi `subscriptions.plan_name` CHECK za `'malware_pack'` + dodaj `malware_credits.subscription_id` FK
+2. `db.py` — nove funkcije: `find_active_malware_credits()`, `consume_malware_credit()`, `get_credits_for_subscription()`
+3. `subscription.py` — handler za `order_created` webhook: kreira subscription + malware_credits red
+4. `api.py` — `/malware-scan`: pre rate limita proveri kredite kroz license_key
+5. `account.html` — prikaži malware pakete (aktivne + istekle) sa brojem preostalih skenova
+6. `pricing.html` — kartica za $3/5 skenova (aktivna) + $30/60 i $300/700 (komentarisane u kodu, INACTIVE za prikaz)
