@@ -280,9 +280,9 @@ def _handle_subscription_event(event_name: str, payload: Dict[str, Any]) -> None
     if not plan_name:
         # Some events (e.g. subscription_payment_success) may not carry
         # variant_id. If the subscription already exists, pull plan from DB.
+        client = db.get_client()
         sub_id = attrs.get("subscription_id")
         if sub_id:
-            client = db.get_client()
             existing = (
                 client.table("subscriptions")
                 .select("plan_name")
@@ -292,6 +292,18 @@ def _handle_subscription_event(event_name: str, payload: Dict[str, Any]) -> None
             )
             if existing.data:
                 plan_name = existing.data[0].get("plan_name")
+        if not plan_name:
+            user_email = (attrs.get("user_email") or "").strip().lower()
+            if user_email:
+                by_email = (
+                    client.table("subscriptions")
+                    .select("plan_name")
+                    .eq("email", user_email)
+                    .limit(1)
+                    .execute()
+                )
+                if by_email.data:
+                    plan_name = by_email.data[0].get("plan_name")
         if not plan_name:
             raise ValueError(
                 f"{event_name}: variant_id {attrs.get('variant_id')} is not mapped "
@@ -341,7 +353,23 @@ def _handle_subscription_event(event_name: str, payload: Dict[str, Any]) -> None
             "lemon_subscription_id", sub_id
         ).execute()
     else:
-        client.table("subscriptions").insert(row).execute()
+        email = row.get("email")
+        if email:
+            by_email = (
+                client.table("subscriptions")
+                .select("id")
+                .eq("email", email)
+                .limit(1)
+                .execute()
+            )
+            if by_email.data:
+                client.table("subscriptions").update(row).eq(
+                    "email", email
+                ).execute()
+            else:
+                client.table("subscriptions").insert(row).execute()
+        else:
+            client.table("subscriptions").insert(row).execute()
 
     log.info(
         "subscription %s: sub_id=%s email=%s status=%s plan=%s",
