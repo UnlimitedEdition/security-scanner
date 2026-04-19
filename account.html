@@ -777,14 +777,27 @@
   function removeDevice(id) {
     var key = getLicenseKey();
     if (!key) return;
-    if (!confirm(isEn() ? 'Remove this device?' : 'Ukloniti ovaj uredjaj?')) return;
-    fetch(API_BASE + '/api/subscription/devices/' + id, {
-      method: 'DELETE',
-      headers: { 'X-License-Key': key }
-    })
-      .then(function(r) {
-        if (r.ok) loadDevices();
-      });
+    showConfirmModal({
+      icon: '\uD83D\uDCF1',
+      titleSr: 'Ukloniti uredjaj?',
+      titleEn: 'Remove device?',
+      bodySr: 'Ovaj uredjaj ce biti uklonjen sa vaseg naloga. Mozete ga ponovo registrovati ako se ulogujete sa tog uredjaja.',
+      bodyEn: 'This device will be removed from your account. You can re-register it by logging in from that device.',
+      confirmSr: 'Ukloni',
+      confirmEn: 'Remove',
+      cancelSr: 'Otkazi',
+      cancelEn: 'Cancel',
+      danger: true
+    }).then(function(ok) {
+      if (!ok) return;
+      fetch(API_BASE + '/api/subscription/devices/' + id, {
+        method: 'DELETE',
+        headers: { 'X-License-Key': key }
+      })
+        .then(function(r) {
+          if (r.ok) loadDevices();
+        });
+    });
   }
 
   // Promise-based confirm dialog — styled to match the rest of account.html
