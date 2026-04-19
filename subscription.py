@@ -380,45 +380,23 @@ def _handle_subscription_event(event_name: str, payload: Dict[str, Any]) -> None
         row.get("plan_name"),
     )
 
-    # Retry: if license_key_created arrived before this row existed,
-    # the key is sitting in lemon_webhook_events but never got attached.
-    # Check if subscription row still has no license_key and try to
-    # find the key from the logged license_key_created event payload.
+    # If license_key_created arrived first, the key is in _pending_keys.
     order_id = row.get("lemon_order_id")
-    if order_id:
-        sub_row = (
-            client.table("subscriptions")
-            .select("license_key")
-            .eq("lemon_order_id", order_id)
-            .limit(1)
-            .execute()
+    if order_id and order_id in _pending_keys:
+        key_val, key_payload = _pending_keys.pop(order_id)
+        client.table("subscriptions").update(
+            {"license_key": key_val}
+        ).eq("lemon_order_id", order_id).execute()
+        log.info(
+            "subscription %s: attached buffered key %s for order_id=%s",
+            event_name, _redact_key(key_val), order_id,
         )
-        if sub_row.data and not sub_row.data[0].get("license_key"):
-            key_event = (
-                client.table("lemon_webhook_events")
-                .select("payload")
-                .eq("event_name", "license_key_created")
-                .like("payload", f"%\"order_id\":{order_id}%")
-                .limit(1)
-                .execute()
-            )
-            if key_event.data:
-                import json
-                try:
-                    ep = key_event.data[0].get("payload")
-                    if isinstance(ep, str):
-                        ep = json.loads(ep)
-                    key_val = ep.get("data", {}).get("attributes", {}).get("key")
-                    if key_val:
-                        client.table("subscriptions").update(
-                            {"license_key": key_val}
-                        ).eq("lemon_order_id", order_id).execute()
-                        log.info(
-                            "subscription %s: retroactively attached key %s for order_id=%s",
-                            event_name, _redact_key(key_val), order_id,
-                        )
-                except Exception as e:
-                    log.warning("subscription %s: key retry failed: %s", event_name, e)
+        if _on_license_key_ready:
+            meta = key_payload.get("meta") or {}
+            custom = meta.get("custom_data") or {}
+            activation_token = custom.get("activation_token")
+            if activation_token:
+                _on_license_key_ready(activation_token, key_val)
 
 
 def _extract_subscription_attrs(payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
@@ -572,20 +550,21 @@ def _handle_order_created(payload: Dict[str, Any]) -> None:
     )
 
 
+# In-memory buffer for license keys that arrive before subscription rows.
+# Key: order_id (int), Value: (license_key_value, payload)
+_pending_keys: Dict[int, tuple] = {}
+
 # ─────────────────────────────────────────────────────────────────────────
 # License key event handlers
 # ─────────────────────────────────────────────────────────────────────────
 def _handle_license_key_event(event_name: str, payload: Dict[str, Any]) -> None:
     """
     License keys arrive in their own events. We attach the key to an
-    existing subscription row by matching on order_id (license keys are
-    tied to orders, and orders are tied to subscriptions).
+    existing subscription row by matching on order_id.
 
     If the subscription row doesn't exist yet (license_key_created raced
-    ahead of subscription_created), we still log the event and will
-    attach the key the next time we see a subscription_updated for the
-    same order. For V1 we trust that Lemon sends subscription_created
-    first in practice.
+    ahead of subscription_created), we buffer the key in memory so
+    _handle_subscription_event can pick it up immediately.
     """
     data = payload.get("data") or {}
     attrs = data.get("attributes") or {}
@@ -600,7 +579,6 @@ def _handle_license_key_event(event_name: str, payload: Dict[str, Any]) -> None:
         raise ValueError(f"{event_name}: no order_id in payload")
 
     client = db.get_client()
-    # Find the subscription tied to this order and patch it
     result = (
         client.table("subscriptions")
         .update({"license_key": license_key_value})
@@ -609,9 +587,10 @@ def _handle_license_key_event(event_name: str, payload: Dict[str, Any]) -> None:
     )
     rows = result.data or []
     if not rows:
+        _pending_keys[order_id] = (license_key_value, payload)
         log.warning(
-            "%s: no subscription row found for order_id=%s (key=%s). "
-            "Will be attached on next subscription_updated event.",
+            "%s: no subscription row yet for order_id=%s (key=%s). "
+            "Buffered in memory for subscription_created.",
             event_name, order_id, _redact_key(license_key_value),
         )
         return
