@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vibe Coding Security Guide — Bezbednost za AI projekte / Security for Vibe Coding Projects</title>
+  <meta name="description" content="Complete security guide for vibe coding projects: AI-generated code risks, real vulnerability examples, protection workflow, config examples for Next.js, Vercel, WordPress. · Kompletni vodic za bezbednost vibe coding projekata: rizici AI koda, primeri ranjivosti, zastita.">
+  <meta name="keywords" content="vibe coding security, vibe coding bezbednost, AI generated code security, cursor security, claude code security, copilot security, AI kod bezbednost, vibe coder security checklist, AI code vulnerabilities, bezbednost AI projekata, vibe coding mistakes, AI coding security risks, secure vibe coding, automated code review, AI web app security, replit agent security, bolt security, lovable security, v0 security">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <link rel="canonical" href="https://security-skener.gradovi.rs/blog-vibe-coding-security.html">
+  <link rel="alternate" hreflang="sr" href="https://security-skener.gradovi.rs/blog-vibe-coding-security.html">
+  <link rel="alternate" hreflang="x-default" href="https://security-skener.gradovi.rs/blog-vibe-coding-security.html">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Vibe Coding Security Guide / Bezbednost za AI projekte">
+  <meta property="og:description" content="6 detailed guides for securing vibe coding projects. · 6 detaljnih vodica za bezbednost vibe coding projekata.">
+  <meta property="og:url" content="https://security-skener.gradovi.rs/blog-vibe-coding-security.html">
+  <meta property="og:site_name" content="Web Security Scanner">
+  <meta property="og:locale" content="sr_RS">
+  <meta property="og:locale:alternate" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Vibe Coding Security / Bezbednost za AI projekte">
+  <meta name="twitter:description" content="6 guides for securing AI-generated web apps. · 6 vodica za bezbednost AI projekata.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Bezbednost za Vibe Coding projekte — Kompletni vodic",
+    "author": {"@type": "Person", "name": "Toske", "url": "https://toske-programer.web.app"},
+    "publisher": {"@type": "Organization", "name": "Web Security Scanner"},
+    "datePublished": "2026-04-19",
+    "dateModified": "2026-04-19",
+    "description": "Complete security guide for vibe coding projects: AI-generated code risks, common vulnerabilities, protection checklist.",
+    "inLanguage": ["sr-RS", "en-US"],
+    "keywords": "vibe coding security, AI code security, vibe coder bezbednost, AI generated code vulnerabilities",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://security-skener.gradovi.rs/blog-vibe-coding-security.html"
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Sta je vibe coding?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Vibe coding je stil programiranja gde koristite AI alate (Cursor, Claude Code, Copilot, Bolt, Lovable) da generisete kod kroz prirodni jezik. Termin je skovao Andrej Karpathy u februaru 2025. Umesto da pisete kod rucno, opisujete sta zelite — AI generise, vi usmeravate."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Da li je AI-generisan kod bezbedan?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Prema Stanford istrazivanju, oko 40% AI-generisanog koda sadrzi bezbednosne propuste. Najcesci problemi: hardkodirani API kljucevi u kodu, nedostajuca server-side validacija, CORS podesen na wildcard (*), i nedostajuci bezbednosni HTTP headeri. AI se fokusira na funkcionalnost, ne na bezbednost."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Kako da zastitim vibe coding projekat pre deploy-a?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Tri koraka: (1) Premestite sve API kljuceve iz koda u environment varijable (.env fajl + .gitignore). (2) Dodajte bezbednosne HTTP headere (CSP, HSTS, X-Frame-Options) u vercel.json ili server konfiguraciju. (3) Pokrenite automatski bezbednosni sken pre svakog deploy-a — nas besplatni skener proverava 240+ stavki za 30 sekundi."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is vibe coding?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Vibe coding is a programming style where you use AI tools (Cursor, Claude Code, Copilot, Bolt, Lovable) to generate code through natural language. The term was coined by Andrej Karpathy in February 2025. Instead of writing code manually, you describe what you want — AI generates, you guide."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I secure a vibe coding project before deployment?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Three steps: (1) Move all API keys from code into environment variables (.env file + .gitignore). (2) Add security HTTP headers (CSP, HSTS, X-Frame-Options) to vercel.json or server config. (3) Run an automated security scan before every deploy — our free scanner checks 240+ items in 30 seconds."
+        }
+      }
+    ]
+  }
+  </script>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+  <style>
+    .article-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+    .article-card { background: #12152a; border: 1px solid #252a4a; border-radius: 10px; padding: 1.2rem; transition: all 0.2s; text-decoration: none; display: block; }
+    .article-card:hover { border-color: #6c63ff; transform: translateY(-2px); box-shadow: 0 4px 20px rgba(108,99,255,0.15); }
+    .article-card h3 { color: #e8eaf6; font-size: 0.95rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .article-card p { color: #7b83a6; font-size: 0.82rem; margin: 0; line-height: 1.5; }
+    .article-card .card-tag { display: inline-block; background: #1a1e38; color: #6c63ff; font-size: 0.7rem; font-weight: 600; padding: 2px 8px; border-radius: 4px; margin-bottom: 0.5rem; }
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.8rem; margin: 1.2rem 0 1.8rem; }
+    .stat-card { background: #11142a; border: 1px solid #252a4a; border-radius: 10px; padding: 1rem; text-align: center; }
+    .stat-num { font-size: 1.6rem; font-weight: 800; color: #a78bfa; }
+    .stat-label { font-size: 0.75rem; color: #7b83a6; margin-top: 0.2rem; }
+    .code-block { background: #0d1117; border: 1px solid #252a4a; border-radius: 8px; padding: 1rem 1.2rem; font-family: 'Courier New', monospace; font-size: 0.82rem; color: #c9d1d9; overflow-x: auto; margin: 1rem 0; line-height: 1.6; }
+    .code-block .comment { color: #8b949e; }
+    .code-block .keyword { color: #ff7b72; }
+    .code-block .string { color: #a5d6ff; }
+    .code-block .danger { color: #f85149; background: rgba(248,81,73,0.1); padding: 0 4px; border-radius: 3px; }
+    .code-block .safe { color: #3fb950; background: rgba(63,185,80,0.1); padding: 0 4px; border-radius: 3px; }
+    .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+    .comparison > div { border-radius: 8px; padding: 1rem; }
+    .comparison .bad { background: rgba(248,81,73,0.05); border: 1px solid rgba(248,81,73,0.2); }
+    .comparison .good { background: rgba(63,185,80,0.05); border: 1px solid rgba(63,185,80,0.2); }
+    .comparison .label { font-size: 0.75rem; font-weight: 700; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .comparison .bad .label { color: #f85149; }
+    .comparison .good .label { color: #3fb950; }
+    @media (max-width: 600px) { .comparison { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr"><div class="timeline-title">Sadrzaj</div><ol id="timeline-sr"></ol></div>
+    <div class="en"><div class="timeline-title">Contents</div><ol id="timeline-en"></ol></div>
+  </aside>
+  <main class="blog-content">
+
+  <!-- SERBIAN -->
+  <div class="sr">
+    <h1>Bezbednost za Vibe Coding projekte</h1>
+    <p class="subtitle">Kompletni vodic: kako da AI-generisani projekti budu bezbedni pre nego sto ih pustite online</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">40%</div><div class="stat-label">AI koda ima bezbednosne propuste (Stanford 2024)</div></div>
+      <div class="stat-card"><div class="stat-num">6</div><div class="stat-label">Detaljnih vodica u ovoj seriji</div></div>
+      <div class="stat-card"><div class="stat-num">240+</div><div class="stat-label">Automatskih provera naseg skenera</div></div>
+      <div class="stat-card"><div class="stat-num">30s</div><div class="stat-label">Potrebno za kompletni sken</div></div>
+    </div>
+
+    <h2 id="sec1">1. Sta je vibe coding i zasto je eksplodirao</h2>
+    <p>Andrej Karpathy &mdash; bivsi direktor AI-ja u Tesli i jedan od osnivaca OpenAI-ja &mdash; skovao je termin &ldquo;vibe coding&rdquo; u februaru 2025. u svom tvitu koji je postao viralan. Opisao je kako koristi AI da napravi kompletan projekat bez rucnog pisanja koda: &ldquo;I just see things, say things, run things, and copy-paste things, and it mostly works.&rdquo;</p>
+    <p>Danas milioni ljudi koriste ovaj pristup. Alati kao sto su Cursor, Claude Code, GitHub Copilot, Replit Agent, Bolt, Lovable i v0 omogucavaju da opissete sta zelite na obicnom jeziku, a AI generise kompletan projekat &mdash; frontend, backend, bazu podataka, deploy konfiguraciju.</p>
+    <p>Problem? Vecina ovih projekata zavrsi online sa ozbiljnim bezbednosnim propustima. Ne zato sto su AI alati losi, vec zato sto se fokusiraju na jednu stvar: <strong>da aplikacija radi</strong>. Bezbednost je skoro uvek sekundarna.</p>
+    <div class="callout callout-danger"><strong>Realan primer:</strong> Korisnik je trazio od Cursor-a da napravi SaaS aplikaciju sa Stripe placanjem. AI je generisao funkcionalan sistem za 2 sata. Problem: Stripe secret key je bio hardkodiran u frontend kodu, API rute nisu imale autentifikaciju, i CORS je bio podesen na <code>*</code>. Svako ko otvori DevTools u browseru mogao je da vidi Stripe kljuc i napravi lazne transakcije.</div>
+
+    <h2 id="sec2">2. 5 najcescih propusta u vibe coding projektima</h2>
+    <p>Na osnovu analize hiljada skeniranih sajtova i akademskih istrazivanja (Stanford, NYU, UIUC), ovo je lista propusta sortiranih po ucestalosti i opasnosti:</p>
+
+    <h3>2.1. Hardkodirani API kljucevi u kodu</h3>
+    <p>Ovo je propust #1. Kad kazete AI-ju &ldquo;povezi se na Supabase&rdquo; ili &ldquo;dodaj Stripe placanje&rdquo;, on cesto stavi kljuceve direktno u JavaScript fajl. Rezultat: svako ko otvori vas sajt i pritisne F12 moze da vidi sve vase tajne.</p>
+    <div class="comparison">
+      <div class="bad">
+        <div class="label">Kako AI cesto generise</div>
+        <div class="code-block"><span class="comment">// api.js — AI output</span><br><span class="keyword">const</span> supabase = createClient(<br>&nbsp;&nbsp;<span class="danger">'https://xyz.supabase.co'</span>,<br>&nbsp;&nbsp;<span class="danger">'eyJhbGciOiJIUzI1NiIs...service_role_key'</span><br>);</div>
+      </div>
+      <div class="good">
+        <div class="label">Kako treba</div>
+        <div class="code-block"><span class="comment">// api.js — ispravljeno</span><br><span class="keyword">const</span> supabase = createClient(<br>&nbsp;&nbsp;<span class="safe">process.env.SUPABASE_URL</span>,<br>&nbsp;&nbsp;<span class="safe">process.env.SUPABASE_SERVICE_KEY</span><br>);</div>
+      </div>
+    </div>
+    <p><strong>Zasto je ovo kriticno:</strong> Automatski botovi skeniraju GitHub u realnom vremenu. GitGuardian izvestava da se dnevno objavi preko 10,000 novih tajni na javnim repozitorijumima. Cak i ako obrisete tajnu iz koda, ona ostaje u Git istoriji zauvek &mdash; osim ako ne koristite <code>git filter-branch</code> ili BFG Repo-Cleaner.</p>
+
+    <h3>2.2. Nedostajuci bezbednosni HTTP headeri</h3>
+    <p>Ovo je najcesci nalaz naseg skenera &mdash; pogadja 85% svih skeniranih sajtova. AI alati nikada ne dodaju bezbednosne headere jer se fokusiraju na funkcionalnost, ne na infrastrukturu.</p>
+    <p>Headeri koje morate imati:</p>
+    <table>
+      <tr><th>Header</th><th>Sta radi</th><th>Primer vrednosti</th></tr>
+      <tr><td>Content-Security-Policy</td><td>Kontrolise odakle se smeju ucitavati skripte i stilovi</td><td><code>default-src 'self'; script-src 'self'</code></td></tr>
+      <tr><td>Strict-Transport-Security</td><td>Forsira HTTPS, brani od downgrade napada</td><td><code>max-age=63072000; includeSubDomains</code></td></tr>
+      <tr><td>X-Frame-Options</td><td>Brani od clickjacking-a (iframe embed)</td><td><code>DENY</code></td></tr>
+      <tr><td>X-Content-Type-Options</td><td>Brani od MIME sniffing-a</td><td><code>nosniff</code></td></tr>
+      <tr><td>Referrer-Policy</td><td>Kontrolise koje URL info se salje drugim sajtovima</td><td><code>strict-origin-when-cross-origin</code></td></tr>
+      <tr><td>Permissions-Policy</td><td>Blokira pristup kameri, mikrofonu, geolokaciji</td><td><code>camera=(), microphone=(), geolocation=()</code></td></tr>
+    </table>
+    <p>Konkretna <code>vercel.json</code> konfiguracija za ove headere je opisana u nasem <a href="./blog-vercel-security.html">Vercel bezbednosnom vodicu</a>.</p>
+
+    <h3>2.3. CORS wildcard — vrata sirom otvorena</h3>
+    <p>Kada AI pravi API, cesto podesi <code>Access-Control-Allow-Origin: *</code> da bi &ldquo;sve radilo&rdquo; u development-u. Problem: u produkciji, ovo znaci da bilo koji sajt na internetu moze da salje zahteve vasem API-ju u ime vasih korisnika.</p>
+    <div class="comparison">
+      <div class="bad">
+        <div class="label">Opasno (AI default)</div>
+        <div class="code-block"><span class="comment"># FastAPI — AI output</span><br>app.add_middleware(<br>&nbsp;&nbsp;CORSMiddleware,<br>&nbsp;&nbsp;allow_origins=[<span class="danger">"*"</span>],<br>&nbsp;&nbsp;allow_methods=[<span class="danger">"*"</span>],<br>)</div>
+      </div>
+      <div class="good">
+        <div class="label">Bezbedno</div>
+        <div class="code-block"><span class="comment"># FastAPI — ispravljeno</span><br>app.add_middleware(<br>&nbsp;&nbsp;CORSMiddleware,<br>&nbsp;&nbsp;allow_origins=[<span class="safe">"https://mojsajt.rs"</span>],<br>&nbsp;&nbsp;allow_methods=[<span class="safe">"GET","POST"</span>],<br>)</div>
+      </div>
+    </div>
+
+    <h3>2.4. Nedostajuca server-side validacija</h3>
+    <p>AI pravi lepe forme sa frontend validacijom (required, minLength, email format). Ali backend cesto prima podatke bez ikakve provere. Napadac zaobilazi frontend za 5 sekundi &mdash; dovoljno je da otvori Postman ili curl.</p>
+    <p><strong>Pravilo:</strong> Svaka validacija na frontendu je za korisnicko iskustvo. Svaka validacija na backendu je za bezbednost. Obe moraju postojati.</p>
+
+    <h3>2.5. Nedostajuca autentifikacija na API rutama</h3>
+    <p>AI generise API rute koje izgledaju kompletne &mdash; vracaju podatke, pisu u bazu &mdash; ali nemaju proveru <em>ko</em> salje zahtev. Svako ko zna URL moze da cita i menja podatke drugih korisnika (IDOR ranjivost).</p>
+    <div class="callout callout-warn"><strong>Test:</strong> Otvorite DevTools &rarr; Network tab &rarr; pogledajte API pozive vaseg sajta. Da li mozete da promenite korisnicki ID u URL-u i dobijete tudje podatke? Ako da, imate IDOR ranjivost.</div>
+
+    <h2 id="sec3">3. Kako AI alati prave ove greske</h2>
+    <p>Da bismo razumeli zasto se ovo desava, treba razumeti kako AI modeli generisu kod:</p>
+    <ul>
+      <li><strong>Trenirani su na javnom kodu</strong> &mdash; GitHub, Stack Overflow, dokumentacija. Taj kod cesto sadrzi lose prakse, zastarele paterne i direktne propuste. AI ih uci i reprodukuje.</li>
+      <li><strong>Optimizovani su za &ldquo;radi&rdquo;</strong> &mdash; AI modeli dobijaju pozitivan signal kad kod kompajlira i radi. Bezbednost se ne testira u tom ciklusu.</li>
+      <li><strong>Kontekst je ogranicen</strong> &mdash; AI ne vidi vasu infrastrukturu, deployment okruzenje, ili ko ce koristiti API. Generise kod koji radi u izolaciji.</li>
+      <li><strong>Korisnik ne trazi bezbednost</strong> &mdash; kad kazete &ldquo;napravi login stranicu&rdquo;, AI pravi login. Ne dodaje rate limiting, 2FA, CSRF zastitu, ili brute-force detekciju osim ako to eksplicitno ne trazite.</li>
+    </ul>
+
+    <h2 id="sec4">4. Bezbednosni workflow za vibe coding</h2>
+    <p>Ovo je workflow koji preporucujemo za svaki vibe coding projekat. Nije komplikovan &mdash; 4 koraka pre svakog deploy-a:</p>
+
+    <h3>Korak 1: Proverite tajne</h3>
+    <p>Pre push-a na GitHub, pretrazite ceo projekat za hardkodirane kljuceve:</p>
+    <div class="code-block"><span class="comment"># Pretrazite projekat za potencijalne tajne</span><br>grep -r "sk_live\|sk_test\|apikey\|secret\|password\|token" --include="*.js" --include="*.ts" --include="*.py" --include="*.env"<br><br><span class="comment"># Proverite da je .env u .gitignore</span><br>cat .gitignore | grep ".env"</div>
+    <p>Ako nadjete bilo sta &mdash; premestite u <code>.env</code> fajl i dodajte <code>.env</code> u <code>.gitignore</code>.</p>
+
+    <h3>Korak 2: Dodajte bezbednosne headere</h3>
+    <p>Za Vercel projekte, dodajte u <code>vercel.json</code>:</p>
+    <div class="code-block">{<br>&nbsp;&nbsp;"headers": [{<br>&nbsp;&nbsp;&nbsp;&nbsp;"source": "/(.*)",<br>&nbsp;&nbsp;&nbsp;&nbsp;"headers": [<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ "key": "X-Frame-Options", "value": "DENY" },<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ "key": "X-Content-Type-Options", "value": "nosniff" },<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains" },<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }<br>&nbsp;&nbsp;&nbsp;&nbsp;]<br>&nbsp;&nbsp;}]<br>}</div>
+
+    <h3>Korak 3: Proverite CORS i autentifikaciju</h3>
+    <p>Otvorite svaku API rutu i proverite: (1) da li ima auth proveru, (2) da li CORS dozvoljava samo vas domen, (3) da li validira ulazne podatke na serveru.</p>
+
+    <h3>Korak 4: Pokrenite automatski sken</h3>
+    <p>Otvorite <a href="./index.html">nas skener</a>, unesite URL i za 30 sekundi dobijate izvestaj sa 240+ provera. Svaki pronadjen problem ima objasnjenje i uputstvo za popravku.</p>
+
+    <h2 id="sec5">5. Kako da AI generise bezbedniji kod</h2>
+    <p>AI alati generisu ono sto trazite. Ako u promptu ne pomenete bezbednost, nema je. Evo kako da promenite to:</p>
+
+    <h3>5.1. Bezbednosni kontekst u promptu</h3>
+    <p>Umesto: <em>&ldquo;Napravi mi API za korisnike&rdquo;</em></p>
+    <p>Napiste: <em>&ldquo;Napravi mi API za korisnike. Koristi environment varijable za sve tajne. Dodaj autentifikaciju na sve rute. Validiraj sve ulazne podatke sa Zod/Pydantic. Podesi CORS samo na moj domen. Dodaj rate limiting.&rdquo;</em></p>
+
+    <h3>5.2. Project-level pravila</h3>
+    <p>Ako koristite Cursor, napravite <code>.cursorrules</code> fajl. Za Claude Code, koristite <code>CLAUDE.md</code>. Primer:</p>
+    <div class="code-block"><span class="comment"># CLAUDE.md — bezbednosna pravila za projekat</span><br><br><span class="comment">## Bezbednosna pravila</span><br>- NIKAD ne hardkoduj API kljuceve, lozinke ili tokene u kod<br>- Koristi environment varijable za sve tajne<br>- Svaka API ruta mora imati autentifikaciju<br>- Validiraj SVE ulazne podatke na serveru<br>- CORS: dozvoli samo https://mojsajt.rs<br>- Dodaj rate limiting na sve javne endpointe<br>- Ne vracaj detaljne greske u produkciji</div>
+
+    <h3>5.3. Pregledajte kriticne delove</h3>
+    <p>Ne morate pregledati svaku liniju. Fokusirajte se na 4 kriticna mesta:</p>
+    <ul>
+      <li><strong>Autentifikacija</strong> &mdash; login, registracija, sesije, tokeni</li>
+      <li><strong>API rute</strong> &mdash; ko moze da pristupi, sta moze da uradi</li>
+      <li><strong>Baza podataka</strong> &mdash; SQL upiti, pristupni kljucevi</li>
+      <li><strong>Placanje</strong> &mdash; Stripe/LemonSqueezy kljucevi, webhook verifikacija</li>
+    </ul>
+
+    <h2 id="sec6">6. Detaljni vodici</h2>
+    <p>Svaka tema iz ove serije ima poseban vodic sa konkretnim konfiguracijama, primerima koda i korak-po-korak uputstvima:</p>
+    <div class="article-cards">
+      <a href="./blog-ai-code-security.html" class="article-card">
+        <span class="card-tag">AI Kod</span>
+        <h3>Da li je AI-generisan kod bezbedan?</h3>
+        <p>Konkretna analiza: sta Cursor, Copilot i Claude Code rade pogresno, realni primeri ranjivosti, i kako da ih ispravite pre deploy-a.</p>
+      </a>
+      <a href="./blog-nextjs-security.html" class="article-card">
+        <span class="card-tag">Next.js</span>
+        <h3>Next.js bezbednosna checklista</h3>
+        <p>12-stavki checklista sa konkretnim konfiguracijama: next.config.js headeri, NEXT_PUBLIC_ zamka, Server Actions auth, middleware zastita.</p>
+      </a>
+      <a href="./blog-vercel-security.html" class="article-card">
+        <span class="card-tag">Vercel</span>
+        <h3>Vercel deploy &mdash; bezbednosna podesavanja</h3>
+        <p>Tacan vercel.json za headere, env vars best practices, preview deploy zastita, i greske koje 90% korisnika pravi.</p>
+      </a>
+      <a href="./blog-wordpress-security.html" class="article-card">
+        <span class="card-tag">WordPress</span>
+        <h3>WordPress bezbednosni sken</h3>
+        <p>Zasto je 90% hakovanih CMS-ova WordPress, sta nas skener detektuje (wp-config, xmlrpc, debug.log), i 12-stavki checklista.</p>
+      </a>
+      <a href="./blog-first-website-security.html" class="article-card">
+        <span class="card-tag">Pocetnici</span>
+        <h3>Kako da zastitis svoj prvi sajt</h3>
+        <p>5-minutni vodic za potpune pocetnike: SSL, headeri, lozinke, backup — sve objasnjeno bez tehnickog zargona.</p>
+      </a>
+    </div>
+
+    <h2 id="sec7">7. Vas sajt — proverite odmah</h2>
+    <p>Najbrzi nacin da saznate da li vas vibe coding projekat ima bezbednosne propuste: pokrenite automatski sken. Unesite URL, sacekajte 30 sekundi, dobijte kompletni izvestaj.</p>
+    <p>Skener proverava sve sto smo opisali u ovom vodicu: SSL konfiguraciju, bezbednosne headere, otvorene portove, osetljive fajlove, CORS, DNS bezbednost, cookie konfiguraciju, i jos 230+ drugih stavki. Besplatno, bez registracije, bez modifikacije vaseg sajta.</p>
+    <a href="./index.html" class="cta">Skeniraj sajt besplatno &rarr;</a>
+  </div>
+
+  <!-- ENGLISH -->
+  <div class="en">
+    <h1>Security for Vibe Coding Projects</h1>
+    <p class="subtitle">Complete guide: how to keep AI-generated projects secure before you ship them</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">40%</div><div class="stat-label">of AI code has security flaws (Stanford 2024)</div></div>
+      <div class="stat-card"><div class="stat-num">6</div><div class="stat-label">Detailed guides in this series</div></div>
+      <div class="stat-card"><div class="stat-num">240+</div><div class="stat-label">Automated scanner checks</div></div>
+      <div class="stat-card"><div class="stat-num">30s</div><div class="stat-label">Time for a complete scan</div></div>
+    </div>
+
+    <h2 id="sec1e">1. What is vibe coding and why it exploded</h2>
+    <p>Andrej Karpathy &mdash; former head of AI at Tesla and OpenAI co-founder &mdash; coined the term &ldquo;vibe coding&rdquo; in February 2025 in a viral tweet. He described using AI to build a complete project without writing code manually: &ldquo;I just see things, say things, run things, and copy-paste things, and it mostly works.&rdquo;</p>
+    <p>Today millions of people use this approach. Tools like Cursor, Claude Code, GitHub Copilot, Replit Agent, Bolt, Lovable, and v0 let you describe what you want in plain language, and AI generates a complete project &mdash; frontend, backend, database, deploy configuration.</p>
+    <p>The problem? Most of these projects end up online with serious security flaws. Not because AI tools are bad, but because they focus on one thing: <strong>making the app work</strong>. Security is almost always secondary.</p>
+    <div class="callout callout-danger"><strong>Real example:</strong> A user asked Cursor to build a SaaS app with Stripe payments. AI generated a functional system in 2 hours. The problem: the Stripe secret key was hardcoded in frontend code, API routes had no authentication, and CORS was set to <code>*</code>. Anyone who opened DevTools could see the Stripe key and make fraudulent transactions.</div>
+
+    <h2 id="sec2e">2. The 5 most common flaws in vibe coding projects</h2>
+    <p>Based on analysis of thousands of scanned sites and academic research (Stanford, NYU, UIUC), here are the flaws sorted by frequency and severity:</p>
+
+    <h3>2.1. Hardcoded API keys in code</h3>
+    <p>This is flaw #1. When you tell AI &ldquo;connect to Supabase&rdquo; or &ldquo;add Stripe payments,&rdquo; it often places keys directly in JavaScript files. Result: anyone who opens your site and presses F12 can see all your secrets.</p>
+    <div class="comparison">
+      <div class="bad">
+        <div class="label">How AI often generates</div>
+        <div class="code-block"><span class="comment">// api.js — AI output</span><br><span class="keyword">const</span> supabase = createClient(<br>&nbsp;&nbsp;<span class="danger">'https://xyz.supabase.co'</span>,<br>&nbsp;&nbsp;<span class="danger">'eyJhbGciOiJIUzI1NiIs...service_role_key'</span><br>);</div>
+      </div>
+      <div class="good">
+        <div class="label">How it should be</div>
+        <div class="code-block"><span class="comment">// api.js — fixed</span><br><span class="keyword">const</span> supabase = createClient(<br>&nbsp;&nbsp;<span class="safe">process.env.SUPABASE_URL</span>,<br>&nbsp;&nbsp;<span class="safe">process.env.SUPABASE_SERVICE_KEY</span><br>);</div>
+      </div>
+    </div>
+    <p><strong>Why this is critical:</strong> Automated bots scan GitHub in real-time. GitGuardian reports that over 10,000 new secrets are published daily on public repositories. Even if you delete a secret from code, it remains in Git history forever &mdash; unless you use <code>git filter-branch</code> or BFG Repo-Cleaner.</p>
+
+    <h3>2.2. Missing security HTTP headers</h3>
+    <p>This is our scanner&rsquo;s most common finding &mdash; affecting 85% of all scanned sites. AI tools never add security headers because they focus on functionality, not infrastructure.</p>
+    <p>Headers you must have:</p>
+    <table>
+      <tr><th>Header</th><th>What it does</th><th>Example value</th></tr>
+      <tr><td>Content-Security-Policy</td><td>Controls where scripts and styles can load from</td><td><code>default-src 'self'; script-src 'self'</code></td></tr>
+      <tr><td>Strict-Transport-Security</td><td>Forces HTTPS, protects against downgrade attacks</td><td><code>max-age=63072000; includeSubDomains</code></td></tr>
+      <tr><td>X-Frame-Options</td><td>Protects against clickjacking (iframe embedding)</td><td><code>DENY</code></td></tr>
+      <tr><td>X-Content-Type-Options</td><td>Prevents MIME sniffing</td><td><code>nosniff</code></td></tr>
+      <tr><td>Referrer-Policy</td><td>Controls what URL info is sent to other sites</td><td><code>strict-origin-when-cross-origin</code></td></tr>
+      <tr><td>Permissions-Policy</td><td>Blocks access to camera, microphone, geolocation</td><td><code>camera=(), microphone=(), geolocation=()</code></td></tr>
+    </table>
+    <p>The exact <code>vercel.json</code> configuration for these headers is described in our <a href="./blog-vercel-security.html">Vercel security guide</a>.</p>
+
+    <h3>2.3. CORS wildcard — doors wide open</h3>
+    <p>When AI builds an API, it often sets <code>Access-Control-Allow-Origin: *</code> so &ldquo;everything works&rdquo; in development. The problem: in production, this means any website on the internet can send requests to your API on behalf of your users.</p>
+    <div class="comparison">
+      <div class="bad">
+        <div class="label">Dangerous (AI default)</div>
+        <div class="code-block"><span class="comment"># FastAPI — AI output</span><br>app.add_middleware(<br>&nbsp;&nbsp;CORSMiddleware,<br>&nbsp;&nbsp;allow_origins=[<span class="danger">"*"</span>],<br>&nbsp;&nbsp;allow_methods=[<span class="danger">"*"</span>],<br>)</div>
+      </div>
+      <div class="good">
+        <div class="label">Secure</div>
+        <div class="code-block"><span class="comment"># FastAPI — fixed</span><br>app.add_middleware(<br>&nbsp;&nbsp;CORSMiddleware,<br>&nbsp;&nbsp;allow_origins=[<span class="safe">"https://mysite.com"</span>],<br>&nbsp;&nbsp;allow_methods=[<span class="safe">"GET","POST"</span>],<br>)</div>
+      </div>
+    </div>
+
+    <h3>2.4. Missing server-side validation</h3>
+    <p>AI builds beautiful forms with frontend validation (required, minLength, email format). But the backend often accepts data without any checks. An attacker bypasses frontend validation in 5 seconds &mdash; just open Postman or curl.</p>
+    <p><strong>Rule:</strong> Every frontend validation is for user experience. Every backend validation is for security. Both must exist.</p>
+
+    <h3>2.5. Missing authentication on API routes</h3>
+    <p>AI generates API routes that look complete &mdash; they return data, write to the database &mdash; but don&rsquo;t check <em>who</em> is sending the request. Anyone who knows the URL can read and modify other users&rsquo; data (IDOR vulnerability).</p>
+    <div class="callout callout-warn"><strong>Test:</strong> Open DevTools &rarr; Network tab &rarr; look at your site&rsquo;s API calls. Can you change the user ID in the URL and get someone else&rsquo;s data? If yes, you have an IDOR vulnerability.</div>
+
+    <h2 id="sec3e">3. How AI tools make these mistakes</h2>
+    <p>To understand why this happens, you need to understand how AI models generate code:</p>
+    <ul>
+      <li><strong>Trained on public code</strong> &mdash; GitHub, Stack Overflow, documentation. That code often contains bad practices, outdated patterns, and direct flaws. AI learns and reproduces them.</li>
+      <li><strong>Optimized for &ldquo;works&rdquo;</strong> &mdash; AI models get positive signals when code compiles and runs. Security isn&rsquo;t tested in that cycle.</li>
+      <li><strong>Context is limited</strong> &mdash; AI doesn&rsquo;t see your infrastructure, deployment environment, or who will use the API. It generates code that works in isolation.</li>
+      <li><strong>User doesn&rsquo;t ask for security</strong> &mdash; when you say &ldquo;build a login page,&rdquo; AI builds a login. It doesn&rsquo;t add rate limiting, 2FA, CSRF protection, or brute-force detection unless you explicitly ask.</li>
+    </ul>
+
+    <h2 id="sec4e">4. Security workflow for vibe coding</h2>
+    <p>This is the workflow we recommend for every vibe coding project. It&rsquo;s not complicated &mdash; 4 steps before every deploy:</p>
+
+    <h3>Step 1: Check for secrets</h3>
+    <p>Before pushing to GitHub, search your entire project for hardcoded keys:</p>
+    <div class="code-block"><span class="comment"># Search project for potential secrets</span><br>grep -r "sk_live\|sk_test\|apikey\|secret\|password\|token" --include="*.js" --include="*.ts" --include="*.py" --include="*.env"<br><br><span class="comment"># Verify .env is in .gitignore</span><br>cat .gitignore | grep ".env"</div>
+    <p>If you find anything &mdash; move it to a <code>.env</code> file and add <code>.env</code> to <code>.gitignore</code>.</p>
+
+    <h3>Step 2: Add security headers</h3>
+    <p>For Vercel projects, add to <code>vercel.json</code>:</p>
+    <div class="code-block">{<br>&nbsp;&nbsp;"headers": [{<br>&nbsp;&nbsp;&nbsp;&nbsp;"source": "/(.*)",<br>&nbsp;&nbsp;&nbsp;&nbsp;"headers": [<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ "key": "X-Frame-Options", "value": "DENY" },<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ "key": "X-Content-Type-Options", "value": "nosniff" },<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains" },<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }<br>&nbsp;&nbsp;&nbsp;&nbsp;]<br>&nbsp;&nbsp;}]<br>}</div>
+
+    <h3>Step 3: Check CORS and authentication</h3>
+    <p>Open every API route and verify: (1) it has an auth check, (2) CORS only allows your domain, (3) it validates input data on the server.</p>
+
+    <h3>Step 4: Run an automated scan</h3>
+    <p>Open <a href="./index.html">our scanner</a>, enter your URL, and in 30 seconds you get a report with 240+ checks. Every found issue includes an explanation and fix instructions.</p>
+
+    <h2 id="sec5e">5. How to make AI generate more secure code</h2>
+    <p>AI tools generate what you ask for. If you don&rsquo;t mention security in your prompt, there won&rsquo;t be any. Here&rsquo;s how to change that:</p>
+
+    <h3>5.1. Security context in prompts</h3>
+    <p>Instead of: <em>&ldquo;Build me a user API&rdquo;</em></p>
+    <p>Write: <em>&ldquo;Build me a user API. Use environment variables for all secrets. Add authentication to all routes. Validate all input with Zod/Pydantic. Set CORS to my domain only. Add rate limiting.&rdquo;</em></p>
+
+    <h3>5.2. Project-level rules</h3>
+    <p>If you use Cursor, create a <code>.cursorrules</code> file. For Claude Code, use <code>CLAUDE.md</code>. Example:</p>
+    <div class="code-block"><span class="comment"># CLAUDE.md — security rules for project</span><br><br><span class="comment">## Security Rules</span><br>- NEVER hardcode API keys, passwords, or tokens in code<br>- Use environment variables for all secrets<br>- Every API route must have authentication<br>- Validate ALL input data on the server<br>- CORS: allow only https://mysite.com<br>- Add rate limiting to all public endpoints<br>- Don't return detailed errors in production</div>
+
+    <h3>5.3. Review critical parts</h3>
+    <p>You don&rsquo;t have to review every line. Focus on 4 critical areas:</p>
+    <ul>
+      <li><strong>Authentication</strong> &mdash; login, registration, sessions, tokens</li>
+      <li><strong>API routes</strong> &mdash; who can access, what they can do</li>
+      <li><strong>Database</strong> &mdash; SQL queries, access keys</li>
+      <li><strong>Payments</strong> &mdash; Stripe/LemonSqueezy keys, webhook verification</li>
+    </ul>
+
+    <h2 id="sec6e">6. Detailed guides</h2>
+    <p>Each topic in this series has a dedicated guide with concrete configurations, code examples, and step-by-step instructions:</p>
+    <div class="article-cards">
+      <a href="./blog-ai-code-security.html" class="article-card">
+        <span class="card-tag">AI Code</span>
+        <h3>Is AI-generated code secure?</h3>
+        <p>Concrete analysis: what Cursor, Copilot, and Claude Code get wrong, real vulnerability examples, and how to fix them before deploy.</p>
+      </a>
+      <a href="./blog-nextjs-security.html" class="article-card">
+        <span class="card-tag">Next.js</span>
+        <h3>Next.js security checklist</h3>
+        <p>12-item checklist with concrete configurations: next.config.js headers, NEXT_PUBLIC_ trap, Server Actions auth, middleware protection.</p>
+      </a>
+      <a href="./blog-vercel-security.html" class="article-card">
+        <span class="card-tag">Vercel</span>
+        <h3>Vercel deploy &mdash; security settings</h3>
+        <p>Exact vercel.json for headers, env vars best practices, preview deploy protection, and mistakes 90% of users make.</p>
+      </a>
+      <a href="./blog-wordpress-security.html" class="article-card">
+        <span class="card-tag">WordPress</span>
+        <h3>WordPress security scan</h3>
+        <p>Why 90% of hacked CMSs are WordPress, what our scanner detects (wp-config, xmlrpc, debug.log), and a 12-item checklist.</p>
+      </a>
+      <a href="./blog-first-website-security.html" class="article-card">
+        <span class="card-tag">Beginners</span>
+        <h3>How to secure your first website</h3>
+        <p>5-minute guide for complete beginners: SSL, headers, passwords, backup &mdash; everything explained without technical jargon.</p>
+      </a>
+    </div>
+
+    <h2 id="sec7e">7. Your site — check it now</h2>
+    <p>The fastest way to find out if your vibe coding project has security flaws: run an automated scan. Enter your URL, wait 30 seconds, get a complete report.</p>
+    <p>The scanner checks everything we described in this guide: SSL configuration, security headers, open ports, sensitive files, CORS, DNS security, cookie configuration, and 230+ other items. Free, no registration, no modification to your site.</p>
+    <a href="./index.html" class="cta">Scan your site for free &rarr;</a>
+  </div>
+
+  </main>
+</div>
+<script src="./blog-common.js" defer></script>
+</body>
+</html>

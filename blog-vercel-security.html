@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vercel Security Settings / Vercel bezbednosna podesavanja — Deploy · Headers · Env Vars · Preview</title>
+  <meta name="description" content="Complete Vercel security guide: security headers configuration, environment variables, preview deploy protection, edge functions, DDoS protection. · Kompletni vodic za Vercel bezbednost: headeri, env varijable, preview deploy zastita.">
+  <meta name="keywords" content="vercel security, vercel bezbednost, vercel security headers, vercel environment variables, vercel preview deploy, vercel edge functions, vercel DDoS protection, vercel CORS, vercel CSP, secure vercel deploy, vercel.json security, vercel deploy settings, vercel production security, vercel WAF, vercel firewall">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <link rel="canonical" href="https://security-skener.gradovi.rs/blog-vercel-security.html">
+  <link rel="alternate" hreflang="sr" href="https://security-skener.gradovi.rs/blog-vercel-security.html">
+  <link rel="alternate" hreflang="x-default" href="https://security-skener.gradovi.rs/blog-vercel-security.html">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Vercel Security Settings / Vercel bezbednosna podesavanja">
+  <meta property="og:description" content="How to properly configure Vercel for production. · Kako pravilno podesiti Vercel za produkciju.">
+  <meta property="og:url" content="https://security-skener.gradovi.rs/blog-vercel-security.html">
+  <meta property="og:site_name" content="Web Security Scanner">
+  <meta property="og:locale" content="sr_RS">
+  <meta property="og:locale:alternate" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Vercel Security Settings">
+  <meta name="twitter:description" content="Secure your Vercel deployment. · Zastitite Vercel deploy.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Vercel bezbednosna podesavanja — Kompletni vodic za vibe kodere",
+    "author": {"@type": "Person", "name": "Toske", "url": "https://toske-programer.web.app"},
+    "publisher": {"@type": "Organization", "name": "Web Security Scanner"},
+    "datePublished": "2026-04-19",
+    "dateModified": "2026-04-19",
+    "description": "Complete Vercel security guide for vibe coders: vercel.json headers, env vars, preview deploy protection, edge functions, WAF, and deploy checklist.",
+    "inLanguage": ["sr-RS", "en-US"],
+    "keywords": "vercel security, vercel security headers, vercel environment variables, vercel deploy security, vibe coding security",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://security-skener.gradovi.rs/blog-vercel-security.html"
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Da li je Vercel bezbedan za hosting?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Vercel je jedna od najbezbednijih hosting platformi. Automatski obezbedjuje SSL/HTTPS, DDoS zastitu i edge network. Ali morate sami konfigurisati bezbednosne headere u vercel.json, env varijable u dashboardu i pristup preview deployima."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Kako da dodam security headere na Vercel?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Kreirajte vercel.json fajl u root-u projekta sa headers sekcijom. Dodajte CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy i Cross-Origin-Opener-Policy za sve rute koristeci source pattern '/(.*)'."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Sta je Content-Security-Policy i zasto mi treba na Vercel-u?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "CSP je header koji browseru kaze odakle sme da ucitava skripte, stilove, slike i druge resurse. Bez CSP-a, napadac koji nadje XSS ranjivost moze da ucita malicioznu skriptu sa bilo kog domena. Vercel ne dodaje CSP automatski — morate ga sami definisati u vercel.json."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is Vercel secure for hosting?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Vercel is one of the most secure hosting platforms. It automatically provides SSL/HTTPS, DDoS protection, and edge network. But you must configure security headers in vercel.json, env variables in the dashboard, and preview deploy access yourself."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I add security headers on Vercel?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Create a vercel.json file in your project root with a headers section. Add CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, and Cross-Origin-Opener-Policy for all routes using source pattern '/(.*)'."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is Content-Security-Policy and why do I need it on Vercel?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "CSP is a header that tells the browser where it can load scripts, styles, images, and other resources from. Without CSP, an attacker who finds an XSS vulnerability can load malicious scripts from any domain. Vercel does not add CSP automatically — you must define it yourself in vercel.json."
+        }
+      }
+    ]
+  }
+  </script>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+  <style>
+    .code-block{background:#111528;border:1px solid #252a4a;border-radius:8px;padding:1.2rem 1.4rem;overflow-x:auto;font-family:'Courier New',monospace;font-size:.88rem;line-height:1.7;margin:1rem 0 1.5rem}
+    .code-block .comment{color:#6b7394}
+    .code-block .keyword{color:#c792ea}
+    .code-block .string{color:#c3e88d}
+    .code-block .danger{color:#ff5572;background:rgba(255,85,114,.08);padding:0 3px;border-radius:3px}
+    .code-block .safe{color:#82aaff;background:rgba(130,170,255,.08);padding:0 3px;border-radius:3px}
+    .comparison{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0 1.5rem}
+    .comparison .bad,.comparison .good{border-radius:8px;padding:1rem 1.2rem;font-size:.88rem}
+    .comparison .bad{background:rgba(255,85,114,.06);border:1px solid #ff5572}
+    .comparison .good{background:rgba(130,170,255,.06);border:1px solid #82aaff}
+    .comparison .bad::before{content:"BAD";display:block;color:#ff5572;font-weight:700;font-size:.75rem;margin-bottom:.5rem;letter-spacing:.05em}
+    .comparison .good::before{content:"GOOD";display:block;color:#82aaff;font-weight:700;font-size:.75rem;margin-bottom:.5rem;letter-spacing:.05em}
+    @media(max-width:700px){.comparison{grid-template-columns:1fr}}
+    table{width:100%;border-collapse:collapse;margin:1rem 0 1.5rem;font-size:.9rem}
+    th{background:#151833;color:#a78bfa;text-align:left;padding:.7rem .8rem;border-bottom:2px solid #252a4a}
+    td{padding:.6rem .8rem;border-bottom:1px solid #1a1f3a}
+    tr:hover td{background:rgba(167,139,250,.04)}
+  </style>
+</head>
+<body>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr"><div class="timeline-title">Sadrzaj</div><ol id="timeline-sr"></ol></div>
+    <div class="en"><div class="timeline-title">Contents</div><ol id="timeline-en"></ol></div>
+  </aside>
+  <main class="blog-content">
+
+  <!-- ======================== SERBIAN ======================== -->
+  <div class="sr">
+    <h1>Vercel deploy &mdash; bezbednosna podesavanja za vibe kodere</h1>
+    <p class="subtitle">Kompletni vodic: vercel.json headeri sa pravim vrednostima, env varijable po okruzenjima, preview deploy zastita, Edge/Serverless bezbednost, domen/SSL i deploy checklista</p>
+
+    <h2 id="sec1">1. Zasto Vercel zahteva dodatnu konfiguraciju</h2>
+    <p>Vercel je najpopularnija platforma za deploy Next.js, React i statik sajtova. AI alati kao Cursor, Claude Code i v0 generisu kod koji se deploy-uje na Vercel jednim klikom. Problem je sto taj jedan klik ne ukljucuje bezbednosnu konfiguraciju.</p>
+    <p>Evo sta Vercel <strong>automatski obezbedjuje</strong>: SSL/TLS sertifikat (Let's Encrypt), globalni CDN sa edge lokacijama, DDoS zastitu na mreznom nivou, automatske build-ove iz Git-a i izolaciju izmedju projekata.</p>
+    <p>A evo sta Vercel <strong>ne radi za vas</strong>: ne dodaje nijedan bezbednosni HTTP header, ne enkriptuje env varijable po defaultu, ne ogranicava pristup preview deploy-ovima i ne implementira rate limiting na vasim API rutama.</p>
+    <div class="callout"><strong>Kljucna razlika:</strong> Vercel vam daje bezbednu infrastrukturu. Ali konfiguracija vase aplikacije &mdash; headeri, tajne, pristup &mdash; je potpuno vasa odgovornost. Ovaj vodic pokriva svaku od tih stavki sa tacnim konfiguracijama koje mozete kopirati.</div>
+
+    <h2 id="sec2">2. Bezbednosni headeri u vercel.json &mdash; kompletna konfiguracija</h2>
+    <p>Ovo je najvazniji deo. Vercel ne dodaje nijedan security header po defaultu. Bez <code>vercel.json</code> fajla, vas sajt nema CSP, nema HSTS, nema clickjacking zastitu &mdash; nista. Ovo je produkcijski vercel.json sa svim potrebnim headerima:</p>
+
+    <div class="code-block">
+<span class="keyword">{</span>
+  <span class="string">"headers"</span>: [
+    <span class="keyword">{</span>
+      <span class="string">"source"</span>: <span class="string">"/(.*)"</span>,
+      <span class="comment">// Primenjuje se na SVE rute</span>
+      <span class="string">"headers"</span>: [
+        <span class="keyword">{</span>
+          <span class="string">"key"</span>: <span class="safe">"Strict-Transport-Security"</span>,
+          <span class="string">"value"</span>: <span class="safe">"max-age=31536000; includeSubDomains; preload"</span>
+        <span class="keyword">}</span>,
+        <span class="keyword">{</span>
+          <span class="string">"key"</span>: <span class="safe">"Content-Security-Policy"</span>,
+          <span class="string">"value"</span>: <span class="safe">"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self'; frame-ancestors 'none'"</span>
+        <span class="keyword">}</span>,
+        <span class="keyword">{</span>
+          <span class="string">"key"</span>: <span class="safe">"X-Frame-Options"</span>,
+          <span class="string">"value"</span>: <span class="safe">"DENY"</span>
+        <span class="keyword">}</span>,
+        <span class="keyword">{</span>
+          <span class="string">"key"</span>: <span class="safe">"X-Content-Type-Options"</span>,
+          <span class="string">"value"</span>: <span class="safe">"nosniff"</span>
+        <span class="keyword">}</span>,
+        <span class="keyword">{</span>
+          <span class="string">"key"</span>: <span class="safe">"Referrer-Policy"</span>,
+          <span class="string">"value"</span>: <span class="safe">"strict-origin-when-cross-origin"</span>
+        <span class="keyword">}</span>,
+        <span class="keyword">{</span>
+          <span class="string">"key"</span>: <span class="safe">"Permissions-Policy"</span>,
+          <span class="string">"value"</span>: <span class="safe">"camera=(), microphone=(), geolocation=()"</span>
+        <span class="keyword">}</span>,
+        <span class="keyword">{</span>
+          <span class="string">"key"</span>: <span class="safe">"Cross-Origin-Opener-Policy"</span>,
+          <span class="string">"value"</span>: <span class="safe">"same-origin"</span>
+        <span class="keyword">}</span>
+      ]
+    <span class="keyword">}</span>
+  ]
+<span class="keyword">}</span>
+    </div>
+
+    <p>Svaki header ima specificnu ulogu:</p>
+    <ul>
+      <li><strong>Strict-Transport-Security</strong> &mdash; kaze browseru da vas sajt koristi iskljucivo HTTPS narednih 365 dana (<code>max-age=31536000</code>). <code>includeSubDomains</code> stiti i subdomene. <code>preload</code> omogucava upis u hromovu ugradjenu listu.</li>
+      <li><strong>Content-Security-Policy</strong> &mdash; najslozeniji i najvazniji header. <code>default-src 'self'</code> znaci da se svi resursi ucitavaju samo sa vaseg domena. Svaka direktiva (<code>script-src</code>, <code>style-src</code>, <code>font-src</code>) precizira izuzetke. <code>frame-ancestors 'none'</code> zamenjuje X-Frame-Options u modernim browserima.</li>
+      <li><strong>X-Frame-Options: DENY</strong> &mdash; sprecava da bilo koji sajt ucita vas sajt u iframe. Stiti od clickjacking napada gde napadac postavi nevidljivi iframe preko dugmeta.</li>
+      <li><strong>X-Content-Type-Options: nosniff</strong> &mdash; sprecava browser da &ldquo;pogadja&rdquo; MIME tip. Bez ovoga, browser moze da interpretira tekstualni fajl kao JavaScript.</li>
+      <li><strong>Referrer-Policy</strong> &mdash; <code>strict-origin-when-cross-origin</code> salje pun URL samo za isti origin; za spoljne linkove salje samo domen. Stiti od curenja URL parametara (tokeni, session ID-jevi).</li>
+      <li><strong>Permissions-Policy</strong> &mdash; eksplicitno onemogucava pristup kameri, mikrofonu i geolokaciji. Cak i ako napadac ubaci skriptu, ne moze aktivirati ove senzore.</li>
+      <li><strong>Cross-Origin-Opener-Policy</strong> &mdash; izoluje vas tab od drugih tabova. Sprecava Spectre-tipa napade gde drugi tab pristupa memoriji vaseg taba.</li>
+    </ul>
+
+    <h3>CSP za sajt sa Google Ads</h3>
+    <p>Ako koristite Google AdSense, morate prosiriti CSP da dozvoli Google domene. Ovo je cesta situacija za vibe kodere koji monetizuju projekte:</p>
+    <div class="code-block">
+<span class="string">"value"</span>: <span class="safe">"default-src 'self'; script-src 'self' 'unsafe-inline' https://*.googlesyndication.com https://*.g.doubleclick.net https://*.adtrafficquality.google https://www.googletagmanager.com https://fundingchoicesmessages.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.googlesyndication.com https://fundingchoicesmessages.google.com; frame-src https://*.googlesyndication.com https://*.g.doubleclick.net; frame-ancestors 'self'"</span>
+    </div>
+    <p>Obratite paznju: <code>frame-ancestors</code> se menja iz <code>'none'</code> u <code>'self'</code> jer Google Ads koriste iframe-ove. Takodje, <code>'unsafe-inline'</code> za script-src je neophodan za AdSense jer Google ubacuje inline skripte &mdash; ali to oslabljuje XSS zastitu.</p>
+
+    <div class="callout callout-warn"><strong>Proverite headere odmah:</strong> Pokrenite nas <a href="./index.html">skener</a> na vasem Vercel sajtu. Za 30 sekundi cete videti tacno koji headeri nedostaju i sa kojim vrednostima.</div>
+
+    <h2 id="sec3">3. Environment varijable &mdash; Production vs Preview vs Development</h2>
+    <p>Vercel ima tri okruzenja, i svako treba da ima razlicite tajne. Evo kako sistem funkcionise:</p>
+
+    <table>
+      <tr><th>Okruzenje</th><th>Kada se koristi</th><th>Primer env var</th></tr>
+      <tr><td data-label="Okruzenje"><strong>Production</strong></td><td data-label="Kada">Deploy sa main/master branch-a</td><td data-label="Primer"><code>DATABASE_URL=postgres://prod-host/mydb</code></td></tr>
+      <tr><td data-label="Okruzenje"><strong>Preview</strong></td><td data-label="Kada">Svaki PR i svaki push na ne-main branch</td><td data-label="Primer"><code>DATABASE_URL=postgres://staging-host/mydb</code></td></tr>
+      <tr><td data-label="Okruzenje"><strong>Development</strong></td><td data-label="Kada"><code>vercel dev</code> na lokalnoj masini</td><td data-label="Primer"><code>DATABASE_URL=postgres://localhost/mydb</code></td></tr>
+    </table>
+
+    <p>Kritična pravila za env varijable:</p>
+    <ul>
+      <li><strong>Nikad isti API kljuc za Production i Preview</strong> &mdash; preview deploy-ovi imaju javne URL-ove. Ako koriste produkcijski Stripe kljuc, svako ko otvori preview moze pokrenuti naplate.</li>
+      <li><strong>Oznacite osetljive varijable kao Sensitive</strong> &mdash; u Vercel dashboardu, kliknite ikonu oka pored varijable. Sensitive varijable se enkriptuju, ne prikazuju se u logovima i ne mogu se procitati kroz Vercel API.</li>
+      <li><strong>NEXT_PUBLIC_ prefiks je opaasan</strong> &mdash; sve varijable sa ovim prefiksom se ugradjuju u JavaScript bundle i vidljive su svima koji otvore DevTools. Nikad ne stavljajte tajne u NEXT_PUBLIC_ varijable.</li>
+      <li><strong>.env fajl ide u .gitignore</strong> &mdash; lokalni .env fajl je samo za development. Ako zavrsi u Git-u, tajne su zauvek u istoriji cak i ako ga obrisete.</li>
+    </ul>
+
+    <div class="comparison">
+      <div class="bad">
+        <code>NEXT_PUBLIC_STRIPE_SECRET=sk_live_xxx</code><br>
+        Tajni kljuc sa NEXT_PUBLIC_ prefiksom &mdash; vidljiv svima u browser-u
+      </div>
+      <div class="good">
+        <code>STRIPE_SECRET_KEY=sk_live_xxx</code> (server-side only)<br>
+        <code>NEXT_PUBLIC_STRIPE_PK=pk_live_xxx</code> (samo publishable key)
+      </div>
+    </div>
+
+    <div class="callout callout-danger"><strong>Cesta greska vibe kodera:</strong> AI genraise kod sa <code>process.env.NEXT_PUBLIC_DATABASE_URL</code>. Vi kopirate iz AI output-a, dodate u Vercel dashboard i ne primetite da je baza izlozena celom svetu. Uvek proverite da li varijabla zaista treba NEXT_PUBLIC_ prefiks.</div>
+
+    <h2 id="sec4">4. Preview deploy zastita</h2>
+    <p>Svaki pull request na GitHub-u automatski kreira preview deploy na Vercel-u. Ovaj deploy ima javni URL u formatu <code>project-git-branch-username.vercel.app</code>. Evo zasto je to rizik i kako da se zastitite:</p>
+
+    <p><strong>Problem 1: Javni pristup.</strong> Svako ko zna URL moze pristupiti. Google moze da ga indeksira. Bot-ovi mogu da ga skeniraju. Ako preview koristi produkcijski API, podaci su izlozeni.</p>
+
+    <p><strong>Problem 2: Zauvek dostupni.</strong> Svaki deploy kreira permanentan URL. Cak i kad zatvorite PR, stari deploy ostaje aktivan na unikatnom URL-u. Bagovi, test podaci i debug modovi ostaju online.</p>
+
+    <p><strong>Resenja po Vercel planu:</strong></p>
+    <ul>
+      <li><strong>Hobby (besplatan)</strong> &mdash; koristite razlicite env varijable za Preview okruzenje. Barem ce tajne biti izolovane.</li>
+      <li><strong>Pro ($20/mesec)</strong> &mdash; ukljucite Vercel Authentication (Settings &rarr; Deployment Protection). Samo ulogovani clanovi tima mogu pristupiti preview deploy-ovima.</li>
+      <li><strong>Pro sa password-om</strong> &mdash; alternativno, postavite password protection za preview URL-ove (Settings &rarr; Deployment Protection &rarr; Password).</li>
+      <li><strong>Enterprise</strong> &mdash; SAML SSO integracija za pristup preview deploy-ovima samo autorizovanim zaposlenima.</li>
+    </ul>
+
+    <div class="comparison">
+      <div class="bad">
+        Production i Preview koriste isti <code>OPENAI_API_KEY</code> &mdash; svako ko otvori preview URL moze trositi vas budzet
+      </div>
+      <div class="good">
+        Production: <code>OPENAI_API_KEY=sk-prod-xxx</code><br>
+        Preview: <code>OPENAI_API_KEY=sk-test-xxx</code> (sa rate limitom od $5)
+      </div>
+    </div>
+
+    <h2 id="sec5">5. Serverless i Edge funkcije &mdash; bezbednost</h2>
+    <p>Vercel izvrsava server-side kod kroz dva runtime-a: Serverless (Node.js) i Edge (V8 isolates). Oba imaju specificne bezbednosne zahteve.</p>
+
+    <h3>Serverless funkcije (api/ direktorijum ili Route Handlers)</h3>
+    <ul>
+      <li><strong>Timeout</strong> &mdash; Hobby plan ima limit od 10 sekundi, Pro od 60 sekundi. Podesite <code>maxDuration</code> u vercel.json da sprecite beskonacne zahteve koji trose resurse.</li>
+      <li><strong>Memorija</strong> &mdash; default je 1024 MB. Za API rute koje ne procesiraju fajlove, smanjite na 256 MB u vercel.json (<code>"memory": 256</code>) da ogranicite potencijalne zloupotrebe.</li>
+      <li><strong>Cold start tajne</strong> &mdash; env varijable se ucitavaju pri svakom cold start-u. Nikad ih ne ispisujte u <code>console.log()</code> jer se logovi cuvaju i vidljivi su u Vercel dashboardu.</li>
+      <li><strong>CORS</strong> &mdash; Vercel ne dodaje CORS headere automatski. Ako vasa API ruta treba da odgovara frontend-u na drugom domenu, morate rucno dodati <code>Access-Control-Allow-Origin</code> header.</li>
+    </ul>
+
+    <div class="code-block">
+<span class="comment">// vercel.json — ogranicenje za serverless funkcije</span>
+<span class="keyword">{</span>
+  <span class="string">"functions"</span>: <span class="keyword">{</span>
+    <span class="string">"api/**/*.js"</span>: <span class="keyword">{</span>
+      <span class="string">"maxDuration"</span>: <span class="safe">15</span>,
+      <span class="comment">// sekunde — dovoljno za vecinu API poziva</span>
+      <span class="string">"memory"</span>: <span class="safe">256</span>
+      <span class="comment">// MB — ogranicava potrosnju resursa</span>
+    <span class="keyword">}</span>
+  <span class="keyword">}</span>
+<span class="keyword">}</span>
+    </div>
+
+    <h3>Edge funkcije</h3>
+    <ul>
+      <li><strong>Manji napadni vektor</strong> &mdash; Edge runtime nema pristup fajl sistemu, child procesima ni Node.js modulima. To ga cini inherentno bezbednijim.</li>
+      <li><strong>Globalna distribucija</strong> &mdash; izvrsava se na najblizem edge cvor-u korisniku. Idealno za autentifikaciju, redirect-e i rate limiting middleware.</li>
+      <li><strong>Ogranicenja</strong> &mdash; max 128 KB velicina koda posle kompresije, nema native modula (bcrypt ne radi), ogrannicen skup Web API-ja.</li>
+    </ul>
+
+    <div class="code-block">
+<span class="comment">// middleware.ts — Edge middleware za rate limiting</span>
+<span class="keyword">import</span> { NextResponse } <span class="keyword">from</span> <span class="string">'next/server'</span>;
+
+<span class="keyword">export const</span> config = { matcher: <span class="string">'/api/:path*'</span> };
+
+<span class="keyword">export function</span> middleware(request) {
+  <span class="comment">// Proverite rate limit pre nego sto zahtev stigne do serverless funkcije</span>
+  <span class="keyword">const</span> ip = request.headers.get(<span class="string">'x-forwarded-for'</span>);
+  <span class="comment">// ...implementacija sa Upstash Redis ili KV store-om</span>
+  <span class="keyword">return</span> NextResponse.next();
+}
+    </div>
+
+    <h2 id="sec6">6. Domen i SSL konfiguracija</h2>
+    <p>Vercel automatski izdaje SSL sertifikat za svaki domen, ali postoje dodatne stvari koje morate podesiti za potpunu zastitu:</p>
+
+    <ul>
+      <li><strong>Prilagodjen domen</strong> &mdash; koristite vlastiti domen umesto <code>.vercel.app</code>. Pored profesionalnog izgleda, vlastiti domen vam daje kontrolu nad DNS zapisima i omogucava CAA i DNSSEC.</li>
+      <li><strong>CAA DNS zapis</strong> &mdash; ogranicava koji Certificate Authority sme da izda sertifikat za vas domen. Vercel koristi Let's Encrypt, pa dodajte: <code>CAA 0 issue "letsencrypt.org"</code>. Ovo sprecava da neko drugi izda lazni sertifikat za vas domen.</li>
+      <li><strong>HSTS preload lista</strong> &mdash; nakon sto ste sigurni da vam HTTPS radi korektno, podnesite vas domen na <code>hstspreload.org</code>. Ovo ugradjuje vas domen u Chrome/Firefox/Edge tako da se nikad ne uspostavlja HTTP konekcija, cak ni pri prvoj poseti.</li>
+      <li><strong>www redirect</strong> &mdash; konfigurisite Vercel da redirektuje <code>www.vasdomen.rs</code> na <code>vasdomen.rs</code> (ili obrnuto). Konzistentan domen sprecava cookie konfuziju i pomaze SEO.</li>
+      <li><strong>DNSSEC</strong> &mdash; omogucite DNSSEC kod vaseg DNS provajdera (Cloudflare ga ukljucuje jednim klikom). Stiti od DNS spoofing-a gde napadac preusmeri vas domen na maliciozan server.</li>
+    </ul>
+
+    <div class="comparison">
+      <div class="bad">
+        Bez CAA zapisa &mdash; bilo koji CA moze da izda sertifikat za vas domen<br>
+        Bez HSTS &mdash; prva poseta ide preko HTTP-a, podlozna MITM napadu
+      </div>
+      <div class="good">
+        <code>CAA 0 issue "letsencrypt.org"</code> &mdash; samo Let's Encrypt<br>
+        HSTS sa preload &mdash; browser nikad ne pokusa HTTP
+      </div>
+    </div>
+
+    <h2 id="sec7">7. Vercel Firewall, WAF i rate limiting</h2>
+    <p>Vercel ima vise slojeva zastite na infrastrukturnom nivou, ali svaki plan nudi razlicite mogucnosti:</p>
+
+    <table>
+      <tr><th>Funkcija</th><th>Hobby</th><th>Pro</th><th>Enterprise</th></tr>
+      <tr><td data-label="Funkcija">DDoS zastita (L3/L4)</td><td data-label="Hobby">Da</td><td data-label="Pro">Da</td><td data-label="Enterprise">Da</td></tr>
+      <tr><td data-label="Funkcija">Edge Network</td><td data-label="Hobby">Da</td><td data-label="Pro">Da</td><td data-label="Enterprise">Da</td></tr>
+      <tr><td data-label="Funkcija">Vercel Firewall (pravila)</td><td data-label="Hobby">&mdash;</td><td data-label="Pro">Da</td><td data-label="Enterprise">Da</td></tr>
+      <tr><td data-label="Funkcija">WAF (upravljana pravila)</td><td data-label="Hobby">&mdash;</td><td data-label="Pro">&mdash;</td><td data-label="Enterprise">Da</td></tr>
+      <tr><td data-label="Funkcija">Bot zastita</td><td data-label="Hobby">Osnovna</td><td data-label="Pro">Napredna</td><td data-label="Enterprise">Napredna</td></tr>
+      <tr><td data-label="Funkcija">IP blokiranje</td><td data-label="Hobby">&mdash;</td><td data-label="Pro">Da</td><td data-label="Enterprise">Da</td></tr>
+      <tr><td data-label="Funkcija">Geo-blokiranje</td><td data-label="Hobby">&mdash;</td><td data-label="Pro">Da</td><td data-label="Enterprise">Da</td></tr>
+    </table>
+
+    <p><strong>Rate limiting morate sami implementirati.</strong> Vercel infrastruktura stiti od volumetrickih DDoS napada, ali ne ogranicava broj zahteva po korisniku na vasim API rutama. Bez rate limiting-a, napadac moze:</p>
+    <ul>
+      <li>Pokusavati brute-force login beskonacno puta</li>
+      <li>Slati hiljade zahteva na API koji trosi OpenAI kredite</li>
+      <li>Preplaviti kontakt formu spam porukama</li>
+    </ul>
+
+    <p>Najjednostavniji pristup za vibe kodere: koristite <strong>Upstash Redis</strong> (besplatan tier) sa <code>@upstash/ratelimit</code> paketom u Edge middleware-u. Alternativno, ako koristite Cloudflare ispred Vercel-a, Cloudflare ima ugradjeni rate limiting.</p>
+
+    <h2 id="sec8">8. Checklista za bezbedan Vercel deploy</h2>
+    <p>Koristite ovu tabelu pre svakog production deploy-a. Kolona &ldquo;Kako proveriti&rdquo; vam kaze tacno gde da pogledate:</p>
+
+    <table>
+      <tr><th>#</th><th>Stavka</th><th>Kako proveriti</th></tr>
+      <tr><td data-label="#">1</td><td data-label="Stavka">Security headeri u vercel.json</td><td data-label="Provera">Pokrenite <a href="./index.html">skener</a> &mdash; proverava svih 7 headera</td></tr>
+      <tr><td data-label="#">2</td><td data-label="Stavka">CSP definisan i testiran</td><td data-label="Provera">Otvorite DevTools &rarr; Console &mdash; ne sme biti CSP violation gresaka</td></tr>
+      <tr><td data-label="#">3</td><td data-label="Stavka">Env vars samo u Vercel dashboardu</td><td data-label="Provera">Settings &rarr; Environment Variables &mdash; proverite da su tajne tamo, ne u kodu</td></tr>
+      <tr><td data-label="#">4</td><td data-label="Stavka">Razliciti env za Production/Preview</td><td data-label="Provera">Kliknite na env var &rarr; pogledajte koja okruzenja su cekirana</td></tr>
+      <tr><td data-label="#">5</td><td data-label="Stavka">Sensitive flag na tajnama</td><td data-label="Provera">Settings &rarr; Env Vars &mdash; ikona oka pored svake osetljive varijable</td></tr>
+      <tr><td data-label="#">6</td><td data-label="Stavka">.env u .gitignore</td><td data-label="Provera"><code>git ls-files .env</code> &mdash; ako vrati rezultat, fajl je u repo-u</td></tr>
+      <tr><td data-label="#">7</td><td data-label="Stavka">Preview deploy zastita</td><td data-label="Provera">Settings &rarr; Deployment Protection &mdash; trebalo bi da pise "Vercel Authentication" ili "Password"</td></tr>
+      <tr><td data-label="#">8</td><td data-label="Stavka">Rate limiting na API rutama</td><td data-label="Provera">Posaljite 100 zahteva za 10 sekundi &mdash; ako svi prodju, nemate rate limit</td></tr>
+      <tr><td data-label="#">9</td><td data-label="Stavka">Build logovi bez tajni</td><td data-label="Provera">Deployments &rarr; kliknite poslednji &rarr; Build Logs &mdash; pretrazite za kljucne reci vaših tajni</td></tr>
+      <tr><td data-label="#">10</td><td data-label="Stavka">Bezbednosni sken posle deploy-a</td><td data-label="Provera">Pokrenite <a href="./index.html">Web Security Scanner</a> &mdash; proverava 110+ stavki za 30 sekundi</td></tr>
+    </table>
+
+    <div class="callout"><strong>Automatizacija:</strong> Dodajte nas skener u CI/CD pipeline. Posle svakog deploy-a, automatski pokrenite sken i dobijte izvestaj o nedostajucim headerima, SSL problemima i ostalim ranjivostima.</div>
+
+    <h2 id="sec9">9. Najcesce Vercel bezbednosne greske vibe kodera</h2>
+    <p>Ove greske vidimo u vecini Vercel deploy-ova koji nam stignu na skeniranje:</p>
+
+    <p><strong>Greska 1: Nula headera.</strong> Vercel ne dodaje nijedan header po defaultu. Kreirate React app, deploy-ujete, i sajt je online bez CSP-a, bez HSTS-a, bez icega. Napadacu je dovoljno da nadje jedan XSS i ucita eksternu skriptu.</p>
+
+    <p><strong>Greska 2: NEXT_PUBLIC_ tajne.</strong> AI alat generise <code>process.env.NEXT_PUBLIC_SUPABASE_SERVICE_KEY</code> i vi ne primetite. Service key ima admin pristup bazi &mdash; sad je u JavaScript bundle-u vidljiv svima.</p>
+
+    <p><strong>Greska 3: Isti env za sve.</strong> U zurbi, stavite produkcijski Stripe kljuc i za Preview. Kolega otvori PR, Vercel kreira preview, i sad test stranica moze da procesira prave naplate.</p>
+
+    <p><strong>Greska 4: Zaboravljeni preview URL-ovi.</strong> Napravite 50 PR-ova tokom razvoja. Svaki kreira permanentan URL. Stari deploy-ovi sa debug modom, test podacima i otvorenim admin panelima ostaju zauvek online.</p>
+
+    <p><strong>Greska 5: console.log(process.env).</strong> Za debug ispisete sve env varijable u konzolu. Build log cuva ovaj ispis, vidljiv svim clanovima tima u Vercel dashboardu.</p>
+
+    <p><strong>Greska 6: Nedostaje rate limiting.</strong> Deploy-ujete AI chatbot koji poziva OpenAI API. Bez rate limita, jedan korisnik moze da potrosi ceo mesecni budzet za 10 minuta.</p>
+
+    <a href="./index.html" class="cta">Skeniraj Vercel sajt &rarr;</a>
+    <p style="margin-top:2rem;"><a href="./blog-vibe-coding-security.html">&larr; Nazad na Vibe Coding vodice</a></p>
+  </div>
+
+  <!-- ======================== ENGLISH ======================== -->
+  <div class="en">
+    <h1>Vercel Deploy &mdash; Security Settings for Vibe Coders</h1>
+    <p class="subtitle">Complete guide: vercel.json headers with real values, environment variables per scope, preview deploy protection, Edge/Serverless security, domain/SSL, and deploy checklist</p>
+
+    <h2 id="sec1e">1. Why Vercel requires additional configuration</h2>
+    <p>Vercel is the most popular platform for deploying Next.js, React, and static sites. AI tools like Cursor, Claude Code, and v0 generate code that deploys to Vercel with a single click. The problem is that single click does not include security configuration.</p>
+    <p>Here is what Vercel <strong>automatically provides</strong>: SSL/TLS certificates (Let's Encrypt), global CDN with edge locations, DDoS protection at the network level, automatic builds from Git, and isolation between projects.</p>
+    <p>And here is what Vercel <strong>does not do for you</strong>: it adds zero security HTTP headers, does not encrypt env variables by default, does not restrict access to preview deployments, and does not implement rate limiting on your API routes.</p>
+    <div class="callout"><strong>Key distinction:</strong> Vercel gives you secure infrastructure. But configuring your application &mdash; headers, secrets, access control &mdash; is entirely your responsibility. This guide covers each of those items with exact configurations you can copy.</div>
+
+    <h2 id="sec2e">2. Security headers in vercel.json &mdash; complete configuration</h2>
+    <p>This is the most important section. Vercel adds zero security headers by default. Without a <code>vercel.json</code> file, your site has no CSP, no HSTS, no clickjacking protection &mdash; nothing. Here is a production-ready vercel.json with all required headers:</p>
+
+    <div class="code-block">
+<span class="keyword">{</span>
+  <span class="string">"headers"</span>: [
+    <span class="keyword">{</span>
+      <span class="string">"source"</span>: <span class="string">"/(.*)"</span>,
+      <span class="comment">// Applies to ALL routes</span>
+      <span class="string">"headers"</span>: [
+        <span class="keyword">{</span>
+          <span class="string">"key"</span>: <span class="safe">"Strict-Transport-Security"</span>,
+          <span class="string">"value"</span>: <span class="safe">"max-age=31536000; includeSubDomains; preload"</span>
+        <span class="keyword">}</span>,
+        <span class="keyword">{</span>
+          <span class="string">"key"</span>: <span class="safe">"Content-Security-Policy"</span>,
+          <span class="string">"value"</span>: <span class="safe">"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self'; frame-ancestors 'none'"</span>
+        <span class="keyword">}</span>,
+        <span class="keyword">{</span>
+          <span class="string">"key"</span>: <span class="safe">"X-Frame-Options"</span>,
+          <span class="string">"value"</span>: <span class="safe">"DENY"</span>
+        <span class="keyword">}</span>,
+        <span class="keyword">{</span>
+          <span class="string">"key"</span>: <span class="safe">"X-Content-Type-Options"</span>,
+          <span class="string">"value"</span>: <span class="safe">"nosniff"</span>
+        <span class="keyword">}</span>,
+        <span class="keyword">{</span>
+          <span class="string">"key"</span>: <span class="safe">"Referrer-Policy"</span>,
+          <span class="string">"value"</span>: <span class="safe">"strict-origin-when-cross-origin"</span>
+        <span class="keyword">}</span>,
+        <span class="keyword">{</span>
+          <span class="string">"key"</span>: <span class="safe">"Permissions-Policy"</span>,
+          <span class="string">"value"</span>: <span class="safe">"camera=(), microphone=(), geolocation=()"</span>
+        <span class="keyword">}</span>,
+        <span class="keyword">{</span>
+          <span class="string">"key"</span>: <span class="safe">"Cross-Origin-Opener-Policy"</span>,
+          <span class="string">"value"</span>: <span class="safe">"same-origin"</span>
+        <span class="keyword">}</span>
+      ]
+    <span class="keyword">}</span>
+  ]
+<span class="keyword">}</span>
+    </div>
+
+    <p>Each header serves a specific purpose:</p>
+    <ul>
+      <li><strong>Strict-Transport-Security</strong> &mdash; tells the browser your site uses HTTPS exclusively for the next 365 days (<code>max-age=31536000</code>). <code>includeSubDomains</code> protects subdomains too. <code>preload</code> enables inclusion in Chrome's built-in list.</li>
+      <li><strong>Content-Security-Policy</strong> &mdash; the most complex and most important header. <code>default-src 'self'</code> means all resources load only from your domain. Each directive (<code>script-src</code>, <code>style-src</code>, <code>font-src</code>) specifies exceptions. <code>frame-ancestors 'none'</code> replaces X-Frame-Options in modern browsers.</li>
+      <li><strong>X-Frame-Options: DENY</strong> &mdash; prevents any site from loading your site in an iframe. Protects against clickjacking where an attacker places an invisible iframe over a button.</li>
+      <li><strong>X-Content-Type-Options: nosniff</strong> &mdash; prevents the browser from &ldquo;guessing&rdquo; MIME types. Without this, a browser might interpret a text file as JavaScript.</li>
+      <li><strong>Referrer-Policy</strong> &mdash; <code>strict-origin-when-cross-origin</code> sends the full URL only for same-origin requests; for external links it sends only the domain. Prevents leaking URL parameters (tokens, session IDs).</li>
+      <li><strong>Permissions-Policy</strong> &mdash; explicitly disables access to camera, microphone, and geolocation. Even if an attacker injects a script, they cannot activate these sensors.</li>
+      <li><strong>Cross-Origin-Opener-Policy</strong> &mdash; isolates your tab from other tabs. Prevents Spectre-type attacks where another tab accesses your tab's memory.</li>
+    </ul>
+
+    <h3>CSP for a site with Google Ads</h3>
+    <p>If you use Google AdSense, you must expand your CSP to allow Google domains. This is a common scenario for vibe coders monetizing projects:</p>
+    <div class="code-block">
+<span class="string">"value"</span>: <span class="safe">"default-src 'self'; script-src 'self' 'unsafe-inline' https://*.googlesyndication.com https://*.g.doubleclick.net https://*.adtrafficquality.google https://www.googletagmanager.com https://fundingchoicesmessages.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.googlesyndication.com https://fundingchoicesmessages.google.com; frame-src https://*.googlesyndication.com https://*.g.doubleclick.net; frame-ancestors 'self'"</span>
+    </div>
+    <p>Note: <code>frame-ancestors</code> changes from <code>'none'</code> to <code>'self'</code> because Google Ads uses iframes. Also, <code>'unsafe-inline'</code> for script-src is required by AdSense because Google injects inline scripts &mdash; but this weakens XSS protection.</p>
+
+    <div class="callout callout-warn"><strong>Check your headers now:</strong> Run our <a href="./index.html">scanner</a> on your Vercel site. In 30 seconds you will see exactly which headers are missing and with what values.</div>
+
+    <h2 id="sec3e">3. Environment variables &mdash; Production vs Preview vs Development</h2>
+    <p>Vercel has three environment scopes, and each should have different secrets. Here is how the system works:</p>
+
+    <table>
+      <tr><th>Scope</th><th>When used</th><th>Example env var</th></tr>
+      <tr><td data-label="Scope"><strong>Production</strong></td><td data-label="When">Deploy from main/master branch</td><td data-label="Example"><code>DATABASE_URL=postgres://prod-host/mydb</code></td></tr>
+      <tr><td data-label="Scope"><strong>Preview</strong></td><td data-label="When">Every PR and every push to non-main branch</td><td data-label="Example"><code>DATABASE_URL=postgres://staging-host/mydb</code></td></tr>
+      <tr><td data-label="Scope"><strong>Development</strong></td><td data-label="When"><code>vercel dev</code> on local machine</td><td data-label="Example"><code>DATABASE_URL=postgres://localhost/mydb</code></td></tr>
+    </table>
+
+    <p>Critical rules for environment variables:</p>
+    <ul>
+      <li><strong>Never share API keys between Production and Preview</strong> &mdash; preview deploys have public URLs. If they use your production Stripe key, anyone who opens the preview can trigger real charges.</li>
+      <li><strong>Mark sensitive variables as Sensitive</strong> &mdash; in the Vercel dashboard, click the eye icon next to the variable. Sensitive variables are encrypted, hidden from logs, and cannot be read via the Vercel API.</li>
+      <li><strong>NEXT_PUBLIC_ prefix is dangerous</strong> &mdash; any variable with this prefix gets embedded into the JavaScript bundle and is visible to anyone who opens DevTools. Never put secrets in NEXT_PUBLIC_ variables.</li>
+      <li><strong>.env file goes in .gitignore</strong> &mdash; the local .env file is for development only. If it ends up in Git, secrets are in the history forever even if you delete the file.</li>
+    </ul>
+
+    <div class="comparison">
+      <div class="bad">
+        <code>NEXT_PUBLIC_STRIPE_SECRET=sk_live_xxx</code><br>
+        Secret key with NEXT_PUBLIC_ prefix &mdash; visible to everyone in the browser
+      </div>
+      <div class="good">
+        <code>STRIPE_SECRET_KEY=sk_live_xxx</code> (server-side only)<br>
+        <code>NEXT_PUBLIC_STRIPE_PK=pk_live_xxx</code> (publishable key only)
+      </div>
+    </div>
+
+    <div class="callout callout-danger"><strong>Common vibe coder mistake:</strong> An AI tool generates <code>process.env.NEXT_PUBLIC_SUPABASE_SERVICE_KEY</code> and you copy it without noticing. The service key has admin access to your database &mdash; now it is in the JavaScript bundle visible to everyone.</div>
+
+    <h2 id="sec4e">4. Preview deploy protection</h2>
+    <p>Every pull request on GitHub automatically creates a preview deploy on Vercel. This deploy has a public URL in the format <code>project-git-branch-username.vercel.app</code>. Here is why this is a risk and how to protect yourself:</p>
+
+    <p><strong>Problem 1: Public access.</strong> Anyone who knows the URL can access it. Google can index it. Bots can scan it. If the preview uses production APIs, your data is exposed.</p>
+
+    <p><strong>Problem 2: Permanently available.</strong> Every deploy creates a permanent URL. Even when you close the PR, the old deploy remains active on its unique URL. Bugs, test data, and debug modes stay online forever.</p>
+
+    <p><strong>Solutions by Vercel plan:</strong></p>
+    <ul>
+      <li><strong>Hobby (free)</strong> &mdash; use different env variables for the Preview scope. At minimum, secrets will be isolated.</li>
+      <li><strong>Pro ($20/month)</strong> &mdash; enable Vercel Authentication (Settings &rarr; Deployment Protection). Only logged-in team members can access preview deploys.</li>
+      <li><strong>Pro with password</strong> &mdash; alternatively, set password protection for preview URLs (Settings &rarr; Deployment Protection &rarr; Password).</li>
+      <li><strong>Enterprise</strong> &mdash; SAML SSO integration for preview deploy access restricted to authorized employees only.</li>
+    </ul>
+
+    <div class="comparison">
+      <div class="bad">
+        Production and Preview use the same <code>OPENAI_API_KEY</code> &mdash; anyone who opens the preview URL can spend your budget
+      </div>
+      <div class="good">
+        Production: <code>OPENAI_API_KEY=sk-prod-xxx</code><br>
+        Preview: <code>OPENAI_API_KEY=sk-test-xxx</code> (with $5 rate limit)
+      </div>
+    </div>
+
+    <h2 id="sec5e">5. Serverless and Edge functions &mdash; security</h2>
+    <p>Vercel executes server-side code through two runtimes: Serverless (Node.js) and Edge (V8 isolates). Both have specific security requirements.</p>
+
+    <h3>Serverless functions (api/ directory or Route Handlers)</h3>
+    <ul>
+      <li><strong>Timeout</strong> &mdash; Hobby plan has a 10-second limit, Pro has 60 seconds. Set <code>maxDuration</code> in vercel.json to prevent infinite requests that exhaust resources.</li>
+      <li><strong>Memory</strong> &mdash; default is 1024 MB. For API routes that do not process files, reduce to 256 MB in vercel.json (<code>"memory": 256</code>) to limit potential abuse.</li>
+      <li><strong>Cold start secrets</strong> &mdash; env variables load on every cold start. Never print them with <code>console.log()</code> because logs are stored and visible in the Vercel dashboard.</li>
+      <li><strong>CORS</strong> &mdash; Vercel does not add CORS headers automatically. If your API route needs to respond to a frontend on a different domain, you must manually add the <code>Access-Control-Allow-Origin</code> header.</li>
+    </ul>
+
+    <div class="code-block">
+<span class="comment">// vercel.json — serverless function constraints</span>
+<span class="keyword">{</span>
+  <span class="string">"functions"</span>: <span class="keyword">{</span>
+    <span class="string">"api/**/*.js"</span>: <span class="keyword">{</span>
+      <span class="string">"maxDuration"</span>: <span class="safe">15</span>,
+      <span class="comment">// seconds — sufficient for most API calls</span>
+      <span class="string">"memory"</span>: <span class="safe">256</span>
+      <span class="comment">// MB — limits resource consumption</span>
+    <span class="keyword">}</span>
+  <span class="keyword">}</span>
+<span class="keyword">}</span>
+    </div>
+
+    <h3>Edge functions</h3>
+    <ul>
+      <li><strong>Smaller attack surface</strong> &mdash; Edge runtime has no access to the file system, child processes, or Node.js modules. This makes it inherently more secure.</li>
+      <li><strong>Global distribution</strong> &mdash; executes on the nearest edge node to the user. Ideal for authentication, redirects, and rate limiting middleware.</li>
+      <li><strong>Limitations</strong> &mdash; max 128 KB code size after compression, no native modules (bcrypt does not work), limited set of Web APIs.</li>
+    </ul>
+
+    <div class="code-block">
+<span class="comment">// middleware.ts — Edge middleware for rate limiting</span>
+<span class="keyword">import</span> { NextResponse } <span class="keyword">from</span> <span class="string">'next/server'</span>;
+
+<span class="keyword">export const</span> config = { matcher: <span class="string">'/api/:path*'</span> };
+
+<span class="keyword">export function</span> middleware(request) {
+  <span class="comment">// Check rate limit before the request reaches the serverless function</span>
+  <span class="keyword">const</span> ip = request.headers.get(<span class="string">'x-forwarded-for'</span>);
+  <span class="comment">// ...implementation with Upstash Redis or KV store</span>
+  <span class="keyword">return</span> NextResponse.next();
+}
+    </div>
+
+    <h2 id="sec6e">6. Domain and SSL configuration</h2>
+    <p>Vercel automatically issues an SSL certificate for every domain, but there are additional steps you must take for complete protection:</p>
+
+    <ul>
+      <li><strong>Custom domain</strong> &mdash; use your own domain instead of <code>.vercel.app</code>. Beyond the professional appearance, a custom domain gives you control over DNS records and enables CAA and DNSSEC.</li>
+      <li><strong>CAA DNS record</strong> &mdash; restricts which Certificate Authority can issue certificates for your domain. Vercel uses Let's Encrypt, so add: <code>CAA 0 issue "letsencrypt.org"</code>. This prevents anyone else from issuing a fraudulent certificate for your domain.</li>
+      <li><strong>HSTS preload list</strong> &mdash; once you are confident HTTPS works correctly, submit your domain at <code>hstspreload.org</code>. This embeds your domain in Chrome/Firefox/Edge so an HTTP connection is never established, not even on the first visit.</li>
+      <li><strong>www redirect</strong> &mdash; configure Vercel to redirect <code>www.yourdomain.com</code> to <code>yourdomain.com</code> (or vice versa). A consistent domain prevents cookie confusion and helps SEO.</li>
+      <li><strong>DNSSEC</strong> &mdash; enable DNSSEC at your DNS provider (Cloudflare enables it with a single click). Protects against DNS spoofing where an attacker redirects your domain to a malicious server.</li>
+    </ul>
+
+    <div class="comparison">
+      <div class="bad">
+        No CAA record &mdash; any CA can issue a certificate for your domain<br>
+        No HSTS &mdash; first visit goes over HTTP, vulnerable to MITM
+      </div>
+      <div class="good">
+        <code>CAA 0 issue "letsencrypt.org"</code> &mdash; only Let's Encrypt<br>
+        HSTS with preload &mdash; browser never attempts HTTP
+      </div>
+    </div>
+
+    <h2 id="sec7e">7. Vercel Firewall, WAF, and rate limiting</h2>
+    <p>Vercel has multiple layers of protection at the infrastructure level, but each plan offers different capabilities:</p>
+
+    <table>
+      <tr><th>Feature</th><th>Hobby</th><th>Pro</th><th>Enterprise</th></tr>
+      <tr><td data-label="Feature">DDoS protection (L3/L4)</td><td data-label="Hobby">Yes</td><td data-label="Pro">Yes</td><td data-label="Enterprise">Yes</td></tr>
+      <tr><td data-label="Feature">Edge Network</td><td data-label="Hobby">Yes</td><td data-label="Pro">Yes</td><td data-label="Enterprise">Yes</td></tr>
+      <tr><td data-label="Feature">Vercel Firewall (rules)</td><td data-label="Hobby">&mdash;</td><td data-label="Pro">Yes</td><td data-label="Enterprise">Yes</td></tr>
+      <tr><td data-label="Feature">WAF (managed rules)</td><td data-label="Hobby">&mdash;</td><td data-label="Pro">&mdash;</td><td data-label="Enterprise">Yes</td></tr>
+      <tr><td data-label="Feature">Bot protection</td><td data-label="Hobby">Basic</td><td data-label="Pro">Advanced</td><td data-label="Enterprise">Advanced</td></tr>
+      <tr><td data-label="Feature">IP blocking</td><td data-label="Hobby">&mdash;</td><td data-label="Pro">Yes</td><td data-label="Enterprise">Yes</td></tr>
+      <tr><td data-label="Feature">Geo-blocking</td><td data-label="Hobby">&mdash;</td><td data-label="Pro">Yes</td><td data-label="Enterprise">Yes</td></tr>
+    </table>
+
+    <p><strong>You must implement rate limiting yourself.</strong> Vercel infrastructure protects against volumetric DDoS attacks, but it does not limit the number of requests per user on your API routes. Without rate limiting, an attacker can:</p>
+    <ul>
+      <li>Attempt brute-force login infinitely</li>
+      <li>Send thousands of requests to an API that consumes OpenAI credits</li>
+      <li>Flood your contact form with spam messages</li>
+    </ul>
+
+    <p>The simplest approach for vibe coders: use <strong>Upstash Redis</strong> (free tier) with the <code>@upstash/ratelimit</code> package in Edge middleware. Alternatively, if you use Cloudflare in front of Vercel, Cloudflare has built-in rate limiting.</p>
+
+    <h2 id="sec8e">8. Secure Vercel deploy checklist</h2>
+    <p>Use this table before every production deploy. The &ldquo;How to verify&rdquo; column tells you exactly where to look:</p>
+
+    <table>
+      <tr><th>#</th><th>Item</th><th>How to verify</th></tr>
+      <tr><td data-label="#">1</td><td data-label="Item">Security headers in vercel.json</td><td data-label="Verify">Run our <a href="./index.html">scanner</a> &mdash; checks all 7 headers</td></tr>
+      <tr><td data-label="#">2</td><td data-label="Item">CSP defined and tested</td><td data-label="Verify">Open DevTools &rarr; Console &mdash; no CSP violation errors should appear</td></tr>
+      <tr><td data-label="#">3</td><td data-label="Item">Env vars only in Vercel dashboard</td><td data-label="Verify">Settings &rarr; Environment Variables &mdash; verify secrets are there, not in code</td></tr>
+      <tr><td data-label="#">4</td><td data-label="Item">Different env for Production/Preview</td><td data-label="Verify">Click on env var &rarr; check which scopes are selected</td></tr>
+      <tr><td data-label="#">5</td><td data-label="Item">Sensitive flag on secrets</td><td data-label="Verify">Settings &rarr; Env Vars &mdash; eye icon next to each sensitive variable</td></tr>
+      <tr><td data-label="#">6</td><td data-label="Item">.env in .gitignore</td><td data-label="Verify"><code>git ls-files .env</code> &mdash; if it returns a result, the file is in the repo</td></tr>
+      <tr><td data-label="#">7</td><td data-label="Item">Preview deploy protection</td><td data-label="Verify">Settings &rarr; Deployment Protection &mdash; should say "Vercel Authentication" or "Password"</td></tr>
+      <tr><td data-label="#">8</td><td data-label="Item">Rate limiting on API routes</td><td data-label="Verify">Send 100 requests in 10 seconds &mdash; if all pass, you have no rate limit</td></tr>
+      <tr><td data-label="#">9</td><td data-label="Item">Build logs without secrets</td><td data-label="Verify">Deployments &rarr; click latest &rarr; Build Logs &mdash; search for your secret keywords</td></tr>
+      <tr><td data-label="#">10</td><td data-label="Item">Security scan after deploy</td><td data-label="Verify">Run <a href="./index.html">Web Security Scanner</a> &mdash; checks 110+ items in 30 seconds</td></tr>
+    </table>
+
+    <div class="callout"><strong>Automation:</strong> Add our scanner to your CI/CD pipeline. After every deploy, automatically run a scan and get a report on missing headers, SSL issues, and other vulnerabilities.</div>
+
+    <h2 id="sec9e">9. Most common Vercel security mistakes by vibe coders</h2>
+    <p>These are the mistakes we see in the majority of Vercel deployments that come through our scanner:</p>
+
+    <p><strong>Mistake 1: Zero headers.</strong> Vercel adds no headers by default. You create a React app, deploy it, and the site is live without CSP, without HSTS, without anything. All an attacker needs is one XSS to load an external script.</p>
+
+    <p><strong>Mistake 2: NEXT_PUBLIC_ secrets.</strong> An AI tool generates <code>process.env.NEXT_PUBLIC_SUPABASE_SERVICE_KEY</code> and you copy it without noticing. The service key has admin access to your database &mdash; now it is in the JavaScript bundle visible to everyone.</p>
+
+    <p><strong>Mistake 3: Same env for everything.</strong> In a rush, you set the production Stripe key for Preview too. A colleague opens a PR, Vercel creates a preview, and now a test page can process real charges.</p>
+
+    <p><strong>Mistake 4: Forgotten preview URLs.</strong> You create 50 PRs during development. Each creates a permanent URL. Old deploys with debug mode, test data, and open admin panels stay online forever.</p>
+
+    <p><strong>Mistake 5: console.log(process.env).</strong> For debugging you print all env variables to the console. The build log stores this output, visible to all team members in the Vercel dashboard.</p>
+
+    <p><strong>Mistake 6: Missing rate limiting.</strong> You deploy an AI chatbot that calls the OpenAI API. Without rate limits, a single user can exhaust your entire monthly budget in 10 minutes.</p>
+
+    <a href="./index.html" class="cta">Scan your Vercel site &rarr;</a>
+    <p style="margin-top:2rem;"><a href="./blog-vibe-coding-security.html">&larr; Back to Vibe Coding guides</a></p>
+  </div>
+
+  </main>
+</div>
+<script src="./blog-common.js" defer></script>
+</body>
+</html>

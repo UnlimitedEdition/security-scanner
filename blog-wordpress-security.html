@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WordPress Security Scan / WordPress bezbednosni sken — Ranjivosti · Plugini · Zastita · Skeniranje</title>
+  <meta name="description" content="WordPress security guide: why WordPress is the #1 attack target, common vulnerabilities, plugin risks, how to scan and protect your WordPress site. · WordPress bezbednosni vodic: zasto je WordPress meta br.1, ceste ranjivosti, rizici plugina, skeniranje.">
+  <meta name="keywords" content="wordpress security, wordpress bezbednost, wordpress security scan, wordpress ranjivosti, wordpress plugin security, wordpress hack, wordpress zastita, wordpress malware, wordpress security checklist, wordpress bezbednosni sken, wordpress vulnerability scanner, wordpress hack zastita, wp security, secure wordpress, wordpress security audit, wordpress security guide, wp-config security, htaccess security, wordpress hardening">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <link rel="canonical" href="https://security-skener.gradovi.rs/blog-wordpress-security.html">
+  <link rel="alternate" hreflang="sr" href="https://security-skener.gradovi.rs/blog-wordpress-security.html">
+  <link rel="alternate" hreflang="x-default" href="https://security-skener.gradovi.rs/blog-wordpress-security.html">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="WordPress Security Scan / WordPress bezbednosni sken">
+  <meta property="og:description" content="Why WordPress is the #1 target and how to protect it. · Zasto je WordPress meta br.1 i kako ga zastititi.">
+  <meta property="og:url" content="https://security-skener.gradovi.rs/blog-wordpress-security.html">
+  <meta property="og:site_name" content="Web Security Scanner">
+  <meta property="og:locale" content="sr_RS">
+  <meta property="og:locale:alternate" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="WordPress Security Scan">
+  <meta name="twitter:description" content="Scan and protect your WordPress site. · Skenirajte i zastitite WordPress sajt.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "WordPress bezbednosni sken — Kompletni vodic za zastitu",
+    "author": {"@type": "Person", "name": "Toske", "url": "https://toske-programer.web.app"},
+    "publisher": {"@type": "Organization", "name": "Web Security Scanner"},
+    "datePublished": "2026-04-19",
+    "dateModified": "2026-04-19",
+    "description": "WordPress security guide: common vulnerabilities, plugin risks, hardening configurations, how to scan and protect your WordPress site.",
+    "inLanguage": ["sr-RS", "en-US"],
+    "keywords": "wordpress security, wordpress vulnerability scan, wordpress plugin security, wordpress hack protection, wp-config hardening, htaccess security",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://security-skener.gradovi.rs/blog-wordpress-security.html"
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Zasto je WordPress cesta meta napada?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "WordPress pokrece 43% svih sajtova na internetu, sto ga cini najatraktivnijom metom. Vecina napada koristi zastarele plugine, slabe lozinke i podrazumevane konfiguracije."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Kako da skeniram WordPress sajt za ranjivosti?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Koristite nas besplatni Web Security Scanner koji proverava SSL, bezbednosne headere, otvorene portove, osetljive fajlove i 240+ drugih stavki. Sken traje 30 sekundi bez registracije."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Sta treba da sadrzi wp-config.php za bezbednost?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "wp-config.php treba da ima onemoguceno editovanje fajlova (DISALLOW_FILE_EDIT), promenjen database prefix, unikatne bezbednosne kljuceve, forsirani SSL za admin panel, i ogranicene revizije postova."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Why is WordPress a frequent attack target?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "WordPress powers 43% of all websites on the internet, making it the most attractive target. Most attacks exploit outdated plugins, weak passwords, and default configurations."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How to scan a WordPress site for vulnerabilities?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Use our free Web Security Scanner which checks SSL, security headers, open ports, sensitive files, and 240+ other items. Scan takes 30 seconds with no registration."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What security hardening should wp-config.php include?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "wp-config.php should disable file editing (DISALLOW_FILE_EDIT), use a changed database prefix, unique security keys, force SSL for admin, and limit post revisions."
+        }
+      }
+    ]
+  }
+  </script>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+  <style>
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.8rem; margin: 1.2rem 0 1.8rem; }
+    .stat-card { background: #11142a; border: 1px solid #252a4a; border-radius: 10px; padding: 1rem; text-align: center; }
+    .stat-num { font-size: 1.6rem; font-weight: 800; color: #a78bfa; }
+    .stat-label { font-size: 0.75rem; color: #7b83a6; margin-top: 0.2rem; }
+    .code-block { background: #0d1025; border: 1px solid #252a4a; border-radius: 8px; padding: 1rem 1.2rem; margin: 1rem 0 1.4rem; overflow-x: auto; font-family: 'Courier New', monospace; font-size: 0.82rem; line-height: 1.7; color: #c8cdf0; }
+    .code-block .comment { color: #5c6590; }
+    .code-block .keyword { color: #a78bfa; }
+    .code-block .string { color: #6ee7b7; }
+    .code-block .filename { display: block; font-size: 0.72rem; color: #7b83a6; margin-bottom: 0.5rem; border-bottom: 1px solid #1a1e38; padding-bottom: 0.4rem; }
+    .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0 1.4rem; }
+    .comparison .bad, .comparison .good { border-radius: 8px; padding: 1rem; font-size: 0.85rem; }
+    .comparison .bad { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25); }
+    .comparison .good { background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.25); }
+    .comparison .bad::before { content: "Lose / Bad"; display: block; font-weight: 700; color: #ef4444; margin-bottom: 0.4rem; font-size: 0.75rem; text-transform: uppercase; }
+    .comparison .good::before { content: "Dobro / Good"; display: block; font-weight: 700; color: #22c55e; margin-bottom: 0.4rem; font-size: 0.75rem; text-transform: uppercase; }
+    .plugin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; margin: 1rem 0 1.4rem; }
+    .plugin-card { background: #11142a; border: 1px solid #252a4a; border-radius: 10px; padding: 1.1rem; }
+    .plugin-card h4 { color: #a78bfa; margin-bottom: 0.4rem; font-size: 0.95rem; }
+    .plugin-card .pros { color: #6ee7b7; font-size: 0.82rem; margin-bottom: 0.2rem; }
+    .plugin-card .cons { color: #f87171; font-size: 0.82rem; }
+    @media (max-width: 600px) {
+      .comparison { grid-template-columns: 1fr; }
+      .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr"><div class="timeline-title">Sadrzaj</div><ol id="timeline-sr"></ol></div>
+    <div class="en"><div class="timeline-title">Contents</div><ol id="timeline-en"></ol></div>
+  </aside>
+  <main class="blog-content">
+
+  <!-- ============================== SERBIAN ============================== -->
+  <div class="sr">
+    <h1>WordPress bezbednosni sken</h1>
+    <p class="subtitle">Zasto je WordPress najcesca meta napada, kako da ojacate konfiguraciju i sta nas skener proverava na WP sajtovima</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">43%</div><div class="stat-label">Svih sajtova koristi WordPress</div></div>
+      <div class="stat-card"><div class="stat-num">90%</div><div class="stat-label">Hakovanih CMS-ova je WordPress</div></div>
+      <div class="stat-card"><div class="stat-num">97%</div><div class="stat-label">Napada dolazi kroz plugine</div></div>
+      <div class="stat-card"><div class="stat-num">~50k</div><div class="stat-label">WP sajtova se hakuje dnevno</div></div>
+      <div class="stat-card"><div class="stat-num">240+</div><div class="stat-label">Provera naseg skenera</div></div>
+    </div>
+
+    <!-- SEC 1 -->
+    <h2 id="sec1">1. Zasto napadaci ciljaju WordPress?</h2>
+    <p>WordPress pokrece 43% svih web sajtova na internetu &mdash; to je skoro polovina celog weba. Ova dominacija ga cini najatraktivnijom metom za automatizovane napade iz prostog razloga: jedna ranjivost u popularnom pluginu potencijalno pogadja milione sajtova istovremeno.</p>
+    <p>Vecina WordPress napada nije ciljana. Automatski botovi neprekidno skeniraju internet trazeci poznate ranjivosti u popularnim pluginima i temama. Kad pronadju ranjiv sajt, eksploatacija je automatska &mdash; ne zahteva ljudsku intervenciju.</p>
+    <p>Dodatni faktori koji doprinose:</p>
+    <ul>
+      <li><strong>Ogroman ekosistem plugina</strong> &mdash; preko 60.000 plugina u zvanicnom repozitorijumu, od kojih mnogi imaju neujednacen kvalitet koda i bezbednosne prakse.</li>
+      <li><strong>Korisnici bez tehnickog znanja</strong> &mdash; WordPress privlaci korisnike koji nisu programeri, pa cesto zanemaruju azuriranja i bezbednosna podesavanja.</li>
+      <li><strong>Podrazumevana konfiguracija</strong> &mdash; sveza WordPress instalacija ima predvidive putanje (/wp-admin, /wp-login.php, /xmlrpc.php), poznate database tabele (wp_users, wp_posts), i otkrivenu verziju.</li>
+      <li><strong>Shared hosting</strong> &mdash; mnogi WP sajtovi su na jeftinom deljenom hostingu gde kompromitovanje jednog sajta moze ugroziti sve ostale na istom serveru.</li>
+    </ul>
+    <div class="callout callout-danger"><strong>Statistika (Sucuri 2025):</strong> WordPress cini preko 90% svih hakovanih CMS sajtova. 97% napada dolazi kroz ranjive plugine, ne kroz WordPress core koji je sam po sebi relativno bezbedan.</div>
+
+    <!-- SEC 2 -->
+    <h2 id="sec2">2. Najcesci vektori napada na WordPress</h2>
+    <p>Razumevanje nacina na koje se WP sajtovi kompromituju je kljucno za efikasnu odbranu. Evo sest najcescih vektora:</p>
+
+    <h3>2.1. Zastareli plugini i teme</h3>
+    <p>Ovo je uzrok broj 1 svih WordPress hakovanja. Plugini sa poznatim ranjivostima ostaju instalirani i neazurirani mesecima ili godinama. Botovi koriste javno objavljene CVE-ove (Common Vulnerabilities and Exposures) da automatski eksploatisu ove ranjivosti u roku od sati nakon objavljivanja zakrpe.</p>
+    <p>Posebno su opasni plugini koji su napusteni od strane autora &mdash; nemaju vise bezbednosne ispravke, ali ostaju instalirani na hiljadama sajtova.</p>
+    <p><strong>Zastita:</strong> Redovno azurirajte sve plugine i teme. Uklonite plugine koje ne koristite. Omogucite auto-update za manje plugine. Proveravajte da li plugin ima aktivnog autora pre instalacije.</p>
+
+    <h3>2.2. Slabe lozinke i brute-force</h3>
+    <p>WordPress login stranica (<code>/wp-login.php</code>) je podrazumevano dostupna svima. Bez rate limiting-a, napadaci mogu da probaju hiljade lozinki u minutu. Cesti targetirani korisnici: "admin", "administrator", ime domena.</p>
+    <p><strong>Zastita:</strong> Koristite jake lozinke (minimum 16 karaktera sa mesavinom slova, brojeva i specijalnih znakova), omogucite dvofaktorsku autentifikaciju (2FA), ogranicite pristup login stranici, i implementirajte rate limiting ili CAPTCHA nakon nekoliko neuspelih pokusaja.</p>
+
+    <h3>2.3. File inclusion ranjivosti (LFI/RFI)</h3>
+    <p>Mnogi plugini ucitavaju fajlove bez pravilne validacije korisnickog unosa, sto moze omoguciti ucitavanje neovlascenih fajlova sa servera (Local File Inclusion) ili sa eksternog izvora (Remote File Inclusion).</p>
+    <p><strong>Zastita:</strong> Koristite samo proverene plugine sa aktivnim odrzavanjem i velikim brojem instalacija. Nas skener proverava pristupacnost osetljivih fajlova i direktorijuma.</p>
+
+    <h3>2.4. SQL Injection</h3>
+    <p>Plugini koji ne koriste WordPress-ove ugradjene funkcije za rad sa bazom (<code>$wpdb-&gt;prepare()</code>) su potencijalno ranjivi. Ovo je posebno cest problem kod plugina koji imaju sopstvene forme za pretragu ili filtriranje podataka.</p>
+    <p><strong>Zastita:</strong> Koristite samo plugine koji prate WordPress Coding Standards. Proverite da li plugin koristi pripremljene upite (prepared statements). Redovno skenirajte sajt.</p>
+
+    <h3>2.5. Cross-Site Scripting (XSS)</h3>
+    <p>XSS ranjivosti nastaju kada sajt prikazuje korisnicki unos bez pravilnog filtriranja. Napadac moze ubaciti JavaScript kod koji se izvrsava u browseru posetilaca, kradeci kolacice ili preusmeravajuci korisnike.</p>
+    <p><strong>Zastita:</strong> Konfigurisite Content Security Policy (CSP) header. Koristite WordPress-ove <code>esc_html()</code>, <code>esc_attr()</code>, <code>wp_kses()</code> funkcije u temama i pluginima. Nas skener proverava CSP konfiguraciju.</p>
+
+    <h3>2.6. Nedostajuci bezbednosni headeri</h3>
+    <p>Vecina WordPress sajtova nema pravilno konfigurisane HTTP bezbednosne headere. Ovo ih ostavlja ranjivim na razlicite napade:</p>
+    <div class="comparison">
+      <div class="bad">
+        Bez headera:<br>
+        &bull; Nema CSP &rarr; XSS rizik<br>
+        &bull; Nema HSTS &rarr; Downgrade rizik<br>
+        &bull; Nema X-Frame-Options &rarr; Clickjacking<br>
+        &bull; Nema Referrer-Policy &rarr; Curenje URL-ova
+      </div>
+      <div class="good">
+        Sa headerima:<br>
+        &bull; CSP blokira neovlascene skripte<br>
+        &bull; HSTS forsira HTTPS<br>
+        &bull; X-Frame-Options brani od framinga<br>
+        &bull; Referrer-Policy kontrolise podatke
+      </div>
+    </div>
+    <p><strong>Zastita:</strong> Konfigurisite headere kroz <code>.htaccess</code>, nginx config, ili bezbednosni plugin. Pokrenite nas skener da vidite sta nedostaje.</p>
+
+    <!-- SEC 3 -->
+    <h2 id="sec3">3. Ojacavanje wp-config.php</h2>
+    <p>Fajl <code>wp-config.php</code> je srce WordPress konfiguracije. Pravilno podesavanje ovog fajla dramaticno smanjuje povrsinu napada. Evo najvaznijih izmena:</p>
+
+    <div class="code-block">
+      <span class="filename">wp-config.php &mdash; bezbednosno ojacavanje</span>
+<span class="comment">// 1. Onemogucite editovanje fajlova iz admin panela</span>
+<span class="keyword">define</span>(<span class="string">'DISALLOW_FILE_EDIT'</span>, <span class="keyword">true</span>);
+
+<span class="comment">// 2. Onemogucite instalaciju/azuriranje plugina iz admin panela</span>
+<span class="comment">//    (koristite ovo samo ako azurirate rucno preko FTP/SSH)</span>
+<span class="keyword">define</span>(<span class="string">'DISALLOW_FILE_MODS'</span>, <span class="keyword">true</span>);
+
+<span class="comment">// 3. Forsirajte SSL za admin panel</span>
+<span class="keyword">define</span>(<span class="string">'FORCE_SSL_ADMIN'</span>, <span class="keyword">true</span>);
+
+<span class="comment">// 4. Ogranicite revizije postova (smanjuje velicinu baze)</span>
+<span class="keyword">define</span>(<span class="string">'WP_POST_REVISIONS'</span>, <span class="keyword">5</span>);
+
+<span class="comment">// 5. Iskljucite debug mode na produkciji</span>
+<span class="keyword">define</span>(<span class="string">'WP_DEBUG'</span>, <span class="keyword">false</span>);
+<span class="keyword">define</span>(<span class="string">'WP_DEBUG_LOG'</span>, <span class="keyword">false</span>);
+<span class="keyword">define</span>(<span class="string">'WP_DEBUG_DISPLAY'</span>, <span class="keyword">false</span>);
+
+<span class="comment">// 6. Promenite database prefix (radite ovo SAMO pri novoj instalaciji)</span>
+<span class="comment">// Umesto podrazumevanog 'wp_' koristite nesto unikatno:</span>
+$table_prefix = <span class="string">'x9k2_'</span>;
+
+<span class="comment">// 7. Automatsko praznjenje korpe</span>
+<span class="keyword">define</span>(<span class="string">'EMPTY_TRASH_DAYS'</span>, <span class="keyword">7</span>);
+
+<span class="comment">// 8. Unikatni bezbednosni kljucevi (generisi na: api.wordpress.org/secret-key)</span>
+<span class="keyword">define</span>(<span class="string">'AUTH_KEY'</span>,         <span class="string">'vas-unikatni-kljuc-ovde'</span>);
+<span class="keyword">define</span>(<span class="string">'SECURE_AUTH_KEY'</span>,  <span class="string">'vas-unikatni-kljuc-ovde'</span>);
+<span class="keyword">define</span>(<span class="string">'LOGGED_IN_KEY'</span>,    <span class="string">'vas-unikatni-kljuc-ovde'</span>);
+<span class="keyword">define</span>(<span class="string">'NONCE_KEY'</span>,        <span class="string">'vas-unikatni-kljuc-ovde'</span>);
+    </div>
+    <div class="callout callout-warn"><strong>Vazno:</strong> Nikada ne menjajte database prefix na vec postojecem sajtu bez prethodnog backup-a i migracije svih tabela. Ova promena je bezbedna samo pri novoj instalaciji.</div>
+
+    <!-- SEC 4 -->
+    <h2 id="sec4">4. Bezbednosna konfiguracija .htaccess</h2>
+    <p>Za Apache servere, <code>.htaccess</code> fajl je mocan alat za bezbednosno ojacavanje. Evo najvaznijih pravila:</p>
+
+    <div class="code-block">
+      <span class="filename">.htaccess &mdash; bezbednosna pravila</span>
+<span class="comment"># Zastita wp-config.php od direktnog pristupa</span>
+&lt;Files wp-config.php&gt;
+  Order Allow,Deny
+  Deny from all
+&lt;/Files&gt;
+
+<span class="comment"># Onemogucite directory listing</span>
+Options -Indexes
+
+<span class="comment"># Blokirajte pristup .htaccess fajlu</span>
+&lt;Files .htaccess&gt;
+  Order Allow,Deny
+  Deny from all
+&lt;/Files&gt;
+
+<span class="comment"># Onemogucite XML-RPC (ako ga ne koristite)</span>
+&lt;Files xmlrpc.php&gt;
+  Order Allow,Deny
+  Deny from all
+&lt;/Files&gt;
+
+<span class="comment"># Bezbednosni headeri</span>
+&lt;IfModule mod_headers.c&gt;
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-Frame-Options "SAMEORIGIN"
+  Header set X-XSS-Protection "1; mode=block"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+  Header set Permissions-Policy "geolocation=(), camera=(), microphone=()"
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+&lt;/IfModule&gt;
+
+<span class="comment"># Zastita uploads direktorijuma od izvrsavanja PHP-a</span>
+&lt;Directory "wp-content/uploads"&gt;
+  &lt;Files "*.php"&gt;
+    Order Allow,Deny
+    Deny from all
+  &lt;/Files&gt;
+&lt;/Directory&gt;
+
+<span class="comment"># Sprecite pristup osetljivim fajlovima</span>
+&lt;FilesMatch "(^\.htaccess|\.htpasswd|wp-config\.php|readme\.html|license\.txt|error_log|debug\.log)$"&gt;
+  Order Allow,Deny
+  Deny from all
+&lt;/FilesMatch&gt;
+    </div>
+    <div class="callout"><strong>Napomena:</strong> Testirajte svako pravilo pojedinacno nakon dodavanja. Pogresna .htaccess konfiguracija moze uciniti sajt nedostupnim. Uvek imajte backup prethodne verzije.</div>
+
+    <!-- SEC 5 -->
+    <h2 id="sec5">5. Sta nas skener proverava na WordPress-u</h2>
+    <p>Nas <a href="./index.html">Web Security Scanner</a> automatski detektuje da sajt koristi WordPress i izvrsava specijalizovane provere:</p>
+    <ul>
+      <li><strong>SSL/TLS konfiguracija</strong> &mdash; validan sertifikat, jaki cipher suite-ovi, HTTPS redirect, HSTS header.</li>
+      <li><strong>Bezbednosni headeri</strong> &mdash; CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, CORP, COEP.</li>
+      <li><strong>Osetljivi fajlovi</strong> &mdash; wp-config.php backup, debug.log, .htaccess, xmlrpc.php, readme.html (otkrivanje verzije), install.php, wp-cron.php dostupnost.</li>
+      <li><strong>Otvoreni portovi</strong> &mdash; provera 10+ kriticnih portova (FTP, SSH, MySQL, phpMyAdmin) koji ne bi trebali biti javno dostupni.</li>
+      <li><strong>DNS bezbednost</strong> &mdash; SPF, DMARC, DNSSEC konfiguracija za zastitu od email spoofing-a.</li>
+      <li><strong>Verzija softvera</strong> &mdash; detekcija WordPress verzije, otkrivanje poznatih CVE-ova za tu verziju.</li>
+      <li><strong>CORS konfiguracija</strong> &mdash; da li je Cross-Origin Resource Sharing pravilno podesen i ne dozvoljava neovlascene domene.</li>
+      <li><strong>Cookie bezbednost</strong> &mdash; Secure, HttpOnly, SameSite atributi na svim kolacicima.</li>
+      <li><strong>Mixed content</strong> &mdash; detekcija HTTP resursa na HTTPS stranicama.</li>
+      <li><strong>Informaciono curenje</strong> &mdash; PHP verzija u headerima, WordPress generator meta tag, detaljne poruke o greskama.</li>
+    </ul>
+    <div class="callout"><strong>Besplatno skeniranje:</strong> Unesite URL vaseg WordPress sajta i dobijte kompletni izvestaj za 30 sekundi. Bez registracije, bez modifikacije vaseg sajta, potpuno neinvazivno.</div>
+
+    <!-- SEC 6 -->
+    <h2 id="sec6">6. WordPress bezbednosna checklista (12 stavki)</h2>
+    <table>
+      <tr><th>#</th><th>Stavka</th><th>Prioritet</th><th>Objasnjenje</th></tr>
+      <tr><td data-label="#">1</td><td data-label="Stavka">Azurirani svi plugini i teme</td><td data-label="Prioritet"><strong>Kritican</strong></td><td data-label="Objasnjenje">97% napada dolazi kroz zastarele plugine</td></tr>
+      <tr><td data-label="#">2</td><td data-label="Stavka">Jake lozinke + 2FA na admin nalogu</td><td data-label="Prioritet"><strong>Kritican</strong></td><td data-label="Objasnjenje">Brute-force je najcesci napad na login</td></tr>
+      <tr><td data-label="#">3</td><td data-label="Stavka">SSL/HTTPS aktivan i forsiran</td><td data-label="Prioritet"><strong>Kritican</strong></td><td data-label="Objasnjenje">Bez HTTPS svi podaci se prenose u otvorenom tekstu</td></tr>
+      <tr><td data-label="#">4</td><td data-label="Stavka">Bezbednosni headeri konfigurisani</td><td data-label="Prioritet">Visok</td><td data-label="Objasnjenje">CSP, HSTS, X-Frame-Options stite od XSS i clickjacking-a</td></tr>
+      <tr><td data-label="#">5</td><td data-label="Stavka">xmlrpc.php onemogucen</td><td data-label="Prioritet">Visok</td><td data-label="Objasnjenje">XML-RPC se koristi za brute-force amplifikaciju</td></tr>
+      <tr><td data-label="#">6</td><td data-label="Stavka">Login URL zasticen ili skriven</td><td data-label="Prioritet">Visok</td><td data-label="Objasnjenje">Smanjuje surface za automatizovane napade</td></tr>
+      <tr><td data-label="#">7</td><td data-label="Stavka">File editing onemogucen u wp-config</td><td data-label="Prioritet">Visok</td><td data-label="Objasnjenje">Sprecava izmenu koda iz kompromitovanog admin panela</td></tr>
+      <tr><td data-label="#">8</td><td data-label="Stavka">Redovni backup-ovi (offsite)</td><td data-label="Prioritet">Visok</td><td data-label="Objasnjenje">Jedina garancija oporavka posle incidenta</td></tr>
+      <tr><td data-label="#">9</td><td data-label="Stavka">wp-config.php zasticen od pristupa</td><td data-label="Prioritet">Srednji</td><td data-label="Objasnjenje">Sadrzi database kredencijale i kljuceve</td></tr>
+      <tr><td data-label="#">10</td><td data-label="Stavka">Directory listing onemogucen</td><td data-label="Prioritet">Srednji</td><td data-label="Objasnjenje">Options -Indexes u .htaccess</td></tr>
+      <tr><td data-label="#">11</td><td data-label="Stavka">Database prefix promenjen sa wp_</td><td data-label="Prioritet">Nizak</td><td data-label="Objasnjenje">Otezava genericki SQL injection</td></tr>
+      <tr><td data-label="#">12</td><td data-label="Stavka">Redovni bezbednosni skenovi</td><td data-label="Prioritet"><strong>Kritican</strong></td><td data-label="Objasnjenje">Kontinuirani monitoring je temelj bezbednosti</td></tr>
+    </table>
+
+    <!-- SEC 7 -->
+    <h2 id="sec7">7. Preporuceni bezbednosni plugini</h2>
+    <p>Ovi plugini su najcesci izbor WordPress zajednice za bezbednost. Svaki ima svoje prednosti i mane:</p>
+
+    <div class="plugin-grid">
+      <div class="plugin-card">
+        <h4>Wordfence Security</h4>
+        <p class="pros">+ Web Application Firewall (WAF)<br>+ Malware skener sa signaturama<br>+ Brute-force zastita<br>+ 4M+ aktivnih instalacija</p>
+        <p class="cons">&minus; Zahteva server resurse<br>&minus; Premium funkcije su skupe ($119/god)</p>
+      </div>
+      <div class="plugin-card">
+        <h4>Sucuri Security</h4>
+        <p class="pros">+ Cloud-based WAF (ne opterecuje server)<br>+ Blacklist monitoring<br>+ Post-hack ciscenje ukljuceno u plan</p>
+        <p class="cons">&minus; Besplatna verzija nema WAF<br>&minus; Skuplji od Wordfence-a ($199/god)</p>
+      </div>
+      <div class="plugin-card">
+        <h4>Solid Security (ex-iThemes)</h4>
+        <p class="pros">+ 30+ bezbednosnih podesavanja<br>+ Detekcija promene fajlova<br>+ Jednostavan interfejs</p>
+        <p class="cons">&minus; Nema sopstveni WAF<br>&minus; Manje temeljit malware sken</p>
+      </div>
+      <div class="plugin-card">
+        <h4>WP Cerber Security</h4>
+        <p class="pros">+ Napredna anti-spam zastita<br>+ GEO blokiranje po zemlji<br>+ Integrisan antivirus skener</p>
+        <p class="cons">&minus; Manji community<br>&minus; Komplikovaniji za pocetnike</p>
+      </div>
+      <div class="plugin-card">
+        <h4>All-In-One WP Security</h4>
+        <p class="pros">+ Potpuno besplatan<br>+ Vizuelni bezbednosni meter<br>+ Login lockdown + honeypot</p>
+        <p class="cons">&minus; Nema malware skener<br>&minus; Manje azuriranja od Wordfence</p>
+      </div>
+      <div class="plugin-card">
+        <h4>MalCare Security</h4>
+        <p class="pros">+ Automatsko ciscenje jednim klikom<br>+ Skeniranje na njihovim serverima<br>+ Ne usporava sajt</p>
+        <p class="cons">&minus; Besplatna verzija samo detektuje, ne cisti<br>&minus; $99/god za full funkcije</p>
+      </div>
+    </div>
+    <div class="callout callout-warn"><strong>Vazno:</strong> Bezbednosni plugini su dopuna, ne zamena za dobre prakse. Azurirani plugini, jake lozinke, pravilna konfiguracija i redovni skenovi su temelj bezbednosti. Nijedan plugin ne moze zastiti sajt sa zastarelim softverom.</div>
+
+    <!-- SEC 8 -->
+    <h2 id="sec8">8. AI-generisane teme i plugini &mdash; dodatni rizici</h2>
+    <p>Sve vise WordPress korisnika koristi AI alate (ChatGPT, Claude, Copilot) za generisanje tema i plugina. Ovo uvodi specificne bezbednosne rizike:</p>
+    <ul>
+      <li><strong>Nedostatak sanitizacije unosa</strong> &mdash; AI-generisan kod cesto ne koristi WordPress-ove bezbednosne funkcije poput <code>sanitize_text_field()</code>, <code>wp_nonce_field()</code>, i <code>check_admin_referer()</code>.</li>
+      <li><strong>Direktni SQL upiti</strong> &mdash; AI cesto generiSe direktne SQL upite umesto koriscenja <code>$wpdb-&gt;prepare()</code>, sto otvara vrata za SQL injection.</li>
+      <li><strong>Nesigurno rukovanje fajlovima</strong> &mdash; Upload funkcionalnost generisana AI-jem cesto preskace MIME type verifikaciju i zastitu od path traversal napada.</li>
+      <li><strong>Zastareli obrasci</strong> &mdash; AI modeli su trenirani na kodu koji moze koristiti zastarele WordPress API-je sa poznatim ranjivostima.</li>
+      <li><strong>Nedostatak capability provera</strong> &mdash; AI-generisani admin paneli cesto ne proveravaju <code>current_user_can()</code> pre izvrsavanja privilegovanih operacija.</li>
+    </ul>
+
+    <div class="comparison">
+      <div class="bad">
+        AI-generisan kod bez provere:<br>
+        <code>$_GET['id']</code> direktno u SQL upitu<br>
+        <code>echo $_POST['name']</code> bez escape-a<br>
+        Nema nonce verifikacije u formama
+      </div>
+      <div class="good">
+        Pravilan WordPress kod:<br>
+        <code>$wpdb-&gt;prepare()</code> za sve upite<br>
+        <code>esc_html()</code> za svaki ispis<br>
+        <code>wp_verify_nonce()</code> na svim formama
+      </div>
+    </div>
+    <p><strong>Preporuka:</strong> Ako koristite AI za generisanje WordPress koda, uvek pregledajte generisan kod sa fokusom na bezbednost. Pokrenite nas <a href="./index.html">bezbednosni skener</a> nakon svake promene.</p>
+
+    <!-- SEC 9 -->
+    <h2 id="sec9">9. Sta ako je sajt vec hakovan?</h2>
+    <p>Ako sumnjate da je vas WordPress sajt kompromitovan, sledite ove korake redom:</p>
+    <ol>
+      <li><strong>Ne panicite, ali reagujte brzo</strong> &mdash; svaki sat koji prodje povecava stetu i rizik da Google stavi sajt na crnu listu.</li>
+      <li><strong>Izolujte sajt</strong> &mdash; stavite sajt u maintenance mode ili ga privremeno ugasite da zastite posetioce od malicioznog koda.</li>
+      <li><strong>Promenite sve lozinke</strong> &mdash; WordPress admin, FTP, cPanel, baza podataka, email nalozi vezani za sajt.</li>
+      <li><strong>Skenirajte za malware</strong> &mdash; koristite nas <a href="./malware.html">malware skener</a> za detekciju zlonamernog koda, skrivenih backdoor-ova i sumnjivih fajlova.</li>
+      <li><strong>Proverite admin naloge</strong> &mdash; potrazite nepoznate administratorske naloge koji su mozda kreirani tokom napada.</li>
+      <li><strong>Ocistite sajt</strong> &mdash; uklonite maliciozni kod, obrisite sumnjive fajlove, ponovo instalirajte cist WordPress core.</li>
+      <li><strong>Azurirajte sve</strong> &mdash; WordPress core, svi plugini, sve teme. Uklonite nekoriscene plugine i teme.</li>
+      <li><strong>Ojacajte konfiguraciju</strong> &mdash; primenite sve preporuke iz sekcija 3 i 4 ovog vodicA.</li>
+      <li><strong>Ponovo skenirajte</strong> &mdash; potvrdite da je sajt cist pre nego sto ga vratite online.</li>
+      <li><strong>Pratite sajt</strong> &mdash; pojacajte monitoring u narednih 30 dana jer se napadaci cesto vracaju.</li>
+    </ol>
+    <p>Detaljniji vodic za oporavak: <a href="./blog-security-malware-recovery.html">Post-Hack Recovery vodic</a></p>
+
+    <a href="./index.html" class="cta">Skeniraj WordPress sajt &rarr;</a>
+    <p style="margin-top:2rem;"><a href="./blog-vibe-coding-security.html">&larr; Nazad na Vibe Coding vodice</a></p>
+  </div>
+
+  <!-- ============================== ENGLISH ============================== -->
+  <div class="en">
+    <h1>WordPress Security Scan</h1>
+    <p class="subtitle">Why WordPress is the #1 attack target, how to harden your configuration, and what our scanner checks on WP sites</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">43%</div><div class="stat-label">Of all sites run WordPress</div></div>
+      <div class="stat-card"><div class="stat-num">90%</div><div class="stat-label">Of hacked CMSs are WordPress</div></div>
+      <div class="stat-card"><div class="stat-num">97%</div><div class="stat-label">Of attacks come through plugins</div></div>
+      <div class="stat-card"><div class="stat-num">~50k</div><div class="stat-label">WP sites hacked daily</div></div>
+      <div class="stat-card"><div class="stat-num">240+</div><div class="stat-label">Our scanner checks</div></div>
+    </div>
+
+    <!-- SEC 1E -->
+    <h2 id="sec1e">1. Why do attackers target WordPress?</h2>
+    <p>WordPress powers 43% of all websites on the internet &mdash; that is nearly half the web. This dominance makes it the most attractive target for automated attacks for a simple reason: one vulnerability in a popular plugin potentially affects millions of sites simultaneously.</p>
+    <p>Most WordPress attacks are not targeted. Automated bots continuously scan the internet looking for known vulnerabilities in popular plugins and themes. When they find a vulnerable site, exploitation is automatic &mdash; no human intervention required.</p>
+    <p>Additional contributing factors:</p>
+    <ul>
+      <li><strong>Massive plugin ecosystem</strong> &mdash; over 60,000 plugins in the official repository, many with inconsistent code quality and security practices.</li>
+      <li><strong>Non-technical users</strong> &mdash; WordPress attracts users who are not developers, so they often neglect updates and security settings.</li>
+      <li><strong>Default configuration</strong> &mdash; a fresh WordPress installation has predictable paths (/wp-admin, /wp-login.php, /xmlrpc.php), known database tables (wp_users, wp_posts), and an exposed version number.</li>
+      <li><strong>Shared hosting</strong> &mdash; many WP sites run on cheap shared hosting where compromising one site can jeopardize all others on the same server.</li>
+    </ul>
+    <div class="callout callout-danger"><strong>Statistic (Sucuri 2025):</strong> WordPress accounts for over 90% of all hacked CMS sites. 97% of attacks come through vulnerable plugins, not through WordPress core, which is itself relatively secure.</div>
+
+    <!-- SEC 2E -->
+    <h2 id="sec2e">2. Most common WordPress attack vectors</h2>
+    <p>Understanding how WP sites get compromised is key to effective defense. Here are the six most common vectors:</p>
+
+    <h3>2.1. Outdated plugins and themes</h3>
+    <p>This is cause number one of all WordPress hacks. Plugins with known vulnerabilities remain installed and unpatched for months or years. Bots use publicly disclosed CVEs (Common Vulnerabilities and Exposures) to automatically exploit these vulnerabilities within hours of a patch being released.</p>
+    <p>Particularly dangerous are plugins abandoned by their authors &mdash; they no longer receive security fixes but remain installed on thousands of sites.</p>
+    <p><strong>Protection:</strong> Regularly update all plugins and themes. Remove plugins you do not use. Enable auto-update for minor plugins. Check if a plugin has an active author before installing.</p>
+
+    <h3>2.2. Weak passwords and brute-force</h3>
+    <p>The WordPress login page (<code>/wp-login.php</code>) is accessible to everyone by default. Without rate limiting, attackers can try thousands of passwords per minute. Commonly targeted usernames: "admin", "administrator", the domain name.</p>
+    <p><strong>Protection:</strong> Use strong passwords (minimum 16 characters with a mix of letters, numbers, and special characters), enable two-factor authentication (2FA), restrict access to the login page, and implement rate limiting or CAPTCHA after several failed attempts.</p>
+
+    <h3>2.3. File inclusion vulnerabilities (LFI/RFI)</h3>
+    <p>Many plugins load files without proper input validation, which can allow loading unauthorized files from the server (Local File Inclusion) or from an external source (Remote File Inclusion).</p>
+    <p><strong>Protection:</strong> Only use verified plugins with active maintenance and a large number of installations. Our scanner checks accessibility of sensitive files and directories.</p>
+
+    <h3>2.4. SQL Injection</h3>
+    <p>Plugins that do not use WordPress built-in database functions (<code>$wpdb-&gt;prepare()</code>) are potentially vulnerable. This is especially common in plugins that have their own search or data filtering forms.</p>
+    <p><strong>Protection:</strong> Only use plugins that follow WordPress Coding Standards. Verify that the plugin uses prepared statements. Scan your site regularly.</p>
+
+    <h3>2.5. Cross-Site Scripting (XSS)</h3>
+    <p>XSS vulnerabilities occur when a site displays user input without proper escaping. An attacker can inject JavaScript code that executes in visitors' browsers, stealing cookies or redirecting users.</p>
+    <p><strong>Protection:</strong> Configure Content Security Policy (CSP) header. Use WordPress functions like <code>esc_html()</code>, <code>esc_attr()</code>, <code>wp_kses()</code> in themes and plugins. Our scanner checks CSP configuration.</p>
+
+    <h3>2.6. Missing security headers</h3>
+    <p>Most WordPress sites lack properly configured HTTP security headers. This leaves them vulnerable to various attacks:</p>
+    <div class="comparison">
+      <div class="bad">
+        Without headers:<br>
+        &bull; No CSP &rarr; XSS risk<br>
+        &bull; No HSTS &rarr; Downgrade risk<br>
+        &bull; No X-Frame-Options &rarr; Clickjacking<br>
+        &bull; No Referrer-Policy &rarr; URL leakage
+      </div>
+      <div class="good">
+        With headers:<br>
+        &bull; CSP blocks unauthorized scripts<br>
+        &bull; HSTS enforces HTTPS<br>
+        &bull; X-Frame-Options prevents framing<br>
+        &bull; Referrer-Policy controls data flow
+      </div>
+    </div>
+    <p><strong>Protection:</strong> Configure headers through <code>.htaccess</code>, nginx config, or a security plugin. Run our scanner to see what is missing.</p>
+
+    <!-- SEC 3E -->
+    <h2 id="sec3e">3. Hardening wp-config.php</h2>
+    <p>The <code>wp-config.php</code> file is the heart of WordPress configuration. Properly configuring this file dramatically reduces the attack surface. Here are the most important changes:</p>
+
+    <div class="code-block">
+      <span class="filename">wp-config.php &mdash; security hardening</span>
+<span class="comment">// 1. Disable file editing from the admin panel</span>
+<span class="keyword">define</span>(<span class="string">'DISALLOW_FILE_EDIT'</span>, <span class="keyword">true</span>);
+
+<span class="comment">// 2. Disable plugin/theme installation from admin panel</span>
+<span class="comment">//    (use this only if you update manually via FTP/SSH)</span>
+<span class="keyword">define</span>(<span class="string">'DISALLOW_FILE_MODS'</span>, <span class="keyword">true</span>);
+
+<span class="comment">// 3. Force SSL for the admin panel</span>
+<span class="keyword">define</span>(<span class="string">'FORCE_SSL_ADMIN'</span>, <span class="keyword">true</span>);
+
+<span class="comment">// 4. Limit post revisions (reduces database size)</span>
+<span class="keyword">define</span>(<span class="string">'WP_POST_REVISIONS'</span>, <span class="keyword">5</span>);
+
+<span class="comment">// 5. Disable debug mode in production</span>
+<span class="keyword">define</span>(<span class="string">'WP_DEBUG'</span>, <span class="keyword">false</span>);
+<span class="keyword">define</span>(<span class="string">'WP_DEBUG_LOG'</span>, <span class="keyword">false</span>);
+<span class="keyword">define</span>(<span class="string">'WP_DEBUG_DISPLAY'</span>, <span class="keyword">false</span>);
+
+<span class="comment">// 6. Change database prefix (do this ONLY on new installations)</span>
+<span class="comment">// Instead of the default 'wp_' use something unique:</span>
+$table_prefix = <span class="string">'x9k2_'</span>;
+
+<span class="comment">// 7. Auto-empty trash</span>
+<span class="keyword">define</span>(<span class="string">'EMPTY_TRASH_DAYS'</span>, <span class="keyword">7</span>);
+
+<span class="comment">// 8. Unique security keys (generate at: api.wordpress.org/secret-key)</span>
+<span class="keyword">define</span>(<span class="string">'AUTH_KEY'</span>,         <span class="string">'your-unique-key-here'</span>);
+<span class="keyword">define</span>(<span class="string">'SECURE_AUTH_KEY'</span>,  <span class="string">'your-unique-key-here'</span>);
+<span class="keyword">define</span>(<span class="string">'LOGGED_IN_KEY'</span>,    <span class="string">'your-unique-key-here'</span>);
+<span class="keyword">define</span>(<span class="string">'NONCE_KEY'</span>,        <span class="string">'your-unique-key-here'</span>);
+    </div>
+    <div class="callout callout-warn"><strong>Important:</strong> Never change the database prefix on an existing site without a prior backup and full table migration. This change is only safe on new installations.</div>
+
+    <!-- SEC 4E -->
+    <h2 id="sec4e">4. Security configuration with .htaccess</h2>
+    <p>For Apache servers, the <code>.htaccess</code> file is a powerful tool for security hardening. Here are the most important rules:</p>
+
+    <div class="code-block">
+      <span class="filename">.htaccess &mdash; security rules</span>
+<span class="comment"># Protect wp-config.php from direct access</span>
+&lt;Files wp-config.php&gt;
+  Order Allow,Deny
+  Deny from all
+&lt;/Files&gt;
+
+<span class="comment"># Disable directory listing</span>
+Options -Indexes
+
+<span class="comment"># Block access to .htaccess itself</span>
+&lt;Files .htaccess&gt;
+  Order Allow,Deny
+  Deny from all
+&lt;/Files&gt;
+
+<span class="comment"># Disable XML-RPC (if you do not use it)</span>
+&lt;Files xmlrpc.php&gt;
+  Order Allow,Deny
+  Deny from all
+&lt;/Files&gt;
+
+<span class="comment"># Security headers</span>
+&lt;IfModule mod_headers.c&gt;
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-Frame-Options "SAMEORIGIN"
+  Header set X-XSS-Protection "1; mode=block"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+  Header set Permissions-Policy "geolocation=(), camera=(), microphone=()"
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+&lt;/IfModule&gt;
+
+<span class="comment"># Protect uploads directory from PHP execution</span>
+&lt;Directory "wp-content/uploads"&gt;
+  &lt;Files "*.php"&gt;
+    Order Allow,Deny
+    Deny from all
+  &lt;/Files&gt;
+&lt;/Directory&gt;
+
+<span class="comment"># Prevent access to sensitive files</span>
+&lt;FilesMatch "(^\.htaccess|\.htpasswd|wp-config\.php|readme\.html|license\.txt|error_log|debug\.log)$"&gt;
+  Order Allow,Deny
+  Deny from all
+&lt;/FilesMatch&gt;
+    </div>
+    <div class="callout"><strong>Note:</strong> Test each rule individually after adding it. An incorrect .htaccess configuration can make your site inaccessible. Always keep a backup of the previous version.</div>
+
+    <!-- SEC 5E -->
+    <h2 id="sec5e">5. What our scanner checks on WordPress</h2>
+    <p>Our <a href="./index.html">Web Security Scanner</a> automatically detects that a site runs WordPress and performs specialized checks:</p>
+    <ul>
+      <li><strong>SSL/TLS configuration</strong> &mdash; valid certificate, strong cipher suites, HTTPS redirect, HSTS header.</li>
+      <li><strong>Security headers</strong> &mdash; CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, CORP, COEP.</li>
+      <li><strong>Sensitive files</strong> &mdash; wp-config.php backup, debug.log, .htaccess, xmlrpc.php, readme.html (version disclosure), install.php, wp-cron.php accessibility.</li>
+      <li><strong>Open ports</strong> &mdash; checking 10+ critical ports (FTP, SSH, MySQL, phpMyAdmin) that should not be publicly accessible.</li>
+      <li><strong>DNS security</strong> &mdash; SPF, DMARC, DNSSEC configuration for email spoofing protection.</li>
+      <li><strong>Software version</strong> &mdash; WordPress version detection, discovery of known CVEs for that version.</li>
+      <li><strong>CORS configuration</strong> &mdash; whether Cross-Origin Resource Sharing is properly configured and does not allow unauthorized domains.</li>
+      <li><strong>Cookie security</strong> &mdash; Secure, HttpOnly, SameSite attributes on all cookies.</li>
+      <li><strong>Mixed content</strong> &mdash; detection of HTTP resources on HTTPS pages.</li>
+      <li><strong>Information leakage</strong> &mdash; PHP version in headers, WordPress generator meta tag, detailed error messages.</li>
+    </ul>
+    <div class="callout"><strong>Free scanning:</strong> Enter your WordPress site URL and get a complete report in 30 seconds. No registration, no modification to your site, completely non-invasive.</div>
+
+    <!-- SEC 6E -->
+    <h2 id="sec6e">6. WordPress security checklist (12 items)</h2>
+    <table>
+      <tr><th>#</th><th>Item</th><th>Priority</th><th>Explanation</th></tr>
+      <tr><td data-label="#">1</td><td data-label="Item">All plugins and themes updated</td><td data-label="Priority"><strong>Critical</strong></td><td data-label="Why">97% of attacks come through outdated plugins</td></tr>
+      <tr><td data-label="#">2</td><td data-label="Item">Strong passwords + 2FA on admin</td><td data-label="Priority"><strong>Critical</strong></td><td data-label="Why">Brute-force is the most common login attack</td></tr>
+      <tr><td data-label="#">3</td><td data-label="Item">SSL/HTTPS active and enforced</td><td data-label="Priority"><strong>Critical</strong></td><td data-label="Why">Without HTTPS all data is transmitted in plain text</td></tr>
+      <tr><td data-label="#">4</td><td data-label="Item">Security headers configured</td><td data-label="Priority">High</td><td data-label="Why">CSP, HSTS, X-Frame-Options protect against XSS and clickjacking</td></tr>
+      <tr><td data-label="#">5</td><td data-label="Item">xmlrpc.php disabled</td><td data-label="Priority">High</td><td data-label="Why">XML-RPC is used for brute-force amplification</td></tr>
+      <tr><td data-label="#">6</td><td data-label="Item">Login URL protected or hidden</td><td data-label="Priority">High</td><td data-label="Why">Reduces surface for automated attacks</td></tr>
+      <tr><td data-label="#">7</td><td data-label="Item">File editing disabled in wp-config</td><td data-label="Priority">High</td><td data-label="Why">Prevents code changes from a compromised admin panel</td></tr>
+      <tr><td data-label="#">8</td><td data-label="Item">Regular backups (offsite)</td><td data-label="Priority">High</td><td data-label="Why">Only guarantee of recovery after an incident</td></tr>
+      <tr><td data-label="#">9</td><td data-label="Item">wp-config.php protected from access</td><td data-label="Priority">Medium</td><td data-label="Why">Contains database credentials and security keys</td></tr>
+      <tr><td data-label="#">10</td><td data-label="Item">Directory listing disabled</td><td data-label="Priority">Medium</td><td data-label="Why">Options -Indexes in .htaccess</td></tr>
+      <tr><td data-label="#">11</td><td data-label="Item">Database prefix changed from wp_</td><td data-label="Priority">Low</td><td data-label="Why">Makes generic SQL injection harder</td></tr>
+      <tr><td data-label="#">12</td><td data-label="Item">Regular security scans</td><td data-label="Priority"><strong>Critical</strong></td><td data-label="Why">Continuous monitoring is the foundation of security</td></tr>
+    </table>
+
+    <!-- SEC 7E -->
+    <h2 id="sec7e">7. Recommended security plugins</h2>
+    <p>These plugins are the most common choices in the WordPress community for security. Each has its own strengths and weaknesses:</p>
+
+    <div class="plugin-grid">
+      <div class="plugin-card">
+        <h4>Wordfence Security</h4>
+        <p class="pros">+ Web Application Firewall (WAF)<br>+ Malware scanner with signatures<br>+ Brute-force protection<br>+ 4M+ active installations</p>
+        <p class="cons">&minus; Resource-intensive on the server<br>&minus; Premium features are expensive ($119/yr)</p>
+      </div>
+      <div class="plugin-card">
+        <h4>Sucuri Security</h4>
+        <p class="pros">+ Cloud-based WAF (no server load)<br>+ Blacklist monitoring<br>+ Post-hack cleanup included in plan</p>
+        <p class="cons">&minus; Free version has no WAF<br>&minus; More expensive than Wordfence ($199/yr)</p>
+      </div>
+      <div class="plugin-card">
+        <h4>Solid Security (ex-iThemes)</h4>
+        <p class="pros">+ 30+ security settings<br>+ File change detection<br>+ Simple interface</p>
+        <p class="cons">&minus; No built-in WAF<br>&minus; Less thorough malware scanning</p>
+      </div>
+      <div class="plugin-card">
+        <h4>WP Cerber Security</h4>
+        <p class="pros">+ Advanced anti-spam protection<br>+ GEO blocking by country<br>+ Integrated antivirus scanner</p>
+        <p class="cons">&minus; Smaller community<br>&minus; More complex for beginners</p>
+      </div>
+      <div class="plugin-card">
+        <h4>All-In-One WP Security</h4>
+        <p class="pros">+ Completely free<br>+ Visual security meter<br>+ Login lockdown + honeypot</p>
+        <p class="cons">&minus; No malware scanner<br>&minus; Fewer updates than Wordfence</p>
+      </div>
+      <div class="plugin-card">
+        <h4>MalCare Security</h4>
+        <p class="pros">+ One-click automatic cleanup<br>+ Scanning on their servers<br>+ Does not slow down your site</p>
+        <p class="cons">&minus; Free version only detects, does not clean<br>&minus; $99/yr for full features</p>
+      </div>
+    </div>
+    <div class="callout callout-warn"><strong>Important:</strong> Security plugins are supplementary, not a replacement for good practices. Updated plugins, strong passwords, proper configuration, and regular scans are the foundation of security. No plugin can protect a site running outdated software.</div>
+
+    <!-- SEC 8E -->
+    <h2 id="sec8e">8. AI-generated themes and plugins &mdash; additional risks</h2>
+    <p>More and more WordPress users are using AI tools (ChatGPT, Claude, Copilot) to generate themes and plugins. This introduces specific security risks:</p>
+    <ul>
+      <li><strong>Missing input sanitization</strong> &mdash; AI-generated code often does not use WordPress security functions like <code>sanitize_text_field()</code>, <code>wp_nonce_field()</code>, and <code>check_admin_referer()</code>.</li>
+      <li><strong>Direct SQL queries</strong> &mdash; AI frequently generates direct SQL queries instead of using <code>$wpdb-&gt;prepare()</code>, opening the door to SQL injection.</li>
+      <li><strong>Insecure file handling</strong> &mdash; Upload functionality generated by AI often skips MIME type verification and path traversal protection.</li>
+      <li><strong>Outdated patterns</strong> &mdash; AI models are trained on code that may use deprecated WordPress APIs with known vulnerabilities.</li>
+      <li><strong>Missing capability checks</strong> &mdash; AI-generated admin panels often do not check <code>current_user_can()</code> before executing privileged operations.</li>
+    </ul>
+
+    <div class="comparison">
+      <div class="bad">
+        AI-generated code without checks:<br>
+        <code>$_GET['id']</code> directly in SQL query<br>
+        <code>echo $_POST['name']</code> without escaping<br>
+        No nonce verification on forms
+      </div>
+      <div class="good">
+        Proper WordPress code:<br>
+        <code>$wpdb-&gt;prepare()</code> for all queries<br>
+        <code>esc_html()</code> for every output<br>
+        <code>wp_verify_nonce()</code> on all forms
+      </div>
+    </div>
+    <p><strong>Recommendation:</strong> If you use AI to generate WordPress code, always review the generated code with a focus on security. Run our <a href="./index.html">security scanner</a> after every change.</p>
+
+    <!-- SEC 9E -->
+    <h2 id="sec9e">9. What if the site is already hacked?</h2>
+    <p>If you suspect your WordPress site is compromised, follow these steps in order:</p>
+    <ol>
+      <li><strong>Do not panic, but act quickly</strong> &mdash; every hour that passes increases the damage and the risk of Google blacklisting your site.</li>
+      <li><strong>Isolate the site</strong> &mdash; put the site in maintenance mode or temporarily take it down to protect visitors from malicious code.</li>
+      <li><strong>Change all passwords</strong> &mdash; WordPress admin, FTP, cPanel, database, email accounts linked to the site.</li>
+      <li><strong>Scan for malware</strong> &mdash; use our <a href="./malware.html">malware scanner</a> for detection of malicious code, hidden backdoors, and suspicious files.</li>
+      <li><strong>Check admin accounts</strong> &mdash; look for unknown administrator accounts that may have been created during the attack.</li>
+      <li><strong>Clean the site</strong> &mdash; remove malicious code, delete suspicious files, reinstall clean WordPress core.</li>
+      <li><strong>Update everything</strong> &mdash; WordPress core, all plugins, all themes. Remove unused plugins and themes.</li>
+      <li><strong>Harden configuration</strong> &mdash; apply all recommendations from sections 3 and 4 of this guide.</li>
+      <li><strong>Rescan</strong> &mdash; confirm the site is clean before bringing it back online.</li>
+      <li><strong>Monitor the site</strong> &mdash; increase monitoring for the next 30 days as attackers often return.</li>
+    </ol>
+    <p>Detailed recovery guide: <a href="./blog-security-malware-recovery.html">Post-Hack Recovery guide</a></p>
+
+    <a href="./index.html" class="cta">Scan your WordPress site &rarr;</a>
+    <p style="margin-top:2rem;"><a href="./blog-vibe-coding-security.html">&larr; Back to Vibe Coding guides</a></p>
+  </div>
+
+  </main>
+</div>
+<script src="./blog-common.js" defer></script>
+</body>
+</html>

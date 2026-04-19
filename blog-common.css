@@ -222,15 +222,44 @@ th, td {
 }
 th { color: #a78bfa; font-weight: 600; }
 @media (max-width: 720px) {
-  /* Mobile: let the table scroll horizontally inside its own box
-     instead of forcing the whole page to scroll. */
-  table {
+  table:has(td[data-label]) { border: 0; }
+  table:has(td[data-label]) thead { display: none; }
+  table:has(td[data-label]) tr {
+    display: block;
+    background: #11142a;
+    border: 1px solid #252a4a;
+    border-radius: 10px;
+    padding: 0.8rem 1rem;
+    margin-bottom: 0.8rem;
+  }
+  table:has(td[data-label]) td {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid rgba(37,42,74,0.5);
+    font-size: 0.84rem;
+  }
+  table:has(td[data-label]) td:last-child { border-bottom: 0; }
+  table:has(td[data-label]) td::before {
+    content: attr(data-label);
+    color: #a78bfa;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    flex-shrink: 0;
+    min-width: 35%;
+  }
+  table:not(:has(td[data-label])) {
     display: block;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     max-width: 100%;
   }
-  th, td { font-size: 0.82rem; padding: 0.5rem 0.6rem; }
+  table:not(:has(td[data-label])) th,
+  table:not(:has(td[data-label])) td { font-size: 0.82rem; padding: 0.5rem 0.6rem; }
 }
 
 /* === REFERENCES === */
@@ -412,13 +441,14 @@ th { color: #a78bfa; font-weight: 600; }
   .toc { padding: 1rem; }
   .footer-grid {
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto;
+    grid-template-rows: auto auto auto;
     gap: 1.5rem 1rem;
   }
   .footer-col:nth-child(1) { grid-column: 1; grid-row: 1; text-align: left; }
   .footer-col:nth-child(2) { grid-column: 1; grid-row: 2; text-align: left; }
   .footer-col:nth-child(3) { grid-column: 2; grid-row: 1; text-align: right; }
   .footer-col:nth-child(4) { grid-column: 2; grid-row: 2; text-align: right; }
+  .footer-col:nth-child(5) { grid-column: 1 / -1; grid-row: 3; text-align: center; }
 }
 @media (max-width: 480px) {
   .blog-layout { padding: 0.8rem 0.6rem 0; }

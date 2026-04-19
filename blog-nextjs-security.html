@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Next.js Security Checklist / Next.js bezbednosna checklista — API rute · Middleware · CSP · Auth</title>
+  <meta name="description" content="Complete Next.js security checklist: API routes, middleware, CSP headers, environment variables, authentication, CORS. Scan your Next.js app free. · Kompletna Next.js bezbednosna checklista: API rute, middleware, CSP headeri, env varijable, auth.">
+  <meta name="keywords" content="next.js security, next.js bezbednost, next.js security checklist, next.js API route security, next.js middleware security, next.js CSP, next.js environment variables, next.js auth, next.js CORS, next.js headers, nextjs security best practices, next.js security headers, next.js rate limiting, secure next.js app, next.js vulnerability scan, NEXT_PUBLIC_ env leak, next.js server actions security, next.js middleware auth guard">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <link rel="canonical" href="https://security-skener.gradovi.rs/blog-nextjs-security.html">
+  <link rel="alternate" hreflang="sr" href="https://security-skener.gradovi.rs/blog-nextjs-security.html">
+  <link rel="alternate" hreflang="x-default" href="https://security-skener.gradovi.rs/blog-nextjs-security.html">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Next.js Security Checklist / Next.js bezbednosna checklista">
+  <meta property="og:description" content="Secure your Next.js app: API routes, middleware, headers, auth. · Zastitite Next.js aplikaciju: API rute, middleware, headeri, auth.">
+  <meta property="og:url" content="https://security-skener.gradovi.rs/blog-nextjs-security.html">
+  <meta property="og:site_name" content="Web Security Scanner">
+  <meta property="og:locale" content="sr_RS">
+  <meta property="og:locale:alternate" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Next.js Security Checklist">
+  <meta name="twitter:description" content="Complete security checklist for Next.js apps. · Kompletna bezbednosna checklista za Next.js.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Next.js bezbednosna checklista — Kompletni vodic",
+    "author": {"@type": "Person", "name": "Toske", "url": "https://toske-programer.web.app"},
+    "publisher": {"@type": "Organization", "name": "Web Security Scanner"},
+    "datePublished": "2026-04-19",
+    "dateModified": "2026-04-19",
+    "description": "Complete Next.js security checklist: API routes, middleware, CSP, auth, environment variables, Server Actions, CORS.",
+    "inLanguage": ["sr-RS", "en-US"],
+    "keywords": "next.js security, nextjs security checklist, next.js CSP, next.js auth, next.js API security, NEXT_PUBLIC_ env leak",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://security-skener.gradovi.rs/blog-nextjs-security.html"
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Da li je Next.js bezbedan po defaultu?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Next.js ima neke ugradjene zastite (automatski escape u JSX, CSRF tokeni za Server Actions), ali mnoge bezbednosne mere morate sami konfigurisati: CSP headeri, API autentifikacija, rate limiting, CORS podesavanja."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Kako da podesim security headere u Next.js?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Koristite next.config.js headers() funkciju za staticke headere ili middleware.ts za dinamicke. Obavezni headeri: Content-Security-Policy, Strict-Transport-Security, X-Frame-Options, X-Content-Type-Options, Permissions-Policy."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Sta je NEXT_PUBLIC_ zamka i kako da je izbegnem?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Svaka env varijabla sa prefiksom NEXT_PUBLIC_ se ukljucuje u klijentski JavaScript bundle i vidljiva je svima u browseru. AI alati cesto generisu NEXT_PUBLIC_SUPABASE_SERVICE_KEY ili NEXT_PUBLIC_STRIPE_SECRET umesto server-only varijabli. Nikada ne stavljajte tajne kljuceve sa ovim prefiksom."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Da li su Server Actions bezbedne?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Server Actions su de facto javni HTTP endpointi. Svaka funkcija sa 'use server' direktivom moze biti pozvana direktno iz browsera. Morate dodati autentifikaciju, input validaciju (Zod) i rate limiting na svaku Server Action, isto kao na API rutu."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is Next.js secure by default?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Next.js has some built-in protections (automatic JSX escaping, CSRF tokens for Server Actions), but many security measures must be configured manually: CSP headers, API authentication, rate limiting, CORS settings."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How to set up security headers in Next.js?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Use next.config.js headers() function for static headers or middleware.ts for dynamic ones. Required headers: Content-Security-Policy, Strict-Transport-Security, X-Frame-Options, X-Content-Type-Options, Permissions-Policy."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the NEXT_PUBLIC_ trap and how do I avoid it?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Any env variable prefixed with NEXT_PUBLIC_ is bundled into client-side JavaScript and visible to everyone in the browser. AI tools often generate NEXT_PUBLIC_SUPABASE_SERVICE_KEY or NEXT_PUBLIC_STRIPE_SECRET instead of server-only variables. Never put secret keys with this prefix."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Are Server Actions secure?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Server Actions are effectively public HTTP endpoints. Any function with the 'use server' directive can be called directly from the browser. You must add authentication, input validation (Zod), and rate limiting to every Server Action, just like an API route."
+        }
+      }
+    ]
+  }
+  </script>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+  <style>
+    .code-block { background: #0d1117; border: 1px solid #252a4a; border-radius: 8px; padding: 1rem 1.2rem; font-family: 'Courier New', monospace; font-size: 0.82rem; color: #c9d1d9; overflow-x: auto; margin: 1rem 0; line-height: 1.6; }
+    .code-block .comment { color: #8b949e; }
+    .code-block .keyword { color: #ff7b72; }
+    .code-block .string { color: #a5d6ff; }
+    .code-block .prop { color: #d2a8ff; }
+    .code-block .danger { color: #f85149; background: rgba(248,81,73,0.1); padding: 0 4px; border-radius: 3px; }
+    .code-block .safe { color: #3fb950; background: rgba(63,185,80,0.1); padding: 0 4px; border-radius: 3px; }
+    .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+    .comparison > div { border-radius: 8px; padding: 1rem; }
+    .comparison .bad { background: rgba(248,81,73,0.05); border: 1px solid rgba(248,81,73,0.2); }
+    .comparison .good { background: rgba(63,185,80,0.05); border: 1px solid rgba(63,185,80,0.2); }
+    .comparison .label { font-size: 0.75rem; font-weight: 700; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .comparison .bad .label { color: #f85149; }
+    .comparison .good .label { color: #3fb950; }
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+    th, td { padding: 0.6rem 0.8rem; text-align: left; border-bottom: 1px solid #252a4a; }
+    th { color: #8b949e; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.03em; }
+    td:first-child { width: 2.5rem; text-align: center; }
+    @media (max-width: 600px) { .comparison { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr"><div class="timeline-title">Sadrzaj</div><ol id="timeline-sr"></ol></div>
+    <div class="en"><div class="timeline-title">Contents</div><ol id="timeline-en"></ol></div>
+  </aside>
+  <main class="blog-content">
+
+  <!-- SERBIAN -->
+  <div class="sr">
+    <h1>Next.js bezbednosna checklista za vibe codere</h1>
+    <p class="subtitle">Konkretni primeri koda, before/after poredjenja i 12-stavki checklista za svaki Next.js projekat koji generisete sa AI alatima</p>
+
+    <h2 id="sec1">1. NEXT_PUBLIC_ zamka &mdash; greska koja otkriva vase tajne</h2>
+    <p>Ovo je greska broj jedan u Next.js projektima koje generisu AI alati. Next.js ima jednostavno pravilo: svaka env varijabla sa prefiksom <code>NEXT_PUBLIC_</code> se <strong>ukljucuje u klijentski JavaScript bundle</strong>. To znaci da je vidljiva svakome ko otvori DevTools u browseru.</p>
+    <p>Problem je sto AI alati (Cursor, Copilot, Claude) cesto dodaju <code>NEXT_PUBLIC_</code> prefiks na varijable koje bi trebalo da ostanu tajne. Razlog: AI vidi da vam treba varijabla u komponenti i automatski dodaje prefiks da bi "resio" build error &mdash; ne razmisljajuci o bezbednosti.</p>
+
+    <div class="comparison">
+      <div class="bad">
+        <div class="label">Opasno &mdash; tajni kljuc u browseru</div>
+        <div class="code-block"><span class="comment">// .env.local</span><br><span class="danger">NEXT_PUBLIC_SUPABASE_SERVICE_KEY=eyJhbGci...</span><br><span class="danger">NEXT_PUBLIC_STRIPE_SECRET_KEY=sk_live_51...</span><br><span class="danger">NEXT_PUBLIC_DATABASE_URL=postgresql://user:pass@...</span><br><br><span class="comment">// bilo koja komponenta</span><br><span class="keyword">const</span> supabase = createClient(<br>&nbsp;&nbsp;process.env.<span class="danger">NEXT_PUBLIC_SUPABASE_URL</span>,<br>&nbsp;&nbsp;process.env.<span class="danger">NEXT_PUBLIC_SUPABASE_SERVICE_KEY</span><br>);</div>
+      </div>
+      <div class="good">
+        <div class="label">Bezbedno &mdash; tajne samo na serveru</div>
+        <div class="code-block"><span class="comment">// .env.local</span><br><span class="safe">SUPABASE_SERVICE_KEY=eyJhbGci...</span><br><span class="safe">STRIPE_SECRET_KEY=sk_live_51...</span><br><span class="safe">DATABASE_URL=postgresql://user:pass@...</span><br><br><span class="comment">// app/api/data/route.ts (server-only)</span><br><span class="keyword">const</span> supabase = createClient(<br>&nbsp;&nbsp;process.env.<span class="safe">NEXT_PUBLIC_SUPABASE_URL</span>,<br>&nbsp;&nbsp;process.env.<span class="safe">SUPABASE_SERVICE_KEY</span><br>);</div>
+      </div>
+    </div>
+
+    <p>Pravilo: <code>NEXT_PUBLIC_SUPABASE_URL</code> je OK &mdash; to je javni URL. Ali <code>SUPABASE_SERVICE_KEY</code> nikad ne sme imati <code>NEXT_PUBLIC_</code> prefiks jer daje admin pristup celoj bazi. Isto vazi za <code>STRIPE_SECRET_KEY</code>, <code>DATABASE_URL</code>, <code>JWT_SECRET</code>, i bilo koji API kljuc sa write pristupom.</p>
+    <p><strong>Kako da proverite:</strong> Otvorite sajt u browseru, pritisnite F12, idite na Sources tab i pretrazite (Ctrl+F) za "sk_live", "eyJhbG", "service_role" ili "password". Ako nadjete bilo sta &mdash; imate ozbiljan problem.</p>
+    <div class="callout callout-danger"><strong>Stvaran primer:</strong> U martu 2026, bezbednosni istrazivac je otkrio Supabase service key u klijentskom JS-u popularnog SaaS alata. Sa tim kljucem je mogao da cita, menja i brise sve podatke u bazi &mdash; ukljucujuci korisnicke email adrese i lozinke.</div>
+
+    <h2 id="sec2">2. Bezbednosni headeri u next.config.js</h2>
+    <p>Next.js ne dodaje nijedan bezbednosni HTTP header automatski. Morate ih sami konfigurisati. Bez njih, vas sajt je ranjiv na XSS, clickjacking i MIME sniffing napade.</p>
+    <p>Evo kompletne konfiguracije za <code>next.config.js</code>:</p>
+
+    <div class="code-block"><span class="comment">// next.config.js</span><br><span class="keyword">const</span> nextConfig = {<br>&nbsp;&nbsp;<span class="prop">headers</span>: <span class="keyword">async</span> () =&gt; [<br>&nbsp;&nbsp;&nbsp;&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="prop">source</span>: <span class="string">'/(.*)'</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="prop">headers</span>: [<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="prop">key</span>: <span class="string">'Content-Security-Policy'</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="prop">value</span>: <span class="safe">"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.example.com"</span> },<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="prop">key</span>: <span class="string">'Strict-Transport-Security'</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="prop">value</span>: <span class="safe">'max-age=63072000; includeSubDomains; preload'</span> },<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="prop">key</span>: <span class="string">'X-Frame-Options'</span>, <span class="prop">value</span>: <span class="safe">'DENY'</span> },<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="prop">key</span>: <span class="string">'X-Content-Type-Options'</span>, <span class="prop">value</span>: <span class="safe">'nosniff'</span> },<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="prop">key</span>: <span class="string">'Referrer-Policy'</span>, <span class="prop">value</span>: <span class="safe">'strict-origin-when-cross-origin'</span> },<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="prop">key</span>: <span class="string">'Permissions-Policy'</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="prop">value</span>: <span class="safe">'camera=(), microphone=(), geolocation=(), interest-cohort=()'</span> },<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;]<br>};<br><span class="keyword">module.exports</span> = nextConfig;</div>
+
+    <p><strong>CSP je najvazniji header.</strong> Bez njega, napadac moze da ubaci skriptu sa bilo kog domena na vas sajt. Gornji primer koristi restriktivan CSP koji dozvoljava samo resurse sa vaseg domena. Prilagodite <code>connect-src</code> za vase API domene i <code>script-src</code> ako koristite analytics ili trecu stranu.</p>
+    <p>Ako koristite <strong>Vercel</strong> za hosting, mozete takodje konfigurisati headere u <code>vercel.json</code>:</p>
+
+    <div class="code-block"><span class="comment">// vercel.json</span><br>{<br>&nbsp;&nbsp;<span class="string">"headers"</span>: [<br>&nbsp;&nbsp;&nbsp;&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"source"</span>: <span class="string">"/(.*)"</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"headers"</span>: [<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="string">"key"</span>: <span class="string">"X-Frame-Options"</span>, <span class="string">"value"</span>: <span class="safe">"DENY"</span> },<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="string">"key"</span>: <span class="string">"X-Content-Type-Options"</span>, <span class="string">"value"</span>: <span class="safe">"nosniff"</span> },<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="string">"key"</span>: <span class="string">"Strict-Transport-Security"</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"value"</span>: <span class="safe">"max-age=63072000; includeSubDomains; preload"</span> }<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;]<br>}</div>
+
+    <div class="callout callout-warn"><strong>Proverite vase headere:</strong> Pokrenite nas <a href="./index.html">besplatni sken</a> &mdash; proverava svih 6 kljucnih bezbednosnih headera i daje ocenu od A do F. Traje 30 sekundi.</div>
+
+    <h2 id="sec3">3. API rute &mdash; autentifikacija i validacija</h2>
+    <p>Svaka datoteka u <code>app/api/</code> folderu je javno dostupan HTTP endpoint. AI alati generisu API rute koje rade, ali retko dodaju proveru ko ih poziva. Rezultat: bilo ko moze da pozove vasu API rutu direktno iz browsera ili sa <code>curl</code>.</p>
+
+    <div class="comparison">
+      <div class="bad">
+        <div class="label">Opasno &mdash; API bez autentifikacije</div>
+        <div class="code-block"><span class="comment">// app/api/users/route.ts</span><br><span class="keyword">export async function</span> GET() {<br>&nbsp;&nbsp;<span class="keyword">const</span> users = <span class="keyword">await</span> db.query(<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="danger">'SELECT * FROM users'</span><br>&nbsp;&nbsp;);<br>&nbsp;&nbsp;<span class="keyword">return</span> Response.json(users);<br>}</div>
+      </div>
+      <div class="good">
+        <div class="label">Bezbedno &mdash; auth + validacija</div>
+        <div class="code-block"><span class="comment">// app/api/users/route.ts</span><br><span class="keyword">import</span> { auth } <span class="keyword">from</span> <span class="string">'@/lib/auth'</span>;<br><br><span class="keyword">export async function</span> GET(req: Request) {<br>&nbsp;&nbsp;<span class="keyword">const</span> session = <span class="keyword">await</span> <span class="safe">auth()</span>;<br>&nbsp;&nbsp;<span class="keyword">if</span> (<span class="safe">!session</span>) {<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> Response.json(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ error: <span class="string">'Unauthorized'</span> },<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ status: 401 }<br>&nbsp;&nbsp;&nbsp;&nbsp;);<br>&nbsp;&nbsp;}<br>&nbsp;&nbsp;<span class="keyword">const</span> users = <span class="keyword">await</span> db.query(<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="safe">'SELECT id, name FROM users WHERE org_id = $1'</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;[session.user.orgId]<br>&nbsp;&nbsp;);<br>&nbsp;&nbsp;<span class="keyword">return</span> Response.json(users);<br>}</div>
+      </div>
+    </div>
+
+    <p>U bezbednom primeru postoje tri kljucne razlike: (1) provera sesije na pocetku, (2) query vraca samo <code>id</code> i <code>name</code> umesto svih kolona, i (3) filtriranje po <code>org_id</code> tako da korisnik vidi samo svoje podatke.</p>
+    <p><strong>Input validacija sa Zod:</strong> Svaki POST/PUT endpoint mora da validira ulazne podatke na serveru. Frontend validacija je za UX &mdash; server validacija je za bezbednost.</p>
+
+    <div class="code-block"><span class="comment">// app/api/contact/route.ts</span><br><span class="keyword">import</span> { z } <span class="keyword">from</span> <span class="string">'zod'</span>;<br><br><span class="keyword">const</span> ContactSchema = z.object({<br>&nbsp;&nbsp;email: z.string().<span class="safe">email()</span>,<br>&nbsp;&nbsp;message: z.string().<span class="safe">min(10).max(1000)</span>,<br>&nbsp;&nbsp;name: z.string().<span class="safe">min(2).max(100)</span>,<br>});<br><br><span class="keyword">export async function</span> POST(req: Request) {<br>&nbsp;&nbsp;<span class="keyword">const</span> body = <span class="keyword">await</span> req.json();<br>&nbsp;&nbsp;<span class="keyword">const</span> result = ContactSchema.<span class="safe">safeParse(body)</span>;<br>&nbsp;&nbsp;<span class="keyword">if</span> (!result.success) {<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> Response.json(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ error: <span class="string">'Invalid input'</span> },<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ status: 400 }<br>&nbsp;&nbsp;&nbsp;&nbsp;);<br>&nbsp;&nbsp;}<br>&nbsp;&nbsp;<span class="comment">// result.data je sada tipizirano i validirano</span><br>&nbsp;&nbsp;<span class="keyword">await</span> saveContact(result.data);<br>&nbsp;&nbsp;<span class="keyword">return</span> Response.json({ ok: true });<br>}</div>
+
+    <h2 id="sec4">4. Server Actions &mdash; skriveni javni endpointi</h2>
+    <p>Server Actions su funkcije sa <code>"use server"</code> direktivom koje Next.js pretvara u HTTP POST endpointe. Svaki korisnik moze da ih pozove direktno &mdash; ne moraju da koriste vas UI. AI alati generisu Server Actions bez ikakve zastite.</p>
+
+    <div class="comparison">
+      <div class="bad">
+        <div class="label">Opasno &mdash; Server Action bez zastite</div>
+        <div class="code-block"><span class="comment">// app/actions.ts</span><br><span class="string">'use server'</span>;<br><br><span class="keyword">export async function</span> deleteUser(userId: string) {<br>&nbsp;&nbsp;<span class="keyword">await</span> db.query(<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="danger">`DELETE FROM users WHERE id = '${userId}'`</span><br>&nbsp;&nbsp;);<br>}</div>
+      </div>
+      <div class="good">
+        <div class="label">Bezbedno &mdash; auth + validacija + parametrizovani query</div>
+        <div class="code-block"><span class="comment">// app/actions.ts</span><br><span class="string">'use server'</span>;<br><span class="keyword">import</span> { auth } <span class="keyword">from</span> <span class="string">'@/lib/auth'</span>;<br><span class="keyword">import</span> { z } <span class="keyword">from</span> <span class="string">'zod'</span>;<br><br><span class="keyword">export async function</span> deleteUser(userId: string) {<br>&nbsp;&nbsp;<span class="keyword">const</span> session = <span class="keyword">await</span> <span class="safe">auth()</span>;<br>&nbsp;&nbsp;<span class="keyword">if</span> (!session?.user.isAdmin) {<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">throw new</span> Error(<span class="string">'Forbidden'</span>);<br>&nbsp;&nbsp;}<br>&nbsp;&nbsp;<span class="keyword">const</span> id = z.string().<span class="safe">uuid().parse(userId)</span>;<br>&nbsp;&nbsp;<span class="keyword">await</span> db.query(<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="safe">'DELETE FROM users WHERE id = $1'</span>, [id]<br>&nbsp;&nbsp;);<br>}</div>
+      </div>
+    </div>
+
+    <p>Bezbedna verzija ima tri sloja zastite: (1) provera da je korisnik ulogovan i da je admin, (2) Zod validacija da je <code>userId</code> validan UUID format (sprecava SQL injection), i (3) parametrizovani query umesto string interpolacije.</p>
+    <p><strong>Vazno:</strong> Next.js automatski dodaje CSRF zastitu za Server Actions (ukljucuje token u formu). Ali to NE pokriva autentifikaciju ni autorizaciju &mdash; to morate sami.</p>
+    <div class="callout"><strong>Pravilo:</strong> Svaka Server Action je API endpoint. Tretirajte je kao javni REST endpoint &mdash; jer to i jeste.</div>
+
+    <h2 id="sec5">5. Middleware auth guard</h2>
+    <p>Next.js <code>middleware.ts</code> se izvrsava pre svakog zahteva &mdash; pre nego sto se ucita stranica ili API ruta. To je idealno mesto za centralnu autentifikaciju. Umesto da dodajete auth proveru u svaku rutu pojedinacno, jednom je definisete u middleware-u.</p>
+
+    <div class="code-block"><span class="comment">// middleware.ts (koren projekta)</span><br><span class="keyword">import</span> { NextResponse } <span class="keyword">from</span> <span class="string">'next/server'</span>;<br><span class="keyword">import type</span> { NextRequest } <span class="keyword">from</span> <span class="string">'next/server'</span>;<br><br><span class="keyword">const</span> publicPaths = [<span class="string">'/'</span>, <span class="string">'/login'</span>, <span class="string">'/register'</span>, <span class="string">'/api/health'</span>];<br><br><span class="keyword">export function</span> middleware(request: NextRequest) {<br>&nbsp;&nbsp;<span class="keyword">const</span> { pathname } = request.nextUrl;<br>&nbsp;&nbsp;<br>&nbsp;&nbsp;<span class="comment">// Javne rute &mdash; propusti bez provere</span><br>&nbsp;&nbsp;<span class="keyword">if</span> (publicPaths.some(p =&gt; pathname.startsWith(p))) {<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> NextResponse.next();<br>&nbsp;&nbsp;}<br>&nbsp;&nbsp;<br>&nbsp;&nbsp;<span class="comment">// Proveri session token</span><br>&nbsp;&nbsp;<span class="keyword">const</span> token = request.cookies.get(<span class="string">'session-token'</span>);<br>&nbsp;&nbsp;<span class="keyword">if</span> (<span class="safe">!token</span>) {<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> NextResponse.<span class="safe">redirect(</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">new</span> URL(<span class="string">'/login'</span>, request.url)<br>&nbsp;&nbsp;&nbsp;&nbsp;);<br>&nbsp;&nbsp;}<br>&nbsp;&nbsp;<br>&nbsp;&nbsp;<span class="comment">// Dodaj bezbednosne headere na svaki response</span><br>&nbsp;&nbsp;<span class="keyword">const</span> response = NextResponse.next();<br>&nbsp;&nbsp;response.headers.set(<span class="string">'X-Frame-Options'</span>, <span class="safe">'DENY'</span>);<br>&nbsp;&nbsp;response.headers.set(<span class="string">'X-Content-Type-Options'</span>, <span class="safe">'nosniff'</span>);<br>&nbsp;&nbsp;<span class="keyword">return</span> response;<br>}<br><br><span class="keyword">export const</span> config = {<br>&nbsp;&nbsp;<span class="comment">// Primeni na sve rute osim statickih fajlova</span><br>&nbsp;&nbsp;matcher: [<span class="string">'/((?!_next/static|_next/image|favicon.ico).*)'</span>]<br>};</div>
+
+    <p><strong>Matcher je kriticno podesavanje.</strong> Bez matcher-a, middleware se izvrsava i za staticke fajlove (slike, CSS, JS), sto usporava sajt. Gornji regex iskljucuje Next.js interne putanje.</p>
+    <p>Middleware takodje moze da dodaje bezbednosne headere dinamicki &mdash; korisno kad header zavisi od rute ili korisnika (npr. razlicit CSP za admin panel).</p>
+
+    <h2 id="sec6">6. CORS u Route Handler-ima</h2>
+    <p>Next.js ne konfigurise CORS automatski. Ako vam frontend poziva API sa drugog domena (ili cak sa drugog porta u development-u), dobicete CORS gresku. AI alati cesto "rese" ovo dodavanjem wildcard CORS-a &mdash; sto je opasno.</p>
+
+    <div class="comparison">
+      <div class="bad">
+        <div class="label">Opasno &mdash; wildcard CORS</div>
+        <div class="code-block"><span class="comment">// app/api/data/route.ts</span><br><span class="keyword">export async function</span> GET() {<br>&nbsp;&nbsp;<span class="keyword">return</span> Response.json(data, {<br>&nbsp;&nbsp;&nbsp;&nbsp;headers: {<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="danger">'Access-Control-Allow-Origin': '*'</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="danger">'Access-Control-Allow-Methods': '*'</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;});<br>}</div>
+      </div>
+      <div class="good">
+        <div class="label">Bezbedno &mdash; eksplicitni origin</div>
+        <div class="code-block"><span class="comment">// app/api/data/route.ts</span><br><span class="keyword">const</span> ALLOWED = [<br>&nbsp;&nbsp;<span class="safe">'https://myapp.com'</span>,<br>&nbsp;&nbsp;<span class="safe">'https://admin.myapp.com'</span>,<br>];<br><br><span class="keyword">export async function</span> GET(req: Request) {<br>&nbsp;&nbsp;<span class="keyword">const</span> origin = req.headers.get(<span class="string">'origin'</span>);<br>&nbsp;&nbsp;<span class="keyword">const</span> headers: Record&lt;string, string&gt; = {};<br>&nbsp;&nbsp;<span class="keyword">if</span> (origin &amp;&amp; <span class="safe">ALLOWED.includes(origin)</span>) {<br>&nbsp;&nbsp;&nbsp;&nbsp;headers[<span class="string">'Access-Control-Allow-Origin'</span>] = origin;<br>&nbsp;&nbsp;&nbsp;&nbsp;headers[<span class="string">'Access-Control-Allow-Methods'</span>] = <span class="safe">'GET, POST'</span>;<br>&nbsp;&nbsp;}<br>&nbsp;&nbsp;<span class="keyword">return</span> Response.json(data, { headers });<br>}</div>
+      </div>
+    </div>
+
+    <p>Wildcard (<code>*</code>) znaci da BILO KOJI sajt moze da poziva vase API rute. Napadac moze da napravi lazni sajt koji poziva vase API-je iz korisnikovog browsera, koristeci korisnikove kolacice. Sa eksplicitnim origin listom, samo vasi domeni mogu da pozivaju API.</p>
+
+    <h2 id="sec7">7. Error handling &mdash; ne otkrivajte stack trace</h2>
+    <p>Kad se desi greska u API ruti, Next.js u development modu prikazuje kompletan stack trace sa putanjama fajlova, verzijama paketa i ponekad env varijablama. Ako ostavite ovo u produkciji, napadac dobija mapu vaseg projekta.</p>
+
+    <div class="comparison">
+      <div class="bad">
+        <div class="label">Opasno &mdash; detaljna greska u produkciji</div>
+        <div class="code-block"><span class="keyword">export async function</span> POST(req: Request) {<br>&nbsp;&nbsp;<span class="keyword">try</span> {<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">const</span> data = <span class="keyword">await</span> processOrder(req);<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> Response.json(data);<br>&nbsp;&nbsp;} <span class="keyword">catch</span> (err) {<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> Response.json(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ error: <span class="danger">err.message, stack: err.stack</span> },<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ status: 500 }<br>&nbsp;&nbsp;&nbsp;&nbsp;);<br>&nbsp;&nbsp;}<br>}</div>
+      </div>
+      <div class="good">
+        <div class="label">Bezbedno &mdash; loguj interno, vrati genericki odgovor</div>
+        <div class="code-block"><span class="keyword">export async function</span> POST(req: Request) {<br>&nbsp;&nbsp;<span class="keyword">try</span> {<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">const</span> data = <span class="keyword">await</span> processOrder(req);<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> Response.json(data);<br>&nbsp;&nbsp;} <span class="keyword">catch</span> (err) {<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="safe">console.error('Order failed:', err);</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> Response.json(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ error: <span class="safe">'Internal server error'</span> },<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ status: 500 }<br>&nbsp;&nbsp;&nbsp;&nbsp;);<br>&nbsp;&nbsp;}<br>}</div>
+      </div>
+    </div>
+
+    <h2 id="sec8">8. Kompletna checklista (12 stavki)</h2>
+    <p>Prodjite kroz svaku stavku pre deploy-a. Treca kolona objasnjava kako da proverite svaku stavku bez alata.</p>
+    <table>
+      <tr><th>#</th><th>Stavka</th><th>Kako proveriti</th></tr>
+      <tr><td data-label="#">1</td><td data-label="Stavka">CSP header konfigurisan</td><td data-label="Provera">DevTools &gt; Network &gt; proverite Response Headers na bilo kom zahtevu</td></tr>
+      <tr><td data-label="#">2</td><td data-label="Stavka">HSTS header aktivan</td><td data-label="Provera">Isti nacin kao CSP &mdash; trazite <code>Strict-Transport-Security</code> u response headerima</td></tr>
+      <tr><td data-label="#">3</td><td data-label="Stavka">X-Frame-Options = DENY</td><td data-label="Provera">Pokusajte da ucitate sajt u iframe na drugom domenu &mdash; treba da bude blokirano</td></tr>
+      <tr><td data-label="#">4</td><td data-label="Stavka">API rute imaju auth proveru</td><td data-label="Provera">Pozovite API rutu sa <code>curl</code> bez tokena &mdash; treba da vrati 401</td></tr>
+      <tr><td data-label="#">5</td><td data-label="Stavka">Input validacija na serveru (Zod)</td><td data-label="Provera">Posaljite nevalidan JSON na POST endpoint &mdash; treba da vrati 400, ne 500</td></tr>
+      <tr><td data-label="#">6</td><td data-label="Stavka">Rate limiting aktivan</td><td data-label="Provera">Posaljite 100 zahteva u 10 sekundi &mdash; treba da dobijete 429 odgovor</td></tr>
+      <tr><td data-label="#">7</td><td data-label="Stavka">Nema NEXT_PUBLIC_ za tajne</td><td data-label="Provera">Pretrazite <code>.env*</code> fajlove za <code>NEXT_PUBLIC_.*KEY\|SECRET\|PASSWORD</code></td></tr>
+      <tr><td data-label="#">8</td><td data-label="Stavka">.env fajlovi u .gitignore</td><td data-label="Provera">Pokrenite <code>git ls-files .env*</code> &mdash; ne sme da vrati nista</td></tr>
+      <tr><td data-label="#">9</td><td data-label="Stavka">CORS nije wildcard (*)</td><td data-label="Provera">Proverite <code>Access-Control-Allow-Origin</code> u response headerima API ruta</td></tr>
+      <tr><td data-label="#">10</td><td data-label="Stavka">Server Actions imaju auth</td><td data-label="Provera">Pozovite Server Action dirketno sa <code>fetch()</code> bez sesije &mdash; treba da odbije</td></tr>
+      <tr><td data-label="#">11</td><td data-label="Stavka">Error responses ne otkrivaju stack</td><td data-label="Provera">Izazovite gresku na API ruti &mdash; odgovor treba da bude genericki, ne stack trace</td></tr>
+      <tr><td data-label="#">12</td><td data-label="Stavka">Automatski bezbednosni sken</td><td data-label="Provera">Pokrenite nas <a href="./index.html">besplatni skener</a> &mdash; proverava 240+ stavki za 30 sekundi</td></tr>
+    </table>
+    <div class="callout"><strong>Automatska provera:</strong> Nas <a href="./index.html">skener</a> proverava headere, SSL, CORS, portove i 240+ drugih stavki automatski. Besplatno i bez registracije.</div>
+
+    <h2 id="sec9">9. Najcesce greske vibe codera u Next.js</h2>
+    <p>Ovo su greske koje vidimo najcesce u Next.js projektima napravljenim sa AI alatima:</p>
+    <ul>
+      <li><strong>Izlozene tajne kroz NEXT_PUBLIC_</strong> &mdash; AI dodaje prefiks da resi build error, ne razmisljajuci da tajni kljuc postaje javan. Proverite svaki <code>.env</code> fajl pre deploy-a.</li>
+      <li><strong>Nezasticene API rute</strong> &mdash; AI generise handler koji radi, ali ne dodaje auth. Svaki endpoint bez autentifikacije je otvoren ceo internet.</li>
+      <li><strong>Server Actions bez validacije</strong> &mdash; AI koristi <code>"use server"</code> direktivu ali ne dodaje Zod validaciju. Korisnik moze da posalje bilo sta.</li>
+      <li><strong>Wildcard CORS</strong> &mdash; AI dodaje <code>Access-Control-Allow-Origin: *</code> da resi CORS gresku u development-u, a vi zaboravite da promenite za produkciju.</li>
+      <li><strong>Nedostaju bezbednosni headeri</strong> &mdash; next.config.js generisan od AI-a gotovo nikad ne ukljucuje headers() konfiguraciju. Morate je sami dodati.</li>
+      <li><strong>Debug mod u produkciji</strong> &mdash; detaljne greske sa stack trace-om vidljive u produkciji otkrivaju strukturu vaseg projekta napadacima.</li>
+    </ul>
+    <p>Svaku od ovih gresaka mozete otkriti automatski pokretanjem naseg skenera posle svakog deploy-a.</p>
+    <a href="./index.html" class="cta">Skeniraj Next.js sajt &rarr;</a>
+
+    <p style="margin-top:2rem;"><a href="./blog-vibe-coding-security.html">&larr; Nazad na Vibe Coding vodice</a></p>
+  </div>
+
+  <!-- ENGLISH -->
+  <div class="en">
+    <h1>Next.js Security Checklist for Vibe Coders</h1>
+    <p class="subtitle">Concrete code examples, before/after comparisons, and a 12-item checklist for every Next.js project you generate with AI tools</p>
+
+    <h2 id="sec1e">1. The NEXT_PUBLIC_ trap &mdash; the mistake that exposes your secrets</h2>
+    <p>This is the number one mistake in AI-generated Next.js projects. Next.js has a simple rule: any env variable prefixed with <code>NEXT_PUBLIC_</code> is <strong>bundled into the client-side JavaScript</strong>. That means it is visible to anyone who opens DevTools in their browser.</p>
+    <p>The problem is that AI tools (Cursor, Copilot, Claude) frequently add the <code>NEXT_PUBLIC_</code> prefix to variables that should remain secret. The reason: AI sees you need a variable in a component and automatically adds the prefix to "solve" the build error &mdash; without considering security.</p>
+
+    <div class="comparison">
+      <div class="bad">
+        <div class="label">Dangerous &mdash; secret key in the browser</div>
+        <div class="code-block"><span class="comment">// .env.local</span><br><span class="danger">NEXT_PUBLIC_SUPABASE_SERVICE_KEY=eyJhbGci...</span><br><span class="danger">NEXT_PUBLIC_STRIPE_SECRET_KEY=sk_live_51...</span><br><span class="danger">NEXT_PUBLIC_DATABASE_URL=postgresql://user:pass@...</span><br><br><span class="comment">// any component</span><br><span class="keyword">const</span> supabase = createClient(<br>&nbsp;&nbsp;process.env.<span class="danger">NEXT_PUBLIC_SUPABASE_URL</span>,<br>&nbsp;&nbsp;process.env.<span class="danger">NEXT_PUBLIC_SUPABASE_SERVICE_KEY</span><br>);</div>
+      </div>
+      <div class="good">
+        <div class="label">Safe &mdash; secrets on the server only</div>
+        <div class="code-block"><span class="comment">// .env.local</span><br><span class="safe">SUPABASE_SERVICE_KEY=eyJhbGci...</span><br><span class="safe">STRIPE_SECRET_KEY=sk_live_51...</span><br><span class="safe">DATABASE_URL=postgresql://user:pass@...</span><br><br><span class="comment">// app/api/data/route.ts (server-only)</span><br><span class="keyword">const</span> supabase = createClient(<br>&nbsp;&nbsp;process.env.<span class="safe">NEXT_PUBLIC_SUPABASE_URL</span>,<br>&nbsp;&nbsp;process.env.<span class="safe">SUPABASE_SERVICE_KEY</span><br>);</div>
+      </div>
+    </div>
+
+    <p>The rule: <code>NEXT_PUBLIC_SUPABASE_URL</code> is fine &mdash; it is a public URL. But <code>SUPABASE_SERVICE_KEY</code> must never have the <code>NEXT_PUBLIC_</code> prefix because it grants admin access to the entire database. The same applies to <code>STRIPE_SECRET_KEY</code>, <code>DATABASE_URL</code>, <code>JWT_SECRET</code>, and any API key with write access.</p>
+    <p><strong>How to check:</strong> Open your site in the browser, press F12, go to the Sources tab and search (Ctrl+F) for "sk_live", "eyJhbG", "service_role", or "password". If you find anything &mdash; you have a serious problem.</p>
+    <div class="callout callout-danger"><strong>Real-world example:</strong> In March 2026, a security researcher discovered a Supabase service key in the client-side JS of a popular SaaS tool. With that key, they could read, modify, and delete all data in the database &mdash; including user email addresses and passwords.</div>
+
+    <h2 id="sec2e">2. Security headers in next.config.js</h2>
+    <p>Next.js does not add any security HTTP headers automatically. You must configure them yourself. Without them, your site is vulnerable to XSS, clickjacking, and MIME sniffing attacks.</p>
+    <p>Here is the complete configuration for <code>next.config.js</code>:</p>
+
+    <div class="code-block"><span class="comment">// next.config.js</span><br><span class="keyword">const</span> nextConfig = {<br>&nbsp;&nbsp;<span class="prop">headers</span>: <span class="keyword">async</span> () =&gt; [<br>&nbsp;&nbsp;&nbsp;&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="prop">source</span>: <span class="string">'/(.*)'</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="prop">headers</span>: [<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="prop">key</span>: <span class="string">'Content-Security-Policy'</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="prop">value</span>: <span class="safe">"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.example.com"</span> },<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="prop">key</span>: <span class="string">'Strict-Transport-Security'</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="prop">value</span>: <span class="safe">'max-age=63072000; includeSubDomains; preload'</span> },<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="prop">key</span>: <span class="string">'X-Frame-Options'</span>, <span class="prop">value</span>: <span class="safe">'DENY'</span> },<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="prop">key</span>: <span class="string">'X-Content-Type-Options'</span>, <span class="prop">value</span>: <span class="safe">'nosniff'</span> },<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="prop">key</span>: <span class="string">'Referrer-Policy'</span>, <span class="prop">value</span>: <span class="safe">'strict-origin-when-cross-origin'</span> },<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="prop">key</span>: <span class="string">'Permissions-Policy'</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="prop">value</span>: <span class="safe">'camera=(), microphone=(), geolocation=(), interest-cohort=()'</span> },<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;]<br>};<br><span class="keyword">module.exports</span> = nextConfig;</div>
+
+    <p><strong>CSP is the most important header.</strong> Without it, an attacker can inject a script from any domain onto your site. The example above uses a restrictive CSP that only allows resources from your domain. Adjust <code>connect-src</code> for your API domains and <code>script-src</code> if you use analytics or third parties.</p>
+    <p>If you use <strong>Vercel</strong> for hosting, you can also configure headers in <code>vercel.json</code>:</p>
+
+    <div class="code-block"><span class="comment">// vercel.json</span><br>{<br>&nbsp;&nbsp;<span class="string">"headers"</span>: [<br>&nbsp;&nbsp;&nbsp;&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"source"</span>: <span class="string">"/(.*)"</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"headers"</span>: [<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="string">"key"</span>: <span class="string">"X-Frame-Options"</span>, <span class="string">"value"</span>: <span class="safe">"DENY"</span> },<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="string">"key"</span>: <span class="string">"X-Content-Type-Options"</span>, <span class="string">"value"</span>: <span class="safe">"nosniff"</span> },<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="string">"key"</span>: <span class="string">"Strict-Transport-Security"</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"value"</span>: <span class="safe">"max-age=63072000; includeSubDomains; preload"</span> }<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;]<br>}</div>
+
+    <div class="callout callout-warn"><strong>Check your headers:</strong> Run our <a href="./index.html">free scan</a> &mdash; it checks all 6 critical security headers and gives a grade from A to F. Takes 30 seconds.</div>
+
+    <h2 id="sec3e">3. API routes &mdash; authentication and validation</h2>
+    <p>Every file in the <code>app/api/</code> folder is a publicly accessible HTTP endpoint. AI tools generate API routes that work, but rarely add checks for who is calling them. The result: anyone can call your API route directly from the browser or with <code>curl</code>.</p>
+
+    <div class="comparison">
+      <div class="bad">
+        <div class="label">Dangerous &mdash; API without authentication</div>
+        <div class="code-block"><span class="comment">// app/api/users/route.ts</span><br><span class="keyword">export async function</span> GET() {<br>&nbsp;&nbsp;<span class="keyword">const</span> users = <span class="keyword">await</span> db.query(<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="danger">'SELECT * FROM users'</span><br>&nbsp;&nbsp;);<br>&nbsp;&nbsp;<span class="keyword">return</span> Response.json(users);<br>}</div>
+      </div>
+      <div class="good">
+        <div class="label">Safe &mdash; auth + validation</div>
+        <div class="code-block"><span class="comment">// app/api/users/route.ts</span><br><span class="keyword">import</span> { auth } <span class="keyword">from</span> <span class="string">'@/lib/auth'</span>;<br><br><span class="keyword">export async function</span> GET(req: Request) {<br>&nbsp;&nbsp;<span class="keyword">const</span> session = <span class="keyword">await</span> <span class="safe">auth()</span>;<br>&nbsp;&nbsp;<span class="keyword">if</span> (<span class="safe">!session</span>) {<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> Response.json(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ error: <span class="string">'Unauthorized'</span> },<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ status: 401 }<br>&nbsp;&nbsp;&nbsp;&nbsp;);<br>&nbsp;&nbsp;}<br>&nbsp;&nbsp;<span class="keyword">const</span> users = <span class="keyword">await</span> db.query(<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="safe">'SELECT id, name FROM users WHERE org_id = $1'</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;[session.user.orgId]<br>&nbsp;&nbsp;);<br>&nbsp;&nbsp;<span class="keyword">return</span> Response.json(users);<br>}</div>
+      </div>
+    </div>
+
+    <p>The safe version has three key differences: (1) session check at the start, (2) the query returns only <code>id</code> and <code>name</code> instead of all columns, and (3) filtering by <code>org_id</code> so users only see their own data.</p>
+    <p><strong>Input validation with Zod:</strong> Every POST/PUT endpoint must validate input on the server. Frontend validation is for UX &mdash; server validation is for security.</p>
+
+    <div class="code-block"><span class="comment">// app/api/contact/route.ts</span><br><span class="keyword">import</span> { z } <span class="keyword">from</span> <span class="string">'zod'</span>;<br><br><span class="keyword">const</span> ContactSchema = z.object({<br>&nbsp;&nbsp;email: z.string().<span class="safe">email()</span>,<br>&nbsp;&nbsp;message: z.string().<span class="safe">min(10).max(1000)</span>,<br>&nbsp;&nbsp;name: z.string().<span class="safe">min(2).max(100)</span>,<br>});<br><br><span class="keyword">export async function</span> POST(req: Request) {<br>&nbsp;&nbsp;<span class="keyword">const</span> body = <span class="keyword">await</span> req.json();<br>&nbsp;&nbsp;<span class="keyword">const</span> result = ContactSchema.<span class="safe">safeParse(body)</span>;<br>&nbsp;&nbsp;<span class="keyword">if</span> (!result.success) {<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> Response.json(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ error: <span class="string">'Invalid input'</span> },<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ status: 400 }<br>&nbsp;&nbsp;&nbsp;&nbsp;);<br>&nbsp;&nbsp;}<br>&nbsp;&nbsp;<span class="comment">// result.data is now typed and validated</span><br>&nbsp;&nbsp;<span class="keyword">await</span> saveContact(result.data);<br>&nbsp;&nbsp;<span class="keyword">return</span> Response.json({ ok: true });<br>}</div>
+
+    <h2 id="sec4e">4. Server Actions &mdash; hidden public endpoints</h2>
+    <p>Server Actions are functions with the <code>"use server"</code> directive that Next.js turns into HTTP POST endpoints. Any user can call them directly &mdash; they do not need to use your UI. AI tools generate Server Actions without any protection.</p>
+
+    <div class="comparison">
+      <div class="bad">
+        <div class="label">Dangerous &mdash; unprotected Server Action</div>
+        <div class="code-block"><span class="comment">// app/actions.ts</span><br><span class="string">'use server'</span>;<br><br><span class="keyword">export async function</span> deleteUser(userId: string) {<br>&nbsp;&nbsp;<span class="keyword">await</span> db.query(<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="danger">`DELETE FROM users WHERE id = '${userId}'`</span><br>&nbsp;&nbsp;);<br>}</div>
+      </div>
+      <div class="good">
+        <div class="label">Safe &mdash; auth + validation + parameterized query</div>
+        <div class="code-block"><span class="comment">// app/actions.ts</span><br><span class="string">'use server'</span>;<br><span class="keyword">import</span> { auth } <span class="keyword">from</span> <span class="string">'@/lib/auth'</span>;<br><span class="keyword">import</span> { z } <span class="keyword">from</span> <span class="string">'zod'</span>;<br><br><span class="keyword">export async function</span> deleteUser(userId: string) {<br>&nbsp;&nbsp;<span class="keyword">const</span> session = <span class="keyword">await</span> <span class="safe">auth()</span>;<br>&nbsp;&nbsp;<span class="keyword">if</span> (!session?.user.isAdmin) {<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">throw new</span> Error(<span class="string">'Forbidden'</span>);<br>&nbsp;&nbsp;}<br>&nbsp;&nbsp;<span class="keyword">const</span> id = z.string().<span class="safe">uuid().parse(userId)</span>;<br>&nbsp;&nbsp;<span class="keyword">await</span> db.query(<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="safe">'DELETE FROM users WHERE id = $1'</span>, [id]<br>&nbsp;&nbsp;);<br>}</div>
+      </div>
+    </div>
+
+    <p>The safe version has three layers of protection: (1) check that the user is logged in and is an admin, (2) Zod validation that <code>userId</code> is a valid UUID format (prevents SQL injection), and (3) parameterized query instead of string interpolation.</p>
+    <p><strong>Important:</strong> Next.js automatically adds CSRF protection for Server Actions (includes a token in the form). But that does NOT cover authentication or authorization &mdash; you must add those yourself.</p>
+    <div class="callout"><strong>Rule of thumb:</strong> Every Server Action is an API endpoint. Treat it as a public REST endpoint &mdash; because that is what it is.</div>
+
+    <h2 id="sec5e">5. Middleware auth guard</h2>
+    <p>Next.js <code>middleware.ts</code> runs before every request &mdash; before any page or API route loads. That makes it the ideal place for centralized authentication. Instead of adding auth checks to every route individually, define it once in middleware.</p>
+
+    <div class="code-block"><span class="comment">// middleware.ts (project root)</span><br><span class="keyword">import</span> { NextResponse } <span class="keyword">from</span> <span class="string">'next/server'</span>;<br><span class="keyword">import type</span> { NextRequest } <span class="keyword">from</span> <span class="string">'next/server'</span>;<br><br><span class="keyword">const</span> publicPaths = [<span class="string">'/'</span>, <span class="string">'/login'</span>, <span class="string">'/register'</span>, <span class="string">'/api/health'</span>];<br><br><span class="keyword">export function</span> middleware(request: NextRequest) {<br>&nbsp;&nbsp;<span class="keyword">const</span> { pathname } = request.nextUrl;<br>&nbsp;&nbsp;<br>&nbsp;&nbsp;<span class="comment">// Public routes &mdash; pass through without checking</span><br>&nbsp;&nbsp;<span class="keyword">if</span> (publicPaths.some(p =&gt; pathname.startsWith(p))) {<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> NextResponse.next();<br>&nbsp;&nbsp;}<br>&nbsp;&nbsp;<br>&nbsp;&nbsp;<span class="comment">// Check session token</span><br>&nbsp;&nbsp;<span class="keyword">const</span> token = request.cookies.get(<span class="string">'session-token'</span>);<br>&nbsp;&nbsp;<span class="keyword">if</span> (<span class="safe">!token</span>) {<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> NextResponse.<span class="safe">redirect(</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">new</span> URL(<span class="string">'/login'</span>, request.url)<br>&nbsp;&nbsp;&nbsp;&nbsp;);<br>&nbsp;&nbsp;}<br>&nbsp;&nbsp;<br>&nbsp;&nbsp;<span class="comment">// Add security headers to every response</span><br>&nbsp;&nbsp;<span class="keyword">const</span> response = NextResponse.next();<br>&nbsp;&nbsp;response.headers.set(<span class="string">'X-Frame-Options'</span>, <span class="safe">'DENY'</span>);<br>&nbsp;&nbsp;response.headers.set(<span class="string">'X-Content-Type-Options'</span>, <span class="safe">'nosniff'</span>);<br>&nbsp;&nbsp;<span class="keyword">return</span> response;<br>}<br><br><span class="keyword">export const</span> config = {<br>&nbsp;&nbsp;<span class="comment">// Apply to all routes except static files</span><br>&nbsp;&nbsp;matcher: [<span class="string">'/((?!_next/static|_next/image|favicon.ico).*)'</span>]<br>};</div>
+
+    <p><strong>The matcher is a critical setting.</strong> Without it, middleware runs for static files too (images, CSS, JS), which slows down the site. The regex above excludes Next.js internal paths.</p>
+    <p>Middleware can also add security headers dynamically &mdash; useful when a header depends on the route or user (e.g., different CSP for the admin panel).</p>
+
+    <h2 id="sec6e">6. CORS in Route Handlers</h2>
+    <p>Next.js does not configure CORS automatically. If your frontend calls an API from another domain (or even another port during development), you will get a CORS error. AI tools often "solve" this by adding wildcard CORS &mdash; which is dangerous.</p>
+
+    <div class="comparison">
+      <div class="bad">
+        <div class="label">Dangerous &mdash; wildcard CORS</div>
+        <div class="code-block"><span class="comment">// app/api/data/route.ts</span><br><span class="keyword">export async function</span> GET() {<br>&nbsp;&nbsp;<span class="keyword">return</span> Response.json(data, {<br>&nbsp;&nbsp;&nbsp;&nbsp;headers: {<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="danger">'Access-Control-Allow-Origin': '*'</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="danger">'Access-Control-Allow-Methods': '*'</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;});<br>}</div>
+      </div>
+      <div class="good">
+        <div class="label">Safe &mdash; explicit origin allowlist</div>
+        <div class="code-block"><span class="comment">// app/api/data/route.ts</span><br><span class="keyword">const</span> ALLOWED = [<br>&nbsp;&nbsp;<span class="safe">'https://myapp.com'</span>,<br>&nbsp;&nbsp;<span class="safe">'https://admin.myapp.com'</span>,<br>];<br><br><span class="keyword">export async function</span> GET(req: Request) {<br>&nbsp;&nbsp;<span class="keyword">const</span> origin = req.headers.get(<span class="string">'origin'</span>);<br>&nbsp;&nbsp;<span class="keyword">const</span> headers: Record&lt;string, string&gt; = {};<br>&nbsp;&nbsp;<span class="keyword">if</span> (origin &amp;&amp; <span class="safe">ALLOWED.includes(origin)</span>) {<br>&nbsp;&nbsp;&nbsp;&nbsp;headers[<span class="string">'Access-Control-Allow-Origin'</span>] = origin;<br>&nbsp;&nbsp;&nbsp;&nbsp;headers[<span class="string">'Access-Control-Allow-Methods'</span>] = <span class="safe">'GET, POST'</span>;<br>&nbsp;&nbsp;}<br>&nbsp;&nbsp;<span class="keyword">return</span> Response.json(data, { headers });<br>}</div>
+      </div>
+    </div>
+
+    <p>A wildcard (<code>*</code>) means ANY website can call your API routes. An attacker can create a fake site that calls your APIs from the user's browser, using the user's cookies. With an explicit origin list, only your domains can call the API.</p>
+
+    <h2 id="sec7e">7. Error handling &mdash; do not expose stack traces</h2>
+    <p>When an error occurs in an API route, Next.js in development mode shows the full stack trace with file paths, package versions, and sometimes env variables. If you leave this in production, an attacker gets a map of your project.</p>
+
+    <div class="comparison">
+      <div class="bad">
+        <div class="label">Dangerous &mdash; detailed error in production</div>
+        <div class="code-block"><span class="keyword">export async function</span> POST(req: Request) {<br>&nbsp;&nbsp;<span class="keyword">try</span> {<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">const</span> data = <span class="keyword">await</span> processOrder(req);<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> Response.json(data);<br>&nbsp;&nbsp;} <span class="keyword">catch</span> (err) {<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> Response.json(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ error: <span class="danger">err.message, stack: err.stack</span> },<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ status: 500 }<br>&nbsp;&nbsp;&nbsp;&nbsp;);<br>&nbsp;&nbsp;}<br>}</div>
+      </div>
+      <div class="good">
+        <div class="label">Safe &mdash; log internally, return generic response</div>
+        <div class="code-block"><span class="keyword">export async function</span> POST(req: Request) {<br>&nbsp;&nbsp;<span class="keyword">try</span> {<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">const</span> data = <span class="keyword">await</span> processOrder(req);<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> Response.json(data);<br>&nbsp;&nbsp;} <span class="keyword">catch</span> (err) {<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="safe">console.error('Order failed:', err);</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> Response.json(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ error: <span class="safe">'Internal server error'</span> },<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ status: 500 }<br>&nbsp;&nbsp;&nbsp;&nbsp;);<br>&nbsp;&nbsp;}<br>}</div>
+      </div>
+    </div>
+
+    <h2 id="sec8e">8. Complete checklist (12 items)</h2>
+    <p>Go through every item before deploying. The third column explains how to verify each item without tools.</p>
+    <table>
+      <tr><th>#</th><th>Item</th><th>How to verify</th></tr>
+      <tr><td data-label="#">1</td><td data-label="Item">CSP header configured</td><td data-label="Verify">DevTools &gt; Network &gt; check Response Headers on any request</td></tr>
+      <tr><td data-label="#">2</td><td data-label="Item">HSTS header active</td><td data-label="Verify">Same as CSP &mdash; look for <code>Strict-Transport-Security</code> in response headers</td></tr>
+      <tr><td data-label="#">3</td><td data-label="Item">X-Frame-Options = DENY</td><td data-label="Verify">Try loading your site in an iframe on another domain &mdash; it should be blocked</td></tr>
+      <tr><td data-label="#">4</td><td data-label="Item">API routes have auth check</td><td data-label="Verify">Call an API route with <code>curl</code> without a token &mdash; should return 401</td></tr>
+      <tr><td data-label="#">5</td><td data-label="Item">Server-side input validation (Zod)</td><td data-label="Verify">Send invalid JSON to a POST endpoint &mdash; should return 400, not 500</td></tr>
+      <tr><td data-label="#">6</td><td data-label="Item">Rate limiting active</td><td data-label="Verify">Send 100 requests in 10 seconds &mdash; should get 429 response</td></tr>
+      <tr><td data-label="#">7</td><td data-label="Item">No NEXT_PUBLIC_ for secrets</td><td data-label="Verify">Search <code>.env*</code> files for <code>NEXT_PUBLIC_.*KEY\|SECRET\|PASSWORD</code></td></tr>
+      <tr><td data-label="#">8</td><td data-label="Item">.env files in .gitignore</td><td data-label="Verify">Run <code>git ls-files .env*</code> &mdash; should return nothing</td></tr>
+      <tr><td data-label="#">9</td><td data-label="Item">CORS is not wildcard (*)</td><td data-label="Verify">Check <code>Access-Control-Allow-Origin</code> in API route response headers</td></tr>
+      <tr><td data-label="#">10</td><td data-label="Item">Server Actions have auth</td><td data-label="Verify">Call a Server Action directly with <code>fetch()</code> without a session &mdash; should reject</td></tr>
+      <tr><td data-label="#">11</td><td data-label="Item">Error responses hide stack traces</td><td data-label="Verify">Trigger an error on an API route &mdash; response should be generic, not a stack trace</td></tr>
+      <tr><td data-label="#">12</td><td data-label="Item">Automated security scan</td><td data-label="Verify">Run our <a href="./index.html">free scanner</a> &mdash; checks 240+ items in 30 seconds</td></tr>
+    </table>
+    <div class="callout"><strong>Automated check:</strong> Our <a href="./index.html">scanner</a> checks headers, SSL, CORS, ports, and 240+ other items automatically. Free and no registration required.</div>
+
+    <h2 id="sec9e">9. Most common vibe coder mistakes in Next.js</h2>
+    <p>These are the mistakes we see most frequently in AI-generated Next.js projects:</p>
+    <ul>
+      <li><strong>Exposing secrets via NEXT_PUBLIC_</strong> &mdash; AI adds the prefix to solve a build error, without considering that the secret key becomes public. Check every <code>.env</code> file before deploying.</li>
+      <li><strong>Unprotected API routes</strong> &mdash; AI generates handlers that work but does not add auth. Every endpoint without authentication is open to the entire internet.</li>
+      <li><strong>Server Actions without validation</strong> &mdash; AI uses the <code>"use server"</code> directive but does not add Zod validation. Users can send anything.</li>
+      <li><strong>Wildcard CORS</strong> &mdash; AI adds <code>Access-Control-Allow-Origin: *</code> to fix a CORS error during development, and you forget to change it for production.</li>
+      <li><strong>Missing security headers</strong> &mdash; AI-generated next.config.js almost never includes the headers() configuration. You must add it yourself.</li>
+      <li><strong>Debug mode in production</strong> &mdash; detailed errors with stack traces visible in production reveal your project structure to attackers.</li>
+    </ul>
+    <p>You can catch every one of these mistakes automatically by running our scanner after every deploy.</p>
+    <a href="./index.html" class="cta">Scan your Next.js site &rarr;</a>
+
+    <p style="margin-top:2rem;"><a href="./blog-vibe-coding-security.html">&larr; Back to Vibe Coding guides</a></p>
+  </div>
+
+  </main>
+</div>
+<script src="./blog-common.js" defer></script>
+</body>
+</html>

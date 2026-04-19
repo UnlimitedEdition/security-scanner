@@ -322,6 +322,17 @@
   colGdpr.appendChild(footerLinkBi('./blog-gdpr-fines.html', 'GDPR Kazne', 'GDPR Fines'));
   footerGrid.appendChild(colGdpr);
 
+  // --- Vibe Coding / AI Security column ---
+  var colVibe = el('div', { className: 'footer-col' });
+  colVibe.appendChild(el('h4', {}, ['Vibe Coding']));
+  colVibe.appendChild(footerLinkBi('./blog-vibe-coding-security.html', 'Vibe Coding vodič', 'Vibe Coding Guide'));
+  colVibe.appendChild(footerLinkBi('./blog-ai-code-security.html', 'AI-generisan kod', 'AI-Generated Code'));
+  colVibe.appendChild(footerLinkBi('./blog-nextjs-security.html', 'Next.js bezbednost', 'Next.js Security'));
+  colVibe.appendChild(footerLinkBi('./blog-vercel-security.html', 'Vercel deploy', 'Vercel Deploy'));
+  colVibe.appendChild(footerLinkBi('./blog-wordpress-security.html', 'WordPress sken', 'WordPress Scan'));
+  colVibe.appendChild(footerLinkBi('./blog-first-website-security.html', 'Prvi sajt', 'First Website'));
+  footerGrid.appendChild(colVibe);
+
   // =====================================================================
   // LEGAL ROW — cleanly separated from blog articles above.
   // These are actual policy pages (or panels) that define the terms of

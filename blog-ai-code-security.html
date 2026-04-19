@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Da li je AI-generisan kod bezbedan? / Is AI-Generated Code Secure? — Analiza ranjivosti · Cursor · Copilot · Claude</title>
+  <meta name="description" content="Deep analysis of AI-generated code security: real vulnerability examples from Cursor, Copilot, Claude Code, Bolt, Lovable. Before/after fixes, research data, pre-deploy checklist. · Detaljna analiza bezbednosti AI koda sa konkretnim primerima.">
+  <meta name="keywords" content="AI generated code security, AI code vulnerabilities, cursor security risks, copilot security, claude code security, AI kod bezbednost, AI ranjivosti, da li je AI kod bezbedan, vibe coding security, LLM code security, AI coding mistakes, secure AI development, AI code review, automated code security, bolt security, lovable security, replit agent security, v0 security">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <link rel="canonical" href="https://security-skener.gradovi.rs/blog-ai-code-security.html">
+  <link rel="alternate" hreflang="sr" href="https://security-skener.gradovi.rs/blog-ai-code-security.html">
+  <link rel="alternate" hreflang="x-default" href="https://security-skener.gradovi.rs/blog-ai-code-security.html">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Da li je AI-generisan kod bezbedan? / Is AI-Generated Code Secure?">
+  <meta property="og:description" content="Real vulnerability examples and fixes for AI-generated code. · Realni primeri ranjivosti i popravke za AI kod.">
+  <meta property="og:url" content="https://security-skener.gradovi.rs/blog-ai-code-security.html">
+  <meta property="og:site_name" content="Web Security Scanner">
+  <meta property="og:locale" content="sr_RS">
+  <meta property="og:locale:alternate" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="AI Code Security / Bezbednost AI koda">
+  <meta name="twitter:description" content="Is AI-generated code secure? Real examples and fixes. · Da li je AI kod bezbedan? Konkretni primeri.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Da li je AI-generisan kod bezbedan? Analiza ranjivosti sa primerima",
+    "author": {"@type": "Person", "name": "Toske", "url": "https://toske-programer.web.app"},
+    "publisher": {"@type": "Organization", "name": "Web Security Scanner"},
+    "datePublished": "2026-04-19",
+    "dateModified": "2026-04-19",
+    "description": "Deep analysis of AI-generated code security with real vulnerability examples and fixes.",
+    "inLanguage": ["sr-RS", "en-US"],
+    "keywords": "AI code security, AI generated code vulnerabilities, cursor copilot security, vibe coding risks",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://security-skener.gradovi.rs/blog-ai-code-security.html"
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Da li je AI-generisan kod bezbedan?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ne automatski. Stanford istrazivanje pokazuje da oko 40% AI-generisanog koda sadrzi bezbednosne propuste. AI se fokusira na funkcionalnost, ne na bezbednost. Najcesci problemi: hardkodirani kredencijali, nedostajuca input validacija, otvoreni API endpointi bez autentifikacije."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Koji AI alat generise najbezbedniji kod?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Nijedan AI alat ne generise automatski bezbedan kod. Svi imaju iste tipove gresaka. Razlika je u tome koliko konteksta pruzite: Cursor i Claude Code podrzavaju project-level pravila (.cursorrules, CLAUDE.md) koja smanjuju greske ako definisete bezbednosne standarde."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is AI-generated code secure?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Not automatically. Stanford research shows about 40% of AI-generated code contains security flaws. AI focuses on functionality, not security. Most common issues: hardcoded credentials, missing input validation, open API endpoints without authentication."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Which AI tool generates the most secure code?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No AI tool automatically generates secure code. They all make the same types of mistakes. The difference is how much context you provide: Cursor and Claude Code support project-level rules (.cursorrules, CLAUDE.md) that reduce errors if you define security standards."
+        }
+      }
+    ]
+  }
+  </script>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+  <style>
+    .code-block { background: #0d1117; border: 1px solid #252a4a; border-radius: 8px; padding: 1rem 1.2rem; font-family: 'Courier New', monospace; font-size: 0.82rem; color: #c9d1d9; overflow-x: auto; margin: 1rem 0; line-height: 1.6; }
+    .code-block .comment { color: #8b949e; }
+    .code-block .keyword { color: #ff7b72; }
+    .code-block .string { color: #a5d6ff; }
+    .code-block .danger { color: #f85149; background: rgba(248,81,73,0.1); padding: 0 4px; border-radius: 3px; }
+    .code-block .safe { color: #3fb950; background: rgba(63,185,80,0.1); padding: 0 4px; border-radius: 3px; }
+    .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+    .comparison > div { border-radius: 8px; padding: 1rem; }
+    .comparison .bad { background: rgba(248,81,73,0.05); border: 1px solid rgba(248,81,73,0.2); }
+    .comparison .good { background: rgba(63,185,80,0.05); border: 1px solid rgba(63,185,80,0.2); }
+    .comparison .label { font-size: 0.75rem; font-weight: 700; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .comparison .bad .label { color: #f85149; }
+    .comparison .good .label { color: #3fb950; }
+    .tool-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin: 1rem 0; }
+    .tool-card { background: #11142a; border: 1px solid #252a4a; border-radius: 10px; padding: 1.1rem; }
+    .tool-card h4 { color: #e8eaf6; font-size: 0.92rem; margin: 0 0 0.5rem; }
+    .tool-card p { color: #7b83a6; font-size: 0.8rem; line-height: 1.5; margin: 0; }
+    .tool-card .risk { font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 0.4rem; }
+    .tool-card .risk-high { background: rgba(248,81,73,0.15); color: #f85149; }
+    .tool-card .risk-med { background: rgba(210,153,34,0.15); color: #d29922; }
+    @media (max-width: 600px) { .comparison { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr"><div class="timeline-title">Sadrzaj</div><ol id="timeline-sr"></ol></div>
+    <div class="en"><div class="timeline-title">Contents</div><ol id="timeline-en"></ol></div>
+  </aside>
+  <main class="blog-content">
+
+  <!-- SERBIAN -->
+  <div class="sr">
+    <h1>Da li je AI-generisan kod bezbedan?</h1>
+    <p class="subtitle">Konkretna analiza: sta AI alati rade pogresno, realni primeri sa kodom, i kako da proverite pre deploy-a</p>
+
+    <h2 id="sec1">1. Kratak odgovor: NE automatski</h2>
+    <p>AI-generisan kod funkcionise. Kompajlira se, prikazuje lepe stranice, komunicira sa bazom. Ali &ldquo;radi&rdquo; i &ldquo;bezbedan je&rdquo; su dve potpuno razlicite stvari.</p>
+    <p>Evo sta istrazivanja kazu:</p>
+    <table>
+      <tr><th>Studija</th><th>Godina</th><th>Kljucni nalaz</th></tr>
+      <tr><td data-label="Studija">Stanford University</td><td data-label="Godina">2024</td><td data-label="Nalaz">~40% AI-generisanog koda ima bezbednosne propuste</td></tr>
+      <tr><td data-label="Studija">NYU &amp; Microsoft</td><td data-label="Godina">2023</td><td data-label="Nalaz">Programeri sa Copilot-om prihvataju ranjiv kod 30% cesce</td></tr>
+      <tr><td data-label="Studija">UIUC</td><td data-label="Godina">2024</td><td data-label="Nalaz">LLM-ovi reprodukuju poznate CVE paterne iz trening podataka</td></tr>
+      <tr><td data-label="Studija">Google DeepMind</td><td data-label="Godina">2024</td><td data-label="Nalaz">AI korisnici su previse samouvereni u bezbednost svog koda</td></tr>
+    </table>
+    <p>Poslednji nalaz je mozda i najvazniji. Problem nije samo u losem kodu &mdash; problem je u tome sto korisnici <em>misle</em> da je kod dobar. &ldquo;AI zna sta radi&rdquo; je najopasnije uverenje u vibe coding-u.</p>
+
+    <h2 id="sec2">2. 7 konkretnih ranjivosti sa primerima koda</h2>
+
+    <h3>2.1. Hardkodirani kredencijali</h3>
+    <p>Najcesci i najopasniji propust. AI rutinski stavlja API kljuceve, lozinke i tokene direktno u izvorni kod.</p>
+    <div class="comparison">
+      <div class="bad">
+        <div class="label">AI generise</div>
+        <div class="code-block"><span class="comment">// Stripe payment — AI output</span><br><span class="keyword">const</span> stripe = require('stripe')(<br>&nbsp;&nbsp;<span class="danger">'sk_live_51abc...xyz'</span><br>);</div>
+      </div>
+      <div class="good">
+        <div class="label">Ispravno</div>
+        <div class="code-block"><span class="comment">// Stripe payment — fixed</span><br><span class="keyword">const</span> stripe = require('stripe')(<br>&nbsp;&nbsp;<span class="safe">process.env.STRIPE_SECRET_KEY</span><br>);</div>
+      </div>
+    </div>
+    <p><strong>Sta se desava u praksi:</strong> GitGuardian je u 2024. detektovao 12.8 miliona novih tajni objavljenih na javnim GitHub repozitorijumima. Botovi skeniraju svaki commit u realnom vremenu. Jedna objavljena Stripe tajna moze biti zloupotrebljena za minutima.</p>
+
+    <h3>2.2. SQL Injection</h3>
+    <p>AI cesto pravi SQL upite spajanjem stringova umesto koristeci parametrizovane upite. Ovo je jedna od najstarijih i najopasnijih ranjivosti &mdash; na OWASP Top 10 listi od 2003. godine.</p>
+    <div class="comparison">
+      <div class="bad">
+        <div class="label">Ranjivo</div>
+        <div class="code-block"><span class="comment"># Python — AI output</span><br>query = <span class="danger">f"SELECT * FROM users WHERE email = '{email}'"</span><br>cursor.execute(query)</div>
+      </div>
+      <div class="good">
+        <div class="label">Bezbedno</div>
+        <div class="code-block"><span class="comment"># Python — parametrizovano</span><br>query = <span class="safe">"SELECT * FROM users WHERE email = %s"</span><br>cursor.execute(query, <span class="safe">(email,)</span>)</div>
+      </div>
+    </div>
+    <p>Sa ranjivim kodom, napadac moze da unese u email polje: <code>' OR '1'='1</code> i dobije pristup celoj bazi.</p>
+
+    <h3>2.3. XSS (Cross-Site Scripting)</h3>
+    <p>AI cesto koristi nesigurne metode za ubacivanje HTML sadrzaja bez sanitizacije. U React-u, koristi <code>dangerouslySetInnerHTML</code> bez razmisljanja. U vanilla JS-u, koristi <code>innerHTML</code>.</p>
+    <div class="comparison">
+      <div class="bad">
+        <div class="label">Ranjivo</div>
+        <div class="code-block"><span class="comment">// Prikaz korisnickog komentara</span><br>commentDiv.<span class="danger">innerHTML</span> = userComment;</div>
+      </div>
+      <div class="good">
+        <div class="label">Bezbedno</div>
+        <div class="code-block"><span class="comment">// Prikaz korisnickog komentara</span><br>commentDiv.<span class="safe">textContent</span> = userComment;</div>
+      </div>
+    </div>
+    <p>Sa <code>innerHTML</code>, napadac moze da ubaci <code>&lt;script&gt;</code> tag koji krade kolacice, sesije, ili preusmerava korisnike na lazne stranice.</p>
+
+    <h3>2.4. Nezasticene API rute (IDOR)</h3>
+    <p>AI pravi API koji radi &mdash; ali ne proverava <em>ko</em> pristupa podacima. Klasicna IDOR (Insecure Direct Object Reference) ranjivost.</p>
+    <div class="comparison">
+      <div class="bad">
+        <div class="label">Ranjivo</div>
+        <div class="code-block"><span class="comment">// GET /api/users/:id — AI output</span><br>app.get('/api/users/:id', (req, res) =&gt; {<br>&nbsp;&nbsp;<span class="keyword">const</span> user = db.getUser(<span class="danger">req.params.id</span>);<br>&nbsp;&nbsp;res.json(user); <span class="comment">// svako moze da pristupi</span><br>});</div>
+      </div>
+      <div class="good">
+        <div class="label">Bezbedno</div>
+        <div class="code-block"><span class="comment">// GET /api/users/:id — sa auth</span><br>app.get('/api/users/:id', <span class="safe">authMiddleware</span>, (req, res) =&gt; {<br>&nbsp;&nbsp;<span class="keyword">if</span> (<span class="safe">req.user.id !== req.params.id</span>) <br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> res.status(403).json({error: 'forbidden'});<br>&nbsp;&nbsp;<span class="keyword">const</span> user = db.getUser(req.params.id);<br>&nbsp;&nbsp;res.json(user);<br>});</div>
+      </div>
+    </div>
+
+    <h3>2.5. Slaba CORS konfiguracija</h3>
+    <p>AI podesava CORS na wildcard (<code>*</code>) jer je to najlaksi nacin da sve radi u development-u. Ali u produkciji, ovo znaci da bilo koji sajt na internetu moze slati zahteve vasem API-ju.</p>
+
+    <h3>2.6. Nedostajuca server-side validacija</h3>
+    <p>AI pravi lepe forme sa frontend validacijom (HTML5 required, pattern, minlength). Ali backend prima podatke bez provere. Napadac zaobilazi frontend za 5 sekundi &mdash; otvori DevTools, obrise validaciju, ili koristi curl/Postman.</p>
+    <div class="code-block"><span class="comment"># Python — server-side validacija sa Pydantic</span><br><span class="keyword">from</span> pydantic <span class="keyword">import</span> BaseModel, EmailStr, constr<br><br><span class="keyword">class</span> UserCreate(BaseModel):<br>&nbsp;&nbsp;email: <span class="safe">EmailStr</span><br>&nbsp;&nbsp;password: <span class="safe">constr(min_length=8, max_length=128)</span><br>&nbsp;&nbsp;name: <span class="safe">constr(min_length=1, max_length=100)</span></div>
+
+    <h3>2.7. Detaljne greske u produkciji</h3>
+    <p>AI cesto ostavlja detaljne error poruke u odgovorima. U development-u ovo pomaze u debug-u. U produkciji, napadac koristi ove informacije da razume vasu infrastrukturu.</p>
+    <div class="comparison">
+      <div class="bad">
+        <div class="label">Otkriva detalje</div>
+        <div class="code-block"><span class="comment">// Error handler — AI output</span><br>res.status(500).json({<br>&nbsp;&nbsp;error: <span class="danger">err.message</span>,<br>&nbsp;&nbsp;stack: <span class="danger">err.stack</span>,<br>&nbsp;&nbsp;query: <span class="danger">err.sql</span><br>});</div>
+      </div>
+      <div class="good">
+        <div class="label">Bezbedno</div>
+        <div class="code-block"><span class="comment">// Error handler — fixed</span><br>console.error(err); <span class="comment">// loguj interno</span><br>res.status(500).json({<br>&nbsp;&nbsp;error: <span class="safe">"Internal server error"</span><br>});</div>
+      </div>
+    </div>
+
+    <h2 id="sec3">3. Alat po alat: specificni rizici</h2>
+    <div class="tool-grid">
+      <div class="tool-card">
+        <span class="risk risk-high">Visok rizik</span>
+        <h4>Bolt / Lovable / v0</h4>
+        <p>Generisu kompletne projekte. Korisnik nema uvid u kod i ne moze da procene bezbednost. Najrizicniji za produkciju jer se deploy-uju &ldquo;jednim klikom&rdquo; bez pregleda.</p>
+      </div>
+      <div class="tool-card">
+        <span class="risk risk-high">Visok rizik</span>
+        <h4>Replit Agent</h4>
+        <p>Pravi i deploy-uje automatski. Korisnik cesto ne pregleda generisane fajlove. Posebno opasan za projekte sa placanjem ili bazom podataka.</p>
+      </div>
+      <div class="tool-card">
+        <span class="risk risk-med">Srednji rizik</span>
+        <h4>GitHub Copilot</h4>
+        <p>Inline sugestije u editoru. Treniran na javnom GitHub kodu sa losim praksama. Posebno sklon hardkodiranim tajnama i nesigurnim regex paternima.</p>
+      </div>
+      <div class="tool-card">
+        <span class="risk risk-med">Srednji rizik</span>
+        <h4>Cursor / Claude Code</h4>
+        <p>Podrzavaju project-level pravila (.cursorrules, CLAUDE.md). Ako definisete bezbednosne standarde, greske su redje. Bez pravila &mdash; isti problemi kao ostali alati.</p>
+      </div>
+    </div>
+
+    <h2 id="sec4">4. Pre-deploy checklista</h2>
+    <p>Prodjite kroz ovu listu pre svakog deploy-a AI-generisanog projekta. Svaka stavka ima konkretan nacin provere:</p>
+    <table>
+      <tr><th>#</th><th>Stavka</th><th>Kako proveriti</th></tr>
+      <tr><td data-label="#">1</td><td data-label="Stavka">Nema hardkodiranih tajni</td><td data-label="Provera"><code>grep -r "sk_live\|apikey\|secret" .</code></td></tr>
+      <tr><td data-label="#">2</td><td data-label="Stavka">.env u .gitignore</td><td data-label="Provera"><code>cat .gitignore | grep .env</code></td></tr>
+      <tr><td data-label="#">3</td><td data-label="Stavka">SQL koristi parametre</td><td data-label="Provera">Pretrazite <code>f"SELECT</code> ili <code>+ "SELECT</code></td></tr>
+      <tr><td data-label="#">4</td><td data-label="Stavka">API rute imaju auth</td><td data-label="Provera">Otvorite svaku rutu &mdash; ima li middleware?</td></tr>
+      <tr><td data-label="#">5</td><td data-label="Stavka">CORS nije wildcard</td><td data-label="Provera">Pretrazite <code>allow_origins</code> ili <code>Access-Control</code></td></tr>
+      <tr><td data-label="#">6</td><td data-label="Stavka">Server-side validacija</td><td data-label="Provera">Posaljite prazan body na API &mdash; prihvata li?</td></tr>
+      <tr><td data-label="#">7</td><td data-label="Stavka">Error handling ne otkriva detalje</td><td data-label="Provera">Izazovite 500 gresku &mdash; vracate li stack trace?</td></tr>
+      <tr><td data-label="#">8</td><td data-label="Stavka">Bezbednosni headeri</td><td data-label="Provera">Pokrenite nas <a href="./index.html">skener</a></td></tr>
+      <tr><td data-label="#">9</td><td data-label="Stavka">HTTPS aktivan</td><td data-label="Provera">Pokrenite nas <a href="./index.html">skener</a></td></tr>
+      <tr><td data-label="#">10</td><td data-label="Stavka">Zavisnosti azurne</td><td data-label="Provera"><code>npm audit</code> ili <code>pip audit</code></td></tr>
+    </table>
+
+    <h2 id="sec5">5. Kako da AI generise bezbedniji kod</h2>
+    <p>Ne mozete ocekivati bezbednost ako je ne trazite. Evo konkretnih strategija:</p>
+
+    <h3>5.1. Bezbednosni prompt template</h3>
+    <p>Dodajte ovo na kraj svakog prompta kad trazite od AI-ja da napravi novi fajl:</p>
+    <div class="code-block"><span class="comment">Bezbednosni zahtevi:</span><br>- Koristi environment varijable za SVE tajne (API kljuceve, lozinke, tokene)<br>- Dodaj autentifikaciju/autorizaciju na svaku API rutu<br>- Validiraj SVE ulazne podatke na serveru (Zod/Pydantic)<br>- CORS: dozvoli samo moj domen, ne wildcard<br>- Error handling: loguj interno, vrati genericku poruku korisniku<br>- Dodaj rate limiting na javne endpointe</div>
+
+    <h3>5.2. Project-level pravila (CLAUDE.md / .cursorrules)</h3>
+    <p>Ovo su fajlovi koje AI alati citaju pre svakog generisanja. Definisu standarde za ceo projekat:</p>
+    <div class="code-block"><span class="comment"># CLAUDE.md ili .cursorrules</span><br><br><span class="comment">## Bezbednosni standardi</span><br>- NIKAD ne stavljaj tajne u kod &mdash; koristi process.env<br>- Svaka API ruta zahteva auth middleware<br>- SQL: SAMO parametrizovani upiti, nikad string konkatenacija<br>- CORS: allow_origins = ["https://mojsajt.rs"]<br>- Svaki korisnicki unos mora biti validiran na serveru<br>- Error responses: {error: "Something went wrong"}, NIKAD stack trace<br>- Rate limit: 100 req/min po IP na javnim endpointima</div>
+
+    <h2 id="sec6">6. Automatsko skeniranje — poslednja linija odbrane</h2>
+    <p>Cak i sa dobrim promptom i project-level pravilima, greske se desavaju. Automatsko skeniranje je mreza koja hvata ono sto propustite.</p>
+    <p>Nas <a href="./index.html">Web Security Scanner</a> proverava 240+ stavki na vasem live sajtu: SSL konfiguraciju, bezbednosne headere, otvorene portove, osetljive fajlove, CORS, DNS bezbednost, cookie konfiguraciju i jos mnogo toga. Besplatno, za 30 sekundi, bez registracije.</p>
+    <p><strong>Workflow:</strong> Napravite projekat sa AI &rarr; Pregledajte kriticne delove &rarr; Deploy-ujte &rarr; Pokrenite sken &rarr; Ispravite pronadjene probleme &rarr; Ponovo skenirajte.</p>
+    <a href="./index.html" class="cta">Skeniraj sajt besplatno &rarr;</a>
+    <p style="margin-top:2rem;"><a href="./blog-vibe-coding-security.html">&larr; Nazad na Vibe Coding vodice</a></p>
+  </div>
+
+  <!-- ENGLISH -->
+  <div class="en">
+    <h1>Is AI-Generated Code Secure?</h1>
+    <p class="subtitle">Concrete analysis: what AI tools get wrong, real code examples, and how to verify before deploy</p>
+
+    <h2 id="sec1e">1. Short answer: NOT automatically</h2>
+    <p>AI-generated code works. It compiles, displays beautiful pages, communicates with databases. But &ldquo;works&rdquo; and &ldquo;is secure&rdquo; are two completely different things.</p>
+    <p>Here&rsquo;s what the research says:</p>
+    <table>
+      <tr><th>Study</th><th>Year</th><th>Key finding</th></tr>
+      <tr><td data-label="Study">Stanford University</td><td data-label="Year">2024</td><td data-label="Finding">~40% of AI-generated code has security flaws</td></tr>
+      <tr><td data-label="Study">NYU &amp; Microsoft</td><td data-label="Year">2023</td><td data-label="Finding">Developers with Copilot accept vulnerable code 30% more often</td></tr>
+      <tr><td data-label="Study">UIUC</td><td data-label="Year">2024</td><td data-label="Finding">LLMs reproduce known CVE patterns from training data</td></tr>
+      <tr><td data-label="Study">Google DeepMind</td><td data-label="Year">2024</td><td data-label="Finding">AI users are overconfident about their code&rsquo;s security</td></tr>
+    </table>
+    <p>The last finding might be the most important. The problem isn&rsquo;t just bad code &mdash; the problem is that users <em>think</em> the code is good. &ldquo;AI knows what it&rsquo;s doing&rdquo; is the most dangerous belief in vibe coding.</p>
+
+    <h2 id="sec2e">2. 7 concrete vulnerabilities with code examples</h2>
+
+    <h3>2.1. Hardcoded credentials</h3>
+    <p>The most common and most dangerous flaw. AI routinely places API keys, passwords, and tokens directly in source code.</p>
+    <div class="comparison">
+      <div class="bad">
+        <div class="label">AI generates</div>
+        <div class="code-block"><span class="comment">// Stripe payment — AI output</span><br><span class="keyword">const</span> stripe = require('stripe')(<br>&nbsp;&nbsp;<span class="danger">'sk_live_51abc...xyz'</span><br>);</div>
+      </div>
+      <div class="good">
+        <div class="label">Correct</div>
+        <div class="code-block"><span class="comment">// Stripe payment — fixed</span><br><span class="keyword">const</span> stripe = require('stripe')(<br>&nbsp;&nbsp;<span class="safe">process.env.STRIPE_SECRET_KEY</span><br>);</div>
+      </div>
+    </div>
+    <p><strong>What happens in practice:</strong> GitGuardian detected 12.8 million new secrets published on public GitHub repositories in 2024. Bots scan every commit in real-time. An exposed Stripe secret can be exploited within minutes.</p>
+
+    <h3>2.2. SQL Injection</h3>
+    <p>AI often builds SQL queries by concatenating strings instead of using parameterized queries. This is one of the oldest and most dangerous vulnerabilities &mdash; on the OWASP Top 10 list since 2003.</p>
+    <div class="comparison">
+      <div class="bad">
+        <div class="label">Vulnerable</div>
+        <div class="code-block"><span class="comment"># Python — AI output</span><br>query = <span class="danger">f"SELECT * FROM users WHERE email = '{email}'"</span><br>cursor.execute(query)</div>
+      </div>
+      <div class="good">
+        <div class="label">Secure</div>
+        <div class="code-block"><span class="comment"># Python — parameterized</span><br>query = <span class="safe">"SELECT * FROM users WHERE email = %s"</span><br>cursor.execute(query, <span class="safe">(email,)</span>)</div>
+      </div>
+    </div>
+    <p>With vulnerable code, an attacker can enter in the email field: <code>' OR '1'='1</code> and gain access to the entire database.</p>
+
+    <h3>2.3. XSS (Cross-Site Scripting)</h3>
+    <p>AI often uses unsafe methods for inserting HTML content without sanitization. In vanilla JS, it uses <code>innerHTML</code> instead of <code>textContent</code>.</p>
+    <div class="comparison">
+      <div class="bad">
+        <div class="label">Vulnerable</div>
+        <div class="code-block"><span class="comment">// Display user comment</span><br>commentDiv.<span class="danger">innerHTML</span> = userComment;</div>
+      </div>
+      <div class="good">
+        <div class="label">Secure</div>
+        <div class="code-block"><span class="comment">// Display user comment</span><br>commentDiv.<span class="safe">textContent</span> = userComment;</div>
+      </div>
+    </div>
+    <p>With <code>innerHTML</code>, an attacker can inject <code>&lt;script&gt;</code> tags that steal cookies, sessions, or redirect users to phishing pages.</p>
+
+    <h3>2.4. Unprotected API routes (IDOR)</h3>
+    <p>AI builds APIs that work &mdash; but doesn&rsquo;t check <em>who</em> is accessing the data. Classic IDOR (Insecure Direct Object Reference) vulnerability.</p>
+    <div class="comparison">
+      <div class="bad">
+        <div class="label">Vulnerable</div>
+        <div class="code-block"><span class="comment">// GET /api/users/:id — AI output</span><br>app.get('/api/users/:id', (req, res) =&gt; {<br>&nbsp;&nbsp;<span class="keyword">const</span> user = db.getUser(<span class="danger">req.params.id</span>);<br>&nbsp;&nbsp;res.json(user); <span class="comment">// anyone can access</span><br>});</div>
+      </div>
+      <div class="good">
+        <div class="label">Secure</div>
+        <div class="code-block"><span class="comment">// GET /api/users/:id — with auth</span><br>app.get('/api/users/:id', <span class="safe">authMiddleware</span>, (req, res) =&gt; {<br>&nbsp;&nbsp;<span class="keyword">if</span> (<span class="safe">req.user.id !== req.params.id</span>) <br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> res.status(403).json({error: 'forbidden'});<br>&nbsp;&nbsp;<span class="keyword">const</span> user = db.getUser(req.params.id);<br>&nbsp;&nbsp;res.json(user);<br>});</div>
+      </div>
+    </div>
+
+    <h3>2.5. Weak CORS configuration</h3>
+    <p>AI sets CORS to wildcard (<code>*</code>) because that&rsquo;s the easiest way to make everything work in development. In production, this means any website can send requests to your API.</p>
+
+    <h3>2.6. Missing server-side validation</h3>
+    <p>AI builds beautiful forms with frontend validation (HTML5 required, pattern, minlength). But the backend accepts data without any checks. An attacker bypasses the frontend in 5 seconds &mdash; open DevTools, remove validation, or use curl/Postman.</p>
+    <div class="code-block"><span class="comment"># Python — server-side validation with Pydantic</span><br><span class="keyword">from</span> pydantic <span class="keyword">import</span> BaseModel, EmailStr, constr<br><br><span class="keyword">class</span> UserCreate(BaseModel):<br>&nbsp;&nbsp;email: <span class="safe">EmailStr</span><br>&nbsp;&nbsp;password: <span class="safe">constr(min_length=8, max_length=128)</span><br>&nbsp;&nbsp;name: <span class="safe">constr(min_length=1, max_length=100)</span></div>
+
+    <h3>2.7. Detailed errors in production</h3>
+    <p>AI often leaves detailed error messages in responses. In development this helps debugging. In production, attackers use this information to understand your infrastructure.</p>
+    <div class="comparison">
+      <div class="bad">
+        <div class="label">Exposes details</div>
+        <div class="code-block"><span class="comment">// Error handler — AI output</span><br>res.status(500).json({<br>&nbsp;&nbsp;error: <span class="danger">err.message</span>,<br>&nbsp;&nbsp;stack: <span class="danger">err.stack</span>,<br>&nbsp;&nbsp;query: <span class="danger">err.sql</span><br>});</div>
+      </div>
+      <div class="good">
+        <div class="label">Secure</div>
+        <div class="code-block"><span class="comment">// Error handler — fixed</span><br>console.error(err); <span class="comment">// log internally</span><br>res.status(500).json({<br>&nbsp;&nbsp;error: <span class="safe">"Internal server error"</span><br>});</div>
+      </div>
+    </div>
+
+    <h2 id="sec3e">3. Tool by tool: specific risks</h2>
+    <div class="tool-grid">
+      <div class="tool-card">
+        <span class="risk risk-high">High risk</span>
+        <h4>Bolt / Lovable / v0</h4>
+        <p>Generate complete projects. Users have no visibility into the code and can&rsquo;t assess security. Riskiest for production because they deploy with &ldquo;one click&rdquo; without review.</p>
+      </div>
+      <div class="tool-card">
+        <span class="risk risk-high">High risk</span>
+        <h4>Replit Agent</h4>
+        <p>Builds and deploys automatically. Users often don&rsquo;t review generated files. Especially dangerous for projects with payments or databases.</p>
+      </div>
+      <div class="tool-card">
+        <span class="risk risk-med">Medium risk</span>
+        <h4>GitHub Copilot</h4>
+        <p>Inline suggestions in the editor. Trained on public GitHub code with bad practices. Particularly prone to hardcoded secrets and insecure regex patterns.</p>
+      </div>
+      <div class="tool-card">
+        <span class="risk risk-med">Medium risk</span>
+        <h4>Cursor / Claude Code</h4>
+        <p>Support project-level rules (.cursorrules, CLAUDE.md). If you define security standards, errors are less frequent. Without rules &mdash; same problems as other tools.</p>
+      </div>
+    </div>
+
+    <h2 id="sec4e">4. Pre-deploy checklist</h2>
+    <p>Go through this list before every deploy of an AI-generated project. Each item has a concrete way to verify:</p>
+    <table>
+      <tr><th>#</th><th>Item</th><th>How to verify</th></tr>
+      <tr><td data-label="#">1</td><td data-label="Item">No hardcoded secrets</td><td data-label="Verify"><code>grep -r "sk_live\|apikey\|secret" .</code></td></tr>
+      <tr><td data-label="#">2</td><td data-label="Item">.env in .gitignore</td><td data-label="Verify"><code>cat .gitignore | grep .env</code></td></tr>
+      <tr><td data-label="#">3</td><td data-label="Item">SQL uses parameters</td><td data-label="Verify">Search for <code>f"SELECT</code> or <code>+ "SELECT</code></td></tr>
+      <tr><td data-label="#">4</td><td data-label="Item">API routes have auth</td><td data-label="Verify">Open each route &mdash; is there middleware?</td></tr>
+      <tr><td data-label="#">5</td><td data-label="Item">CORS isn&rsquo;t wildcard</td><td data-label="Verify">Search for <code>allow_origins</code> or <code>Access-Control</code></td></tr>
+      <tr><td data-label="#">6</td><td data-label="Item">Server-side validation</td><td data-label="Verify">Send empty body to API &mdash; does it accept?</td></tr>
+      <tr><td data-label="#">7</td><td data-label="Item">Error handling hides details</td><td data-label="Verify">Trigger a 500 error &mdash; does it return stack trace?</td></tr>
+      <tr><td data-label="#">8</td><td data-label="Item">Security headers present</td><td data-label="Verify">Run our <a href="./index.html">scanner</a></td></tr>
+      <tr><td data-label="#">9</td><td data-label="Item">HTTPS active</td><td data-label="Verify">Run our <a href="./index.html">scanner</a></td></tr>
+      <tr><td data-label="#">10</td><td data-label="Item">Dependencies up to date</td><td data-label="Verify"><code>npm audit</code> or <code>pip audit</code></td></tr>
+    </table>
+
+    <h2 id="sec5e">5. How to make AI generate more secure code</h2>
+    <p>You can&rsquo;t expect security if you don&rsquo;t ask for it. Here are concrete strategies:</p>
+
+    <h3>5.1. Security prompt template</h3>
+    <p>Add this to the end of every prompt when asking AI to create a new file:</p>
+    <div class="code-block"><span class="comment">Security requirements:</span><br>- Use environment variables for ALL secrets (API keys, passwords, tokens)<br>- Add authentication/authorization to every API route<br>- Validate ALL input on the server (Zod/Pydantic)<br>- CORS: allow only my domain, no wildcard<br>- Error handling: log internally, return generic message to user<br>- Add rate limiting to public endpoints</div>
+
+    <h3>5.2. Project-level rules (CLAUDE.md / .cursorrules)</h3>
+    <p>These are files that AI tools read before every generation. They define standards for the entire project:</p>
+    <div class="code-block"><span class="comment"># CLAUDE.md or .cursorrules</span><br><br><span class="comment">## Security Standards</span><br>- NEVER put secrets in code &mdash; use process.env<br>- Every API route requires auth middleware<br>- SQL: ONLY parameterized queries, never string concatenation<br>- CORS: allow_origins = ["https://mysite.com"]<br>- Every user input must be validated on the server<br>- Error responses: {error: "Something went wrong"}, NEVER stack trace<br>- Rate limit: 100 req/min per IP on public endpoints</div>
+
+    <h2 id="sec6e">6. Automated scanning — the last line of defense</h2>
+    <p>Even with good prompts and project-level rules, mistakes happen. Automated scanning is the safety net that catches what you miss.</p>
+    <p>Our <a href="./index.html">Web Security Scanner</a> checks 240+ items on your live site: SSL configuration, security headers, open ports, sensitive files, CORS, DNS security, cookie configuration, and much more. Free, in 30 seconds, no registration required.</p>
+    <p><strong>Workflow:</strong> Build project with AI &rarr; Review critical parts &rarr; Deploy &rarr; Run scan &rarr; Fix found issues &rarr; Rescan.</p>
+    <a href="./index.html" class="cta">Scan your site for free &rarr;</a>
+    <p style="margin-top:2rem;"><a href="./blog-vibe-coding-security.html">&larr; Back to Vibe Coding guides</a></p>
+  </div>
+
+  </main>
+</div>
+<script src="./blog-common.js" defer></script>
+</body>
+</html>

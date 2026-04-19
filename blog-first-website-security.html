@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kako da zastitis svoj prvi sajt / How to Secure Your First Website — Vodic za pocetnike · SSL · Headers · Zastita</title>
+  <meta name="description" content="Beginner-friendly website security guide: SSL setup, security headers, password protection, free scanning — step by step with no technical knowledge required. · Vodic za pocetnike: kako da zastitite svoj prvi sajt korak po korak.">
+  <meta name="keywords" content="kako zastititi sajt, website security for beginners, bezbednost sajta za pocetnike, how to secure website, first website security, SSL za pocetnike, security headers beginners, website security guide beginners, zastita prvog sajta, bezbednost web sajta, pocetnik bezbednost, secure my website, website protection guide, web security basics, free website security scan">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <link rel="canonical" href="https://security-skener.gradovi.rs/blog-first-website-security.html">
+  <link rel="alternate" hreflang="sr" href="https://security-skener.gradovi.rs/blog-first-website-security.html">
+  <link rel="alternate" hreflang="x-default" href="https://security-skener.gradovi.rs/blog-first-website-security.html">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Kako da zastitis svoj prvi sajt / How to Secure Your First Website">
+  <meta property="og:description" content="Step by step guide for complete beginners — SSL, headers, passwords, scanning. · Korak po korak vodic za potpune pocetnike.">
+  <meta property="og:url" content="https://security-skener.gradovi.rs/blog-first-website-security.html">
+  <meta property="og:site_name" content="Web Security Scanner">
+  <meta property="og:locale" content="sr_RS">
+  <meta property="og:locale:alternate" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Secure Your First Website / Zastiti prvi sajt">
+  <meta name="twitter:description" content="Beginner guide to website security. · Vodic za pocetnike.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Kako da zastitis svoj prvi sajt — Vodic za pocetnike",
+    "author": {"@type": "Person", "name": "Toske", "url": "https://toske-programer.web.app"},
+    "publisher": {"@type": "Organization", "name": "Web Security Scanner"},
+    "datePublished": "2026-04-19",
+    "dateModified": "2026-04-19",
+    "description": "Beginner-friendly website security guide: SSL, headers, passwords, free scanning — step by step.",
+    "inLanguage": ["sr-RS", "en-US"],
+    "keywords": "website security beginners, kako zastititi sajt, first website security, SSL beginners, security headers guide",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://security-skener.gradovi.rs/blog-first-website-security.html"
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Da li mi treba bezbednost za mali sajt?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Da, apsolutno. Automatski botovi skeniraju milione sajtova dnevno trazeci ranjivosti, bez obzira na velicinu. Mali sajtovi su cesto laksa meta jer imaju slabiju zastitu."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Koliko kosta zastita sajta?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Osnovna zastita je besplatna. SSL sertifikat je besplatan (Let's Encrypt), bezbednosni headeri se konfiguriscu bez troskova, a nas skener je besplatan za osnovne provere. Jedina investicija je vase vreme."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Sta su bezbednosni headeri i da li mi trebaju?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Bezbednosni headeri su instrukcije koje vas server salje browseru. Govore browseru kako da se ponasa — npr. da ne ucitava skripte sa nepoznatih izvora. Bez njih, vas sajt je ranjiv na uobicajene napade."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Do I need security for a small website?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, absolutely. Automated bots scan millions of sites daily looking for vulnerabilities, regardless of size. Small sites are often easier targets because they have weaker protection."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How much does website security cost?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Basic protection is free. SSL certificates are free (Let's Encrypt), security headers are configured at no cost, and our scanner is free for basic checks. The only investment is your time."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What are security headers and do I need them?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Security headers are instructions your server sends to the browser. They tell the browser how to behave — for example, not to load scripts from unknown sources. Without them, your site is vulnerable to common attacks."
+        }
+      }
+    ]
+  }
+  </script>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./blog-common.css">
+</head>
+<body>
+<div class="blog-layout">
+  <aside class="timeline-nav">
+    <div class="sr"><div class="timeline-title">Sadrzaj</div><ol id="timeline-sr"></ol></div>
+    <div class="en"><div class="timeline-title">Contents</div><ol id="timeline-en"></ol></div>
+  </aside>
+  <main class="blog-content">
+
+  <!-- ===================== SERBIAN ===================== -->
+  <div class="sr">
+    <h1>Kako da zastitis svoj prvi sajt</h1>
+    <p class="subtitle">Kompletan vodic za potpune pocetnike &mdash; od nule do zasticenog sajta, bez ikakvih tehnickih predznanja</p>
+
+    <!-- SEC 1 -->
+    <h2 id="sec1">1. Zasto je bezbednost vazna &mdash; cak i za mali sajt</h2>
+    <p>Ako ste upravo napravili svoj prvi sajt &mdash; portfolio, blog, mali biznis &mdash; mozda mislite: <em>&ldquo;Ko bi napao moj sajt? Imam samo par posetilaca.&rdquo;</em></p>
+    <p>Odgovor je iznenadjujuci: <strong>automatski programi (botovi)</strong>. Zamislite to ovako &mdash; zamislite da postoji robot koji luta ulicom i proba da otvori svaka vrata. Njemu je svejedno da li je u pitanju vila ili garsonjerka. Ako su vrata otvorena, ulazi. Isto rade botovi na internetu &mdash; skeniraju milione sajtova dnevno trazeci otvorena &ldquo;vrata&rdquo; (poznate ranjivosti).</p>
+    <p><strong>Sta se desava kada bot nadje nezasticen sajt?</strong></p>
+    <ul>
+      <li><strong>Google vas oznaci kao opasan sajt</strong> &mdash; posetioci vide crveno upozorenje pre nego sto mogu da pristupe. Vas SEO rang (pozicija na Google-u) pada drasticno, ponekad nepovratno.</li>
+      <li><strong>Sajt se koristi za spam</strong> &mdash; napadaci ubace nevidljive linkove ka laznim prodavnicama ili malicioznim sajtovima. Vasi posetioci to ne vide, ali Google jeste.</li>
+      <li><strong>Kradja podataka</strong> &mdash; ako imate kontakt formu, korisnicke naloge ili bilo kakve licne podatke, sve to moze biti ukradeno i zloupotrebljeno.</li>
+      <li><strong>Gubitak reputacije</strong> &mdash; jednom kada posetioci saznaju da je vas sajt bio hakovan, tesko je vratiti poverenje. To je kao da restoran dobije losu sanitarnu inspekciju &mdash; cak i posle popravke, ljudi pamte.</li>
+      <li><strong>Troskovi oporavka</strong> &mdash; popravka hakovanog sajta moze kostati stotine evra i dane rada. Prevencija je uvek jeftinija od lecenja.</li>
+    </ul>
+    <div class="callout"><strong>Dobra vest:</strong> Osnovna zastita je potpuno besplatna i ne zahteva programersko znanje. Ovaj vodic pokriva sve sto vam treba &mdash; korak po korak, sa objasnjenjima na srpskom.</div>
+
+    <p><strong>Vizuelni tok zastite vaseg sajta:</strong></p>
+    <div class="callout" style="text-align:center; font-size:1.1rem; letter-spacing:0.5px;">
+      Napravi sajt &rarr; Skeniraj &rarr; Popravi probleme &rarr; Skeniraj ponovo &rarr; Objavi sigurno
+    </div>
+    <p>Ovaj vodic prati upravo ovaj tok. Na kraju cete znati tacno sta da uradite i kojim redom.</p>
+
+    <!-- SEC 2 -->
+    <h2 id="sec2">2. HTTPS i SSL &mdash; zakljucana koverta za vas sajt</h2>
+    <p>Zamislite da saljete pismo. Mozete ga poslati na otvorenom razglednicom &mdash; svako ko drzi pismo moze da procita sadrzaj. Ili mozete da ga stavite u <strong>zakljucanu kovertu</strong> koju moze da otvori samo primalac. HTTPS je ta zakljucana koverta za vas sajt.</p>
+    <p><strong>Sta je SSL/HTTPS jednostavnim recima:</strong></p>
+    <ul>
+      <li><strong>HTTP</strong> (bez &ldquo;S&rdquo;) = razglednica. Svako na mrezi (vasa Wi-Fi mreza, internet provajder, hakeri na javnom Wi-Fi-ju) moze da vidi sta vasi posetioci rade na vasem sajtu.</li>
+      <li><strong>HTTPS</strong> (sa &ldquo;S&rdquo; = Secure/Sigurno) = zakljucana koverta. Komunikacija je enkriptovana (kodirana) tako da samo posetilac i vas server mogu da je procitaju.</li>
+      <li><strong>SSL sertifikat</strong> = digitalna potvrda identiteta vaseg sajta. Kao licna karta za sajt &mdash; dokazuje da ste vi zaista vi, a ne neko ko se pretvara.</li>
+    </ul>
+    <p><strong>Kako prepoznajete HTTPS:</strong> Pogledajte address bar (traku gde pisite web adresu). Ako vidite mali <strong>katanac</strong> i adresa pocinje sa <code>https://</code>, vas sajt je zasticen. Ako vidite &ldquo;Not Secure&rdquo; ili &ldquo;Nije bezbedno&rdquo;, HTTPS nije aktivan.</p>
+    <p><strong>Kako da dobijete HTTPS besplatno (po platformi):</strong></p>
+    <ul>
+      <li><strong>Vercel</strong> &mdash; automatski. Cim postavite sajt na Vercel, HTTPS je vec aktivan. Ne morate nista raditi.</li>
+      <li><strong>Netlify</strong> &mdash; automatski. Ista prica &mdash; deploy-ujte sajt i HTTPS je tu.</li>
+      <li><strong>GitHub Pages</strong> &mdash; idite u Settings &rarr; Pages &rarr; cekirajte &ldquo;Enforce HTTPS&rdquo;. Gotovo za 5 minuta.</li>
+      <li><strong>WordPress</strong> &mdash; vecina hosting provajdera (SiteGround, Bluehost, itd.) nudi besplatan SSL sa jednim klikom u cPanel-u. Potrazite &ldquo;SSL/TLS&rdquo; ili &ldquo;Let's Encrypt&rdquo;.</li>
+      <li><strong>Cloudflare</strong> &mdash; registrujte besplatan nalog, dodajte vas domen, i dobijate SSL + CDN (brze ucitavanje) + DDoS zastitu (zastita od preopterecenja). Sve besplatno.</li>
+      <li><strong>Bilo koji hosting</strong> &mdash; <a href="https://letsencrypt.org" rel="noopener">Let's Encrypt</a> je besplatan SSL sertifikat koji radi sa bilo kim. Vecina hosting provajdera ima automatsku instalaciju.</li>
+    </ul>
+    <div class="callout callout-warn"><strong>Proverite odmah:</strong> Otvorite vas sajt u browseru. Da li vidite katanac? Ako ne, to je vas prioritet broj jedan. Pokrenite nas <a href="./index.html">besplatni skener</a> za detaljnu SSL proveru.</div>
+
+    <!-- SEC 3 -->
+    <h2 id="sec3">3. Bezbednosni headeri &mdash; uputstva za obezbedjenje</h2>
+    <p>Zamislite da ste vlasnik zgrade i angazujete obezbedjenje. Obezbedjenju dajete instrukcije: <em>&ldquo;Ne pustaj nikoga bez propusnice. Ne dozvoli nikome da unosi pakete bez provere. Ako neko kaze da je dosao po narudzbinu, proveri sa stanarima.&rdquo;</em></p>
+    <p>Bezbednosni headeri su upravo to &mdash; <strong>instrukcije koje vas server (zgrada) salje browseru (obezbedjenju)</strong> o tome kako da zastiti posetioce vaseg sajta. Bez tih instrukcija, obezbedjenje (browser) pusta svakoga unutra bez provere.</p>
+
+    <p><strong>Pet najvaznijih headera, objasnjenih bez tehnickog zargona:</strong></p>
+    <ul>
+      <li><strong>Content-Security-Policy (CSP)</strong><br>
+        Instrukcija: <em>&ldquo;Ucitavaj slike, skripte i stilove SAMO sa ovih adresa koje sam odobrio.&rdquo;</em><br>
+        Bez ovoga: Neko moze da ubaci maliciozni kod na vas sajt koji krade podatke posetilaca.</li>
+      <li><strong>Strict-Transport-Security (HSTS)</strong><br>
+        Instrukcija: <em>&ldquo;Uvek koristi zakljucanu kovertu (HTTPS). Cak i ako neko pokusa da posalje razglednicu (HTTP), pretvori je u kovertu.&rdquo;</em><br>
+        Bez ovoga: Napadac moze da prevari browser da koristi nezasticenu vezu.</li>
+      <li><strong>X-Frame-Options</strong><br>
+        Instrukcija: <em>&ldquo;Ne dozvoli da drugi sajtovi prikazu moj sajt u svom prozoru (iframe-u).&rdquo;</em><br>
+        Bez ovoga: Napadac moze da stavi vas sajt u nevidljivi okvir i prevari posetioce da kliknu na nesto sto ne zele (clickjacking).</li>
+      <li><strong>X-Content-Type-Options</strong><br>
+        Instrukcija: <em>&ldquo;Veruj tipu fajla koji ti kazem. Ne pogadjaj sam.&rdquo;</em><br>
+        Bez ovoga: Browser moze pogresno da protumaci fajl i izvrsi maliciozan kod.</li>
+      <li><strong>Referrer-Policy</strong><br>
+        Instrukcija: <em>&ldquo;Kada posetilac klikne link ka drugom sajtu, ne govori tom sajtu sa koje tacne stranice dolazi.&rdquo;</em><br>
+        Bez ovoga: Drugi sajtovi mogu da vide tacne URL-ove vasih stranica, ukljucujuci osetljive parametre.</li>
+    </ul>
+
+    <p><strong>Kako da dodate headere (po platformi):</strong></p>
+    <ul>
+      <li><strong>Vercel</strong> &mdash; dodajte ih u <code>vercel.json</code> fajl. Detaljna uputstva u nasem <a href="./blog-vercel-security.html">Vercel bezbednosnom vodicu</a>.</li>
+      <li><strong>Netlify</strong> &mdash; napravite fajl <code>_headers</code> u root direktorijumu projekta i upisite headere.</li>
+      <li><strong>GitHub Pages</strong> &mdash; GitHub Pages ne podrzava custom headere direktno. Resenje: stavite sajt iza Cloudflare-a (besplatno) i koristite Transform Rules.</li>
+      <li><strong>WordPress</strong> &mdash; instalirajte plugin &ldquo;Headers Security Advanced &amp; HSTS WP&rdquo; (besplatan) i ukljucite headere jednim klikom.</li>
+      <li><strong>Cloudflare</strong> &mdash; idite u Rules &rarr; Transform Rules &rarr; Modify Response Header. Dodajte svaki header pojedinacno.</li>
+    </ul>
+    <div class="callout"><strong>Ne morate da pamtite ovo.</strong> Pokrenite nas <a href="./index.html">skener</a> &mdash; on ce vam tacno reci koji headeri nedostaju i dace vam gotov kod za copy-paste.</div>
+
+    <!-- SEC 4 -->
+    <h2 id="sec4">4. Lozinke i dvofaktorska zastita (2FA)</h2>
+    <p>Lozinka je kljuc vase kuce. Dvofaktorska autentifikacija (2FA) je alarm &mdash; cak i ako neko ukrade kljuc, alarm ce ga zaustaviti.</p>
+    <p><strong>Pravila za jaku lozinku:</strong></p>
+    <ul>
+      <li><strong>Minimum 12 karaktera</strong> &mdash; svaki dodatni karakter eksponencijalno povecava vreme potrebno za pogadjanje. Lozinka od 8 karaktera se probije za sekunde, lozinka od 16 karaktera zahteva milione godina.</li>
+      <li><strong>Kombinujte</strong> velika slova, mala slova, brojeve i specijalne znakove (&amp;, !, #, %). Primer: <code>M0j@L1cna$ifra2026!</code></li>
+      <li><strong>Nikad ista lozinka za dva sajta</strong> &mdash; ako jedan sajt bude hakovan, sve vase lozinke su kompromitovane.</li>
+      <li><strong>Koristite password manager</strong> &mdash; <a href="https://bitwarden.com" rel="noopener">Bitwarden</a> je besplatan i pamti sve lozinke za vas. Vi pamtite samo jednu glavnu lozinku.</li>
+    </ul>
+    <p><strong>Sta je 2FA i zasto je obavezna:</strong></p>
+    <p>Dvofaktorska autentifikacija znaci da vam za login, pored lozinke, treba i <strong>drugi dokaz identiteta</strong>. Najcesce je to:</p>
+    <ul>
+      <li><strong>Aplikacija na telefonu</strong> (Google Authenticator, Authy) &mdash; generise kod koji vazi 30 sekundi. Najbezbednije resenje.</li>
+      <li><strong>SMS kod</strong> &mdash; dobijete poruku sa kodom. Bolje nego nista, ali manje bezbedno od aplikacije jer se SMS moze presresti.</li>
+      <li><strong>Fizicki kljuc</strong> (YubiKey) &mdash; USB uredjaj koji ubacite u racunar. Najbezbednije, ali kosta oko 25-50 EUR.</li>
+    </ul>
+    <p><strong>Dodatne mere za admin pristup:</strong></p>
+    <ul>
+      <li><strong>Ne koristite &ldquo;admin&rdquo; kao korisnicko ime</strong> &mdash; to je prvo sto botovi probaju. Izaberite nesto unikatno.</li>
+      <li><strong>Ogranicite login pokusaje</strong> &mdash; nakon 5 neuspesnih pokusaja, blokirajte tu IP adresu na 15 minuta. WordPress plugin: &ldquo;Limit Login Attempts Reloaded&rdquo; (besplatan).</li>
+      <li><strong>Promenite podrazumevani login URL</strong> &mdash; umesto <code>/wp-admin</code>, stavite nesto kao <code>/moj-pristup-2026</code>. Plugin: &ldquo;WPS Hide Login&rdquo;.</li>
+    </ul>
+    <div class="callout callout-warn"><strong>Brza provera:</strong> Da li vasa admin lozinka ima 12+ karaktera? Da li imate ukljucen 2FA? Ako ne, uradite to odmah &mdash; traje 3 minuta.</div>
+
+    <!-- SEC 5 -->
+    <h2 id="sec5">5. Azuriranja i backup &mdash; vas sigurnosni pojas</h2>
+    <p>Zamislite vas sajt kao automobil. Azuriranja su redovni servis &mdash; sprecavaju kvarove. Backup je osiguranje &mdash; ako se nesto desi, imate od cega da se oporavite.</p>
+    <p><strong>Zasto su azuriranja kriticna:</strong></p>
+    <ul>
+      <li>Vecina hakovanja koristi <strong>poznate ranjivosti u starim verzijama</strong> softvera. Kada programeri otkriju problem, objave ispravku (patch). Ako vi ne azurirate, napadaci koriste taj poznati problem da upadnu.</li>
+      <li>To je kao da kljucar objavi da je otkrio manu u jednom modelu brave i ponudi besplatnu zamenu &mdash; a vi i dalje koristite staru bravu koju svaki lopov zna da otvori.</li>
+    </ul>
+    <p><strong>Sta treba azurirati:</strong></p>
+    <ul>
+      <li><strong>CMS</strong> (WordPress, Joomla, Drupal) &mdash; glavna platforma</li>
+      <li><strong>Plugini/dodaci</strong> &mdash; svaki plugin je potencijalna tacka upada</li>
+      <li><strong>Teme</strong> &mdash; vizuelni template vaseg sajta</li>
+      <li><strong>PHP/Node/Python verzija</strong> &mdash; programski jezik na serveru</li>
+      <li><strong>JavaScript biblioteke</strong> &mdash; ako koristite jQuery, React, ili slicno</li>
+    </ul>
+    <p><strong>Backup strategija za pocetnike:</strong></p>
+    <ul>
+      <li><strong>Automatski nedeljni backup</strong> &mdash; vecina hosting provajdera to nudi besplatno. Proverite u vasem panelu.</li>
+      <li><strong>Cuvajte backup na drugom mestu</strong> &mdash; ako je backup na istom serveru kao sajt, hakovanje unistava i backup. Koristite Google Drive, Dropbox ili sličan servis.</li>
+      <li><strong>Testirajte oporavak</strong> &mdash; jednom mesecno probajte da vratite sajt iz backup-a na test okruzenju. Backup koji ne radi je beskoristan.</li>
+      <li><strong>WordPress preporuka</strong> &mdash; plugin &ldquo;UpdraftPlus&rdquo; (besplatan) pravi automatske backup-ove i cuva ih na cloud-u.</li>
+    </ul>
+    <div class="callout"><strong>Zlatno pravilo:</strong> Ukljucite automatske backup-ove DANAS. Ako se sutra nesto desi, mozete vratiti sajt za 10 minuta umesto da ga pravite ispocetka.</div>
+
+    <!-- SEC 6 -->
+    <h2 id="sec6">6. Kako da koristite nas besplatni skener &mdash; korak po korak</h2>
+    <p>Nas <a href="./index.html">Web Security Scanner</a> proverava vas sajt kao sto lekar radi sistematski pregled &mdash; ispituje sve, od SSL-a do headera, od otvorenih portova do SEO podesavanja.</p>
+    <p><strong>Korak 1: Otvorite skener</strong></p>
+    <p>Idite na <a href="./index.html">security-skener.gradovi.rs</a>. Videcete polje za unos URL-a (web adrese).</p>
+    <p><strong>Korak 2: Unesite adresu vaseg sajta</strong></p>
+    <p>Upisite punu adresu: <code>https://vasajt.com</code>. Obavezno unesite <code>https://</code> ispred &mdash; to govori skeneru da proveri i HTTPS konfiguraciju.</p>
+    <p><strong>Korak 3: Sacekajte rezultate</strong></p>
+    <p>Sken traje obicno 20-40 sekundi. Tokom tog vremena, skener automatski proverava preko 240 stavki: SSL sertifikat, bezbednosne headere, osetljive fajlove, DNS konfiguraciju, otvorene portove, SEO, pristupacnost, i jos mnogo toga.</p>
+    <p><strong>Korak 4: Procitajte izvestaj</strong></p>
+    <p>Rezultati su podeljeni po kategorijama sa zelenim (dobro), zutim (upozorenje) i crvenim (problem) indikatorima. Svaki nalaz ima:</p>
+    <ul>
+      <li>Objasnjenje sta je pronadjeno</li>
+      <li>Zasto je to vazno</li>
+      <li>Tacno uputstvo kako da popravite</li>
+    </ul>
+    <p><strong>Korak 5: Popravite i skenirajte ponovo</strong></p>
+    <p>Popravite crvene probleme prvo (oni su najhitniji), pa zute. Nakon svake popravke, pokrenite sken ponovo da potvrdite da je problem resen.</p>
+    <div class="callout"><strong>Skener ne modifikuje vas sajt.</strong> Radi kao obican posetilac &mdash; samo cita javno dostupne informacije. Ne instalira nista, ne menja nista, ne cuva vase podatke. Potpuno sigurno za koriscenje, koliko god puta zelite.</div>
+
+    <!-- SEC 7 -->
+    <h2 id="sec7">7. Najcesce greske pocetnika</h2>
+    <p>Evo tabelarnog pregleda gresaka koje pocetnici najcesce prave, zasto su opasne i kako da ih popravite:</p>
+    <table>
+      <tr><th>Greska</th><th>Zasto je opasna</th><th>Resenje</th><th>Vreme</th></tr>
+      <tr><td data-label="Greska">Nema HTTPS</td><td data-label="Opasnost">Svi podaci su vidljivi &mdash; lozinke, poruke, kartice</td><td data-label="Resenje">Aktivirajte SSL (besplatno na svim modernim platformama)</td><td data-label="Vreme">5 min</td></tr>
+      <tr><td data-label="Greska">Podrazumevana lozinka (&ldquo;admin/admin&rdquo;)</td><td data-label="Opasnost">Botovi je pogadjaju za manje od sekunde</td><td data-label="Resenje">Promenite na 12+ karaktera, ukljucite 2FA</td><td data-label="Vreme">3 min</td></tr>
+      <tr><td data-label="Greska">Nema backup-a</td><td data-label="Opasnost">Hakovanje = potpuni gubitak svega</td><td data-label="Resenje">Ukljucite automatski nedeljni backup</td><td data-label="Vreme">10 min</td></tr>
+      <tr><td data-label="Greska">Zastareli CMS/plugini</td><td data-label="Opasnost">Poznate ranjivosti su javno dostupne</td><td data-label="Resenje">Ukljucite auto-update ili azurirajte mesecno</td><td data-label="Vreme">5 min</td></tr>
+      <tr><td data-label="Greska">Nema bezbednosnih headera</td><td data-label="Opasnost">Sajt je ranjiv na XSS, clickjacking i slicne napade</td><td data-label="Resenje">Dodajte 5 kljucnih headera (kopirajte gotov kod)</td><td data-label="Vreme">15 min</td></tr>
+      <tr><td data-label="Greska">API kljucevi u javnom kodu</td><td data-label="Opasnost">Svako moze da ih procita i zloupotrebi</td><td data-label="Resenje">Koristite environment varijable (env vars)</td><td data-label="Vreme">10 min</td></tr>
+      <tr><td data-label="Greska">Isti username i password svuda</td><td data-label="Opasnost">Jedan hakovan sajt = svi vasi nalozi kompromitovani</td><td data-label="Resenje">Koristite password manager (Bitwarden, besplatan)</td><td data-label="Vreme">15 min</td></tr>
+      <tr><td data-label="Greska">Ignorisanje upozorenja browsera</td><td data-label="Opasnost">Browser vas upozorava iz razloga &mdash; sertifikat je istekao ili je lazni sajt</td><td data-label="Resenje">Obratite paznju na upozorenja, ne klikajte &ldquo;Proceed anyway&rdquo;</td><td data-label="Vreme">0 min</td></tr>
+    </table>
+
+    <!-- SEC 8 -->
+    <h2 id="sec8">8. Petominutna bezbednost &mdash; prioritetna lista</h2>
+    <p>Nemate vremena za sve? Evo <strong>petominutnog plana</strong> koji pokriva 80% svih pretnji:</p>
+    <ul>
+      <li><strong>Minut 1 &mdash; HTTPS provera:</strong> Otvorite vas sajt. Vidite katanac u address baru? Ako da, idite na sledeci korak. Ako ne, aktivirajte SSL na vasem hostingu (obicno jedan klik).</li>
+      <li><strong>Minut 2 &mdash; Lozinka:</strong> Promenite admin lozinku na barem 12 karaktera. Koristite kombinaciju slova, brojeva i specijalnih znakova. Zapamtite je u password manager-u.</li>
+      <li><strong>Minut 3 &mdash; 2FA:</strong> Ukljucite dvofaktorsku autentifikaciju na vasem admin panelu. Instalirajte Google Authenticator na telefon.</li>
+      <li><strong>Minut 4 &mdash; Azuriranja:</strong> Proverite da li imate najnoviju verziju CMS-a i plugina. Kliknite &ldquo;Update All&rdquo; ako je dostupno.</li>
+      <li><strong>Minut 5 &mdash; Sken:</strong> Pokrenite nas <a href="./index.html">besplatni sken</a>. Rezultati ce vam pokazati tacno sta dalje treba popraviti.</li>
+    </ul>
+    <p>Ovih pet minuta mogu da sprece 80% svih napada na vas sajt. Ostatak mozete uraditi postepeno, prateci preporuke iz izvestaja skenera.</p>
+
+    <div class="callout" style="text-align:center;">
+      <strong>Vizuelni tok:</strong><br>
+      Napravi sajt &rarr; Skeniraj &rarr; Popravi crvene probleme &rarr; Skeniraj ponovo &rarr; Popravi zute &rarr; Objavi sigurno
+    </div>
+
+    <a href="./index.html" class="cta">Skeniraj sajt besplatno &rarr;</a>
+
+    <p style="margin-top:2rem;"><a href="./blog-vibe-coding-security.html">&larr; Nazad na Vibe Coding vodice</a></p>
+  </div>
+
+  <!-- ===================== ENGLISH ===================== -->
+  <div class="en">
+    <h1>How to Secure Your First Website</h1>
+    <p class="subtitle">A complete guide for absolute beginners &mdash; from zero to a protected site, no technical knowledge required</p>
+
+    <!-- SEC 1e -->
+    <h2 id="sec1e">1. Why security matters &mdash; even for a small site</h2>
+    <p>If you just built your first website &mdash; a portfolio, blog, or small business page &mdash; you might think: <em>&ldquo;Who would attack my site? I only have a few visitors.&rdquo;</em></p>
+    <p>The answer is surprising: <strong>automated programs (bots)</strong>. Think of it this way &mdash; imagine a robot walking down a street, trying every door handle. It does not care whether it is a mansion or a studio apartment. If the door is unlocked, it walks in. Bots do the same thing on the internet &mdash; they scan millions of sites every day looking for unlocked &ldquo;doors&rdquo; (known vulnerabilities).</p>
+    <p><strong>What happens when a bot finds an unprotected site?</strong></p>
+    <ul>
+      <li><strong>Google marks you as dangerous</strong> &mdash; visitors see a red warning screen before they can access your site. Your SEO ranking (position on Google) drops dramatically, sometimes permanently.</li>
+      <li><strong>Your site becomes a spam tool</strong> &mdash; attackers inject invisible links to fake stores or malicious sites. Your visitors might not see them, but Google does.</li>
+      <li><strong>Data theft</strong> &mdash; if you have a contact form, user accounts, or any personal data, all of it can be stolen and misused.</li>
+      <li><strong>Reputation damage</strong> &mdash; once visitors learn your site was hacked, trust is hard to rebuild. It is like a restaurant getting a bad health inspection &mdash; even after fixing everything, people remember.</li>
+      <li><strong>Recovery costs</strong> &mdash; fixing a hacked site can cost hundreds of dollars and days of work. Prevention is always cheaper than recovery.</li>
+    </ul>
+    <div class="callout"><strong>Good news:</strong> Basic protection is completely free and requires no programming knowledge. This guide covers everything you need &mdash; step by step, with plain English explanations.</div>
+
+    <p><strong>The visual flow of securing your site:</strong></p>
+    <div class="callout" style="text-align:center; font-size:1.1rem; letter-spacing:0.5px;">
+      Build site &rarr; Scan &rarr; Fix issues &rarr; Rescan &rarr; Deploy safely
+    </div>
+    <p>This guide follows exactly this flow. By the end, you will know precisely what to do and in what order.</p>
+
+    <!-- SEC 2e -->
+    <h2 id="sec2e">2. HTTPS and SSL &mdash; a locked envelope for your site</h2>
+    <p>Imagine sending a letter. You can send it as an open postcard &mdash; anyone who handles it can read the contents. Or you can put it in a <strong>locked envelope</strong> that only the recipient can open. HTTPS is that locked envelope for your website.</p>
+    <p><strong>What is SSL/HTTPS in simple terms:</strong></p>
+    <ul>
+      <li><strong>HTTP</strong> (without the &ldquo;S&rdquo;) = postcard. Anyone on the network (your Wi-Fi, your internet provider, hackers on public Wi-Fi) can see what your visitors do on your site.</li>
+      <li><strong>HTTPS</strong> (with &ldquo;S&rdquo; = Secure) = locked envelope. Communication is encrypted (encoded) so only the visitor and your server can read it.</li>
+      <li><strong>SSL certificate</strong> = a digital identity card for your website. Like an ID card for your site &mdash; it proves you are really you, not someone pretending.</li>
+    </ul>
+    <p><strong>How to recognize HTTPS:</strong> Look at the address bar (the bar where you type web addresses). If you see a small <strong>padlock</strong> and the address starts with <code>https://</code>, your site is protected. If you see &ldquo;Not Secure&rdquo;, HTTPS is not active.</p>
+    <p><strong>How to get HTTPS for free (by platform):</strong></p>
+    <ul>
+      <li><strong>Vercel</strong> &mdash; automatic. The moment you deploy to Vercel, HTTPS is already active. Zero configuration needed.</li>
+      <li><strong>Netlify</strong> &mdash; automatic. Same story &mdash; deploy your site and HTTPS is there.</li>
+      <li><strong>GitHub Pages</strong> &mdash; go to Settings &rarr; Pages &rarr; check &ldquo;Enforce HTTPS&rdquo;. Done in 5 minutes.</li>
+      <li><strong>WordPress</strong> &mdash; most hosting providers (SiteGround, Bluehost, etc.) offer free SSL with one click in cPanel. Look for &ldquo;SSL/TLS&rdquo; or &ldquo;Let's Encrypt&rdquo;.</li>
+      <li><strong>Cloudflare</strong> &mdash; create a free account, add your domain, and you get SSL + CDN (faster loading) + DDoS protection (overload protection). All free.</li>
+      <li><strong>Any hosting</strong> &mdash; <a href="https://letsencrypt.org" rel="noopener">Let's Encrypt</a> is a free SSL certificate that works with anyone. Most hosts have automatic installation.</li>
+    </ul>
+    <div class="callout callout-warn"><strong>Check right now:</strong> Open your site in a browser. Do you see a padlock? If not, that is your number one priority. Run our <a href="./index.html">free scanner</a> for a detailed SSL check.</div>
+
+    <!-- SEC 3e -->
+    <h2 id="sec3e">3. Security headers &mdash; instructions for your bodyguard</h2>
+    <p>Imagine you own a building and you hire a security guard. You give the guard instructions: <em>&ldquo;Do not let anyone in without a badge. Do not let anyone bring in packages without checking them. If someone says they are here for a delivery, confirm with the residents.&rdquo;</em></p>
+    <p>Security headers are exactly that &mdash; <strong>instructions your server (the building) sends to the browser (the security guard)</strong> about how to protect your site visitors. Without those instructions, the guard (browser) lets everyone in without checking.</p>
+
+    <p><strong>The five most important headers, explained without jargon:</strong></p>
+    <ul>
+      <li><strong>Content-Security-Policy (CSP)</strong><br>
+        Instruction: <em>&ldquo;Load images, scripts, and styles ONLY from these approved addresses.&rdquo;</em><br>
+        Without it: Someone can inject malicious code into your site that steals visitor data.</li>
+      <li><strong>Strict-Transport-Security (HSTS)</strong><br>
+        Instruction: <em>&ldquo;Always use the locked envelope (HTTPS). Even if someone tries to send a postcard (HTTP), convert it to an envelope.&rdquo;</em><br>
+        Without it: An attacker can trick the browser into using an unprotected connection.</li>
+      <li><strong>X-Frame-Options</strong><br>
+        Instruction: <em>&ldquo;Do not allow other sites to display my site inside their window (an iframe).&rdquo;</em><br>
+        Without it: An attacker can put your site in an invisible frame and trick visitors into clicking things they do not want to (clickjacking).</li>
+      <li><strong>X-Content-Type-Options</strong><br>
+        Instruction: <em>&ldquo;Trust the file type I tell you. Do not guess on your own.&rdquo;</em><br>
+        Without it: The browser might misinterpret a file and execute malicious code.</li>
+      <li><strong>Referrer-Policy</strong><br>
+        Instruction: <em>&ldquo;When a visitor clicks a link to another site, do not tell that site the exact page they came from.&rdquo;</em><br>
+        Without it: Other sites can see the exact URLs of your pages, including sensitive parameters.</li>
+    </ul>
+
+    <p><strong>How to add headers (by platform):</strong></p>
+    <ul>
+      <li><strong>Vercel</strong> &mdash; add them to your <code>vercel.json</code> file. Detailed instructions in our <a href="./blog-vercel-security.html">Vercel security guide</a>.</li>
+      <li><strong>Netlify</strong> &mdash; create a <code>_headers</code> file in your project root directory and write the headers there.</li>
+      <li><strong>GitHub Pages</strong> &mdash; GitHub Pages does not support custom headers directly. Solution: put your site behind Cloudflare (free) and use Transform Rules.</li>
+      <li><strong>WordPress</strong> &mdash; install the &ldquo;Headers Security Advanced &amp; HSTS WP&rdquo; plugin (free) and enable headers with one click.</li>
+      <li><strong>Cloudflare</strong> &mdash; go to Rules &rarr; Transform Rules &rarr; Modify Response Header. Add each header individually.</li>
+    </ul>
+    <div class="callout"><strong>You do not need to memorize any of this.</strong> Run our <a href="./index.html">scanner</a> &mdash; it will tell you exactly which headers are missing and give you ready-to-use copy-paste code.</div>
+
+    <!-- SEC 4e -->
+    <h2 id="sec4e">4. Passwords and two-factor authentication (2FA)</h2>
+    <p>A password is the key to your house. Two-factor authentication (2FA) is the alarm system &mdash; even if someone steals the key, the alarm will stop them.</p>
+    <p><strong>Rules for a strong password:</strong></p>
+    <ul>
+      <li><strong>Minimum 12 characters</strong> &mdash; each additional character exponentially increases the time needed to guess it. An 8-character password can be cracked in seconds; a 16-character password would take millions of years.</li>
+      <li><strong>Mix it up</strong> with uppercase letters, lowercase letters, numbers, and special characters (&amp;, !, #, %). Example: <code>My$ecure!Pass2026</code></li>
+      <li><strong>Never reuse a password</strong> &mdash; if one site gets hacked, all your accounts using that same password are compromised.</li>
+      <li><strong>Use a password manager</strong> &mdash; <a href="https://bitwarden.com" rel="noopener">Bitwarden</a> is free and remembers all your passwords. You only need to remember one master password.</li>
+    </ul>
+    <p><strong>What is 2FA and why is it essential:</strong></p>
+    <p>Two-factor authentication means that to log in, besides your password, you also need a <strong>second proof of identity</strong>. The most common options:</p>
+    <ul>
+      <li><strong>Phone app</strong> (Google Authenticator, Authy) &mdash; generates a code that expires every 30 seconds. The most secure option.</li>
+      <li><strong>SMS code</strong> &mdash; you receive a text message with a code. Better than nothing, but less secure than an app because SMS can be intercepted.</li>
+      <li><strong>Physical key</strong> (YubiKey) &mdash; a USB device you plug into your computer. Most secure, but costs around $25-50.</li>
+    </ul>
+    <p><strong>Extra measures for admin access:</strong></p>
+    <ul>
+      <li><strong>Do not use &ldquo;admin&rdquo; as your username</strong> &mdash; that is the first thing bots try. Choose something unique.</li>
+      <li><strong>Limit login attempts</strong> &mdash; after 5 failed attempts, block that IP address for 15 minutes. WordPress plugin: &ldquo;Limit Login Attempts Reloaded&rdquo; (free).</li>
+      <li><strong>Change the default login URL</strong> &mdash; instead of <code>/wp-admin</code>, use something like <code>/my-access-2026</code>. Plugin: &ldquo;WPS Hide Login&rdquo;.</li>
+    </ul>
+    <div class="callout callout-warn"><strong>Quick check:</strong> Does your admin password have 12+ characters? Is 2FA enabled? If not, do it now &mdash; it takes 3 minutes.</div>
+
+    <!-- SEC 5e -->
+    <h2 id="sec5e">5. Updates and backups &mdash; your safety net</h2>
+    <p>Think of your website as a car. Updates are regular maintenance &mdash; they prevent breakdowns. Backups are insurance &mdash; if something happens, you have something to fall back on.</p>
+    <p><strong>Why updates are critical:</strong></p>
+    <ul>
+      <li>Most hacks exploit <strong>known vulnerabilities in old versions</strong> of software. When developers discover a problem, they publish a fix (patch). If you do not update, attackers use that known problem to break in.</li>
+      <li>It is like a locksmith announcing they found a flaw in a particular lock model and offering a free replacement &mdash; but you keep using the old lock that every burglar knows how to open.</li>
+    </ul>
+    <p><strong>What needs updating:</strong></p>
+    <ul>
+      <li><strong>CMS</strong> (WordPress, Joomla, Drupal) &mdash; the main platform</li>
+      <li><strong>Plugins/extensions</strong> &mdash; each plugin is a potential entry point</li>
+      <li><strong>Themes</strong> &mdash; the visual template of your site</li>
+      <li><strong>PHP/Node/Python version</strong> &mdash; the programming language on the server</li>
+      <li><strong>JavaScript libraries</strong> &mdash; if you use jQuery, React, or similar</li>
+    </ul>
+    <p><strong>Backup strategy for beginners:</strong></p>
+    <ul>
+      <li><strong>Automatic weekly backups</strong> &mdash; most hosting providers offer this for free. Check your control panel.</li>
+      <li><strong>Store backups somewhere else</strong> &mdash; if your backup is on the same server as your site, a hack destroys both. Use Google Drive, Dropbox, or a similar service.</li>
+      <li><strong>Test your recovery</strong> &mdash; once a month, try restoring your site from backup on a test environment. A backup that does not work is useless.</li>
+      <li><strong>WordPress recommendation</strong> &mdash; the &ldquo;UpdraftPlus&rdquo; plugin (free) creates automatic backups and stores them in the cloud.</li>
+    </ul>
+    <div class="callout"><strong>Golden rule:</strong> Enable automatic backups TODAY. If something happens tomorrow, you can restore your site in 10 minutes instead of building it from scratch.</div>
+
+    <!-- SEC 6e -->
+    <h2 id="sec6e">6. How to use our free scanner &mdash; step by step</h2>
+    <p>Our <a href="./index.html">Web Security Scanner</a> checks your site the way a doctor performs a full medical exam &mdash; examining everything from SSL to headers, from open ports to SEO settings.</p>
+    <p><strong>Step 1: Open the scanner</strong></p>
+    <p>Go to <a href="./index.html">security-skener.gradovi.rs</a>. You will see a field to enter a URL (web address).</p>
+    <p><strong>Step 2: Enter your website address</strong></p>
+    <p>Type in the full address: <code>https://yoursite.com</code>. Make sure to include <code>https://</code> at the beginning &mdash; this tells the scanner to also check your HTTPS configuration.</p>
+    <p><strong>Step 3: Wait for results</strong></p>
+    <p>The scan usually takes 20-40 seconds. During that time, the scanner automatically checks over 240 items: SSL certificate, security headers, sensitive files, DNS configuration, open ports, SEO, accessibility, and much more.</p>
+    <p><strong>Step 4: Read the report</strong></p>
+    <p>Results are organized by category with green (good), yellow (warning), and red (problem) indicators. Each finding includes:</p>
+    <ul>
+      <li>An explanation of what was found</li>
+      <li>Why it matters</li>
+      <li>Exact instructions on how to fix it</li>
+    </ul>
+    <p><strong>Step 5: Fix and rescan</strong></p>
+    <p>Fix red issues first (those are the most urgent), then yellow ones. After each fix, run the scan again to confirm the issue is resolved.</p>
+    <div class="callout"><strong>The scanner does not modify your site.</strong> It works like a regular visitor &mdash; it only reads publicly available information. It installs nothing, changes nothing, stores none of your data. Completely safe to use, as many times as you want.</div>
+
+    <!-- SEC 7e -->
+    <h2 id="sec7e">7. Most common beginner mistakes</h2>
+    <p>Here is a table of the mistakes beginners make most often, why they are dangerous, and how to fix them:</p>
+    <table>
+      <tr><th>Mistake</th><th>Why it is dangerous</th><th>Fix</th><th>Time needed</th></tr>
+      <tr><td data-label="Mistake">No HTTPS</td><td data-label="Risk">All data is visible &mdash; passwords, messages, credit cards</td><td data-label="Fix">Activate SSL (free on all modern platforms)</td><td data-label="Time">5 min</td></tr>
+      <tr><td data-label="Mistake">Default password (&ldquo;admin/admin&rdquo;)</td><td data-label="Risk">Bots guess it in less than a second</td><td data-label="Fix">Change to 12+ characters, enable 2FA</td><td data-label="Time">3 min</td></tr>
+      <tr><td data-label="Mistake">No backups</td><td data-label="Risk">Hack = total loss of everything</td><td data-label="Fix">Enable automatic weekly backups</td><td data-label="Time">10 min</td></tr>
+      <tr><td data-label="Mistake">Outdated CMS/plugins</td><td data-label="Risk">Known vulnerabilities are publicly available</td><td data-label="Fix">Enable auto-update or update monthly</td><td data-label="Time">5 min</td></tr>
+      <tr><td data-label="Mistake">No security headers</td><td data-label="Risk">Site is vulnerable to XSS, clickjacking, and similar attacks</td><td data-label="Fix">Add 5 key headers (copy ready-made code)</td><td data-label="Time">15 min</td></tr>
+      <tr><td data-label="Mistake">API keys in public code</td><td data-label="Risk">Anyone can read and misuse them</td><td data-label="Fix">Use environment variables (env vars)</td><td data-label="Time">10 min</td></tr>
+      <tr><td data-label="Mistake">Same username and password everywhere</td><td data-label="Risk">One hacked site = all your accounts compromised</td><td data-label="Fix">Use a password manager (Bitwarden, free)</td><td data-label="Time">15 min</td></tr>
+      <tr><td data-label="Mistake">Ignoring browser warnings</td><td data-label="Risk">The browser warns you for a reason &mdash; expired certificate or fake site</td><td data-label="Fix">Pay attention to warnings, do not click &ldquo;Proceed anyway&rdquo;</td><td data-label="Time">0 min</td></tr>
+    </table>
+
+    <!-- SEC 8e -->
+    <h2 id="sec8e">8. Five-minute security &mdash; prioritized action list</h2>
+    <p>Short on time? Here is a <strong>five-minute plan</strong> that covers 80% of all threats:</p>
+    <ul>
+      <li><strong>Minute 1 &mdash; HTTPS check:</strong> Open your site. Do you see a padlock in the address bar? If yes, move to the next step. If not, activate SSL on your hosting (usually one click).</li>
+      <li><strong>Minute 2 &mdash; Password:</strong> Change your admin password to at least 12 characters. Use a mix of letters, numbers, and special characters. Save it in a password manager.</li>
+      <li><strong>Minute 3 &mdash; 2FA:</strong> Enable two-factor authentication on your admin panel. Install Google Authenticator on your phone.</li>
+      <li><strong>Minute 4 &mdash; Updates:</strong> Check if you have the latest version of your CMS and plugins. Click &ldquo;Update All&rdquo; if available.</li>
+      <li><strong>Minute 5 &mdash; Scan:</strong> Run our <a href="./index.html">free scan</a>. The results will show you exactly what to fix next.</li>
+    </ul>
+    <p>These five minutes can prevent 80% of all attacks on your site. You can tackle the rest gradually, following the recommendations from the scanner report.</p>
+
+    <div class="callout" style="text-align:center;">
+      <strong>Visual flow:</strong><br>
+      Build site &rarr; Scan &rarr; Fix red issues &rarr; Rescan &rarr; Fix yellow issues &rarr; Deploy safely
+    </div>
+
+    <a href="./index.html" class="cta">Scan your site for free &rarr;</a>
+
+    <p style="margin-top:2rem;"><a href="./blog-vibe-coding-security.html">&larr; Back to Vibe Coding guides</a></p>
+  </div>
+
+  </main>
+</div>
+<script src="./blog-common.js" defer></script>
+</body>
+</html>
