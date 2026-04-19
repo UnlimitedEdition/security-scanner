@@ -352,6 +352,46 @@ def _handle_subscription_event(event_name: str, payload: Dict[str, Any]) -> None
         row.get("plan_name"),
     )
 
+    # Retry: if license_key_created arrived before this row existed,
+    # the key is sitting in lemon_webhook_events but never got attached.
+    # Check if subscription row still has no license_key and try to
+    # find the key from the logged license_key_created event payload.
+    order_id = row.get("lemon_order_id")
+    if order_id:
+        sub_row = (
+            client.table("subscriptions")
+            .select("license_key")
+            .eq("lemon_order_id", order_id)
+            .limit(1)
+            .execute()
+        )
+        if sub_row.data and not sub_row.data[0].get("license_key"):
+            key_event = (
+                client.table("lemon_webhook_events")
+                .select("payload")
+                .eq("event_name", "license_key_created")
+                .like("payload", f"%\"order_id\":{order_id}%")
+                .limit(1)
+                .execute()
+            )
+            if key_event.data:
+                import json
+                try:
+                    ep = key_event.data[0].get("payload")
+                    if isinstance(ep, str):
+                        ep = json.loads(ep)
+                    key_val = ep.get("data", {}).get("attributes", {}).get("key")
+                    if key_val:
+                        client.table("subscriptions").update(
+                            {"license_key": key_val}
+                        ).eq("lemon_order_id", order_id).execute()
+                        log.info(
+                            "subscription %s: retroactively attached key %s for order_id=%s",
+                            event_name, _redact_key(key_val), order_id,
+                        )
+                except Exception as e:
+                    log.warning("subscription %s: key retry failed: %s", event_name, e)
+
 
 def _extract_subscription_attrs(payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     """
