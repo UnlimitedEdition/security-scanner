@@ -1691,75 +1691,65 @@ def check_device_activation(
     """
     Register a device fingerprint for a subscription.
     Returns {"allowed": True/False, "device_count": int, "max": int}.
-    If the device is already registered, updates last_seen_at.
-    If new and under limit, inserts. If over limit, rejects.
     """
     if not is_configured() or not fingerprint:
         return {"allowed": True, "device_count": 0, "max": MAX_DEVICES_PER_LICENSE}
 
     def _do() -> Dict[str, Any]:
-        conn = get_pg_connection()
-        if not conn:
-            return {"allowed": True, "device_count": 0, "max": MAX_DEVICES_PER_LICENSE}
-        try:
-            with conn.cursor() as cur:
-                cur.execute(
-                    "SELECT id FROM license_activations "
-                    "WHERE subscription_id = %s AND fingerprint = %s",
-                    (subscription_id, fingerprint),
-                )
-                existing = cur.fetchone()
+        client = get_client()
+        existing = (
+            client.table("license_activations")
+            .select("id")
+            .eq("subscription_id", subscription_id)
+            .eq("fingerprint", fingerprint)
+            .limit(1)
+            .execute()
+        )
 
-                if existing:
-                    cur.execute(
-                        "UPDATE license_activations SET last_seen_at = NOW(), "
-                        "user_agent = %s WHERE id = %s",
-                        (user_agent[:500] if user_agent else "", existing[0]),
-                    )
-                    conn.commit()
-                    cur.execute(
-                        "SELECT COUNT(*) FROM license_activations "
-                        "WHERE subscription_id = %s",
-                        (subscription_id,),
-                    )
-                    count = cur.fetchone()[0]
-                    return {
-                        "allowed": True,
-                        "device_count": count,
-                        "max": MAX_DEVICES_PER_LICENSE,
-                    }
+        if existing.data:
+            client.table("license_activations").update({
+                "last_seen_at": now_utc().isoformat(),
+                "user_agent": (user_agent[:500] if user_agent else ""),
+            }).eq("id", existing.data[0]["id"]).execute()
 
-                cur.execute(
-                    "SELECT COUNT(*) FROM license_activations "
-                    "WHERE subscription_id = %s",
-                    (subscription_id,),
-                )
-                count = cur.fetchone()[0]
+            all_devices = (
+                client.table("license_activations")
+                .select("id")
+                .eq("subscription_id", subscription_id)
+                .execute()
+            )
+            return {
+                "allowed": True,
+                "device_count": len(all_devices.data or []),
+                "max": MAX_DEVICES_PER_LICENSE,
+            }
 
-                if count >= MAX_DEVICES_PER_LICENSE:
-                    return {
-                        "allowed": False,
-                        "device_count": count,
-                        "max": MAX_DEVICES_PER_LICENSE,
-                    }
+        all_devices = (
+            client.table("license_activations")
+            .select("id")
+            .eq("subscription_id", subscription_id)
+            .execute()
+        )
+        count = len(all_devices.data or [])
 
-                cur.execute(
-                    "INSERT INTO license_activations "
-                    "(subscription_id, fingerprint, user_agent) "
-                    "VALUES (%s, %s, %s)",
-                    (subscription_id, fingerprint, user_agent[:500] if user_agent else ""),
-                )
-                conn.commit()
-                return {
-                    "allowed": True,
-                    "device_count": count + 1,
-                    "max": MAX_DEVICES_PER_LICENSE,
-                }
-        except Exception:
-            conn.rollback()
-            raise
-        finally:
-            conn.close()
+        if count >= MAX_DEVICES_PER_LICENSE:
+            return {
+                "allowed": False,
+                "device_count": count,
+                "max": MAX_DEVICES_PER_LICENSE,
+            }
+
+        client.table("license_activations").insert({
+            "subscription_id": subscription_id,
+            "fingerprint": fingerprint,
+            "user_agent": (user_agent[:500] if user_agent else ""),
+        }).execute()
+
+        return {
+            "allowed": True,
+            "device_count": count + 1,
+            "max": MAX_DEVICES_PER_LICENSE,
+        }
 
     result = _safe_db_call("check_device_activation", _do)
     return result or {"allowed": True, "device_count": 0, "max": MAX_DEVICES_PER_LICENSE}
@@ -1790,22 +1780,14 @@ def remove_device_activation(activation_id: int, subscription_id: int) -> bool:
         return False
 
     def _do() -> bool:
-        conn = get_pg_connection()
-        if not conn:
-            return False
-        try:
-            with conn.cursor() as cur:
-                cur.execute(
-                    "DELETE FROM license_activations "
-                    "WHERE id = %s AND subscription_id = %s",
-                    (activation_id, subscription_id),
-                )
-                conn.commit()
-                return cur.rowcount == 1
-        except Exception:
-            conn.rollback()
-            raise
-        finally:
-            conn.close()
+        client = get_client()
+        result = (
+            client.table("license_activations")
+            .delete()
+            .eq("id", activation_id)
+            .eq("subscription_id", subscription_id)
+            .execute()
+        )
+        return len(result.data or []) > 0
 
     return bool(_safe_db_call("remove_device_activation", _do))
