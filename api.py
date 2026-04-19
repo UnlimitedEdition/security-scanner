@@ -187,7 +187,7 @@ _rate_store: Dict[str, list] = defaultdict(list)
 # Queue system: max 1 concurrent scan
 _scan_queue: list = []
 _active_scans: set = set()  # Track multiple concurrent scans
-_MAX_CONCURRENT = 3
+_MAX_CONCURRENT = 8
 
 # Pending activations — maps activation_token → license_key.
 # Populated by webhook handler, consumed by frontend polling.
