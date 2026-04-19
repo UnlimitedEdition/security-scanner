@@ -51,7 +51,9 @@ log = logging.getLogger(__name__)
 LEMON_API_KEY = os.environ.get("LEMON_API_KEY", "").strip()
 LEMON_WEBHOOK_SECRET = os.environ.get("LEMON_WEBHOOK_SECRET", "").strip()
 LEMON_STORE_ID = os.environ.get("LEMON_STORE_ID", "").strip()
-LEMON_PRODUCT_ID = os.environ.get("LEMON_PRODUCT_ID", "").strip()
+LEMON_PRODUCT_ID_MONTHLY = os.environ.get("LEMON_PRODUCT_ID_MONTHLY", "").strip()
+LEMON_PRODUCT_ID_YEARLY = os.environ.get("LEMON_PRODUCT_ID_YEARLY", "").strip()
+LEMON_PRODUCT_ID_MALWARE = os.environ.get("LEMON_PRODUCT_ID_MALWARE", "").strip()
 LEMON_VARIANT_MONTHLY = os.environ.get("LEMON_VARIANT_MONTHLY", "").strip()
 LEMON_VARIANT_YEARLY = os.environ.get("LEMON_VARIANT_YEARLY", "").strip()
 LEMON_VARIANT_MALWARE_5_PACK = os.environ.get("LEMON_VARIANT_MALWARE_5_PACK", "").strip()
@@ -634,7 +636,9 @@ def health_check() -> Dict[str, Any]:
         "lemon_api_key_set": bool(LEMON_API_KEY),
         "lemon_webhook_secret_set": bool(LEMON_WEBHOOK_SECRET),
         "lemon_store_id": LEMON_STORE_ID or "<unset>",
-        "lemon_product_id": LEMON_PRODUCT_ID or "<unset>",
+        "lemon_product_id_monthly": LEMON_PRODUCT_ID_MONTHLY or "<unset>",
+        "lemon_product_id_yearly": LEMON_PRODUCT_ID_YEARLY or "<unset>",
+        "lemon_product_id_malware": LEMON_PRODUCT_ID_MALWARE or "<unset>",
         "lemon_variant_monthly": LEMON_VARIANT_MONTHLY or "<unset>",
         "lemon_variant_yearly": LEMON_VARIANT_YEARLY or "<unset>",
         "lemon_variant_malware_5_pack": LEMON_VARIANT_MALWARE_5_PACK or "<unset>",
