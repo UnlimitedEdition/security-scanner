@@ -2798,7 +2798,9 @@ function getLicenseKey() {
 
 function proAuthHeaders() {
   var key = getLicenseKey();
-  return key ? { "X-License-Key": key } : {};
+  var h = key ? { "X-License-Key": key } : {};
+  if (window._browserFingerprint) h["X-Fingerprint-Hash"] = window._browserFingerprint;
+  return h;
 }
 
 // Cache of the last /api/subscription/me response so we don't make
@@ -2810,8 +2812,18 @@ async function isProUser() {
   if (!key) { _proStatusCache = { active: false }; return false; }
   try {
     var resp = await fetch(API_BASE + "/api/subscription/me", {
-      headers: { "X-License-Key": key }
+      headers: proAuthHeaders()
     });
+    if (resp.status === 403) {
+      var err = await resp.json();
+      if (err.error === "device_limit") {
+        alert(isEn()
+          ? "This license key is active on " + err.device_count + " devices (max " + err.max + "). Remove a device from your account page to use it here."
+          : "Ovaj kljuc je aktivan na " + err.device_count + " uredjaja (max " + err.max + "). Uklonite uredjaj sa account stranice da biste ga koristili ovde.");
+        _proStatusCache = { active: false };
+        return false;
+      }
+    }
     var data = await resp.json();
     _proStatusCache = data;
     return !!data.active;

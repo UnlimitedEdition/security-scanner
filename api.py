@@ -3384,7 +3384,60 @@ def api_subscription_me(request: Request):
     if not license_key:
         return _subscription_public(None)
     row = subscription.get_by_license_key(license_key)
+    if not row:
+        return _subscription_public(None)
+
+    fp = _client_fingerprint(request)
+    if fp and subscription.is_active(row):
+        device_check = db.check_device_activation(
+            subscription_id=row["id"],
+            fingerprint=fp,
+            user_agent=request.headers.get("user-agent", ""),
+        )
+        if not device_check["allowed"]:
+            return JSONResponse(
+                status_code=403,
+                content={
+                    "error": "device_limit",
+                    "message": f"This license key is active on {device_check['device_count']} devices (max {device_check['max']}). Remove a device from your account page to use it here.",
+                    "device_count": device_check["device_count"],
+                    "max": device_check["max"],
+                },
+            )
+
     return _subscription_public(row)
+
+
+@app.get("/api/subscription/devices")
+def api_subscription_devices(request: Request):
+    """List all device activations for the current license key."""
+    license_key = (request.headers.get("x-license-key") or "").strip()
+    if not license_key:
+        raise HTTPException(status_code=402, detail="License key required.")
+    row = subscription.get_by_license_key(license_key)
+    if not row or not subscription.is_active(row):
+        raise HTTPException(status_code=402, detail="Active subscription required.")
+    devices = db.get_device_activations(row["id"])
+    return {
+        "devices": devices,
+        "count": len(devices),
+        "max": db.MAX_DEVICES_PER_LICENSE,
+    }
+
+
+@app.delete("/api/subscription/devices/{activation_id}")
+def api_remove_device(activation_id: int, request: Request):
+    """Remove a device activation (free up a slot)."""
+    license_key = (request.headers.get("x-license-key") or "").strip()
+    if not license_key:
+        raise HTTPException(status_code=402, detail="License key required.")
+    row = subscription.get_by_license_key(license_key)
+    if not row:
+        raise HTTPException(status_code=402, detail="Active subscription required.")
+    ok = db.remove_device_activation(activation_id, row["id"])
+    if not ok:
+        raise HTTPException(status_code=404, detail="Device not found.")
+    return {"removed": True}
 
 
 @app.get("/api/subscription/scans")

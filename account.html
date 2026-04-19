@@ -338,6 +338,19 @@
       <div id="malwareCreditsContainer"></div>
     </div>
 
+    <div class="acc-card" id="devicesCard" style="display:none;">
+      <h2>
+        <span class="sr">Aktivni uredjaji</span>
+        <span class="en">Active devices</span>
+      </h2>
+      <p style="color:#9ca3af;font-size:0.9rem;margin-bottom:1rem;">
+        <span class="sr">Vas kljuc moze biti aktivan na maksimalno <strong style="color:#a78bfa;">5 uredjaja</strong>. Uklonite uredjaj da biste oslobodili mesto.</span>
+        <span class="en">Your key can be active on up to <strong style="color:#a78bfa;">5 devices</strong>. Remove a device to free up a slot.</span>
+      </p>
+      <div id="devicesCount" style="font-weight:600;color:#a78bfa;margin-bottom:0.8rem;"></div>
+      <div id="devicesContainer"></div>
+    </div>
+
     <div class="acc-card">
       <h2>
         <span class="sr">Istorija skeniranja (30 dana)</span>
@@ -682,6 +695,7 @@
         document.getElementById('accContent').style.display = 'block';
         if (data.subscription) renderSubscription(data.subscription);
         if (data.malware_credits) renderMalwareCredits(data.malware_credits);
+        loadDevices();
         renderHistoryList(data.scans || []);
       })
       .catch(function(err) {
@@ -714,6 +728,64 @@
       });
     }
   });
+
+  function loadDevices() {
+    var key = getLicenseKey();
+    if (!key) return;
+    fetch(API_BASE + '/api/subscription/devices', {
+      headers: { 'X-License-Key': key }
+    })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(data) {
+        if (!data) return;
+        var card = document.getElementById('devicesCard');
+        card.style.display = 'block';
+        var countEl = document.getElementById('devicesCount');
+        countEl.textContent = data.count + ' / ' + data.max;
+        var container = document.getElementById('devicesContainer');
+        while (container.firstChild) container.removeChild(container.firstChild);
+        data.devices.forEach(function(d) {
+          var row = document.createElement('div');
+          row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:0.6rem 0.8rem;background:rgba(255,255,255,0.04);border-radius:8px;margin-bottom:0.5rem;';
+          var info = document.createElement('div');
+          var fp = d.fingerprint || '';
+          var short = fp.length > 12 ? fp.substring(0, 12) + '...' : fp;
+          var ua = d.user_agent || '';
+          var browserMatch = ua.match(/Chrome|Firefox|Safari|Edge|Opera/i);
+          var browser = browserMatch ? browserMatch[0] : 'Unknown';
+          var lastSeen = d.last_seen_at ? new Date(d.last_seen_at).toLocaleDateString() : '—';
+          var nameEl = document.createElement('div');
+          nameEl.style.cssText = 'font-weight:600;color:#e2e8f0;';
+          nameEl.textContent = browser + ' (' + short + ')';
+          var dateEl = document.createElement('div');
+          dateEl.style.cssText = 'font-size:0.8rem;color:#6b7280;';
+          dateEl.textContent = (isEn() ? 'Last seen: ' : 'Poslednji put: ') + lastSeen;
+          info.appendChild(nameEl);
+          info.appendChild(dateEl);
+          var btn = document.createElement('button');
+          btn.textContent = isEn() ? 'Remove' : 'Ukloni';
+          btn.style.cssText = 'background:#ef4444;color:#fff;border:none;border-radius:6px;padding:0.4rem 0.8rem;cursor:pointer;font-size:0.85rem;';
+          btn.onclick = function() { removeDevice(d.id); };
+          row.appendChild(info);
+          row.appendChild(btn);
+          container.appendChild(row);
+        });
+      })
+      .catch(function() {});
+  }
+
+  function removeDevice(id) {
+    var key = getLicenseKey();
+    if (!key) return;
+    if (!confirm(isEn() ? 'Remove this device?' : 'Ukloniti ovaj uredjaj?')) return;
+    fetch(API_BASE + '/api/subscription/devices/' + id, {
+      method: 'DELETE',
+      headers: { 'X-License-Key': key }
+    })
+      .then(function(r) {
+        if (r.ok) loadDevices();
+      });
+  }
 
   // Promise-based confirm dialog — styled to match the rest of account.html
   // instead of using the jarring native confirm() popup.
