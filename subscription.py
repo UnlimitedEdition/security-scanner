@@ -278,10 +278,25 @@ def _handle_subscription_event(event_name: str, payload: Dict[str, Any]) -> None
 
     plan_name = _variant_to_plan_name(attrs.get("variant_id"))
     if not plan_name:
-        raise ValueError(
-            f"{event_name}: variant_id {attrs.get('variant_id')} is not mapped "
-            f"to a known plan. Check LEMON_VARIANT_MONTHLY / LEMON_VARIANT_YEARLY env vars."
-        )
+        # Some events (e.g. subscription_payment_success) may not carry
+        # variant_id. If the subscription already exists, pull plan from DB.
+        sub_id = attrs.get("subscription_id")
+        if sub_id:
+            client = db.get_client()
+            existing = (
+                client.table("subscriptions")
+                .select("plan_name")
+                .eq("lemon_subscription_id", sub_id)
+                .limit(1)
+                .execute()
+            )
+            if existing.data:
+                plan_name = existing.data[0].get("plan_name")
+        if not plan_name:
+            raise ValueError(
+                f"{event_name}: variant_id {attrs.get('variant_id')} is not mapped "
+                f"to a known plan. Check LEMON_VARIANT_MONTHLY / LEMON_VARIANT_YEARLY env vars."
+            )
 
     row = {
         "email": (attrs.get("user_email") or "").strip().lower(),
@@ -304,22 +319,34 @@ def _handle_subscription_event(event_name: str, payload: Dict[str, Any]) -> None
         "cancelled_at": _parse_ts(attrs.get("cancelled_at")),
     }
 
-    # Drop Nones so UPSERT doesn't clobber existing values with NULL.
+    # Drop Nones so we don't clobber existing values with NULL.
     # Exception: cancelled_at is explicitly set to None on resume events.
     if event_name != "subscription_resumed":
         row = {k: v for k, v in row.items() if v is not None}
 
-    if not row.get("lemon_subscription_id"):
+    sub_id = row.get("lemon_subscription_id")
+    if not sub_id:
         raise ValueError(f"{event_name}: payload has no subscription id")
 
     client = db.get_client()
-    client.table("subscriptions").upsert(
-        row, on_conflict="lemon_subscription_id"
-    ).execute()
+    existing = (
+        client.table("subscriptions")
+        .select("id")
+        .eq("lemon_subscription_id", sub_id)
+        .limit(1)
+        .execute()
+    )
+    if existing.data:
+        client.table("subscriptions").update(row).eq(
+            "lemon_subscription_id", sub_id
+        ).execute()
+    else:
+        client.table("subscriptions").insert(row).execute()
+
     log.info(
         "subscription %s: sub_id=%s email=%s status=%s plan=%s",
         event_name,
-        row.get("lemon_subscription_id"),
+        sub_id,
         row.get("email"),
         row.get("status"),
         row.get("plan_name"),
