@@ -104,6 +104,25 @@
       transform: none !important;
       box-shadow: none !important;
     }
+    /* Status-check notes — the backend runs on a Hugging Face Space that
+       sleeps when idle, so /api/status can take 20-60s on a cold start.
+       These notes explain the wait without hiding any buy button. */
+    .status-note {
+      display: none;
+      max-width: 780px;
+      margin: 0.6rem auto 0;
+      padding: 0.5rem 1rem;
+      color: #7b83a6;
+      font-size: 0.82rem;
+      line-height: 1.5;
+      text-align: center;
+    }
+    .status-note.visible { display: block; }
+    /* Purely a "we are checking" hint. Buttons that are not explicitly
+       disabled stay clickable while the check runs — a sleeping Space
+       must never cost a sale. */
+    .plan-cta.status-checking { opacity: 0.75; }
+    .plan-cta.status-checking:not([disabled]) { cursor: progress; }
 
     .launch-banner {
       max-width: 780px;
@@ -206,6 +225,19 @@
     <br>
     <span class="sr">Stranica sa cenama je u finalnoj fazi pripreme. Pretplate cemo otvoriti cim zavrsimo poslednje provere. Besplatni skener u medjuvremenu radi normalno.</span>
     <span class="en">The pricing page is in final preparation. Subscriptions open as soon as we finish the last checks. The free scanner is fully operational in the meantime.</span>
+  </div>
+
+  <!-- STATUS NOTES — shown by JS around the /api/status call.
+       "checking" while the call is in flight (cold HF Space: 20-60s),
+       "unknown" if it never answered. Neither one disables the live Pro
+       buttons; only the not-yet-approved Malware pack stays gated. -->
+  <div id="statusCheckingNote" class="status-note">
+    <span class="sr">Proveravamo status servisa... Dugmad za kupovinu rade normalno.</span>
+    <span class="en">Checking service status... The buy buttons work normally.</span>
+  </div>
+  <div id="statusUnknownNote" class="status-note">
+    <span class="sr">Status servisa trenutno nismo mogli da proverimo (server se verovatno budi iz mirovanja). Kupovina i dalje radi — placanje obradjuje Lemon Squeezy, nezavisno od naseg servera.</span>
+    <span class="en">We could not verify the service status right now (the server is probably waking up). Purchases still work — payments are processed by Lemon Squeezy, independently of our server.</span>
   </div>
 
   <div id="proActiveBanner" class="pro-active-banner" style="display:none;">
@@ -595,25 +627,132 @@
 
     function isEn() { return document.body.classList.contains('lang-en'); }
 
-    // Check launch status on page load — if Pro is not yet live
-    // (Lemon Squeezy buy URLs not set in env), swap buy buttons to
-    // a visible "Coming Soon" state and show a banner above the plans.
-    // This lets the full pricing page exist for Lemon Squeezy review
-    // while preventing users from clicking into a broken checkout.
+    // --- Launch status check --------------------------------------------
+    //
+    // Checks /api/status on page load — if Pro is not yet live (Lemon
+    // Squeezy buy URLs not set in env), swap buy buttons to a visible
+    // "Coming Soon" state and show a banner above the plans. This lets the
+    // full pricing page exist for Lemon Squeezy review while preventing
+    // users from clicking into a broken checkout.
+    //
+    // The backend runs on a Hugging Face Space that sleeps when idle, so a
+    // cold start takes 20-60s. The call therefore gets an explicit
+    // AbortController timeout plus one retry before we give up.
+    //
+    // The failure policy is deliberately split per product:
+    //
+    //   Pro Monthly / Pro Yearly -> FAIL-OPEN. Both are LIVE on Lemon
+    //     Squeezy, and Lemon Squeezy stays up even while the Space sleeps.
+    //     A sleeping Space must never cost us a sale, so if the status call
+    //     never answers these buttons stay clickable and we only show a
+    //     discreet note. Worst case the visitor gets the checkout error
+    //     alert from buyPlan() — far better than seeing no buy button.
+    //
+    //   Malware 5-Pack -> FAIL-CLOSED. That variant is still pending Lemon
+    //     Squeezy approval and its LEMON_BUY_URL_MALWARE_5_PACK env var may
+    //     be unset, in which case /api/checkout/create answers 503. It is
+    //     enabled only when the status call explicitly reports
+    //     malware_pack_available === true.
+    //
+    // An explicit pro_available === false (a real answer, not a failure)
+    // still mutes every buy button via applyComingSoonState(), as before.
+    var STATUS_TIMEOUT_MS = 60000;      // generous: cold HF Space needs 20-60s
+    var STATUS_RETRY_DELAY_MS = 3000;   // short pause, then one more attempt
+
+    // Live products — must survive a failed status check.
+    var FAIL_OPEN_PLANS = ['pro_monthly', 'pro_yearly'];
+    // Products awaiting approval — hidden unless explicitly cleared.
+    var FAIL_CLOSED_PLANS = ['malware_5_pack'];
+
+    function planBtn(planName) {
+      return document.querySelector('button[data-plan="' + planName + '"]');
+    }
+
+    function showNote(id, on) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      if (on) el.classList.add('visible');
+      else el.classList.remove('visible');
+    }
+
+    function fetchStatusOnce() {
+      var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+      var timer = setTimeout(function() { if (ctrl) ctrl.abort(); }, STATUS_TIMEOUT_MS);
+      var opts = ctrl ? { signal: ctrl.signal } : {};
+      return fetch(API_BASE + '/api/status', opts)
+        .then(function(r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.json();
+        })
+        .then(
+          function(data) { clearTimeout(timer); return data; },
+          function(err) { clearTimeout(timer); throw err; }
+        );
+    }
+
+    function setStatusChecking(on) {
+      var i, btn;
+      // Live plans: visual hint only, the button stays clickable.
+      for (i = 0; i < FAIL_OPEN_PLANS.length; i++) {
+        btn = planBtn(FAIL_OPEN_PLANS[i]);
+        if (!btn) continue;
+        if (on) btn.classList.add('status-checking');
+        else btn.classList.remove('status-checking');
+      }
+      // Gated plans: disabled until the check explicitly clears them.
+      for (i = 0; i < FAIL_CLOSED_PLANS.length; i++) {
+        btn = planBtn(FAIL_CLOSED_PLANS[i]);
+        if (!btn) continue;
+        if (on) {
+          btn.setAttribute('disabled', 'disabled');
+          btn.classList.add('status-checking');
+        } else {
+          btn.classList.remove('status-checking');
+        }
+      }
+      showNote('statusCheckingNote', on);
+    }
+
+    function applyStatus(data) {
+      if (data && data.pro_available === false) {
+        applyComingSoonState();
+        return;
+      }
+      // Pro is live — leave those buttons untouched.
+      if (data && data.malware_pack_available === true) {
+        var btn = planBtn('malware_5_pack');
+        if (btn) btn.removeAttribute('disabled');
+      } else {
+        applyComingSoonBtn('malware_5_pack');
+      }
+    }
+
+    function applyStatusUnavailable() {
+      // Fail-open for the live plans (nothing to do — they were never
+      // disabled), fail-closed for the ones awaiting approval.
+      for (var i = 0; i < FAIL_CLOSED_PLANS.length; i++) {
+        applyComingSoonBtn(FAIL_CLOSED_PLANS[i]);
+      }
+      showNote('statusUnknownNote', true);
+    }
+
     function checkLaunchStatus() {
-      fetch(API_BASE + '/api/status')
-        .then(function(r) { return r.json(); })
+      setStatusChecking(true);
+      fetchStatusOnce()
+        .catch(function() {
+          // The first call very likely just woke the Space from sleep.
+          // Wait a moment and try once more before giving up.
+          return new Promise(function(resolve) {
+            setTimeout(resolve, STATUS_RETRY_DELAY_MS);
+          }).then(fetchStatusOnce);
+        })
         .then(function(data) {
-          if (data && data.pro_available === false) {
-            applyComingSoonState();
-          } else if (data && data.malware_pack_available === false) {
-            applyComingSoonBtn('malware_5_pack');
-          }
+          setStatusChecking(false);
+          applyStatus(data);
         })
         .catch(function() {
-          // Fail closed — if the status call fails, treat as coming
-          // soon so we never show a broken Buy button by accident.
-          applyComingSoonState();
+          setStatusChecking(false);
+          applyStatusUnavailable();
         });
     }
 
