@@ -96,7 +96,7 @@ Most security scanners require you to choose between **thoroughness** and **safe
 
 **Web Security Scanner bridges that gap.** It performs 240+ checks covering TLS, HTTP headers, DNS, cookies, JavaScript, APIs, CMS detection, GDPR compliance, SEO, performance, and accessibility — all without sending a single exploit payload.
 
-The gate-before-scan model ensures that even the most thorough checks (sensitive file enumeration, port scanning, subdomain takeover detection) **only run after cryptographic ownership verification**. Unverified users get a comprehensive 20-check passive scan that is indistinguishable from a normal browser visit.
+The gate-before-scan model ensures that even the most thorough checks (sensitive file enumeration, port scanning, subdomain takeover detection) **only run after cryptographic ownership verification**. Unverified users get a comprehensive 21-check passive scan that is indistinguishable from a normal browser visit.
 
 **Use cases:**
 
@@ -122,13 +122,17 @@ The gate-before-scan model ensures that even the most thorough checks (sensitive
 | Multi-page scanning | ✅ Up to 10 pages | Homepage only | Homepage only | Template-based |
 | Strictness profiles | ✅ 4 levels (basic → paranoid) | Single mode | Single mode | N/A |
 | Self-hosted option | ✅ Docker or bare metal | ❌ | ❌ | ✅ |
-| Privacy | ✅ PII hashed, no data sent externally | Unknown | Unknown | Local execution |
+| Privacy | ✅ PII hashed, no user telemetry (target domain goes to public reputation services) | Unknown | Unknown | Local execution |
 
 ### Core design principles
 
 1. **Passive by default.** The scanner mimics a normal browser visit. Target servers see standard HTTP requests, not pentest probes.
 2. **Gate-before-scan.** Active checks (file enumeration, port scanning, subdomain discovery) require ownership verification via meta tag, file upload, or DNS TXT record.
-3. **Zero data exfiltration.** No scan data is sent to third-party analytics, APIs, or telemetry services. All processing happens on the scanner's infrastructure.
+3. **No user telemetry — but reputation lookups do leave the box.** We send nothing about *you*: no third-party analytics, no tracking pixels, no "phone home", and your scan results are never shared with anyone. The **target domain or URL you submit** is, however, sent to public reputation and transparency services, because those lookups *are* the check:
+   - Core scan: **Mozilla HTTP Observatory** (`http-observatory.security.mozilla.org`), **crt.sh** (Certificate Transparency), **hstspreload.org** (HSTS preload status), and the authoritative **WHOIS** registry for the TLD. DNS-based checks (SPF/DMARC/CAA/MX) query public DNS resolvers.
+   - Malware scanner: **URLhaus** (abuse.ch), plus the **Spamhaus DBL**, **SURBL** and **Barracuda** domain blacklists via DNS. In verified full mode it also queries the **Internet Archive** (`web.archive.org`). The **OpenPhish** feed is downloaded and matched locally, so your target is never sent for that check.
+
+   Every one of these is a public, unauthenticated, read-only lookup, and each fails open — an unreachable service is reported as "unavailable", never as a finding. Everything else is processed on the scanner's own infrastructure.
 4. **Defense in depth for the scanner itself.** SSRF protection on every outbound request, PII hashing, append-only audit logs, encrypted backups, Row-Level Security on all database tables.
 
 ---
@@ -173,6 +177,18 @@ The gate-before-scan model ensures that even the most thorough checks (sensitive
 | **Performance** | Response time, page weight, compression (gzip/brotli), caching headers |
 | **Accessibility** | ARIA landmarks, `lang` attribute, image alt text, contrast hints |
 
+### Malware Scanner (18 checks — separate paid module)
+
+`malware_scanner/` is a standalone module for detecting an already-compromised site — it answers "am I infected?", not "am I hardenable?". It follows the same gate-before-scan model:
+
+| Tier | Checks | Gate |
+|------|--------|------|
+| **SAFE** | 11 checks: blacklist lookup, JS obfuscation, external scripts, cryptojacking, hidden iframes, redirect chains, SEO spam, drive-by downloads, data exfiltration, HTML comments, webshell indicators | Free, rate-limited |
+| **FULL** | 7 checks: blacklist history, search-index contamination, reputation score, content modification vs. archive, email reputation, SSL compromise, Wayback analysis | Domain ownership verification required |
+| **Damage Report** | Aggregates all findings into a reputation score and grade | Runs after the FULL pass |
+
+Full scans are a **paid one-time purchase** (Malware 5-Pack — 5 scan credits, via Lemon Squeezy). Module details, check-by-check documentation, and the source of truth for these counts (`_SAFE_CHECKS` / `_FULL_CHECKS` in `main.py`): [malware_scanner/README.md](malware_scanner/README.md).
+
 ---
 
 ## 🎚️ Strictness Profiles
@@ -216,7 +232,7 @@ Sensitive file checks (`.env`, `.git/config`) validate response bodies for expec
 
 **Web Security Scanner is designed with a privacy-first architecture:**
 
-- **No external data transmission.** Scan results are processed entirely on the scanner's infrastructure. No telemetry, no third-party analytics on scan data, no "phone home" behavior.
+- **No user telemetry.** Scan results are stored and processed on the scanner's own infrastructure. No third-party analytics, no "phone home", no sharing of your results. The target domain/URL you submit *is* sent to the public reputation and transparency services listed under [Core design principles](#core-design-principles) — Mozilla Observatory, crt.sh, hstspreload.org, WHOIS and, for malware scans, URLhaus, the Spamhaus/SURBL/Barracuda DNSBLs and the Internet Archive.
 - **PII is hashed, never stored raw.** IP addresses, User-Agents, and email addresses pass through SHA-256 with a server-side salt before database storage.
 - **Append-only audit log.** `UPDATE` and `DELETE` are revoked at the database role level — even the backend cannot rewrite forensic history.
 - **90-day retention.** Audit logs are automatically pruned via `pg_cron`. Legal-hold exceptions are flagged per row, not per table.
@@ -350,8 +366,8 @@ Full architecture diagram, data model, and flow descriptions: [ARCHITECTURE.md](
 |--------|-------|
 | Average scan time | 45–90 seconds |
 | Scan deadline | 180 seconds (hard cap) |
-| Concurrent scans | 3 (configurable) |
-| Rate limit | 5 scans / 30 min per IP |
+| Concurrent scans | 8 (`_MAX_CONCURRENT` in `api.py`) |
+| Rate limit | 2 scans / 2 h per IP (`RATE_LIMIT_MAX`, `RATE_LIMIT_WINDOW_SECONDS`) |
 | Max response body | 50 KB (caps memory) |
 | Multi-page limit | 10 pages (Pro) |
 | Target-side rate limit | 0.5s between pages |

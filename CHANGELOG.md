@@ -8,6 +8,123 @@ Versioning: [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [4.3.0] — 2026-04-19
+
+### Added
+
+- `feat(malware)`: **Malware Scanner** as a standalone product
+  (`/malware`) — 18 checks in two packs. Safe pack: blacklist, iframes,
+  JS obfuscation, cryptojacking, drive-by, redirect chain, SEO spam,
+  webshell indicators, cookie stealing, external scripts. Full pack:
+  blacklist history, content modification, damage report, email
+  reputation, index contamination, reputation score, SSL compromise,
+  Wayback analysis
+- `feat(db)`: migration 020 — `malware_scans` table
+- `feat(malware)`: full scan wizard — 3 consents + domain verification
+  + countdown
+- `feat(malware)`: backend-gated wizard via `scan_requests`
+  (`scan_kind='malware'`) — `/scan/request/{id}/execute` re-validates
+  all 3 consents + `verify_passed` + `is_domain_verified` server-side,
+  so a compromised frontend cannot bypass the gate
+- `feat(db)`: migration 021 — `scan_requests.scan_kind`
+  (`'main'` | `'malware'`), default `'main'`
+- `security(malware)`: fingerprint + IP dual rate limiting — browser
+  fingerprint (Canvas + WebGL + navigator, SHA-256) required on every
+  wizard/scan request; no fingerprint → 403 (blocks curl), rotated IP
+  with same fingerprint → 429 (blocks VPN rotation)
+- `feat(malware)`: rate limit countdown timer (1 free scan / 24h)
+- `feat(monetization)`: Phase 7 — Malware Pack purchase pipeline:
+  Lemon Squeezy webhook (`order_created` + `license_key_created`),
+  atomic credit consumption, post-purchase auto-activation via polling,
+  masked/unmaskable license key in account panel, rate limit countdown
+  timers on `index.html` and `pricing.html`, Pro users bypass all rate
+  limits
+- `feat(db)`: migration 022 — `subscriptions` widened for the
+  `malware_pack` plan
+- `feat(license)`: device fingerprint limiting — max 5 devices per
+  license key, with device management in the account panel
+- `feat(db)`: migration 023 — `license_activations` table
+- `feat(affiliate)`: Lemon Squeezy affiliate tracking script on all
+  purchase pages + affiliate program links across the site
+- `feat(api)`: live scan load indicator — `/health` polled every 5s for
+  active/queued scan count
+- `feat(content)`: malware content pages (`faq-malware`,
+  `faq-malware-recovery`, `blog-security-malware`,
+  `blog-security-malware-recovery`), guides in a 3-column grid
+  (detection, recovery, FAQ), category overview grid (6 cards —
+  security, SEO, performance, a11y, GDPR, extra)
+- `feat(blog)`: 6 Vibe Coding blog pages (AI code security, Next.js,
+  Vercel, WordPress, first website, vibe coding) + responsive tables
+  + footer column
+- `feat(blog)`: timeline nav for `blog-features` categories
+- `feat(ui)`: vertical 240+ badge + mobile hide-on-scroll for the
+  checks button
+- `feat(pricing)`: activation polling protection — prevents page reload
+  during auto-activation
+- `feat(pricing)`: `#activate` anchor for direct scroll to the
+  activation section
+- `docs`: `LEMON-SQUEEZY-SETUP.md` + per-directory `README.md` for
+  `checks/`, `malware_scanner/`, `scripts/`, `supabase/`, `tests/`
+
+### Changed
+
+- `feat(api)`: max concurrent scans raised 3 → 8 (`_MAX_CONCURRENT`)
+- `fix(ratelimit)`: backend scan limit 5/30min → 2/120min to match the
+  pricing page
+- `fix(malware)`: malware credits never expire — 30-day expiration
+  removed from `subscription.py`, `db.py` and all UI copy
+- `fix(lemon)`: `LEMON_PRODUCT_ID` split into per-product env vars
+  (monthly, yearly, malware)
+- `feat(content)`: 5 blog/FAQ pages expanded to the full bilingual
+  400-800 line standard
+- `docs(pricing)`: 14-day refund guarantee on the Pro Monthly card
+- `fix(pricing)`: Free tier limits corrected — 2 scans/120min, PDF
+  included
+- `fix(ui)`: chrome `alert()` / `confirm()` replaced with styled modals
+  for device limit and device removal
+- `fix(account)`: logged-out users redirect to the activation form
+  instead of generic pricing
+
+### Fixed
+
+- `fix(webhook)`: in-memory buffer for the race between
+  `license_key_created` and `subscription_created`
+- `fix(webhook)`: retroactive license key attach when
+  `subscription_created` arrives after `license_key_created`;
+  customer portal URL corrected
+- `fix(webhook)`: email unique constraint on repeat purchases +
+  fallback plan lookup by email for payment events
+- `fix(webhook)`: `upsert` replaced with select + insert/update for
+  partial unique index compatibility; missing `variant_id` in payment
+  events handled
+- `fix(malware)`: wizard gate race condition — modal now waits for the
+  backend before opening
+- `fix(malware)`: wizard execute double-unwrap — `renderScan` was
+  receiving an empty result
+- `fix(malware)`: drive-by false positive + port verify panel taken
+  from `index.html`
+- `fix(malware)`: Spamhaus error IPs (`127.255.255.254`) filtered out
+  of RBL checks
+- `fix(malware)`: URL input accepts bare domains (`gradovi.rs` →
+  `https://gradovi.rs`)
+- `fix(malware)`: consent field name + cross-link + inline DNS verify
+  flow
+- `fix(malware)`: standalone verify button + panel removed
+- `fix(malware)`: consent checkbox stays `disabled=false` in `finally`
+  (matches the `index.html` pattern)
+- `fix(license)`: device activations use the Supabase PostgREST client
+  instead of direct Postgres
+- `fix(license)`: device fingerprint registered on page load when a
+  license key is already present
+- `fix(malware)`: mobile responsive layout on the new content pages
+- `fix(blog)`: sticky header on `blog-features`
+- `fix(hf)`: HuggingFace Space YAML frontmatter restored + logo rollout
+- `fix(ui)`: homepage reverted to the original malware cross-link
+  banner
+- `fix(pricing)`: license key placeholder updated to UUID format
+
+---
+
 ## [4.2.0] — 2026-04-14
 
 ### Added

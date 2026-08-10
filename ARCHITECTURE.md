@@ -13,6 +13,7 @@ It is intended for contributors, security auditors, and potential acquirers.
 - [Scanning Engine](#scanning-engine)
 - [Gate-Before-Scan Model](#gate-before-scan-model)
 - [Check Module System](#check-module-system)
+- [Malware Scanner](#malware-scanner)
 - [Scoring Engine](#scoring-engine)
 - [Risk Engine](#risk-engine)
 - [Data Model](#data-model)
@@ -47,7 +48,7 @@ It is intended for contributors, security auditors, and potential acquirers.
                    │  ┌─────────────┐  ┌──────────────┐  ┌──────────────────────┐ │
                    │  │   FastAPI    │  │   Scanner    │  │    Check Modules     │ │
                    │  │   api.py     │──│  scanner.py  │──│    checks/*.py       │ │
-                   │  │  (3257 LOC)  │  │  (854 LOC)   │  │    (33 modules)      │ │
+                   │  │  (4067 LOC)  │  │  (854 LOC)   │  │    (31 modules)      │ │
                    │  └──────┬──────┘  └──────┬───────┘  └──────────────────────┘ │
                    │         │                │                                    │
                    │  ┌──────┴──────┐  ┌──────┴───────┐  ┌──────────────────────┐ │
@@ -75,7 +76,7 @@ It is intended for contributors, security auditors, and potential acquirers.
 
 ## Scanning Engine
 
-The scanning engine (`scanner.py`) orchestrates all 33 check modules through
+The scanning engine (`scanner.py`) orchestrates all 31 check modules through
 a deadline-aware, fault-tolerant execution pipeline.
 
 ### Execution flow
@@ -165,7 +166,7 @@ three tiers based on what they probe:
 
 | Tier | Gate | Behavior | Count |
 |------|------|----------|-------|
-| **safe** | None — always runs | No probes against private surface. Uses only public information: DNS records, TLS cert, HTTP headers from normal GET, HTML body analysis. | 20 |
+| **safe** | None — always runs | No probes against private surface. Uses only public information: DNS records, TLS cert, HTTP headers from normal GET, HTML body analysis. | 18 |
 | **redacted** | None — always runs | Runs in both modes, but the check internally redacts sensitive values (server versions, JWT contents, API key names) when `mode='safe'`. | 3 |
 | **full** | Ownership verification required | Touches private attack surface: probes `/.env`, `/wp-admin/`, port scans, GraphQL introspection, subdomain enumeration. | 10 |
 
@@ -252,7 +253,13 @@ def run(target, context, **kwargs) -> List[Dict[str, Any]]:
     return results
 ```
 
-### Module catalog (33 modules)
+### Module catalog (31 checks + 1 helper)
+
+`checks/` holds 32 modules plus `__init__.py`. 31 of them are registered as
+checks in `scanner.py` (one `run_check(...)` call each — the source of truth
+for the tier counts above). `crawler.py` is the 32nd module but is **not** a
+check: it is a helper imported directly (`from checks.crawler import crawl`)
+by the crawl step that feeds the multi-page pass.
 
 | Module | Category | Tier | Checks |
 |--------|----------|------|--------|
@@ -287,7 +294,77 @@ def run(target, context, **kwargs) -> List[Dict[str, Any]]:
 | `ct_check.py` | CT Logs | safe | Certificate Transparency |
 | `subdomain_check.py` | Subdomains | full | Enumeration, CT mining |
 | `takeover_check.py` | Takeover | full | Dangling CNAME, 70+ providers |
-| `crawler.py` | Crawler | safe | Same-origin link discovery |
+| `crawler.py` | Crawler | *helper* | Same-origin link discovery (not a registered check) |
+
+---
+
+## Malware Scanner
+
+The malware scanner is a **separate product**, not a tier of the security
+scanner. It lives in its own package, has its own endpoints, its own quota
+and its own tables. It shares only three things with the main scanner: the
+SSRF layer (`security_utils.safe_get`), the DB helpers (`db.py`), and the
+ownership-verification cache (`verified_domains`).
+
+### Package layout (`malware_scanner/`)
+
+| Path | Role |
+|------|------|
+| `main.py` | Orchestrator. Single public entry point: `scan_malware(url, *, mode)` |
+| `config.py` | Timeouts, external feed URLs, heuristic thresholds, free/paid quota constants |
+| `utils.py` | Shared helpers: session factory, URL normalization, DNS/RBL lookups, result shaping |
+| `safe_checks/` | 11 check modules — run on every scan, no ownership verification |
+| `full_checks/` | 8 modules — 7 gated checks + `damage_report.py` (aggregate, not a numbered check) |
+
+18 numbered checks in total (SAFE 1–11, FULL 12–18). The `_SAFE_CHECKS` and
+`_FULL_CHECKS` tuples in `main.py` are the source of truth for that count —
+the per-module docstrings still carry an older numbering and are stale.
+
+### Gate model
+
+The same gate-before-scan rule applies, but enforced one layer up:
+`main.py` never checks ownership itself. `api.py` must confirm
+`db.is_domain_verified(domain, ip, fingerprint)` before it passes
+`mode='full'`. Otherwise it passes `mode='safe'`, and the FULL checks —
+along with the Damage Report — never send a byte.
+
+### Call path from `api.py`
+
+`api.py` imports the package at module level (`import malware_scanner`) and
+drives it through a single function, `malware_scanner.scan_malware()`. Three
+endpoints form the surface — the first and third call it, the second only
+reads quota state:
+
+| Endpoint | Behavior |
+|----------|----------|
+| `POST /malware-scan` | Runs the scan **synchronously** (~15–30s budget) and returns findings in one round-trip — no queue, no SSE, unlike the main scanner |
+| `GET /malware-scan/status` | Read-only: free-tier rate-limit state, or remaining paid credits when `X-License-Key` maps to an active `malware_pack` |
+| `POST /scan/request/{id}/execute` | Wizard path. When the request row has `scan_kind='malware'`, the row is flipped atomically and the scan runs in-process in `full` mode |
+
+Persistence to `malware_scans` is best-effort via `db._safe_db_call()`:
+a DB outage costs forensics, never the caller's result.
+
+### Quota and monetization
+
+- **Free tier:** `FREE_MALWARE_LIMIT` scans per `FREE_MALWARE_WINDOW_SECONDS`
+  (1 per 24h), enforced against **both** the IP hash and the browser
+  fingerprint, so VPN rotation alone does not reset the counter.
+- **Paid:** a Lemon Squeezy `malware_pack` purchase writes credits to
+  `malware_credits`; `db.consume_malware_credit()` decrements one atomically
+  and bypasses the free-tier limit entirely.
+- Verified full-mode scans bypass the free-tier limit as well.
+
+### Tables and migrations
+
+| Table / column | Migration | Purpose |
+|----------------|-----------|---------|
+| `malware_scans` | `020_malware_scans.sql` | One row per malware scan: JSONB `result`, hashed caller identity, `scan_mode`, consent record |
+| `malware_credits` | `020_malware_scans.sql` | Purchased scan credits (`credits_remaining`, `expires_at`, Lemon order id) |
+| `scan_requests.scan_kind` | `021_scan_requests_scan_kind.sql` | `'main'` or `'malware'` — routes the wizard to the right engine |
+| `malware_credits.subscription_id` | `022_malware_pack_subscription_link.sql` | Links a purchased pack back to its `subscriptions` row |
+
+Frontend: `malware.html` + `malware.js`, served from the same Vercel edge
+as the main scanner.
 
 ---
 
@@ -357,6 +434,8 @@ estimates.
 | `abuse_reports` | Owner complaints, linked to `domain_blocks` | Indefinite |
 | `domain_blocks` | Domains permanently blocked from scanning | Indefinite |
 | `ip_rate_limits` | Sliding-window rate counter | Auto-pruned |
+| `malware_scans` | Malware Scanner results (separate product — see above) | Indefinite |
+| `malware_credits` | Purchased malware-scan credits (Lemon Squeezy) | Indefinite (usable until `expires_at`) |
 
 ### PII handling
 
@@ -445,7 +524,7 @@ on every translatable element.
 | DNS checks | 1–3s | Multiple record types |
 | File probes | 5–15s | 430 paths, 2s timeout each, batched |
 | Port scan | 5–20s | 203 ports, short timeouts, CDN fingerprint |
-| Complete scan | 45–90s | All 33 modules, deadline at 180s |
+| Complete scan | 45–90s | All 31 checks, deadline at 180s |
 | Multi-page scan | +5s/page | 0.5s rate limit between pages |
 | PDF generation | 2–5s | Pure Python (fpdf2), no external deps |
 
