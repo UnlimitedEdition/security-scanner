@@ -1,0 +1,96 @@
+# ============================================================================
+# .vercelignore — sta se NE salje na Vercel deployment
+# ============================================================================
+# Kontekst: vercel.json ima "outputDirectory": ".", "framework": null i prazan
+# buildCommand — dakle CEO repo se servira kao static site sa produkcijskog
+# domena. robots.txt ima "Allow: /", pa je sve i indeksabilno.
+# Bez ovog fajla su backend kod, dokumentacija i interni materijali javno
+# dostupni (npr. /api.py, /README.md, /migrations/...).
+#
+# Sintaksa je identicna .gitignore sintaksi.
+#
+# OSTAJE (frontend — NE dodavati ovde):
+#   index.html i sve ostale *.html stranice, *.js, *.css,
+#   sitemap.xml, robots.txt, ads.txt, humans.txt, .well-known/security.txt,
+#   favicon.svg, logo.svg, logo.png, data-protection-badge.png,
+#   uptimerobot-*.png, google739403949172c6ee.html (Search Console verifikacija),
+#   404.html, LICENSE, AUTHORS.
+#
+# Svaki obrazac ispod je pre uvrstavanja proveren grep-om: nijedna .html
+# stranica, .js ili .css fajl ga ne referencira (provera: 2026-08-09).
+# ============================================================================
+
+
+# ----------------------------------------------------------------------------
+# Python backend — ceo scanner engine. Vercel ga ne izvrsava (nema Python
+# runtime u ovoj konfiguraciji), pa bi bio serviran kao plain-text izvorni kod.
+# Pokriva: api.py, db.py, scanner.py, risk_engine.py, security_utils.py,
+# subscription.py, verification.py, pdf_report.py, migration_runner.py.
+# ----------------------------------------------------------------------------
+*.py
+__pycache__/
+.pytest_cache/
+
+# ----------------------------------------------------------------------------
+# Backend moduli i podaci — logika provera, malware potpisi, SQL seme.
+# Otkrivanje detekcionih pravila olaksava zaobilazenje skenera.
+# ----------------------------------------------------------------------------
+checks/
+malware_scanner/
+migrations/
+supabase/
+configs/
+tests/
+scripts/
+examples/
+
+# ----------------------------------------------------------------------------
+# Build / deploy infrastruktura backend-a (HF Spaces Docker, Fly).
+# Otkriva interne portove, env var imena i lanac izgradnje.
+# ----------------------------------------------------------------------------
+Dockerfile
+requirements*.txt
+start.bat
+start.sh
+fly.toml
+.github/
+
+# ----------------------------------------------------------------------------
+# Dokumentacija i interni materijali. Nijedna stranica ne linkuje .md fajl sa
+# ovog domena (svi doc linkovi u blogovima idu na MDN / vercel.com).
+# Pokriva i: README, ARCHITECTURE, PRIRUCNIK*, security-profile, ROADMAP,
+# BLOG-TODO, CLAUDE.md, AGENTS.md, LEMON-SQUEEZY-SETUP, INSTALL, SECURITY...
+# ----------------------------------------------------------------------------
+*.md
+docs/
+
+# ----------------------------------------------------------------------------
+# Lemon Squeezy interni asseti — lemon-images.html je pomocna stranica za
+# generisanje slika proizvoda. Nije u sitemap.xml i nijedna stranica je ne
+# linkuje (referencira samo logo.svg, koji ostaje).
+# ----------------------------------------------------------------------------
+lemon-images.html
+lemon-product-*.png
+
+# ----------------------------------------------------------------------------
+# Tajne i lokalno stanje agenata. Vec je u .gitignore (dakle ne stize preko Git
+# integracije), ovo je zastita za `vercel deploy` iz lokalnog direktorijuma.
+# ----------------------------------------------------------------------------
+.env
+.env.*
+*.pem
+*.key
+.mcp.json
+.claude/
+.codex/
+.code-review-graph/
+.playwright-mcp/
+.vercel/
+
+# ----------------------------------------------------------------------------
+# Scan exporti i audit artefakti — interni rezultati skeniranja.
+# Vec u .gitignore; nijedna stranica ih ne fetch-uje.
+# ----------------------------------------------------------------------------
+scan-*.json
+json-*.json
+seo_audit.json
