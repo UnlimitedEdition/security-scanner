@@ -64,11 +64,91 @@ app = FastAPI(
 )
 
 app.add_middleware(GZipMiddleware, minimum_size=500)
+
+# ── CORS origin allowlist ────────────────────────────────────────────
+# Replaces the old allow_origins=["*"]. allow_credentials stays False
+# (we authenticate with explicit headers, never cookies), so a wildcard
+# was not a session-hijack hole — but it did let any third-party page
+# drive the scan API from a visitor's browser and burn that visitor's
+# IP rate-limit quota. Pinned to the origins we actually ship.
+#
+# Where each default comes from (no invented hosts):
+#   security-skener.gradovi.rs         — canonical production domain:
+#                                        index.html <link rel="canonical">,
+#                                        sitemap.xml, README.md, ARCHITECTURE.md
+#   security-scanner-ruddy.vercel.app  — Vercel deployment URL of this
+#                                        project (.vercel/project.json name
+#                                        "security-scanner"); referenced in
+#                                        CONTENT-LICENSE.md and .github/FUNDING.yml
+#   web-security-scanner.vercel.app    — older Vercel alias still used as
+#                                        canonical/og:url by blog-security-*.html
+#   unlimitededition-web-security-scanner.hf.space
+#                                      — this backend; it is the production
+#                                        API_BASE in index.html/account.html/
+#                                        malware.js and it also serves the
+#                                        static frontend itself
+#   http://localhost:8000 / 127.0.0.1:8000  — local uvicorn (start.sh)
+#   http://localhost:8765 / 127.0.0.1:8765  — alternate dev port mentioned
+#                                             in the index.html API_BASE comment
+#
+# Override per environment with ALLOWED_ORIGINS="https://a,https://b".
+# FRONTEND_ORIGIN (single origin, the name documented in INSTALL.md) is
+# appended if set, so an existing deployment configured that way keeps
+# working without a code change.
+_DEFAULT_ALLOWED_ORIGINS = [
+    "https://security-skener.gradovi.rs",
+    "https://security-scanner-ruddy.vercel.app",
+    "https://web-security-scanner.vercel.app",
+    "https://unlimitededition-web-security-scanner.hf.space",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "http://localhost:8765",
+    "http://127.0.0.1:8765",
+]
+
+
+def _build_allowed_origins() -> List[str]:
+    """Resolve the CORS allowlist from env, falling back to the defaults."""
+    raw = os.environ.get("ALLOWED_ORIGINS", "").strip()
+    if raw:
+        origins = [o.strip().rstrip("/") for o in raw.split(",") if o.strip()]
+    else:
+        origins = list(_DEFAULT_ALLOWED_ORIGINS)
+    legacy = os.environ.get("FRONTEND_ORIGIN", "").strip().rstrip("/")
+    if legacy:
+        origins.append(legacy)
+    # De-duplicate while preserving order.
+    seen = set()
+    result = []
+    for origin in origins:
+        if origin and origin not in seen:
+            seen.add(origin)
+            result.append(origin)
+    return result
+
+
+_ALLOWED_ORIGINS = _build_allowed_origins()
+
+# Only the custom request headers the frontend actually sends. Starlette
+# adds the CORS-safelisted ones (accept, accept-language, content-language,
+# content-type) on its own, so they don't need to be repeated here.
+# Sources: proAuthHeaders()/_wizardHeaders() in index.html, _fpHeaders()
+# in malware.js, pricing.html (X-Activation-Token), account.html
+# (X-License-Key), index.html poll headers (X-Ad-Blocked).
+_ALLOWED_HEADERS = [
+    "content-type",
+    "x-license-key",
+    "x-fingerprint-hash",
+    "x-session-id",
+    "x-activation-token",
+    "x-ad-blocked",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_ALLOWED_ORIGINS,
     allow_methods=["GET", "POST"],
-    allow_headers=["*"],
+    allow_headers=_ALLOWED_HEADERS,
 )
 
 
@@ -237,6 +317,20 @@ def _check_rate_limit(ip: str) -> bool:
     return _check_rate_limit_in_memory(ip)
 
 
+# Ad-blocker throttle budget: the MAXIMUM number of seconds a single scan
+# may be slowed down in total (not per progress tick). The previous code
+# slept 8s on EVERY tick, which with ~100 ticks pinned one of the
+# _MAX_CONCURRENT worker slots for up to ~13 minutes per scan and starved
+# the queue for everyone else. Set to 0 to disable the throttle entirely.
+try:
+    _AD_BLOCK_THROTTLE_TOTAL = max(0.0, float(os.environ.get("AD_BLOCK_THROTTLE_SECONDS", "8")))
+except (TypeError, ValueError):
+    # A typo in the env var must not take the whole app down at boot.
+    _AD_BLOCK_THROTTLE_TOTAL = 8.0
+# How much of that budget a single tick may consume.
+_AD_BLOCK_THROTTLE_STEP = 1.0
+
+
 def _make_progress_cb(scan_id: str, _unused: float = 0.0):
     """
     Returns a progress callback closure that updates the in-memory cache
@@ -246,14 +340,25 @@ def _make_progress_cb(scan_id: str, _unused: float = 0.0):
 
     Ad-blocker throttle: reads scans[scan_id]["ad_blocked"] on every tick
     so if the user disables their blocker mid-scan, it speeds up immediately.
+    The delay is capped at _AD_BLOCK_THROTTLE_TOTAL seconds for the WHOLE
+    scan, so a throttled scan can no longer hold a worker slot hostage.
     """
     last_db_pct = [0]  # mutable closure holder
+    throttle_spent = [0.0]  # seconds already slept for this scan
 
     def cb(step: str, pct: int):
-        # Live throttle check — reads current state, not initial
-        if scans.get(scan_id, {}).get("ad_blocked"):
-            import time
-            time.sleep(8.0)
+        # Live throttle check — reads current state, not initial.
+        # Bounded by the per-scan budget; once spent, ticks are free.
+        if (
+            throttle_spent[0] < _AD_BLOCK_THROTTLE_TOTAL
+            and scans.get(scan_id, {}).get("ad_blocked")
+        ):
+            nap = min(
+                _AD_BLOCK_THROTTLE_STEP,
+                _AD_BLOCK_THROTTLE_TOTAL - throttle_spent[0],
+            )
+            throttle_spent[0] += nap
+            time.sleep(nap)
         scans[scan_id]["step"] = step
         scans[scan_id]["progress"] = pct
         # Debounced DB write: only on 10% thresholds
@@ -308,9 +413,10 @@ def _run_scan_inline(
     state machine as 'completed' once the scanner finishes.
     """
     # Ad-blocker throttle: if the user is blocking ads, we slow down
-    # the scan by injecting delays between progress updates. Total scan
-    # time stretches from ~90s to ~300s (5 minutes). This is server-side
-    # so the user cannot bypass it by editing frontend code.
+    # the scan by injecting delays between progress updates, capped at
+    # _AD_BLOCK_THROTTLE_TOTAL seconds for the whole scan (see
+    # _make_progress_cb). This is server-side so the user cannot bypass
+    # it by editing frontend code.
     # Store ad_blocked in scan dict so it can be updated mid-scan
     # when the user disables their ad blocker during polling
     scans[scan_id]["ad_blocked"] = ad_blocked
@@ -992,10 +1098,34 @@ def _client_ip(request: Request) -> str:
     )
 
 
+# The frontend fingerprint is always a hex SHA-256 digest (64 lowercase
+# hex chars) produced by _sha256() in index.html / malware.js. We accept
+# 32-128 hex chars so older/shorter digests and any future switch to a
+# longer hash keep working, but reject arbitrary strings — an unvalidated
+# value is a free-form rate-limit key that anyone can rotate at will.
+_FINGERPRINT_RE = re.compile(r"^[0-9a-fA-F]{32,128}$")
+
+
+def _valid_fingerprint(raw: Optional[str]) -> Optional[str]:
+    """
+    Normalize a raw fingerprint value, or return None.
+
+    Returns None for missing AND for malformed input on purpose: every
+    caller already handles "no fingerprint", so an invalid one is treated
+    exactly like an absent one instead of raising.
+    """
+    # Deliberately NOT case-normalized: fingerprints already stored in
+    # verified_domains / rate-limit rows are compared verbatim, so folding
+    # case here could invalidate an existing device's verification.
+    fp = (raw or "").strip()[:128]
+    if not fp or not _FINGERPRINT_RE.match(fp):
+        return None
+    return fp
+
+
 def _client_fingerprint(request: Request) -> Optional[str]:
     """Extract browser fingerprint from X-Fingerprint-Hash header."""
-    fp = request.headers.get("x-fingerprint-hash", "")[:128]
-    return fp if fp else None
+    return _valid_fingerprint(request.headers.get("x-fingerprint-hash", ""))
 
 
 def _client_session(request: Request) -> Optional[str]:
@@ -1868,7 +1998,7 @@ def execute_scan_request_endpoint(
     # Cross-check verified_domains: the IP or fingerprint that ran verify
     # must match. This covers both static IP users (matched by ip_hash)
     # and dynamic IP users (matched by fingerprint_hash after router restart).
-    caller_fingerprint = request.headers.get("x-fingerprint-hash", "")[:128] or None
+    caller_fingerprint = _client_fingerprint(request)
     if not db.is_domain_verified(domain, client_ip, fingerprint_hash=caller_fingerprint):
         raise HTTPException(
             status_code=403,
@@ -2672,7 +2802,7 @@ def malware_scan_rate_status(request: Request):
                 }
 
     client_ip = _client_ip(request)
-    caller_fp = request.headers.get("x-fingerprint-hash", "")[:128] or None
+    caller_fp = _client_fingerprint(request)
 
     ip_status = db.get_rate_limit_status(
         ip=client_ip,
@@ -2777,11 +2907,10 @@ def start_malware_scan(req: MalwareScanRequest, request: Request):
     # Fingerprint required — blocks curl/scripts that can't generate
     # a real browser fingerprint. Header is set by malware.js from
     # the same fingerprinting logic used in index.html.
-    caller_fingerprint = (
-        req.fingerprint_hash
-        or request.headers.get("x-fingerprint-hash", "")[:128]
-        or None
-    )
+    # NOTE: the body-supplied req.fingerprint_hash is still taken verbatim
+    # (unchanged behaviour — several endpoints and DB rows share that field);
+    # only the header path goes through format validation here.
+    caller_fingerprint = req.fingerprint_hash or _client_fingerprint(request)
     if not caller_fingerprint:
         db.log_audit_event(
             event="scan_blocked_no_fingerprint",
@@ -2938,10 +3067,10 @@ def start_malware_scan(req: MalwareScanRequest, request: Request):
         details={"url": req.url, "mode": effective_mode, "kind": "malware"},
     )
 
-    # Run the scan. Phase 1 stub returns almost instantly because the
-    # _SAFE_CHECKS / _FULL_CHECKS tuples are empty — only the target
-    # homepage fetch happens. Phases 2-5 will grow this to the full
-    # 10-check SAFE / 18-check FULL pipeline.
+    # Run the scan. The pipeline is fully populated: 11 SAFE checks
+    # (malware_scanner/main.py _SAFE_CHECKS) plus 7 FULL checks
+    # (_FULL_CHECKS) and the damage report. FULL mode is bounded by
+    # SCAN_BUDGET_FULL (malware_scanner/config.py, 30s).
     try:
         result: Dict[str, Any] = malware_scanner.scan_malware(
             req.url, mode=effective_mode
@@ -3058,7 +3187,7 @@ def get_scan(scan_id: str, request: Request):
         except Exception:
             cold_domain = db_row["url"]
 
-        req_fp = request.headers.get("x-fingerprint-hash", "")[:128] or None
+        req_fp = _client_fingerprint(request)
         verified = db.is_domain_verified(cold_domain, requester_ip, fingerprint_hash=req_fp)
         result_out = db_row.get("result") if verified else _redact_result(db_row.get("result"))
         return {
@@ -3083,7 +3212,7 @@ def get_scan(scan_id: str, request: Request):
             scan["queue_position"] = 0
 
     scan_domain = scan.get("domain") or ""
-    req_fp = request.headers.get("x-fingerprint-hash", "")[:128] or None
+    req_fp = _client_fingerprint(request)
     verified = bool(scan_domain) and db.is_domain_verified(scan_domain, requester_ip, fingerprint_hash=req_fp)
     raw_result = scan.get("result")
     result_out = raw_result if verified else _redact_result(raw_result)
@@ -3155,7 +3284,7 @@ def download_scan_pdf(scan_id: str, request: Request):
         except Exception:
             scan_domain = ""
 
-    pdf_fp = request.headers.get("x-fingerprint-hash", "")[:128] or None
+    pdf_fp = _client_fingerprint(request)
     verified = bool(scan_domain) and db.is_domain_verified(scan_domain, requester_ip, fingerprint_hash=pdf_fp)
     if not verified:
         raise HTTPException(
