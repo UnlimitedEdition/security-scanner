@@ -1,9 +1,45 @@
 # Web Security Scanner - robots.txt
 # Search engines and AI citations welcome
 # AI training crawlers blocked (enforced at Cloudflare edge)
+#
+# Politika / Policy:
+# - TRENIRANJE MODELA (AI training) = blokirano. Botovi koji skupljaju sadrzaj
+#   za treniranje LLM-ova (GPTBot, ClaudeBot, CCBot, Bytespider, itd.) dobijaju
+#   Disallow: / nize u fajlu. Ovo je namerna odluka, ne greska.
+# - PRETRAGA i CITIRANJE (search & citation / AEO-GEO) = dozvoljeno. Botovi
+#   koji indeksiraju stranicu da bi je prikazali u rezultatima pretrage ili je
+#   citirali u AI odgovorima (Googlebot, Bingbot, OAI-SearchBot, PerplexityBot,
+#   Claude-SearchBot) imaju eksplicitan Allow ispod — cilj je da sajt bude
+#   pronadjen i citiran (Answer Engine Optimization / Generative Engine
+#   Optimization), a ne treniran na.
+#
+# Model training crawlers are blocked below (deliberate policy). Search and
+# citation crawlers — including answer-engine bots that power AI citations —
+# are explicitly allowed so the site can be found and cited, not trained on.
 
 User-agent: *
 Content-Signal: search=yes, ai-input=yes, ai-train=no
+Allow: /
+
+# Search / citation (AEO-GEO) crawlers - eksplicitno dozvoljeno
+# Ovo NISU treniranje-botovi — indeksiraju/citiraju sadrzaj u odgovorima.
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Claude-SearchBot
 Allow: /
 
 # AI training crawlers - explicitly disallowed

@@ -1,0 +1,83 @@
+# Web Security Scanner
+
+> Free, passive website security scanner: 240+ automated checks covering SSL/TLS, HTTP security headers, DNS (SPF/DMARC/DNSSEC), vulnerabilities, JavaScript, API and CORS, SEO, Core Web Vitals, GDPR compliance, accessibility and dependencies. No registration, no payload sent to the scanned site, results in under 60 seconds. Bilingual: Serbian (sr) and English (en).
+
+Operated by Toske-Programer. Source: https://github.com/UnlimitedEdition/security-scanner (MIT). Docs content: CC BY-NC 4.0.
+
+Citation policy: this site allows search indexing and AI citation (Content-Signal: search=yes, ai-input=yes) and disallows AI model training (ai-train=no). Please cite pages by their canonical URL below.
+
+## Core tool
+
+- [Web Security Scanner](https://security-skener.gradovi.rs/): Free online website security scanner — SSL/TLS, HTTP headers, DNS, SEO audit, GDPR compliance, performance, vulnerability, API, CORS, dependencies. 240+ auto...
+- [Malware Scanner](https://security-skener.gradovi.rs/malware): Deep malware & backdoor scan for your website — URLhaus, OpenPhish, CT log, Wayback, DNS RBL. 18 passive checks with bilingual damage report.
+- [Javna galerija rezultata](https://security-skener.gradovi.rs/gallery): Javna galerija objavljenih rezultata skeniranja. Opt-in rezime po sajtu: URL, ocena, skor, profil strogosti. Bez ranjivosti.
+- [Pricing](https://security-skener.gradovi.rs/pricing): Web Security Scanner Pro — unlimited scans, multi-page crawl, PDF reports. $9/mo or $79/yr. 7-day free trial.
+- [240+ Checks](https://security-skener.gradovi.rs/blog-features): Complete list of all 240+ automated checks: security (150+), SEO (37), performance (20), accessibility (17), GDPR (7), WHOIS, tech stack, email, Mozilla Obse...
+- [4 Strictness Modes](https://security-skener.gradovi.rs/blog-strictness-modes): Why we built four scoring profiles: Basic, Standard, Strict, Paranoid. How severity weights differ, which categories count, and what score popular sites get ...
+
+## Security guides
+
+- [Website Security Guide](https://security-skener.gradovi.rs/blog-security): Complete web security guide: most common attacks (XSS, SQL Injection, CSRF), hack consequences, protection tactics, 8 detailed tutorials. Free website scan.
+- [API Security](https://security-skener.gradovi.rs/blog-security-api): Complete API security guide: OWASP API Security Top 10, JWT and OAuth 2.0 protection, GraphQL risks, rate limiting, real API breach examples.
+- [CSRF Attacks](https://security-skener.gradovi.rs/blog-security-csrf): Detailed CSRF attack explanation: how they work, real examples (Gmail, Netflix), protection via tokens, SameSite cookies and framework defenses.
+- [DNS Security](https://security-skener.gradovi.rs/blog-security-dns): Complete DNS security guide: SPF, DMARC, DNSSEC configuration, DNS attacks (cache poisoning, spoofing), email spoofing protection.
+- [HTTP Security Headers](https://security-skener.gradovi.rs/blog-security-headers): Detailed guide to 7 essential HTTP security headers: CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, COOP with confi...
+- [Website Malware & Backdoors](https://security-skener.gradovi.rs/blog-security-malware): Complete guide to website malware, webshells, SEO spam, backdoor attacks, cryptojacking, and phishing. Learn how attackers compromise sites and how to detect...
+- [Website Malware Recovery](https://security-skener.gradovi.rs/blog-security-malware-recovery): Step-by-step guide to recovering a hacked website: quarantine, cleanup, blacklist removal, and hardening against reinfection.
+- [Open Ports](https://security-skener.gradovi.rs/blog-security-ports): Which open ports pose a security risk: MySQL 3306, Redis 6379, MongoDB 27017. Nmap scanning, firewall rules, server protection.
+- [SQL Injection](https://security-skener.gradovi.rs/blog-security-sql): Complete SQL Injection guide: how it works, types (Classic, Blind, Out-of-band), real examples (Equifax, Sony), protection with prepared statements, ORM and ...
+- [SSL/TLS Certificates](https://security-skener.gradovi.rs/blog-security-ssl): Complete SSL/TLS certificate guide: how HTTPS encryption works, certificate types (DV, OV, EV), Let's Encrypt free certs, configuration and common errors.
+- [XSS Attacks](https://security-skener.gradovi.rs/blog-security-xss): Complete guide to Cross-Site Scripting (XSS) attacks: types, real examples, consequences and detailed protection measures.
+
+## Platform-specific security
+
+- [WordPress Security Scan](https://security-skener.gradovi.rs/blog-wordpress-security): WordPress security guide: why WordPress is the #1 attack target, common vulnerabilities, plugin risks, how to scan and protect your WordPress site.
+- [Next.js Security Checklist](https://security-skener.gradovi.rs/blog-nextjs-security): Complete Next.js security checklist: API routes, middleware, CSP headers, environment variables, authentication, CORS. Scan your Next.js app free.
+- [Vercel Security Settings](https://security-skener.gradovi.rs/blog-vercel-security): Complete Vercel security guide: security headers configuration, environment variables, preview deploy protection, edge functions, DDoS protection.
+- [Vibe Coding Security Guide](https://security-skener.gradovi.rs/blog-vibe-coding-security): Complete security guide for vibe coding projects: AI-generated code risks, real vulnerability examples, protection workflow, config examples for Next.js, Ver...
+- [Da li je AI-generisan kod bezbedan?](https://security-skener.gradovi.rs/blog-ai-code-security): Deep analysis of AI-generated code security: real vulnerability examples from Cursor, Copilot, Claude Code, Bolt, Lovable. Before/after fixes, research data,...
+- [Kako da zastitis svoj prvi sajt](https://security-skener.gradovi.rs/blog-first-website-security): Beginner-friendly website security guide: SSL setup, security headers, password protection, free scanning — step by step with no technical knowledge required.
+
+## SEO guides
+
+- [SEO Guide](https://security-skener.gradovi.rs/blog-seo): Complete SEO guide: on-page, technical and off-page SEO. Meta tags, Schema.org, sitemap, local SEO, Open Graph, heading structure, mobile-first. 7 detailed t...
+- [H1-H6 Heading Structure](https://security-skener.gradovi.rs/blog-seo-headings): Complete HTML heading structure guide: H1 rules, H1-H6 hierarchy, SEO impact, accessibility, featured snippets, common mistakes, validation tools.
+- [Local SEO for Serbia](https://security-skener.gradovi.rs/blog-seo-local): Complete local SEO guide for Serbia: Google Business Profile, NAP consistency, local directories, reviews, Schema LocalBusiness, Google Maps optimization.
+- [Meta Tags](https://security-skener.gradovi.rs/blog-seo-meta): Complete HTML meta tags guide: title tag formula, meta description for CTR, robots, viewport, canonical, Open Graph. Examples, mistakes, tools.
+- [Mobile-First SEO](https://security-skener.gradovi.rs/blog-seo-mobile): Complete mobile-first SEO guide: Google mobile-first indexing, responsive design, viewport, touch-friendly UI, Core Web Vitals on mobile, AMP, testing.
+- [Open Graph &amp; Twitter Cards](https://security-skener.gradovi.rs/blog-seo-opengraph): Complete Open Graph and Twitter Cards guide: required tags, optimal image dimensions (1200x630), LinkedIn, testing tools, implementation examples.
+- [Structured Data (Schema.org)](https://security-skener.gradovi.rs/blog-seo-schema): Complete Schema.org structured data guide: JSON-LD examples for Article, FAQPage, HowTo, Product, LocalBusiness, Organization. Google rich snippets.
+- [Sitemap.xml](https://security-skener.gradovi.rs/blog-seo-sitemap): Complete sitemap.xml guide: XML format, Sitemap Index, robots.txt integration, Google Search Console submit, auto-generation. Limits, examples, tools.
+
+## Performance guides
+
+- [HTTP Caching](https://security-skener.gradovi.rs/blog-perf-cache): Complete HTTP caching guide: Cache-Control directives, ETag, Last-Modified, cache-busting, browser vs CDN vs server cache, Service Worker, invalidation.
+- [CDN](https://security-skener.gradovi.rs/blog-perf-cdn): Complete CDN guide: how it works, Cloudflare free setup, AWS CloudFront, Vercel Edge, Bunny.net. Push vs Pull, cache invalidation, DDoS protection, SEO.
+- [Gzip &amp; Brotli Compression](https://security-skener.gradovi.rs/blog-perf-compression): Complete HTTP compression guide: Gzip vs Brotli benchmarks, config for Nginx/Apache/Express/Vercel, pre-compression, which files to compress.
+- [Core Web Vitals](https://security-skener.gradovi.rs/blog-perf-cwv): Complete Core Web Vitals guide: LCP (loading), CLS (stability), INP (responsiveness). Thresholds, optimization, measurement tools, Field vs Lab data, Google ...
+- [Image Optimization for Web](https://security-skener.gradovi.rs/blog-perf-images): Complete image optimization guide: WebP vs AVIF vs JPEG, lossy/lossless compression, srcset, picture element, lazy loading, width/height for CLS, CDN, tools.
+- [Lazy Loading](https://security-skener.gradovi.rs/blog-perf-lazy): Complete lazy loading guide: native loading=lazy, Intersection Observer, dynamic import, code splitting, fetchpriority, above/below fold rule.
+- [Website Performance Guide](https://security-skener.gradovi.rs/blog-performance): Complete website performance guide: Core Web Vitals, image optimization, cache, compression, CDN, lazy loading. 6 detailed tutorials + 9 automated checks.
+
+## GDPR guides
+
+- [GDPR Compliance Guide](https://security-skener.gradovi.rs/blog-gdpr): Complete GDPR compliance guide: cookie consent, privacy policy, trackers, user rights, fines. 5 detailed tutorials + 7 automated compliance checks.
+- [Cookie Consent](https://security-skener.gradovi.rs/blog-gdpr-cookies): Complete GDPR cookie consent guide: cookie types, ePrivacy Directive, banner implementation (CookieConsent, OneTrust, Cookiebot), Google Consent Mode, fines.
+- [GDPR Fines](https://security-skener.gradovi.rs/blog-gdpr-fines): Complete GDPR fines guide: Top 10 biggest fines (Meta 1.2B, Amazon 746M), penalty structure, 11 factors, Serbian ZZPL, 10 steps to avoid.
+- [How to Write a GDPR Privacy Policy](https://security-skener.gradovi.rs/blog-gdpr-policy): Complete GDPR Privacy Policy guide: required information (Article 13-14), section template, generators, Serbian ZZPL, placement, updates.
+- [GDPR User Rights](https://security-skener.gradovi.rs/blog-gdpr-rights): Complete guide to 8 GDPR user rights: access, rectification, erasure (right to be forgotten), portability, objection. Deadlines, DSAR process, technical impl...
+- [Third-Party Trackers](https://security-skener.gradovi.rs/blog-gdpr-trackers): Complete third-party tracker and GDPR guide: Google Analytics, Facebook Pixel, Hotjar, Schrems II, GDPR-compliant alternatives (Plausible, Matomo), server-si...
+
+## FAQ
+
+- [Malware Scanner FAQ](https://security-skener.gradovi.rs/faq-malware): 30 answers about our Malware Scanner: how it works, what it detects, Safe vs Full scan, verification, and privacy.
+- [Malware Recovery FAQ](https://security-skener.gradovi.rs/faq-malware-recovery): 20 answers about recovering a hacked website: first steps, cleanup, Google blacklist removal, and reinfection prevention.
+
+## Policy & legal
+
+- [Privacy Policy](https://security-skener.gradovi.rs/privacy): Privacy Policy: what we store in the database, how PII data is hashed, retention period, how to exercise your GDPR rights. ZZPL compliant.
+- [Terms of Service](https://security-skener.gradovi.rs/terms): Terms of Service for Web Security Scanner — rules, limits, user responsibility when scanning websites, Pro subscription terms.
+- [Refund Policy](https://security-skener.gradovi.rs/refund-policy): Refund Policy for Web Security Scanner Pro subscriptions — conditions, deadlines, how to request a refund.
+- [User Rights](https://security-skener.gradovi.rs/user-rights): Your rights as a Web Security Scanner user: data access, erasure, portability, objection. GDPR Articles 12-22.
+- [Report Abuse](https://security-skener.gradovi.rs/abuse-report): If someone scanned your site through our tool without permission, report it here. We review within 72h and block future scans.
+- [System Status](https://security-skener.gradovi.rs/status): Real-time status of Web Security Scanner: frontend, backend API and database health. Uptime monitoring.

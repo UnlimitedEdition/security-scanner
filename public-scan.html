@@ -5,7 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rezultat skeniranja / Scan result — Web Security Scanner</title>
   <meta name="description" content="Javni rezime objavljenog skeniranja: ocena, skor, broj provera po kategoriji. Bez specificnih ranjivosti. · Public summary of a published scan: grade, score, per-category checks. No vulnerability specifics.">
-  <meta name="robots" content="index, follow">
+  <meta name="robots" content="noindex, follow">
+  <!-- This file is the template behind the /public/:id Vercel rewrite, so
+       one physical file renders every published scan (thousands of
+       distinct URLs). It is kept noindex: the meaningful content (grade,
+       score, per-category breakdown) only exists after client-side JS
+       fetches it, and the <title>/meta description above are identical
+       for every scan id — indexing this at scale today would flood the
+       index with near-duplicate-metadata pages competing against the
+       site's real content instead of helping it.
+       The canonical below is still kept correct and per-scan (rather
+       than pointing every URL at this one template) via JS below, so
+       flipping to indexable later only requires giving each scan a
+       unique title/description — not restructuring canonicals. -->
+  <link rel="canonical" id="canonicalLink" href="https://security-skener.gradovi.rs/public-scan.html">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/blog-common.css">
@@ -228,6 +241,21 @@
       }
 
       var scanId = parseScanId();
+
+      // Self-reference the canonical to this specific published scan
+      // (rather than leaving every /public/:id URL pointed at the shared
+      // template file) so the per-URL signal is correct even while the
+      // page stays noindex — see the comment on the <link> tag above.
+      if (scanId) {
+        var canonicalEl = document.getElementById("canonicalLink");
+        if (canonicalEl) {
+          canonicalEl.setAttribute(
+            "href",
+            "https://security-skener.gradovi.rs/public/" + encodeURIComponent(scanId)
+          );
+        }
+      }
+
       var isEn = function() { return document.body.classList.contains("lang-en"); };
 
       var STRICTNESS_LABEL_SR = {

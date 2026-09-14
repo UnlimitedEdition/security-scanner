@@ -37,7 +37,7 @@ from typing import Dict, Any, List, Optional
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse, FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, HttpUrl, field_validator
 import re
@@ -56,6 +56,26 @@ from security_utils import is_safe_target
 # rate limits per environment without code changes.
 _RATE_LIMIT = int(os.environ.get("RATE_LIMIT_MAX", "2"))
 _RATE_WINDOW = int(os.environ.get("RATE_LIMIT_WINDOW_SECONDS", "7200"))
+
+# ── Production hostname (SEO guard for the HF Space mirror) ───────────
+# This same api.py also runs the Hugging Face Space (Docker SDK, port
+# 7860), and that Space's FileResponse routes below serve the exact same
+# static HTML as production — index.html, every blog-*.html, robots.txt,
+# sitemap.xml, etc. huggingface.co carries far more domain authority than
+# a gradovi.rs subdomain, so left alone that mirror can outrank or
+# cannibalise the real site in search results.
+#
+# PRODUCTION_HOST is the one hostname allowed to be indexed. It's read
+# from the request Host header (not "are we running on Vercel", which
+# api.py has no way to know — Vercel serves static files directly and
+# never runs this file at all) so the check is a host allowlist rather
+# than a hardcoded "always noindex": if this API is ever legitimately
+# fronted by the real domain, it keeps behaving correctly. Overridable
+# via env, following the same convention as ALLOWED_ORIGINS/FRONTEND_ORIGIN
+# above.
+PRODUCTION_HOST = (
+    os.environ.get("PRODUCTION_HOST", "security-skener.gradovi.rs").strip().lower()
+)
 
 app = FastAPI(
     title="Web Security Scanner API",
@@ -216,6 +236,37 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 
 app.add_middleware(SecurityHeadersMiddleware)
+
+
+def _request_host(request: Request) -> str:
+    """Hostname the client actually connected to, lowercased, no port."""
+    return (request.headers.get("host") or "").split(":")[0].strip().lower()
+
+
+class MirrorNoindexMiddleware(BaseHTTPMiddleware):
+    """Stamp X-Robots-Tag: noindex, nofollow on HTML responses whenever the
+    request's Host header is not the production domain (PRODUCTION_HOST).
+
+    This is the single mechanism that keeps the HF Space mirror out of
+    search results without touching the production Vercel domain: Vercel
+    never runs api.py (it serves the static files directly), so in
+    practice this only ever fires for the HF Space host or any other
+    non-production host this backend happens to be reached through. A
+    host check is used instead of an unconditional noindex so that if
+    this API is ever legitimately fronted by the real domain, responses
+    served under that domain are unaffected.
+    """
+
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        if _request_host(request) != PRODUCTION_HOST:
+            content_type = response.headers.get("content-type", "")
+            if "text/html" in content_type:
+                response.headers["X-Robots-Tag"] = "noindex, nofollow"
+        return response
+
+
+app.add_middleware(MirrorNoindexMiddleware)
 
 
 # ── SSRF audit logging for Pydantic validation errors ────────────────
@@ -776,15 +827,34 @@ def ads_txt():
         return FileResponse(path, media_type="text/plain")
 
 
+_MIRROR_ROBOTS_TXT = "User-agent: *\nDisallow: /\n"
+
+
 @app.api_route("/robots.txt", methods=["GET", "HEAD"])
-def robots():
+def robots(request: Request):
+    # Non-production hosts (the HF Space mirror, first and foremost) must
+    # never be crawled at all — serving the production robots.txt here
+    # would tell crawlers this host's copies of every page are fair game.
+    # Handled here in the route rather than in the robots.txt file itself,
+    # which stays the production-only file another agent owns.
+    if _request_host(request) != PRODUCTION_HOST:
+        return PlainTextResponse(_MIRROR_ROBOTS_TXT, media_type="text/plain")
     path = os.path.join(os.path.dirname(__file__), "robots.txt")
     if os.path.exists(path):
         return FileResponse(path, media_type="text/plain")
 
 
 @app.api_route("/sitemap.xml", methods=["GET", "HEAD"])
-def sitemap():
+def sitemap(request: Request):
+    # 404 rather than serving the production sitemap (or a stripped
+    # mirror-specific one) from a non-production host: serving it at all
+    # would tell Google this second host owns those URLs, which is the
+    # exact cannibalisation risk this guard exists to prevent. Disallow-all
+    # robots.txt above already tells well-behaved crawlers not to fetch
+    # this, but a 404 leaves nothing to misinterpret for anything that
+    # fetches /sitemap.xml directly without honoring robots.txt first.
+    if _request_host(request) != PRODUCTION_HOST:
+        raise HTTPException(status_code=404, detail="Not found")
     path = os.path.join(os.path.dirname(__file__), "sitemap.xml")
     if os.path.exists(path):
         return FileResponse(path, media_type="application/xml")

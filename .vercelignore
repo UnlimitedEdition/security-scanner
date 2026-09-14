@@ -11,7 +11,8 @@
 #
 # OSTAJE (frontend — NE dodavati ovde):
 #   index.html i sve ostale *.html stranice, *.js, *.css,
-#   sitemap.xml, robots.txt, ads.txt, humans.txt, .well-known/security.txt,
+#   sitemap.xml, robots.txt, llms.txt, ads.txt, humans.txt,
+#   .well-known/security.txt, og-image.png,
 #   favicon.svg, logo.svg, logo.png, data-protection-badge.png,
 #   uptimerobot-*.png, google739403949172c6ee.html (Search Console verifikacija),
 #   404.html, LICENSE, AUTHORS.
