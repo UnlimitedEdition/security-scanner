@@ -1,0 +1,81 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Toske-Programer (Web Security Scanner contributors)
+#
+# Sync master -> Hugging Face Space.
+#
+# A Hugging Face Space is not "connected" to GitHub the way a Vercel project is
+# — the Space IS its own git repo on huggingface.co. There is no button to link
+# them, so this workflow does the linking: every push to master is mirrored into
+# the Space, which then rebuilds itself.
+#
+# SETUP (one time):
+#   1. Create a WRITE token: https://huggingface.co/settings/tokens
+#      Token type "Write", or Fine-grained with write access to the Space.
+#   2. Add it to the repo:
+#      https://github.com/UnlimitedEdition/security-scanner/settings/secrets/actions
+#      Name: HF_TOKEN
+#
+# The Space is a MIRROR of master. This force-pushes, so any commit made
+# directly in the Space (via the HF web editor) is overwritten. Edit here, not
+# there.
+#
+# README.md must keep its YAML frontmatter (title/sdk/app_port) at the very top
+# — that block is the Space's configuration. Without it the Space will not boot.
+
+name: Sync HF Space
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sync-hf-space
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Push master to Hugging Face
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v6
+        with:
+          # HF rejects shallow pushes — the Space needs real history.
+          fetch-depth: 0
+          lfs: true
+
+      - name: Verify Space config survived
+        run: |
+          # The frontmatter is what makes this a Docker Space on port 7860.
+          # If it is missing, pushing would leave a Space that cannot start,
+          # so fail loudly here instead of breaking production.
+          head -1 README.md | grep -qx -- '---' \
+            || { echo "::error::README.md lost its HF YAML frontmatter"; exit 1; }
+          grep -qE '^sdk: *docker' README.md \
+            || { echo "::error::README.md frontmatter is missing 'sdk: docker'"; exit 1; }
+          grep -qE '^app_port: *7860' README.md \
+            || { echo "::error::README.md frontmatter is missing 'app_port: 7860'"; exit 1; }
+          echo "Space config OK"
+
+      - name: Push to Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          if [ -z "$HF_TOKEN" ]; then
+            echo "::error::HF_TOKEN secret is not set — see the setup notes at the top of this file"
+            exit 1
+          fi
+          # Credentials go in the remote URL, never in a committed file.
+          # HF Spaces use `main`; this repo's default branch is `master`.
+          git push --force \
+            "https://HF:${HF_TOKEN}@huggingface.co/spaces/Unlimitededition/web-security-scanner" \
+            HEAD:main
+
+      - name: Done
+        run: |
+          echo "Space is rebuilding: https://huggingface.co/spaces/Unlimitededition/web-security-scanner"
+          echo "Watch Build logs — the Dockerfile moved to python:3.14-slim and a non-root user."
