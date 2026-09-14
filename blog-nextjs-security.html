@@ -178,6 +178,7 @@
   <div class="sr">
     <h1>Next.js bezbednosna checklista za vibe codere</h1>
     <p class="subtitle">Konkretni primeri koda, before/after poredjenja i 12-stavki checklista za svaki Next.js projekat koji generisete sa AI alatima</p>
+    <p class="direct-answer">Najcesca bezbednosna greska u Next.js projektima generisanim uz pomoc AI je da se tajne environment varijable oznace prefiksom NEXT_PUBLIC_, cime se direktno ubacuju u client-side JavaScript i postaju vidljive svakom ko otvori DevTools. Ova checklista pokriva tu i jos 11 kljucnih stavki: zastitu API ruta, middleware, CSP headere, autentifikaciju i CORS — sa before/after primerima koda.</p>
 
     <h2 id="sec1">1. NEXT_PUBLIC_ zamka &mdash; greska koja otkriva vase tajne</h2>
     <p>Ovo je greska broj jedan u Next.js projektima koje generisu AI alati. Next.js ima jednostavno pravilo: svaka env varijabla sa prefiksom <code>NEXT_PUBLIC_</code> se <strong>ukljucuje u klijentski JavaScript bundle</strong>. To znaci da je vidljiva svakome ko otvori DevTools u browseru.</p>
@@ -325,6 +326,7 @@
   <div class="en">
     <h1>Next.js Security Checklist for Vibe Coders</h1>
     <p class="subtitle">Concrete code examples, before/after comparisons, and a 12-item checklist for every Next.js project you generate with AI tools</p>
+    <p class="direct-answer">The most common Next.js security mistake in AI-generated projects is prefixing secret environment variables with NEXT_PUBLIC_, which bundles them straight into client-side JavaScript where anyone can read them in DevTools. This checklist covers that and 11 other essentials: API route protection, middleware, CSP headers, authentication, and CORS — with before/after code examples.</p>
 
     <h2 id="sec1e">1. The NEXT_PUBLIC_ trap &mdash; the mistake that exposes your secrets</h2>
     <p>This is the number one mistake in AI-generated Next.js projects. Next.js has a simple rule: any env variable prefixed with <code>NEXT_PUBLIC_</code> is <strong>bundled into the client-side JavaScript</strong>. That means it is visible to anyone who opens DevTools in their browser.</p>
