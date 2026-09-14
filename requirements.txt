@@ -11,5 +11,5 @@ supabase==2.30.1
 psycopg[binary]==3.3.4
 
 # PDF report export (Pro plan feature). Pure Python, no system deps —
-# matters for the python:3.11-slim base image on HF Spaces.
+# matters for the python:3.14-slim base image on HF Spaces.
 fpdf2==2.8.7
