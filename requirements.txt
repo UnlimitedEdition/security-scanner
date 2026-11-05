@@ -1,7 +1,7 @@
 fastapi==0.136.3
 uvicorn==0.48.0
 requests==2.34.2
-dnspython==2.8.0
+dnspython==2.9.0
 pydantic==2.13.4
 beautifulsoup4==4.14.3
 certifi>=2026.5.20
@@ -12,4 +12,4 @@ psycopg[binary]==3.3.4
 
 # PDF report export (Pro plan feature). Pure Python, no system deps —
 # matters for the python:3.14-slim base image on HF Spaces.
-fpdf2==2.8.7
+fpdf2==2.8.8
